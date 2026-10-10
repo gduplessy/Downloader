@@ -1,0 +1,20 @@
+[package]
+name = "downloader-service"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+downloader-core = { path = "../core" }
+anyhow.workspace = true
+serde_json.workspace = true
+serde.workspace = true
+interprocess.workspace = true
+dirs.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+widestring = "1"
+
+[[bin]]
+name = "downloader-service"
+path = "src/main.rs"

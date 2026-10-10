@@ -1,0 +1,17 @@
+[package]
+name = "downloader-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+downloader-core = { path = "../core" }
+downloader-service = { path = "../service" }
+anyhow.workspace = true
+serde_json.workspace = true
+clap.workspace = true
+uuid.workspace = true
+
+[[bin]]
+name = "downloader"
+path = "src/main.rs"

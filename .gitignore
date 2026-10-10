@@ -1,0 +1,17 @@
+/target/
+/node_modules/
+/dist/
+**/node_modules/
+**/dist/
+/.gstack/
+/debug.log
+/.local/
+*.log
+*.part
+*.db*
+*.exe
+*.msi
+*.dmg
+*.AppImage
+/.components/
+.gstack/
