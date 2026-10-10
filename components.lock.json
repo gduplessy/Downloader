@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "targets": {
+    "win32-x64": [
+      {
+        "repository": "yt-dlp/yt-dlp",
+        "version": "2026.08.19",
+        "asset": "yt-dlp.exe",
+        "url": "https://github.com/yt-dlp/yt-dlp/releases/download/2026.08.19/yt-dlp.exe",
+        "sha256": "66674953fe251b89f4d08c5f0e35e0728679bd67ab3d7d05c0562af101dd3e7a",
+        "outputs": [
+          "yt-dlp.exe"
+        ],
+        "kind": "file",
+        "source": "https://github.com/yt-dlp/yt-dlp/tree/2026.08.19"
+      },
+      {
+        "repository": "yt-dlp/FFmpeg-Builds",
+        "version": "latest",
+        "asset": "ffmpeg-master-latest-win64-gpl.zip",
+        "url": "https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip",
+        "sha256": "64470b1b149813c6c6a6d090a9444cd8f3f59ce403ab6ef3b0c12b784295116f",
+        "outputs": [
+          "ffmpeg.exe",
+          "ffprobe.exe"
+        ],
+        "kind": "zip",
+        "source": "https://github.com/yt-dlp/FFmpeg-Builds/tree/latest"
+      },
+      {
+        "repository": "denoland/deno",
+        "version": "v2.9.7",
+        "asset": "deno-x86_64-pc-windows-msvc.zip",
+        "url": "https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-pc-windows-msvc.zip",
+        "sha256": "a0c3101b4158d1dfb7d6a78a7bf0f3de80c96bb423c152beec8beb22786f2238",
+        "outputs": [
+          "deno.exe"
+        ],
+        "kind": "zip",
+        "source": "https://github.com/denoland/deno/tree/v2.9.7"
+      }
+    ]
+  }
+}
