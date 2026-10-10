@@ -1,1 +1,0 @@
-{"default":{"identifier":"default","description":"Local download manager window","local":true,"windows":["main"],"permissions":["core:default","dialog:allow-open","dialog:allow-save","notification:default","clipboard-manager:allow-read-text","clipboard-manager:allow-write-text","autostart:default"]}}
