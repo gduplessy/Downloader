@@ -1,0 +1,67 @@
+export type Job = {
+  id: string;
+  request_id: string;
+  url: string;
+  filename: string;
+  destination: string;
+  queue: string;
+  category: string;
+  state: string;
+  bytes: number;
+  total: number | null;
+  speed: number;
+  resumable: boolean;
+  etag: string | null;
+  error: string | null;
+  created: string;
+  description: string;
+  checksum: string | null;
+  segments: { start: number; end: number; downloaded: number }[];
+  media: Record<string, unknown> | null;
+  viable: boolean;
+};
+export type Category = {
+  id: string;
+  name: string;
+  extensions: string[];
+  directory: string;
+};
+export type Settings = {
+  directory: string;
+  max_jobs: number;
+  connections: number;
+  host_connections: number;
+  speed_limit: number;
+  quota_bytes: number;
+  quota_minutes: number;
+  proxy: string | null;
+  proxy_credential: string | null;
+  categories: Category[];
+  locale: string;
+  theme: string;
+  scanner: { executable: string; args: string[] } | null;
+  components: string;
+  clipboard: boolean;
+  completion_action: string;
+  completion_command: unknown;
+};
+export type Queue = {
+  id: string;
+  name: string;
+  enabled: boolean;
+  concurrency: number;
+  order: string[];
+  start_time: string | null;
+  stop_time: string | null;
+  interval_minutes: number | null;
+  next_run: string | null;
+  synchronize: boolean;
+};
+export type Snapshot = {
+  version: number;
+  sequence: number;
+  jobs: Job[];
+  queues: Queue[];
+  settings: Settings;
+  components: { name: string; available: boolean; path: string }[];
+};
