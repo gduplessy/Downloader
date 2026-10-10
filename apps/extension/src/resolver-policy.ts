@@ -6,6 +6,18 @@ export type Candidate = {
   download: boolean;
   id?: string;
 };
+export function navigationAvailable(activePages: readonly string[], page: string): boolean {
+  try {
+    const requested = new URL(page);
+    return (
+      /^https?:$/.test(requested.protocol) &&
+      activePages.length < 3 &&
+      activePages.every((active) => new URL(active).host !== requested.host)
+    );
+  } catch {
+    return false;
+  }
+}
 export type Decision = {
   kind: 'wait' | 'user' | 'click';
   index?: number;

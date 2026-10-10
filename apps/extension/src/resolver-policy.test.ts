@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { decide, type Candidate } from './resolver-policy';
+import { decide, navigationAvailable, type Candidate } from './resolver-policy';
 const c = (text: string, other: Partial<Candidate> = {}): Candidate => ({
   text,
   visible: true,
@@ -8,6 +8,16 @@ const c = (text: string, other: Partial<Candidate> = {}): Candidate => ({
   ...other,
 });
 describe('hosted-page decisions', () => {
+  it('bounds bulk navigation and protects each host session until its current page finishes', () => {
+    const pages = ['https://a.example/file1', 'https://b.example/file2'];
+    expect(navigationAvailable(pages, 'https://a.example/file3')).toBe(false);
+    expect(navigationAvailable(pages, 'https://c.example/file3')).toBe(true);
+    expect(
+      navigationAvailable([...pages, 'https://c.example/file3'], 'https://d.example/file4'),
+    ).toBe(false);
+    expect(navigationAvailable(pages.slice(1), 'https://a.example/file3')).toBe(true);
+    expect(navigationAvailable([], 'file:///tmp/file')).toBe(false);
+  });
   it('chooses the screenshot style free control while excluding premium and torrent', () => {
     expect(
       decide(

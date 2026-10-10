@@ -1,4 +1,5 @@
 import browser from 'webextension-polyfill';
+import { navigationAvailable } from './resolver-policy';
 import {
   defaults,
   eligible,
@@ -595,6 +596,16 @@ async function pollResolvers(userGesture = false) {
   polling = true;
   try {
     const snapshot = await native('snapshot');
+    const storage: Record<string, any> = await browser.storage.local.get(null);
+    const active: any[] = [];
+    for (const [key, record] of Object.entries(storage)) {
+      if (!key.startsWith('resolver-')) continue;
+      const job = snapshot.jobs.find((job: any) => job.id === key.slice(9));
+      if (!job || ['complete', 'browser_complete', 'cancelled', 'failed'].includes(job.state)) {
+        await browser.storage.local.remove(key);
+        await browser.tabs.remove(record.tabId).catch(() => {});
+      } else active.push(job);
+    }
     for (const job of snapshot.jobs.filter(
       (j: any) =>
         j.page_url &&
@@ -608,8 +619,21 @@ async function pollResolvers(userGesture = false) {
         continue;
       }
       const stored: Record<string, any> = await browser.storage.local.get('resolver-' + job.id);
-      if (!stored['resolver-' + job.id] || userGesture)
-        await startResolver(job, userGesture).catch(() => {});
+      if (!stored['resolver-' + job.id]) {
+        // A bulk paste must not open unbounded tabs or rotate a host's session
+        // cookies while another file from that host is being resolved.
+        if (
+          !navigationAvailable(
+            active.map((other) => other.page_url),
+            job.page_url,
+          )
+        )
+          continue;
+        try {
+          await startResolver(job, userGesture);
+          active.push(job);
+        } catch {}
+      } else if (userGesture) await startResolver(job, true).catch(() => {});
     }
   } catch {
   } finally {

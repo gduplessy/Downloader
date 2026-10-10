@@ -6,7 +6,7 @@ Recorded locally on Windows x64, 2026-10-10. This records a working preview, not
 
 - Rust: 6 unit tests, 8 network/recovery integration tests and 1 native framing test pass.
 - Transfer fixtures cover segmented output hashes, ignored ranges, unknown length, redirects, pause/restart, changed validators, checksum refusal, interrupted finalization, rolling quotas, navigation claims and server filename recovery.
-- Browser policy/handoff tests: 11 pass. Desktop utility/translation-key tests: 4 pass. TypeScript checks pass.
+- Browser policy/handoff tests: 12 pass. Desktop utility/translation-key tests: 4 pass. TypeScript checks pass.
 - Rust formatting and Clippy with warnings denied pass for core, service and CLI.
 - Windows Tauri executable and NSIS installer build. Cross-platform CI is configured; remote CI has not run.
 
