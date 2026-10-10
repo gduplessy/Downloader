@@ -132,7 +132,10 @@ fn respond(mut stream: TcpStream, data: &[u8], version: u8) -> std::io::Result<(
     if range.is_some() {
         write!(stream, "Content-Range: bytes {a}-{b}/{}\r\n", data.len())?;
     }
-    write!(stream, "\r\n")?;
+    write!(
+        stream,
+        "Content-Disposition: attachment; filename=\"archive.bin\"\r\n\r\n"
+    )?;
     if head {
         return Ok(());
     }
@@ -395,6 +398,57 @@ fn rolling_quota_stops_exactly_and_resumes_without_corruption() {
     settings.quota_bytes = 0;
     e.command(Command::Settings(settings)).unwrap();
     let complete = wait(&e, &created.id, |j| {
+        matches!(j.state, JobState::Complete | JobState::Failed)
+    });
+    e.shutdown();
+    assert_eq!(complete.state, JobState::Complete, "{:?}", complete.error);
+    assert_eq!(
+        digest(&std::fs::read(complete.destination).unwrap()),
+        digest(&server.data)
+    );
+}
+
+#[test]
+fn browser_resolved_source_uses_server_filename_and_complete_hash() {
+    let server = Server::new();
+    let dir = tempfile::tempdir().unwrap();
+    let e = Engine::open(dir.path()).unwrap();
+    let value = e
+        .command(Command::Navigate(AddJob {
+            request_id: "resolved".into(),
+            url: format!("{}/hosted", server.url),
+            filename: None,
+            directory: Some(dir.path().into()),
+            queue: None,
+            checksum: Some(digest(&server.data)),
+            paused: false,
+            context: RequestContext::default(),
+            media: None,
+            description: String::new(),
+        }))
+        .unwrap();
+    let j: Job = serde_json::from_value(value).unwrap();
+    let owner = uuid::Uuid::new_v4().to_string();
+    e.command(Command::ClaimNavigation {
+        id: j.id.clone(),
+        owner: owner.clone(),
+        force: false,
+    })
+    .unwrap();
+    let resolved: Job = serde_json::from_value(
+        e.command(Command::Resolve {
+            id: j.id.clone(),
+            owner,
+            url: format!("{}/file", server.url),
+            filename: None,
+            context: RequestContext::default(),
+        })
+        .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(resolved.filename, "archive.bin");
+    e.start();
+    let complete = wait(&e, &j.id, |j| {
         matches!(j.state, JobState::Complete | JobState::Failed)
     });
     e.shutdown();

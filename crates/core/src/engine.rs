@@ -279,6 +279,13 @@ impl Engine {
                     bail!("Download is already running");
                 }
                 let job = self.job(&id)?;
+                let filename = match filename {
+                    Some(name) => Some(name),
+                    None => {
+                        transfer::inspect(&url, &context, &self.settings.lock().unwrap().clone())?
+                            .filename
+                    }
+                };
                 let mut j = job.lock().unwrap();
                 if j.navigation_owner.as_ref() != Some(&owner) {
                     bail!("Navigation belongs to another browser profile");
