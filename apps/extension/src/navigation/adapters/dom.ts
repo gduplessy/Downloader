@@ -27,7 +27,8 @@ export function allElements(root: Document | ShadowRoot): Element[] {
   const result: Element[] = [];
   for (const element of root.querySelectorAll('*')) {
     // Ignore the extension's own isolated preview UI.
-    if (element.id === '__downloader_adapter_preview' || element.closest('[data-downloader-ui]')) continue;
+    if (element.id === '__downloader_adapter_preview' || element.closest('[data-downloader-ui]'))
+      continue;
     result.push(element);
     if (element.shadowRoot) result.push(...allElements(element.shadowRoot));
   }

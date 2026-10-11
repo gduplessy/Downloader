@@ -136,10 +136,15 @@ export function inspectCandidates(
     const evidence: string[] = [];
     if (!c.visible) rejections.push('hidden');
     if (c.disabled) rejections.push('disabled');
-    const premiumAuthorized = options.allowPremium === true && adapter.qualification === 'synthetic' && c.premium === true && c.fixture === true;
-    const forbiddenText = premiumAuthorized ? [c.text, c.contextualText, target].join(' ').replace(/premium/gi, '') : [c.text, c.contextualText, target].join(' ');
-    if (forbidden.test(forbiddenText))
-      rejections.push('ad-purchase-premium-or-torrent');
+    const premiumAuthorized =
+      options.allowPremium === true &&
+      adapter.qualification === 'synthetic' &&
+      c.premium === true &&
+      c.fixture === true;
+    const forbiddenText = premiumAuthorized
+      ? [c.text, c.contextualText, target].join(' ').replace(/premium/gi, '')
+      : [c.text, c.contextualText, target].join(' ');
+    if (forbidden.test(forbiddenText)) rejections.push('ad-purchase-premium-or-torrent');
     if (target && !destination && !blob) rejections.push('unsafe-destination');
     if (blob) evidence.push('same-origin-scoped-blob');
     if (premiumAuthorized) evidence.push('qualified-selected-session-entitlement');

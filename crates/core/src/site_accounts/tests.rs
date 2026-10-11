@@ -49,6 +49,7 @@ fn form() -> FormProof {
         origin: "http://127.0.0.1:18783".into(),
         page: "http://127.0.0.1:18783/nav-adapters/ddownload/login".into(),
         action: "http://127.0.0.1:18783/nav-adapters/ddownload/login".into(),
+        method: "POST".into(),
         adapter_id: "local-fixture".into(),
         adapter_version: "1.0.0".into(),
         fingerprint: "a".repeat(64),
@@ -316,4 +317,128 @@ fn grants_are_bound_once_and_attempts_bounded_without_loading_secrets() {
         )
     )
     .is_err());
+}
+
+#[test]
+fn expired_grants_and_mfa_do_not_read_credentials() {
+    let (_d, e, id, _) = setup();
+    let store = e.store.lock().unwrap();
+    let mut selection = store
+        .get::<Selection>("site_account_selection", &id)
+        .unwrap();
+    selection.account.saved_fill = true;
+    selection.account.credential_ref = Some("nonexistent-fixture".into());
+    store
+        .put("site_account", &selection.account.id, &selection.account)
+        .unwrap();
+    drop(store);
+    let grant = browser(&e, request(&e, &id, BrowserAction::Grant { proof: form() })).unwrap();
+    let gid = grant["grant_id"].as_str().unwrap().to_string();
+    e.site_accounts
+        .lock()
+        .unwrap()
+        .grants
+        .get_mut(&gid)
+        .unwrap()
+        .expires = 0;
+    assert!(browser(
+        &e,
+        request(
+            &e,
+            &id,
+            BrowserAction::Consume {
+                grant_id: gid,
+                proof: form()
+            }
+        )
+    )
+    .unwrap_err()
+    .to_string()
+    .contains("expired"));
+    let req = request(
+        &e,
+        &id,
+        BrowserAction::Observe {
+            proof: form(),
+            auth: AuthState::MfaRequired,
+            entitlement: Entitlement::Active,
+            account_id: None,
+            selected_host: None,
+        },
+    );
+    let state = browser(&e, req).unwrap();
+    assert_eq!(state["entitlement"], "unknown");
+    assert!(
+        browser(&e, request(&e, &id, BrowserAction::Grant { proof: form() }))
+            .unwrap_err()
+            .to_string()
+            .contains("user_action_required")
+    );
+}
+#[test]
+fn competing_accounts_and_document_replacements_never_share_authority() {
+    let (_d, e, id, a) = setup();
+    let mut other = account(a.scope.clone());
+    other.scope.cookie_store_id = Some("other-store".into());
+    e.command(crate::Command::SiteAccount(DesktopRequest::Save {
+        account: Box::new(other.clone()),
+        password: None,
+    }))
+    .unwrap();
+    assert!(e
+        .command(crate::Command::SiteAccount(DesktopRequest::Select {
+            job_id: id.clone(),
+            account_id: Some(other.id),
+            mode: Mode::Premium
+        }))
+        .is_err());
+    let store = e.store.lock().unwrap();
+    let mut selected = store
+        .get::<Selection>("site_account_selection", &id)
+        .unwrap();
+    selected.account.saved_fill = true;
+    selected.account.credential_ref = Some("nonexistent-fixture".into());
+    store
+        .put("site_account", &selected.account.id, &selected.account)
+        .unwrap();
+    drop(store);
+    let grant = browser(&e, request(&e, &id, BrowserAction::Grant { proof: form() })).unwrap();
+    let gid = grant["grant_id"].as_str().unwrap().to_string();
+    let changed = FormProof {
+        document_id: Some("replacement-document".into()),
+        ..form()
+    };
+    assert!(browser(
+        &e,
+        request(
+            &e,
+            &id,
+            BrowserAction::Consume {
+                grant_id: gid,
+                proof: changed
+            }
+        )
+    )
+    .unwrap_err()
+    .to_string()
+    .contains("binding_stale"));
+}
+#[test]
+fn removing_accounts_does_not_revive_cancelled_jobs_and_diagnostics_redact_passwords() {
+    let (_d, e, id, a) = setup();
+    e.command(crate::Command::Cancel { id: id.clone() })
+        .unwrap();
+    e.command(crate::Command::SiteAccount(DesktopRequest::Remove {
+        id: a.id.clone(),
+    }))
+    .unwrap();
+    assert_eq!(
+        e.job(&id).unwrap().lock().unwrap().state,
+        JobState::Cancelled
+    );
+    let request = DesktopRequest::Save {
+        account: Box::new(a),
+        password: Some("do-not-debug-password".into()),
+    };
+    assert!(!format!("{request:?}").contains("do-not-debug-password"));
 }

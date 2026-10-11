@@ -1,1 +1,1 @@
-{"fixture":"nav-account-keyring-v1","os":"windows","arch":"x86_64","vault":"native-os-keyring","create_read_delete":"passed","nonsecret_metadata":"passed","test_credential_removed":true,"version":"0.9.0","other_native_targets":"pending"}
+{"arch":"x86_64","create_read_delete":"passed","duplicate_consume_rejected":true,"engine_scoped_grant":"passed","fixture":"nav-account-keyring-v1","nonsecret_metadata":"passed","os":"windows","test_credential_removed":true,"vault":"native-os-keyring"}

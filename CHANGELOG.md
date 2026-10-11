@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.9.1 — Harden account grants and qualify Windows credential lifecycle
+
+- Reject submitter request overrides and revalidate context/form identity after input events; cancellation immediately clears transient fields and returned credentials.
+- Add MFA, expiry, competing-store, document-replacement, terminal-removal and diagnostic redaction regressions; localize actionable account errors across all six locales.
+- Qualify the actual Engine save/select/grant/consume/remove path against Windows Credential Manager, including duplicate-consume rejection and fixture credential cleanup. Real browser DOM checks and HTTP file hashes retain their separate mocked-grant/HTTP evidence boundaries.
+
 ## 0.9.0 — Scoped browser account foundation
 
 - Add desktop-selected site accounts keyed by exact origin and browser session, OS-keyring credential references, ephemeral private session metadata, typed authentication/entitlement observations and expiring one-use form grants.

@@ -23,6 +23,7 @@ pub enum AuthState {
     Expired,
     MfaRequired,
     Rejected,
+    AccountMismatch,
     Unknown,
 }
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -89,6 +90,7 @@ pub struct FormProof {
     pub origin: String,
     pub page: String,
     pub action: String,
+    pub method: String,
     pub adapter_id: String,
     pub adapter_version: String,
     pub fingerprint: String,
@@ -261,7 +263,8 @@ fn proof(proof: &FormProof, account: &Account, login: bool) -> Result<()> {
         bail!("account_form_unqualified");
     }
     if login
-        && (proof.username_name != "username"
+        && (proof.method != "POST"
+            || proof.username_name != "username"
             || proof.password_name != "password"
             || !url::Url::parse(&proof.action)?.path().ends_with("/login"))
     {
@@ -482,7 +485,10 @@ pub fn browser(engine: &Arc<Engine>, request: BrowserRequest) -> Result<serde_js
             if !account.saved_fill || account.scope.private || account.credential_ref.is_none() {
                 bail!("account_saved_fill_disabled");
             }
-            if matches!(selection.auth, AuthState::MfaRequired | AuthState::Rejected) {
+            if matches!(
+                selection.auth,
+                AuthState::MfaRequired | AuthState::Rejected | AuthState::AccountMismatch
+            ) {
                 bail!("account_user_action_required");
             }
             let attempts = runtime

@@ -7,8 +7,7 @@
     "cancelBeforeGrant": 1,
     "cancelDuringGrant": 1,
     "changedClaim": 1,
-    "changedForm": 1,
-    "duplicateConsume": 0
+    "changedForm": 1
   },
   "transport": "explicit mocked account grant; native keyring and installed-extension acceptance recorded separately"
 }
