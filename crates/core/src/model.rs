@@ -460,6 +460,11 @@ pub enum Command {
         scope: crate::navigation::SessionScope,
     },
     DiscoveryClaim(crate::rendered_grabber::Claim),
+    DiscoverySelect(crate::rendered_grabber::Select),
+    GrabberControl {
+        id: String,
+        action: String,
+    },
     DiscoveryPageResult(crate::rendered_grabber::PageResult),
     DiscoveryStatus(crate::rendered_grabber::Status),
     GrabberRun {

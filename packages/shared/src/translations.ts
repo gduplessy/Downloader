@@ -1,5 +1,62 @@
 // Each row is French, Spanish, German, Arabic, Simplified Chinese.
 export const translations: Record<string, [string, string, string, string, string]> = {
+  discoveryBrowser: [
+    'Sélectionnez une session dans l’extension pour explorer ce projet.',
+    'Seleccione una sesión en la extensión para explorar este proyecto.',
+    'Wählen Sie eine Sitzung in der Erweiterung, um dieses Projekt zu erkunden.',
+    'اختر جلسة متصفح في الإضافة لاستكشاف هذا المشروع.',
+    '在扩展中选择浏览器会话以探索此项目。',
+  ],
+  discoveryPrivate: [
+    'Projet privé (en mémoire)',
+    'Proyecto privado (en memoria)',
+    'Privates Projekt (im Arbeitsspeicher)',
+    'مشروع خاص (في الذاكرة)',
+    '私密项目（保存在内存中）',
+  ],
+  discoveryResume: [
+    'Reprendre l’exploration',
+    'Reanudar exploración',
+    'Erkundung fortsetzen',
+    'استئناف الاستكشاف',
+    '恢复探索',
+  ],
+  discoveryCancel: [
+    'Annuler l’exploration',
+    'Cancelar exploración',
+    'Erkundung abbrechen',
+    'إلغاء الاستكشاف',
+    '取消探索',
+  ],
+  discoveryProjects: [
+    'Projets rendus',
+    'Proyectos renderizados',
+    'Gerenderte Projekte',
+    'المشاريع المعروضة',
+    '渲染项目',
+  ],
+  discoveryStart: [
+    'Explorer dans cette session',
+    'Explorar en esta sesión',
+    'In dieser Sitzung erkunden',
+    'استكشاف في هذه الجلسة',
+    '在此会话中探索',
+  ],
+  discoveryCrossOrigins: [
+    'Origines autorisées supplémentaires (séparées par des virgules)',
+    'Orígenes adicionales permitidos (separados por comas)',
+    'Weitere erlaubte Ursprünge (durch Kommas getrennt)',
+    'مصادر إضافية مسموحة (مفصولة بفواصل)',
+    '额外允许的来源（用逗号分隔）',
+  ],
+  discoveryProgress: [
+    'Progression de l’exploration',
+    'Progreso de exploración',
+    'Erkundungsfortschritt',
+    'تقدم الاستكشاف',
+    '探索进度',
+  ],
+
   solverEnable: [
     'Activer FlareSolverr pour les protections du navigateur',
     'Activar FlareSolverr para las protecciones del navegador',

@@ -159,6 +159,9 @@ pub fn download(engine: &Arc<Engine>, id: &str, urls: &[String]) -> Result<serde
         .into_iter()
         .find(|p| p.id == id)
         .context("Unknown project")?;
+    if project.rendered {
+        return crate::rendered_grabber::stage_selection(engine, id, urls);
+    }
     let mut jobs = vec![];
     for url in urls {
         let file = project

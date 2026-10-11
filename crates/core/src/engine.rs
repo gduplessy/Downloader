@@ -16,6 +16,7 @@ pub struct Engine {
     pub settings: Mutex<Settings>,
     pub(crate) navigation_scheduler: Mutex<crate::navigation_scheduler::Scheduler>,
     pub queues: Mutex<Vec<Queue>>,
+    pub(crate) discovery_operations: Mutex<()>,
     contexts: Mutex<HashMap<String, RequestContext>>,
     pub(crate) controls: Mutex<HashMap<String, Arc<AtomicU8>>>,
     solver_tasks: Mutex<HashMap<String, Arc<AtomicU8>>>,
@@ -104,6 +105,7 @@ impl Engine {
             jobs: Mutex::new(jobs),
             settings: Mutex::new(settings),
             navigation_scheduler: Mutex::new(navigation_scheduler),
+            discovery_operations: Mutex::new(()),
             queues: Mutex::new(queues),
             contexts: Mutex::new(contexts),
             controls: Mutex::new(HashMap::new()),
@@ -1036,6 +1038,10 @@ impl Engine {
                 archive::preview(&url, &context, &self.settings.lock().unwrap().clone())
             }
             Command::DiscoveryList { scope } => crate::rendered_grabber::list(self, &scope),
+            Command::DiscoverySelect(request) => crate::rendered_grabber::select(self, request),
+            Command::GrabberControl { id, action } => {
+                crate::rendered_grabber::control(self, &id, &action)
+            }
             Command::DiscoveryClaim(request) => crate::rendered_grabber::claim(self, request),
             Command::DiscoveryPageResult(request) => crate::rendered_grabber::report(self, request),
             Command::DiscoveryStatus(request) => crate::rendered_grabber::status(self, request),
@@ -1054,12 +1060,7 @@ impl Engine {
                     .put("grabber", &project.id, &project)?;
                 Ok(serde_json::to_value(project)?)
             }
-            Command::GrabberList => Ok(serde_json::to_value(
-                self.store
-                    .lock()
-                    .unwrap()
-                    .all::<GrabberProject>("grabber")?,
-            )?),
+            Command::GrabberList => crate::rendered_grabber::projects(self),
             Command::GrabberRun { id } => {
                 let p = self
                     .store

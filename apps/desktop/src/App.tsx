@@ -1484,6 +1484,7 @@ function GrabberPage({ t, run, directory }: { t: T; run: Run; directory: string 
             max_size: null,
             mirror: false,
             rendered: false,
+            private: false,
             found: [],
             visited: [],
             status: 'new',
@@ -1511,6 +1512,25 @@ function GrabberPage({ t, run, directory }: { t: T; run: Run; directory: string 
           >
             {t('details')}
           </button>
+          {p.rendered && (
+            <>
+              <p role="status">{t('discoveryBrowser')}</p>
+              <button
+                onClick={() =>
+                  void run('grabber_control', { id: p.id, action: 'resume' }).then(reload)
+                }
+              >
+                {t('discoveryResume')}
+              </button>
+              <button
+                onClick={() =>
+                  void run('grabber_control', { id: p.id, action: 'cancel' }).then(reload)
+                }
+              >
+                {t('discoveryCancel')}
+              </button>
+            </>
+          )}
           <button
             onClick={async () => {
               await run('grabber_run', { id: p.id });
@@ -1609,6 +1629,7 @@ function GrabberPage({ t, run, directory }: { t: T; run: Run; directory: string 
             {[
               ['same_domain', 'sameDomain'],
               ['mirror', 'mirror'],
+              ['private', 'discoveryPrivate'],
             ].map(([field, key]) => (
               <label className="check" key={field}>
                 <input

@@ -313,6 +313,7 @@ fn load(store: &crate::store::Store, id: &str) -> Result<Discovery> {
         .context("Unknown rendered project")
 }
 pub fn start(engine: &crate::Engine, project: GrabberProject) -> Result<()> {
+    let _operation = engine.discovery_operations.lock().unwrap();
     let store = engine.store.lock().unwrap();
     let mut state = if let Ok(state) = load(&store, &project.id) {
         state
@@ -329,6 +330,7 @@ pub fn list(engine: &crate::Engine, scope: &SessionScope) -> Result<serde_json::
     Ok(serde_json::to_value(states)?)
 }
 pub fn claim(engine: &crate::Engine, request: Claim) -> Result<serde_json::Value> {
+    let _operation = engine.discovery_operations.lock().unwrap();
     let now = chrono::Utc::now().timestamp_millis();
     // Same lock order as navigation: scheduler, then store. Both admissions share one budget.
     let mut scheduler = engine.navigation_scheduler.lock().unwrap();
@@ -389,6 +391,16 @@ pub fn claim(engine: &crate::Engine, request: Claim) -> Result<serde_json::Value
         }
     }
     let page = if admitted { state.next(now)? } else { None };
+    if admitted && page.is_none() {
+        scheduler.apply(
+            &request.scope.profile,
+            crate::navigation_scheduler::SchedulerRequest::Release {
+                id: format!("discovery:{}", request.id),
+                generation: state.generation,
+            },
+            now,
+        )?;
+    }
     scheduler.persist(&store)?;
     store.put("rendered_discovery", &state.project.id, &state)?;
     Ok(
@@ -396,6 +408,7 @@ pub fn claim(engine: &crate::Engine, request: Claim) -> Result<serde_json::Value
     )
 }
 pub fn report(engine: &crate::Engine, request: PageResult) -> Result<serde_json::Value> {
+    let _operation = engine.discovery_operations.lock().unwrap();
     let mut scheduler = engine.navigation_scheduler.lock().unwrap();
     let store = engine.store.lock().unwrap();
     let mut state = load(&store, &request.id)?;
@@ -413,15 +426,33 @@ pub fn report(engine: &crate::Engine, request: PageResult) -> Result<serde_json:
     Ok(serde_json::json!({"status":state.status}))
 }
 pub fn status(engine: &crate::Engine, request: Status) -> Result<serde_json::Value> {
+    let _operation = engine.discovery_operations.lock().unwrap();
+    let mut scheduler = engine.navigation_scheduler.lock().unwrap();
     let store = engine.store.lock().unwrap();
     let mut state = load(&store, &request.id)?;
     state.authorize(&request.scope, request.generation)?;
     if request.action != "snapshot" {
+        if scheduler
+            .tasks
+            .iter()
+            .any(|t| t.id == format!("discovery:{}", request.id))
+        {
+            scheduler.apply(
+                &request.scope.profile,
+                crate::navigation_scheduler::SchedulerRequest::Release {
+                    id: format!("discovery:{}", request.id),
+                    generation: state.generation,
+                },
+                chrono::Utc::now().timestamp_millis(),
+            )?;
+        }
         state.control(&request.action)?;
+        scheduler.persist(&store)?;
         store.put("rendered_discovery", &state.project.id, &state)?;
     }
     Ok(serde_json::to_value(state)?)
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -522,4 +553,151 @@ mod tests {
         assert_eq!(d.bytes, 0);
         assert!(d.visited.is_empty());
     }
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Select {
+    pub id: String,
+    pub scope: SessionScope,
+    pub generation: u64,
+    pub urls: Vec<String>,
+}
+pub fn select(
+    engine: &std::sync::Arc<crate::Engine>,
+    request: Select,
+) -> Result<serde_json::Value> {
+    let _operation = engine.discovery_operations.lock().unwrap();
+    let state = {
+        let store = engine.store.lock().unwrap();
+        let state = load(&store, &request.id)?;
+        state.authorize(&request.scope, request.generation)?;
+        state
+    };
+    if request.urls.len() > 1000 {
+        bail!("Selection exceeds bound");
+    }
+    let mut ids = vec![];
+    for url in request.urls {
+        let file = state
+            .resources
+            .iter()
+            .find(|r| r.url == url)
+            .context("Resource is not in discovery results")?;
+        use sha2::{Digest, Sha256};
+        let request_id = format!(
+            "discovery-{:x}",
+            Sha256::digest(
+                format!("{}:{}:{}", state.project.id, state.generation, file.url).as_bytes()
+            )
+        );
+        let mut context = crate::model::RequestContext::default();
+        context.profile = Some(request.scope.profile.clone());
+        context.browser = Some(request.scope.browser.clone());
+        context.private = request.scope.private;
+        let created = engine.command(crate::model::Command::Navigate(crate::model::AddJob {
+            request_id,
+            url: file.url.clone(),
+            filename: Some(file.name.clone()),
+            directory: Some(state.project.directory.clone()),
+            queue: None,
+            checksum: None,
+            paused: true,
+            context,
+            media: None,
+            description: format!("Grabber: {}", state.project.name),
+        }))?;
+        let id = created["id"]
+            .as_str()
+            .context("Missing navigation job")?
+            .to_string();
+        let job = engine.job(&id)?;
+        {
+            let mut job = job.lock().unwrap();
+            if job.navigation_scope.is_none() {
+                job.navigation_scope = Some(request.scope.clone());
+                job.navigation_owner = Some(request.scope.profile.clone());
+                job.page_url = Some(file.page_url.clone());
+                job.navigation_url = Some(file.url.clone());
+            }
+        }
+        let job = job.lock().unwrap().clone();
+        engine.store.lock().unwrap().put("job", &id, &job)?;
+        ids.push(id);
+    }
+    {
+        let store = engine.store.lock().unwrap();
+        let mut current = load(&store, &request.id)?;
+        current.authorize(&request.scope, request.generation)?;
+        current.selected.clear();
+        store.put("rendered_discovery", &request.id, &current)?;
+    }
+    Ok(serde_json::json!({"jobs":ids}))
+}
+pub fn projects(engine: &crate::Engine) -> Result<serde_json::Value> {
+    let store = engine.store.lock().unwrap();
+    let states = store.all::<Discovery>("rendered_discovery")?;
+    let mut projects = store.all::<GrabberProject>("grabber")?;
+    for project in &mut projects {
+        if let Some(state) = states.iter().find(|s| s.project.id == project.id) {
+            project.status = state.status.clone();
+            project.visited = state.visited.clone();
+            project.found = state
+                .resources
+                .iter()
+                .map(|r| crate::model::GrabberFile {
+                    url: r.url.clone(),
+                    name: r.name.clone(),
+                    size: r.size,
+                    content_type: r.content_type.clone(),
+                })
+                .collect();
+        }
+    }
+    Ok(serde_json::to_value(projects)?)
+}
+pub fn control(engine: &crate::Engine, id: &str, action: &str) -> Result<serde_json::Value> {
+    let _operation = engine.discovery_operations.lock().unwrap();
+    let mut scheduler = engine.navigation_scheduler.lock().unwrap();
+    let store = engine.store.lock().unwrap();
+    let mut state = load(&store, id)?;
+    if let Some(scope) = &state.scope {
+        if scheduler
+            .tasks
+            .iter()
+            .any(|t| t.id == format!("discovery:{id}"))
+        {
+            scheduler.apply(
+                &scope.profile,
+                crate::navigation_scheduler::SchedulerRequest::Release {
+                    id: format!("discovery:{id}"),
+                    generation: state.generation,
+                },
+                chrono::Utc::now().timestamp_millis(),
+            )?;
+        }
+    }
+    state.control(action)?;
+    scheduler.persist(&store)?;
+    store.put("rendered_discovery", id, &state)?;
+    Ok(serde_json::json!({"status":state.status}))
+}
+
+pub fn stage_selection(
+    engine: &crate::Engine,
+    id: &str,
+    urls: &[String],
+) -> Result<serde_json::Value> {
+    let _operation = engine.discovery_operations.lock().unwrap();
+    let store = engine.store.lock().unwrap();
+    let mut state = load(&store, id)?;
+    if state.status == "cancelled" || urls.len() > 1000 {
+        bail!("Invalid rendered selection");
+    }
+    for url in urls {
+        if !state.resources.iter().any(|r| &r.url == url) {
+            bail!("Resource is not in discovery results");
+        }
+    }
+    state.selected = urls.to_vec();
+    store.put("rendered_discovery", id, &state)?;
+    Ok(serde_json::json!({"status":"waiting_browser","selected":urls.len()}))
 }

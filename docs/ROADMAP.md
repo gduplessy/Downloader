@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.11.0<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.11.1<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -173,3 +173,5 @@ NAV-07/08/09/11 implementation increment (0.7.0): durable direct-response receiv
 NAV-04 / NAV-10 qualification increment: production queue UI and actual Engine policy verified with three/twenty real fixture renderer tabs, limit lowering, same-host locking and replaced-wait/restart lifecycle. [Evidence and pending scope/browser/live-host gates](evidence/nav-scheduling/README.md).
 
 NAV-12 increment 0.11.0: scoped durable frontier and bounded report persistence implemented; rendered browser controls and authenticated resource acceptance pending.
+
+NAV-12 0.11.1 adds rendered extraction, session controls and safe staged resource selection; complete extension/native fixture acceptance is pending.

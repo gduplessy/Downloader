@@ -360,8 +360,15 @@ pub fn native(args: &[String]) -> Result<()> {
                 c @ downloader_core::Command::NavigationSelection(_) => call(c),
                 c @ downloader_core::Command::DiscoveryList { .. } => call(c),
                 c @ downloader_core::Command::DiscoveryClaim(_) => call(c),
+                c @ downloader_core::Command::DiscoverySelect(_) => call(c),
                 c @ downloader_core::Command::DiscoveryPageResult(_) => call(c),
-                c @ downloader_core::Command::DiscoveryStatus(_) => call(c),
+                c @ downloader_core::Command::DiscoveryStatus(_) => {
+                    let mut value = call(c)?;
+                    if let Some(project) = value["project"].as_object_mut() {
+                        project.remove("directory");
+                    }
+                    Ok(value)
+                }
                 c @ downloader_core::Command::BrowserSnapshot { .. } => browser_snapshot(call(c)?),
                 c @ downloader_core::Command::BrowserSubscribe { .. } => browser_events(call(c)?),
                 c @ downloader_core::Command::Negotiate { .. } => call(c),

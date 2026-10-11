@@ -23,6 +23,7 @@ for (const target of ['chromium', 'firefox']) {
       'src/popup.ts',
       'src/options.ts',
       'src/resolver.ts',
+      'src/discovery.ts',
     ],
     outdir: dir,
     bundle: true,

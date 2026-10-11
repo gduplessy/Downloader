@@ -2,6 +2,11 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.11.1
+
+- Add bounded DOM extraction, owned-tab discovery runtime, explicit browser-session controls and six-locale project resume/cancel/private controls.
+- Stage selected rendered resources as scoped navigation jobs without anonymous inspection; serialize selection against cancellation. Production browser wiring and native hash acceptance remain in progress.
+
 ## 0.11.0
 
 - Add atomically persisted rendered discovery frontiers, provenance, bounded results, scoped command fences, duplicate-report fingerprints, and shared navigation admission.
