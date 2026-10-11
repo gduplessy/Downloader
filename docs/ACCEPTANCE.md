@@ -33,4 +33,4 @@ Ignored local evidence is under .local/evidence. Fixture URLs and request/sessio
 - Media tools are currently installed separately through the verified component script; the preview installer does not bundle them.
 - Installer execution, upgrade/uninstall, signing, updates, SBOM, corresponding bundled-source publication and store submissions are pending.
 
-The detailed remaining implementation scope is in IMPLEMENTATION.md.
+The detailed remaining implementation scope is in [ROADMAP.md](ROADMAP.md); [IMPLEMENTATION.md](IMPLEMENTATION.md) summarizes current behavior. Research backlog entries, including CAPTCHA automation/bypass, are not completed acceptance evidence.

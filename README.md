@@ -18,7 +18,7 @@ Downloader is an original, GPL-3.0 alternative to Internet Download Manager. It 
 
 No accounts, advertising, or telemetry. Credentials belong in the operating system's credential store; browser session material is temporary.
 
-> **Development preview.** A Windows desktop build and hosted-page browser fixtures have been verified locally. Full IDM parity, installer acceptance, and the complete platform/browser matrix are still in progress. See the [implementation roadmap](docs/IMPLEMENTATION.md), [acceptance evidence](docs/ACCEPTANCE.md), and [compatibility matrix](docs/COMPATIBILITY.md).
+> **Development preview.** A Windows desktop build and hosted-page browser fixtures have been verified locally. Full IDM parity, installer acceptance, and the complete platform/browser matrix are still in progress. See the [full roadmap](docs/ROADMAP.md), [implementation status](docs/IMPLEMENTATION.md), [acceptance evidence](docs/ACCEPTANCE.md), and [compatibility matrix](docs/COMPATIBILITY.md).
 
 ![Downloader desktop showing completed transfers, browser-owned downloads, and a page waiting for user input](docs/assets/desktop.png)
 
@@ -49,7 +49,7 @@ Hosted page → free-download step → countdown → final GET link/form
 
 The resolver respects waiting periods and stops for CAPTCHA, sign-in, payment, or ambiguous controls. Complete the manual step in the tab, then choose **Continue page navigation**. Non-replayable POST requests and browser-generated blobs remain browser-managed.
 
-Navigation is bounded to three active pages and one page per host. Browser profiles claim navigation jobs exclusively to avoid competing workers. This is a heuristic workflow, not universal site automation; changing live sites require separate acceptance testing. There is no CAPTCHA, premium-access, or DRM bypass.
+Navigation is bounded to three active pages and one page per host. Browser profiles claim navigation jobs exclusively to avoid competing workers. This is a heuristic workflow, not universal site automation; changing live sites require separate acceptance testing. There is currently no CAPTCHA, premium-access, or DRM bypass. These limits are tracked explicitly in the [hosted-page and challenge roadmap](docs/ROADMAP.md#1-hosted-download-pages-and-challenges) and [protected-content roadmap](docs/ROADMAP.md#5-media-and-protected-content).
 
 ## Build from source
 
@@ -179,12 +179,19 @@ The loopback fixture serves hosted-page, countdown/session, CAPTCHA, POST, and r
 
 ## Roadmap
 
-- **Transfer qualification:** broader protocol/auth/proxy fixtures, large files, pooling, and hostile filesystem cases.
-- **Management:** advanced schedules and synchronization, editable properties/columns, notifications, sleep inhibition, and completion integrations.
-- **Media and grabber:** deterministic assembly/live tests, authenticated/rendered crawling, durable crawl recovery, and offline rewriting.
-- **Public release:** all supported browser/platform combinations, accessibility and native translation review, installer upgrade/uninstall, signed updates, SBOM, and bundled-source provenance.
+The [complete roadmap](docs/ROADMAP.md) inventories every documented unsupported workflow and missing acceptance gate. Planned implementation, qualification, research, and later-platform items are labeled separately; inclusion does not claim current support.
 
-The detailed scope and current boundaries are tracked in [IMPLEMENTATION.md](docs/IMPLEMENTATION.md). Contributions that close correctness and recovery gaps are especially welcome.
+- **Hosted pages and challenges:** CAPTCHA automation/bypass research, login/MFA and session refresh, premium-account integration and bypass feasibility, countdown recovery, ambiguous controls/site adapters, non-replayable POST/blob/one-use downloads, configurable navigation limits, and profile isolation.
+- **Transfer engine:** protocol/auth/proxy coverage, files above 4 GiB, malformed responses, connection pooling, crash/finalization fault injection, hostile filesystems, source refresh, typed events, and measured performance.
+- **Management:** editable properties/columns, drop target and input workflows, archive qualification, ordered queues, recurring/DST/missed-window schedules, synchronization, unified quotas, and import/export acceptance.
+- **Browser integration:** stable Chrome/Edge/Firefox/ESR coverage, capture/session/fallback and worker-restart tests, automatic native-host onboarding, media/page tools, Firefox signing, and extension-store distribution.
+- **Media:** deterministic assembly, HLS/DASH, playlists, subtitles/audio extraction/live recording, subprocess recovery, authenticated sessions, bundled cross-platform components, verified updates, and protected-media research.
+- **Website grabber:** authenticated/rendered discovery, durable crawl recovery, saved project controls, CSS discovery, offline HTML/CSS rewriting, and scheduled synchronization.
+- **Desktop experience:** notifications, sleep inhibition, optional autostart, scanner/completion actions, accessibility, six verified translations including backend text/RTL, integration health, and CLI installation.
+- **Public release:** native acceptance on Windows/macOS/Linux, installer upgrade/uninstall, signed updates, dependency/source provenance, SBOMs, release identifiers, and the complete launch matrix.
+- **Later targets:** Brave/Opera, Safari, Windows ARM/other architectures, mobile feasibility, legacy protocols/MMS, system-wide interception, and legacy connection management.
+
+Current implemented behavior remains summarized in [IMPLEMENTATION.md](docs/IMPLEMENTATION.md). Local operation, opt-in permissions, credential protection, checksum correctness, and browser fallback remain product requirements as this roadmap expands.
 
 ## Contributing
 

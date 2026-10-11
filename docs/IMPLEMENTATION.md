@@ -2,6 +2,8 @@
 
 The accepted five-increment plan remains the scope. A development build does not establish complete parity or platform acceptance.
 
+The [complete roadmap](ROADMAP.md) tracks all documented limitations, including hosted-page challenges, CAPTCHA automation/bypass research, unsupported transfer paths, later platforms, and intentional product controls. Research and later items expand the backlog without becoming initial-release commitments.
+
 ## Implemented preview
 
 - Rust/libcurl engine, SQLite WAL, CLI and restricted native bridge.
