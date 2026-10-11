@@ -451,6 +451,8 @@ impl Engine {
                 let j = self.job(&id)?;
                 if let Some(c) = self.controls.lock().unwrap().get(&id) {
                     c.store(1, Ordering::Relaxed);
+                    // The transfer owns flushing/checkpointing active offsets.
+                    return Ok(serde_json::json!({"id":id}));
                 } else {
                     let mut job = j.lock().unwrap();
                     if job.state != JobState::Complete && job.state != JobState::Cancelled {
@@ -464,6 +466,7 @@ impl Engine {
                 let j = self.job(&id)?;
                 if let Some(c) = self.controls.lock().unwrap().get(&id) {
                     c.store(2, Ordering::Relaxed);
+                    return Ok(serde_json::json!({"id":id}));
                 } else {
                     j.lock().unwrap().state = JobState::Cancelled;
                 }
@@ -1021,5 +1024,58 @@ mod tests {
                 maximum: 3
             })
             .is_err());
+    }
+    #[test]
+    fn active_controls_do_not_publish_unflushed_progress() {
+        let directory = tempfile::tempdir().unwrap();
+        let e = Engine::open(directory.path()).unwrap();
+        let j = e.add(request(directory.path())).unwrap();
+        e.controls
+            .lock()
+            .unwrap()
+            .insert(j.id.clone(), Arc::new(AtomicU8::new(0)));
+        {
+            let shared = e.job(&j.id).unwrap();
+            let mut job = shared.lock().unwrap();
+            job.state = JobState::Downloading;
+            job.bytes = 123;
+        }
+        for command in [
+            Command::Pause { id: j.id.clone() },
+            Command::Cancel { id: j.id.clone() },
+        ] {
+            e.command(command).unwrap();
+            let durable: Job = e.store.lock().unwrap().get("job", &j.id).unwrap();
+            assert_eq!(durable.bytes, 0);
+        }
+    }
+    #[test]
+    fn browser_refresh_requires_the_owning_profile() {
+        let directory = tempfile::tempdir().unwrap();
+        let e = Engine::open(directory.path()).unwrap();
+        let owner = uuid::Uuid::new_v4().to_string();
+        let mut request = request(directory.path());
+        request.context.browser = Some("extension".into());
+        request.context.profile = Some(owner.clone());
+        let j = e.add(request).unwrap();
+        assert!(e
+            .command(Command::RefreshBrowser {
+                id: j.id.clone(),
+                owner: uuid::Uuid::new_v4().to_string(),
+                url: "https://example.com/refreshed".into(),
+                context: RequestContext::default()
+            })
+            .is_err());
+        e.command(Command::RefreshBrowser {
+            id: j.id.clone(),
+            owner,
+            url: "https://example.com/refreshed".into(),
+            context: RequestContext::default(),
+        })
+        .unwrap();
+        let refreshed = e.job(&j.id).unwrap().lock().unwrap().clone();
+        assert_eq!(refreshed.url, "https://example.com/refreshed");
+        assert_eq!(refreshed.bytes, j.bytes);
+        assert_eq!(refreshed.segments.len(), j.segments.len());
     }
 }

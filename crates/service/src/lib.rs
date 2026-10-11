@@ -162,6 +162,26 @@ pub fn serve() -> Result<()> {
     engine.shutdown();
     Ok(())
 }
+fn command_failure(id: String, error: &anyhow::Error) -> Response {
+    let message = downloader_core::security::redact(&error.to_string());
+    let prefix = message.split(':').next().unwrap_or("");
+    let code = match prefix {
+        "request_conflict"
+        | "request_removed"
+        | "protocol_mismatch"
+        | "authentication_required"
+        | "source_expired"
+        | "source_changed"
+        | "resume_unsupported"
+        | "range_invalid"
+        | "checksum_mismatch"
+        | "protocol_unsupported"
+        | "scan_failed" => prefix,
+        "storage_error" => "storage_failure",
+        _ => "command_failed",
+    };
+    Response::failure(id, code, message.clone())
+}
 fn handle(stream: &mut impl ReadWrite, engine: &Arc<Engine>) -> Result<()> {
     let data = read_frame(stream, MAX_MESSAGE)?.context("No request")?;
     let request: Request = serde_json::from_slice(&data)?;
@@ -174,11 +194,7 @@ fn handle(stream: &mut impl ReadWrite, engine: &Arc<Engine>) -> Result<()> {
     } else {
         match engine.command(request.command) {
             Ok(data) => Response::success(request.id, data),
-            Err(e) => Response::failure(
-                request.id,
-                "command_failed",
-                downloader_core::security::redact(&e.to_string()),
-            ),
+            Err(e) => command_failure(request.id, &e),
         }
     };
     write_frame(stream, &serde_json::to_vec(&response)?, 8 * MAX_MESSAGE)?;
@@ -424,6 +440,17 @@ fn browser_events(mut data: serde_json::Value) -> Result<serde_json::Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn request_conflicts_preserve_machine_readable_codes() {
+        let response = command_failure(
+            "request-1".into(),
+            &anyhow::anyhow!(
+                "request_conflict: Source https://example.com/file?secret=value differs"
+            ),
+        );
+        assert_eq!(response.error.as_ref().unwrap().code, "request_conflict");
+        assert!(!response.error.unwrap().message.contains("secret"));
+    }
     #[test]
     fn bounded_binary_framing() {
         let mut out = Vec::new();

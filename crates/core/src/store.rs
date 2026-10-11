@@ -207,4 +207,29 @@ mod tests {
         store.record_usage(123).unwrap();
         assert_eq!(store.usage(60).unwrap(), 123);
     }
+    #[test]
+    fn replay_limits_and_retention_gaps_are_explicit() {
+        let directory = tempfile::tempdir().unwrap();
+        let store = Store::open(&directory.path().join("events.db")).unwrap();
+        for i in 0..5 {
+            let queue = Queue {
+                id: format!("q{i}"),
+                ..Default::default()
+            };
+            store.put("queue", &queue.id, &queue).unwrap();
+        }
+        let (events, more) = store.replay(0, 2).unwrap().unwrap();
+        assert_eq!(events.len(), 2);
+        assert!(more);
+        assert_eq!(events[0].sequence, 1);
+        store
+            .connection
+            .execute("DELETE FROM events WHERE sequence<4", [])
+            .unwrap();
+        assert!(store.replay(1, 2).unwrap().is_none());
+        let (events, more) = store.replay(3, 2).unwrap().unwrap();
+        assert_eq!(events.len(), 2);
+        assert!(!more);
+        assert_eq!(events[0].sequence, 4);
+    }
 }
