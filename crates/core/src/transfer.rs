@@ -159,7 +159,7 @@ pub fn configure(
     easy.progress(true)?;
     easy.ssl_verify_peer(true)?;
     easy.ssl_verify_host(true)?;
-    easy.useragent("Downloader/0.1")?;
+    easy.useragent(concat!("Downloader/", env!("CARGO_PKG_VERSION")))?;
     easy.accept_encoding("identity")?;
     crate::network::apply(easy, url, settings)?;
     let mut headers = List::new();

@@ -4,11 +4,13 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
+**Version <!-- product-version -->0.2.0<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
 [![Status: development preview](https://img.shields.io/badge/status-development_preview-E9BD75?style=flat-square&labelColor=18212B)](docs/IMPLEMENTATION.md)
 
-[Features](#what-you-can-do) · [Build](#build-from-source) · [Browser extension](#connect-your-browser) · [Architecture](#architecture) · [Contribute](#contributing)
+[Features](#what-you-can-do) · [Build](#build-from-source) · [Browser extension](#connect-your-browser) · [Architecture](#architecture) · [Engine evidence](docs/TRANSFER_ENGINE.md) · [Contribute](#contributing)
 
 </div>
 
@@ -28,8 +30,8 @@ No accounts, advertising, or telemetry. Credentials belong in the operating syst
 
 | Capability                     | In the preview                                                                                                                                              |
 | :----------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Reliable transfers**         | Rust/libcurl, validated byte ranges, dynamic segmentation, single-connection fallback, bounded retries, and SHA-256 verification.                           |
-| **Recover interrupted work**   | SQLite checkpoints, pause/resume, remote validator checks, safe restart decisions, and recoverable finalization.                                            |
+| **Reliable transfers**         | HTTP/HTTPS, HTTP/2, FTP/FTPS, isolated connection reuse, validated segmentation/fallback, bounded retries, and verified SHA-256.                           |
+| **Recover interrupted work**   | Durable SQLite checkpoints, verified resume above 4 GiB, typed recovery actions, and crash-safe no-overwrite publication.                                            |
 | **Organize downloads**         | Searchable table, categories, queues, bulk URLs and numbered templates, source refresh, and import/export.                                                  |
 | **Connect your browser**       | Chrome/Edge and Firefox extension sources, context menus, opt-in capture, per-site access, exclusions, and browser fallback.                                |
 | **Navigate hosted pages**      | Dedicated browser tabs, recognizable free-download controls, countdowns, GET form/session capture, and explicit manual steps.                               |
@@ -57,6 +59,7 @@ Navigation is bounded to three active pages and one page per host. Browser profi
 
 - **Rust 1.93.1**, pinned by `rust-toolchain.toml`.
 - **Node.js 22+** and **pnpm 10.28.2**, pinned in `package.json`.
+- Linux runtime routing: `libproxy1v5` for system settings and `libpacparser1` for explicit PAC. DEB dependencies include both; AppImage runtime bundling still needs release qualification.
 - The [Tauri 2 platform prerequisites](https://v2.tauri.app/start/prerequisites/), including the native compiler and webview dependencies.
 
 ```sh
@@ -118,6 +121,7 @@ downloader add https://example.com/file.zip --directory /absolute/download/path
 downloader add https://example.com/file.zip --sha256 EXPECTED_SHA256
 downloader add https://example.com/download-page --navigate
 downloader list
+downloader --json watch
 downloader pause JOB_ID
 downloader resume JOB_ID
 downloader resume JOB_ID --restart
@@ -163,26 +167,36 @@ One background engine owns jobs per signed-in user. Closing the desktop window l
 ```sh
 cargo fmt --all -- --check
 cargo clippy -p downloader-core -p downloader-service -p downloader-cli --all-targets -- -D warnings
-cargo test -p downloader-core -p downloader-service -p downloader-cli
+cargo test -p downloader-core -p downloader-service -p downloader-cli --features downloader-core/fault-injection
 pnpm typecheck
 pnpm test
 pnpm build
 ```
 
-The recorded Windows preview passed **15 Rust tests and 16 TypeScript tests**, plus native-message boundary checks. A real browser fixture navigated a free-download step and countdown, carried an HttpOnly session cookie, and produced a hash-verified 12 MiB desktop file. Separate fixtures exercised CAPTCHA pauses and POST fallback.
+The transfer-engine increment adds crash, storage, protocol, event-replay, and privacy regressions; **18 TypeScript tests** cover desktop events, utilities/translations, and extension policies. The [engine evidence](docs/TRANSFER_ENGINE.md) records exact Rust/CI results, a real **4.016 GiB** pause/reopen/resume/hash run, remote ZIP64 offsets, and **38 networking/benchmark cases**. The CLI/service lifecycle has also been exercised over real restricted IPC. A real browser fixture navigated a free-download step and countdown, carried an HttpOnly session cookie, and produced a hash-verified 12 MiB desktop file. Separate fixtures exercised CAPTCHA pauses and POST fallback.
 
 ```sh
 node scripts/fixture-server.mjs
 ```
 
-The loopback fixture serves hosted-page, countdown/session, CAPTCHA, POST, and range/unknown-length cases. It is a test utility, not the application's control interface. CI checks source builds on Windows, macOS, and Ubuntu; its live status is shown above. GUI, installer, and browser acceptance remain separate gates.
+For protocol and performance fixtures (OpenSSL must be on `PATH`):
+
+```sh
+CARGO_TARGET_DIR=.local/engine-target cargo build --release -p downloader-core --example qualify
+node scripts/qualify-network.mjs .local/network-qualification --benchmark
+node scripts/qualify-network.mjs .local/large-qualification --only large_over_4gib --large
+```
+
+On PowerShell, set `$env:CARGO_TARGET_DIR = "$PWD/.local/engine-target"` before building. The large-file run uses over 4 GiB of disk space. `OPENSSL` and `QUALIFY_BINARY` override fixture tooling paths. See [networking, recovery, protocol, and benchmark details](docs/TRANSFER_ENGINE.md).
+
+The hosted-page loopback fixture serves countdown/session, CAPTCHA, POST, and range/unknown-length cases. It is a test utility, not the application's control interface. CI checks source builds on Windows, macOS, and Ubuntu; its live status is shown above. GUI, installer, and browser acceptance remain separate gates.
 
 ## Roadmap
 
 The [complete roadmap](docs/ROADMAP.md) inventories every documented unsupported workflow and missing acceptance gate. Planned implementation, qualification, research, and later-platform items are labeled separately; inclusion does not claim current support.
 
 - **Hosted pages and challenges:** CAPTCHA automation/bypass research, login/MFA and session refresh, premium-account integration and bypass feasibility, countdown recovery, ambiguous controls/site adapters, non-replayable POST/blob/one-use downloads, configurable navigation limits, and profile isolation.
-- **Transfer engine:** protocol/auth/proxy coverage, files above 4 GiB, malformed responses, connection pooling, crash/finalization fault injection, hostile filesystems, source refresh, typed events, and measured performance.
+- **Transfer engine:** implemented and covered by deterministic fixtures, including pooling, durable recovery, source refresh, typed events, >4 GiB transfers, and measured performance. External NTLM/Kerberos realms, native filesystem matrices, and a successful IDM comparison remain qualification gates.
 - **Management:** editable properties/columns, drop target and input workflows, archive qualification, ordered queues, recurring/DST/missed-window schedules, synchronization, unified quotas, and import/export acceptance.
 - **Browser integration:** stable Chrome/Edge/Firefox/ESR coverage, capture/session/fallback and worker-restart tests, automatic native-host onboarding, media/page tools, Firefox signing, and extension-store distribution.
 - **Media:** deterministic assembly, HLS/DASH, playlists, subtitles/audio extraction/live recording, subprocess recovery, authenticated sessions, bundled cross-platform components, verified updates, and protected-media research.

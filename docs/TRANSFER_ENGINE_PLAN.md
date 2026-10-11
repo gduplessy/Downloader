@@ -22,3 +22,11 @@ Scope: ENG-01 through ENG-10 in [ROADMAP.md](ROADMAP.md). Work happens on `feat/
 ## Validation
 
 Run Rust fixtures, formatting, Clippy, desktop/extension type checks and tests for each affected boundary. Run the new networking fixtures and benchmarks with isolated data/output directories. Publish exact results and actual targets in the final PR; keep source completion, deterministic tests, CI, native/platform acceptance, and IDM comparison separate.
+
+## Increment status
+
+Batches 1–4 are implemented with deterministic regressions. Batch 5 publishes [reproducible evidence](TRANSFER_ENGINE.md), including actual large-file runs on all three CI platforms. A macOS native socket permission failure found by the real CLI fixture is repaired and awaiting confirming CI. Source completion and remaining ENG-01/06/07/09/10 qualification criteria stay explicit in the roadmap.
+
+The installed IDM command-line workflow yielded no request/output in two attempts; the comparison remains pending. External authentication realms, managed proxy policies, native filesystem matrices and release/browser acceptance are not inferred from fixture success.
+
+From this increment onward, each focused commit increments `0.MINOR.PATCH` and updates README/roadmap/changelog together; major remains 0 until complete parity. Historical commits are preserved for reversibility.

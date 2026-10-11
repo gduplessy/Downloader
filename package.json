@@ -1,10 +1,12 @@
 {
   "name": "downloader-workspace",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "GPL-3.0-only",
   "packageManager": "pnpm@10.28.2",
   "scripts": {
+    "version:check": "node scripts/version.mjs",
+    "version:set": "node scripts/version.mjs --set",
     "dev": "pnpm --filter @downloader/desktop dev",
     "build": "pnpm --filter @downloader/desktop build && pnpm --filter @downloader/extension build",
     "test": "pnpm --filter @downloader/extension test && pnpm --filter @downloader/desktop test",

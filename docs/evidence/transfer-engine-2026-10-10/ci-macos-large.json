@@ -1,0 +1,126 @@
+{
+  "platform": "darwin",
+  "results": [
+    {
+      "name": "large_over_4gib",
+      "bytes": 4311744529,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 7
+      },
+      "cpu_seconds": 23.051163,
+      "metrics": {
+        "checkpoint_seconds": 5.295113276,
+        "checkpoints": 647,
+        "publication_seconds": 0.002407292,
+        "scan_seconds": 0,
+        "verification_seconds": 19.758449167
+      },
+      "peak_rss_bytes": 13074432,
+      "phases_seconds": {
+        "Assembling": 0.058831833,
+        "Downloading": 70.608680333,
+        "Queued": 0.470845334,
+        "Verifying": 19.748633875
+      },
+      "resumed": true,
+      "seconds": 90.891261333,
+      "segments": 1,
+      "sha256": "2583e615a4e14f529b88110b69aa85e6118d1ccf1e5c12fc7afdde4773efd399"
+    }
+  ],
+  "observations": {
+    "requests": [
+      {
+        "path": "/large",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/large",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/large",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/large",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-4311744528"
+      },
+      {
+        "path": "/large",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/large",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/large",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/large",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4295163904-4311744528"
+      }
+    ],
+    "proxy": 0,
+    "socks": 0,
+    "ftpRest": 0,
+    "ftpTls": 0,
+    "maxActive": 1,
+    "active": 0
+  },
+  "source_revision": "d07e43f00c079c306e3a40baa17bae059757be70",
+  "ci_run": "https://github.com/gduplessy/Downloader/actions/runs/38102452983",
+  "scope": "Transfer fixtures passed; this run has a separate macOS CLI startup failure, repaired in a later revision. Native GUI/install/browser acceptance is separate."
+}

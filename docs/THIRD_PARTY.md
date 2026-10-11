@@ -5,6 +5,8 @@ This is a source/build map and release checklist. It does not replace complete n
 | Component        | Purpose                                  | Source                                                                          |
 | ---------------- | ---------------------------------------- | ------------------------------------------------------------------------------- |
 | libcurl/curl-sys | Networking, TLS, proxies, authentication | https://github.com/curl/curl                                                    |
+| libproxy | Linux system proxy/PAC discovery | https://github.com/libproxy/libproxy |
+| pacparser | Linux explicit PAC execution (LGPL-3.0-or-later) | https://github.com/manugarg/pacparser |
 | SQLite/rusqlite  | Persistence                              | https://sqlite.org/src ; https://github.com/rusqlite/rusqlite                   |
 | Tauri/React      | Desktop shell/UI                         | https://github.com/tauri-apps/tauri ; https://github.com/facebook/react         |
 | yt-dlp           | Media extraction                         | Locked release at https://github.com/yt-dlp/yt-dlp                              |
@@ -21,3 +23,9 @@ Build Deno from the locked version with its embedded notices. macOS FFmpeg needs
 Before release, generate Rust/JavaScript SBOMs from lockfiles; publish exact component source/build inputs, notices and checksums alongside installers.
 
 Bundling, immutable provenance, notices/source distribution, SBOMs, and verified update work are tracked in [ROADMAP.md](ROADMAP.md#8-platform-qualification-packaging-and-release).
+
+## Transfer build qualification
+
+The workspace enables curl's `http2`, `protocol-ftp` and `ntlm` features. `.cargo/config.toml` defines `CURL_ENABLE_NTLM` for bundled libcurl 8.22, whose NTLM source compilation requires the macro in addition to the Rust feature. An externally supplied `CFLAGS` takes precedence; diagnostics report actual linked capabilities. System libcurl builds retain their distribution's protocol/authentication features.
+
+Windows uses WinHTTP for system/PAC routing; macOS uses CFNetwork. Linux dynamically loads the installed libproxy/pacparser ABI. Preserve their source/notices when bundling them in an AppImage; system DEB dependencies do not replace the binary-release provenance gate.

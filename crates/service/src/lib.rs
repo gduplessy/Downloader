@@ -18,18 +18,21 @@ pub const HOST_NAME: &str = "org.downloader.native";
 const MAX_MESSAGE: usize = 1024 * 1024;
 
 fn socket_name() -> Result<interprocess::local_socket::Name<'static>> {
+    socket_for_directory(&data_dir())
+}
+fn socket_for_directory(directory: &Path) -> Result<interprocess::local_socket::Name<'static>> {
     #[cfg(windows)]
     {
         use std::hash::{Hash, Hasher};
         let mut hash = std::collections::hash_map::DefaultHasher::new();
-        data_dir().hash(&mut hash);
+        directory.hash(&mut hash);
         Ok(format!("downloader-{:x}", hash.finish())
             .to_ns_name::<GenericNamespaced>()?
             .into_owned())
     }
     #[cfg(unix)]
     {
-        Ok(data_dir()
+        Ok(directory
             .join("engine.sock")
             .to_fs_name::<GenericFilePath>()?
             .into_owned())
@@ -132,21 +135,7 @@ pub fn serve() -> Result<()> {
         use std::os::unix::fs::PermissionsExt;
         std::fs::set_permissions(&directory, std::fs::Permissions::from_mode(0o700))?;
     }
-    let options = ListenerOptions::new().name(socket_name()?);
-    #[cfg(windows)]
-    let options = {
-        use interprocess::os::windows::{
-            local_socket::ListenerOptionsExt, security_descriptor::SecurityDescriptor,
-        };
-        let sddl = widestring::U16CString::from_str("D:P(A;;GA;;;OW)")?;
-        options.security_descriptor(SecurityDescriptor::deserialize(&sddl)?)
-    };
-    #[cfg(unix)]
-    let options = {
-        use interprocess::os::unix::local_socket::ListenerOptionsExt;
-        options.mode(0o600)
-    };
-    let listener = options.create_sync()?;
+    let listener = restricted_listener(&directory)?;
     let engine = Engine::open(&directory)?;
     engine.start();
     for stream in listener.incoming() {
@@ -161,6 +150,34 @@ pub fn serve() -> Result<()> {
     }
     engine.shutdown();
     Ok(())
+}
+fn restricted_listener(directory: &Path) -> Result<interprocess::local_socket::Listener> {
+    let options = ListenerOptions::new().name(socket_for_directory(directory)?);
+    #[cfg(windows)]
+    let options = {
+        use interprocess::os::windows::{
+            local_socket::ListenerOptionsExt, security_descriptor::SecurityDescriptor,
+        };
+        let sddl = widestring::U16CString::from_str("D:P(A;;GA;;;OW)")?;
+        options.security_descriptor(SecurityDescriptor::deserialize(&sddl)?)
+    };
+    #[cfg(all(unix, not(target_os = "macos")))]
+    let options = {
+        use interprocess::os::unix::local_socket::ListenerOptionsExt;
+        options.mode(0o600)
+    };
+    let listener = options.create_sync()?;
+    #[cfg(target_os = "macos")]
+    {
+        // Darwin rejects fchmod on socket descriptors. The private 0700 parent
+        // protects the endpoint while we chmod the bound path, before accepting.
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(
+            directory.join("engine.sock"),
+            std::fs::Permissions::from_mode(0o600),
+        )?;
+    }
+    Ok(listener)
 }
 fn command_failure(id: String, error: &anyhow::Error) -> Response {
     let message = downloader_core::security::redact(&error.to_string());
@@ -440,6 +457,37 @@ fn browser_events(mut data: serde_json::Value) -> Result<serde_json::Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(unix)]
+    #[test]
+    fn unix_endpoint_is_private_and_rebinds_after_shutdown() {
+        use std::os::unix::fs::PermissionsExt;
+        let directory = std::env::temp_dir().join(format!(
+            "dl-{:x}-{:x}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir(&directory).unwrap();
+        std::fs::set_permissions(&directory, std::fs::Permissions::from_mode(0o700)).unwrap();
+        for _ in 0..2 {
+            let listener = restricted_listener(&directory).unwrap();
+            assert_eq!(
+                std::fs::metadata(directory.join("engine.sock"))
+                    .unwrap()
+                    .permissions()
+                    .mode()
+                    & 0o777,
+                0o600
+            );
+            let stream = Stream::connect(socket_for_directory(&directory).unwrap()).unwrap();
+            drop(stream);
+            drop(listener);
+            assert!(!directory.join("engine.sock").exists());
+        }
+        std::fs::remove_dir(&directory).unwrap();
+    }
     #[test]
     fn request_conflicts_preserve_machine_readable_codes() {
         let response = command_failure(
