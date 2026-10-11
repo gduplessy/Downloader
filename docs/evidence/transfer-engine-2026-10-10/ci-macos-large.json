@@ -45,23 +45,22 @@
         "idle": 1,
         "reused": 7
       },
-      "cpu_seconds": 23.051163,
+      "cpu_seconds": 25.230681999999998,
       "metrics": {
-        "checkpoint_seconds": 5.295113276,
-        "checkpoints": 647,
-        "publication_seconds": 0.002407292,
+        "checkpoint_seconds": 6.150981368000002,
+        "checkpoints": 745,
+        "publication_seconds": 0.0016505,
         "scan_seconds": 0,
-        "verification_seconds": 19.758449167
+        "verification_seconds": 19.984473708
       },
-      "peak_rss_bytes": 13074432,
+      "peak_rss_bytes": 13139968,
       "phases_seconds": {
-        "Assembling": 0.058831833,
-        "Downloading": 70.608680333,
-        "Queued": 0.470845334,
-        "Verifying": 19.748633875
+        "Downloading": 81.728863417,
+        "Queued": 0.075295584,
+        "Verifying": 20.002385417
       },
       "resumed": true,
-      "seconds": 90.891261333,
+      "seconds": 101.83653175,
       "segments": 1,
       "sha256": "2583e615a4e14f529b88110b69aa85e6118d1ccf1e5c12fc7afdde4773efd399"
     }
@@ -120,7 +119,8 @@
     "maxActive": 1,
     "active": 0
   },
-  "source_revision": "d07e43f00c079c306e3a40baa17bae059757be70",
-  "ci_run": "https://github.com/gduplessy/Downloader/actions/runs/38102452983",
-  "scope": "Transfer fixtures passed; this run has a separate macOS CLI startup failure, repaired in a later revision. Native GUI/install/browser acceptance is separate."
+  "source_revision": "83cdd8fb157ff4b368ccaa90957cb49e8d3029a3",
+  "product_version": "0.2.0",
+  "ci_run": "https://github.com/gduplessy/Downloader/actions/runs/38103251279",
+  "scope": "All jobs in this post-IPC-repair run passed. Native GUI/install/browser acceptance and newer patch fixtures remain separate."
 }

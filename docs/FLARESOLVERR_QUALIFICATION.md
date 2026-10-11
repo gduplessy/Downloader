@@ -2,7 +2,7 @@
 
 ## Scope and environment
 
-Implemented on `codex/flaresolverr-integration`, based on fetched `origin/feat/transfer-engine-correctness` at `ee1442b`. The original checkout and its uncommitted evidence files were preserved. Delivery commits independently increment the product version; the PR targets the feature branch and is not merged.
+Implemented on `codex/flaresolverr-integration`, initially based on fetched `origin/feat/transfer-engine-correctness` at `ee1442b`, with the response-validator fixes at `604a7d9` incorporated before delivery. The original checkout and its uncommitted evidence files were preserved. Delivery commits independently increment the product version. The PR targets `feat/transfer-engine-correctness`; this integration is not merged.
 
 Local target: Windows x64, Docker Desktop Linux amd64, Docker client/server **29.6.2**, Compose **5.3.1**, FlareSolverr **3.4.6**, reported Chromium **142**. The existing service on 9191 was reused without modification. The isolated deployment used the repository Compose file with port override 19191 and project `downloader-solver-qualification`.
 

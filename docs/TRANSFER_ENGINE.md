@@ -25,7 +25,7 @@ Reusable libcurl handles are bounded and keyed by origin, request context, routi
 | Linux system/PAC | libproxy system resolution; serialized pacparser for explicit PAC | Runtime libraries required; local PAC fixture; desktop policy matrices remain |
 | Authentication | OS keyring references, Basic/Digest and available NTLM/Negotiate | Basic/Digest challenge fixtures; NTLM/Kerberos external realms remain |
 
-PAC adapters choose a supported proxy result; ordered multi-proxy failover is not yet qualified. PAC scripts are explicitly configured/trusted; downloading them is bounded, but Linux parser execution has no separate timeout. Missing Linux libproxy falls back to libcurl environment routing; explicit PAC requires libpacparser. DEB declares runtime libraries; AppImage packaging still needs acceptance.
+PAC adapters choose a supported proxy result; ordered multi-proxy failover is not implemented. PAC scripts are explicitly configured/trusted; downloading them is bounded, but Linux parser execution has no separate timeout. Missing Linux libproxy falls back to libcurl environment routing; explicit PAC requires libpacparser. DEB declares runtime libraries; AppImage packaging still needs acceptance.
 
 Browser-only VPN/proxy extensions do not route the desktop engine. Configure desktop routing explicitly when necessary. Cross-origin redirects clear source cookies/authorization, and HTTPS downgrades are rejected. Browser source refresh requires the owning profile; replacement context is temporary and incompatible partial bytes are never merged.
 
@@ -48,9 +48,10 @@ Wire version **1** is independent of product versions. Restricted per-user named
 
 Tests are deterministic local fixtures, not proof of universal server/browser support. The [acceptance record](ACCEPTANCE.md) and [compatibility matrix](COMPATIBILITY.md) distinguish source builds from native GUI, browser and installer acceptance.
 
-- Windows local: **37 Rust functional tests**, four ignored helpers invoked by parent tests, **18 TypeScript tests**, strict Clippy/formatting, both client builds and native desktop compilation.
-- The [corrected three-platform run](https://github.com/gduplessy/Downloader/actions/runs/38102100627) passed all jobs. An earlier benchmark fixture leaked response counters; its failure was fixed rather than accepted as a server-limit result.
-- The [initial large-file run](https://github.com/gduplessy/Downloader/actions/runs/38102452983) passed all **38 network/performance cases** and the actual >4 GiB transfer on Windows, macOS and Linux. Its macOS CLI IPC step failed. The [repair run](https://github.com/gduplessy/Downloader/actions/runs/38103251279) has passed macOS endpoint permissions/rebind and the real CLI restart workflow; final job status and the newer native creation/privacy fixture still need confirmation.
+- Final regression set: **38 Rust functional tests on Windows**, **39 on Unix** (one additional socket permission/rebind check), four ignored subprocess helpers invoked by parent tests, **18 TypeScript tests**, strict Clippy/formatting, both client builds and native desktop compilation. [Final source CI](https://github.com/gduplessy/Downloader/actions/runs/38104393525) records the response-validator patch; use its exact job statuses as build evidence.
+- The [large-file run](https://github.com/gduplessy/Downloader/actions/runs/38103251279) passed all jobs, **38 network/performance cases** and the actual >4 GiB transfer on Windows, macOS and Linux, including macOS endpoint permissions/rebind and CLI restart.
+- The [native/control run](https://github.com/gduplessy/Downloader/actions/runs/38104025817) passed its real native-messaging and CLI steps on all three platforms, including browser response privacy, durable duplicate creation, ordered events and pause/resume/restart. Per-platform control JSON is included below.
+- Earlier failing attempts exposed benchmark fixture response accounting, Darwin socket chmod and a sibling-cancellation error race. Each cause was repaired with the assertions retained; five consecutive local write/flush fixture repetitions passed after the worker-race fix.
 - Sanitized JSON is published under [evidence/transfer-engine-2026-10-10](evidence/transfer-engine-2026-10-10/). It contains fixture observations and metrics, not credentials, private data directories or session tokens. CI evidence identifies source revision and run; earlier local records identify environment and date.
 
 | CI platform | libcurl / TLS | HTTP/2, FTP/FTPS, gzip, large files, NTLM/Negotiate capability flags |
@@ -72,11 +73,15 @@ Each CI platform transferred **4,311,744,529 bytes**, paused above the 4 GiB bou
 | Run | End-to-end seconds | Evidence |
 | --- | ---: | --- |
 | Windows local | 114.680 | [windows-large.json](evidence/transfer-engine-2026-10-10/windows-large.json) |
-| Windows CI | 43.164 | [ci-windows-large.json](evidence/transfer-engine-2026-10-10/ci-windows-large.json) |
-| macOS CI | 90.891 | [ci-macos-large.json](evidence/transfer-engine-2026-10-10/ci-macos-large.json) |
-| Linux CI | 40.120 | [ci-linux-large.json](evidence/transfer-engine-2026-10-10/ci-linux-large.json) |
+| Windows CI | 58.778 | [ci-windows-large.json](evidence/transfer-engine-2026-10-10/ci-windows-large.json) |
+| macOS CI | 101.837 | [ci-macos-large.json](evidence/transfer-engine-2026-10-10/ci-macos-large.json) |
+| Linux CI | 53.755 | [ci-linux-large.json](evidence/transfer-engine-2026-10-10/ci-linux-large.json) |
 
 These are separate machines, not comparative platform performance measurements. The remote ZIP64 fixture places its central directory above 4 GiB and verifies a known entry. This does not complete broad archive-format acceptance (MGT-04).
+
+### Real native messaging and CLI lifecycle
+
+[Windows](evidence/transfer-engine-2026-10-10/ci-windows-control.json), [macOS](evidence/transfer-engine-2026-10-10/ci-macos-control.json) and [Linux](evidence/transfer-engine-2026-10-10/ci-linux-control.json) records verify native creation privacy/idempotency and CLI snapshot-first watching, sequenced events, pause/resume and service restart. Each completed 32 MiB output matches `1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292`. The fixture uses an isolated allowlist and data directory, with no browser-profile or registry modifications. It does not establish stable-browser capture or visible desktop acceptance.
 
 ### Windows performance measurements
 
@@ -120,7 +125,7 @@ CI `workflow_dispatch` with `large=true` runs the large fixture on every matrix 
 
 - Actual disk-full/permission/cross-volume failure matrices beyond injected I/O, locked-file, symlink/hardlink, collision and staged-copy regressions.
 - External NTLM/Negotiate/Kerberos realms; platform system proxy/WPAD/PAC failure policies, ordered proxy failover, shipped installer/AppImage library provenance.
-- Confirm the latest native-messaging creation/privacy fixture across CI platforms. Intel macOS is a separate launch target from the Apple Silicon CI runner.
+- Intel macOS remains a separate launch target from the Apple Silicon CI runner.
 - Successful identical-fixture IDM comparison. Stable-browser source refresh and desktop GUI acceptance remain in WEB/UI/REL gates.
 
 Keep unresolved criteria in [the roadmap](ROADMAP.md#2-transfer-engine-correctness-and-networking), even when the corresponding source workflow is implemented.

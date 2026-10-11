@@ -2,6 +2,11 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.5.2 — Preserve final transfer-engine fixes
+
+- Incorporate the final transfer-engine branch tip, including weak-ETag/Last-Modified validation and published platform evidence, into the solver integration.
+- Keep solver qualification separate from the existing platform acceptance results.
+
 ## 0.5.1 — Qualified Docker setup and challenge limits
 
 - Publish the pinned Compose deployment, Docker walkthrough, measured real-service fixture evidence and g4u/CoordinatesTask research gates.
@@ -26,6 +31,22 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 
 - Add a bounded loopback FlareSolverr client, conservative GET page resolution, temporary cookie/User-Agent context, and deterministic response/policy regressions.
 - Browser navigation integration and live host qualification remain in progress.
+
+## 0.2.7 — Clarify remaining proxy work
+
+- Distinguish planned ordered PAC proxy failover from implemented routing whose enterprise policies still require qualification.
+- Keep README, roadmap and implementation/evidence documentation aligned with that support boundary.
+
+## 0.2.6 — Acceptance records and synchronized documentation
+
+- Publish post-repair platform transfer, large-file and real native-messaging/CLI evidence with exact source versions and CI runs.
+- Complete the deterministic control-protocol roadmap gate; retain external realms, enterprise proxy policies, native filesystem matrices and the unsuccessful IDM comparison as open qualification work.
+- Align README, roadmap, compatibility, implementation plan and acceptance records with the verified increment and product version.
+
+## 0.2.5 — Validate Last-Modified alongside weak ETags
+
+- Use Last-Modified when an ETag is weak, including actual range responses and redirect identity checks.
+- Reject a changed response date before writing its body even when the weak ETag stays unchanged; retain the explicit safe-restart workflow.
 
 ## 0.2.4 — Windows system proxy protocol maps
 

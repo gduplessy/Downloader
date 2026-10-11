@@ -53,23 +53,23 @@
         "idle": 4,
         "reused": 3
       },
-      "cpu_seconds": 0.074584,
+      "cpu_seconds": 0.09255400000000001,
       "metrics": {
-        "checkpoint_seconds": 0.168507135,
+        "checkpoint_seconds": 0.011871485,
         "checkpoints": 1,
-        "publication_seconds": 0.000163878,
+        "publication_seconds": 0.000171932,
         "scan_seconds": 0,
-        "verification_seconds": 0.019043189
+        "verification_seconds": 0.024637462
       },
-      "peak_rss_bytes": 39510016,
+      "peak_rss_bytes": 43704320,
       "phases_seconds": {
-        "Connecting": 0.010074837,
-        "Downloading": 0.20781992,
-        "Queued": 0.251789315,
-        "Verifying": 0.020149215
+        "Connecting": 0.010083314,
+        "Downloading": 0.064601551,
+        "Queued": 0.252175678,
+        "Verifying": 0.020156398
       },
       "resumed": false,
-      "seconds": 0.495591115,
+      "seconds": 0.3533626,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -125,23 +125,23 @@
         "idle": 4,
         "reused": 3
       },
-      "cpu_seconds": 0.07554599999999999,
+      "cpu_seconds": 0.109238,
       "metrics": {
-        "checkpoint_seconds": 0.160149445,
+        "checkpoint_seconds": 0.01058157,
         "checkpoints": 1,
-        "publication_seconds": 0.00018503,
+        "publication_seconds": 0.000197911,
         "scan_seconds": 0,
-        "verification_seconds": 0.017692734
+        "verification_seconds": 0.023555894
       },
-      "peak_rss_bytes": 39395328,
+      "peak_rss_bytes": 44343296,
       "phases_seconds": {
-        "Connecting": 0.010075884,
-        "Downloading": 0.199108565,
-        "Queued": 0.251806715,
-        "Verifying": 0.010064708
+        "Connecting": 0.010086528,
+        "Downloading": 0.084263624,
+        "Queued": 0.25209961,
+        "Verifying": 0.020165776
       },
       "resumed": false,
-      "seconds": 0.475986711,
+      "seconds": 0.372318028,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -301,23 +301,23 @@
         "idle": 4,
         "reused": 3
       },
-      "cpu_seconds": 0.08646999999999999,
+      "cpu_seconds": 0.114789,
       "metrics": {
-        "checkpoint_seconds": 0.153032795,
+        "checkpoint_seconds": 0.010475284,
         "checkpoints": 1,
-        "publication_seconds": 0.00016539,
+        "publication_seconds": 0.000175389,
         "scan_seconds": 0,
-        "verification_seconds": 0.017597959
+        "verification_seconds": 0.023734779
       },
-      "peak_rss_bytes": 41349120,
+      "peak_rss_bytes": 45166592,
       "phases_seconds": {
-        "Assembling": 0.010073331,
-        "Downloading": 0.199006557,
-        "Queued": 0.027534375,
-        "Verifying": 0.010084107
+        "Connecting": 0.010098179,
+        "Downloading": 0.086004063,
+        "Queued": 0.010089847,
+        "Verifying": 0.020149135
       },
       "resumed": false,
-      "seconds": 0.251597942,
+      "seconds": 0.132132198,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -373,22 +373,22 @@
         "idle": 1,
         "reused": 4
       },
-      "cpu_seconds": 0.061288999999999996,
+      "cpu_seconds": 0.07854699999999999,
       "metrics": {
-        "checkpoint_seconds": 0.160801365,
+        "checkpoint_seconds": 0.013517143,
         "checkpoints": 2,
-        "publication_seconds": 0.000163117,
+        "publication_seconds": 0.000212969,
         "scan_seconds": 0,
-        "verification_seconds": 0.019038602
+        "verification_seconds": 0.025093259
       },
-      "peak_rss_bytes": 43147264,
+      "peak_rss_bytes": 45637632,
       "phases_seconds": {
-        "Downloading": 1.224601252,
-        "Queued": 0.010074272,
-        "Verifying": 0.020137888
+        "Downloading": 1.097936611,
+        "Queued": 0.010079117,
+        "Verifying": 0.020144467
       },
       "resumed": true,
-      "seconds": 1.260408688,
+      "seconds": 1.134374833,
       "segments": 1,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -444,23 +444,23 @@
         "idle": 1,
         "reused": 2
       },
-      "cpu_seconds": 0.059212999999999995,
+      "cpu_seconds": 0.08198399999999999,
       "metrics": {
-        "checkpoint_seconds": 0.166549723,
+        "checkpoint_seconds": 0.010380987,
         "checkpoints": 1,
-        "publication_seconds": 0.000189758,
+        "publication_seconds": 0.000187622,
         "scan_seconds": 0,
-        "verification_seconds": 0.017292888
+        "verification_seconds": 0.023529945
       },
-      "peak_rss_bytes": 43147264,
+      "peak_rss_bytes": 45637632,
       "phases_seconds": {
-        "Connecting": 0.040251959,
-        "Downloading": 0.21576443,
-        "Queued": 0.010067902,
-        "Verifying": 0.02013973
+        "Connecting": 0.050393461,
+        "Downloading": 0.077174007,
+        "Queued": 0.252133363,
+        "Verifying": 0.020146219
       },
       "resumed": false,
-      "seconds": 0.291117675,
+      "seconds": 0.405889243,
       "segments": 1,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -516,22 +516,22 @@
         "idle": 1,
         "reused": 2
       },
-      "cpu_seconds": 0.051947,
+      "cpu_seconds": 0.082582,
       "metrics": {
-        "checkpoint_seconds": 0.157920034,
+        "checkpoint_seconds": 0.01341649,
         "checkpoints": 1,
-        "publication_seconds": 0.000178961,
+        "publication_seconds": 0.000198732,
         "scan_seconds": 0,
-        "verification_seconds": 0.016779771
+        "verification_seconds": 0.023431731
       },
-      "peak_rss_bytes": 43147264,
+      "peak_rss_bytes": 45641728,
       "phases_seconds": {
-        "Downloading": 0.204241972,
-        "Queued": 0.010080774,
-        "Verifying": 0.010065429
+        "Downloading": 0.084063167,
+        "Queued": 0.010070034,
+        "Verifying": 0.020145768
       },
       "resumed": false,
-      "seconds": 0.229304284,
+      "seconds": 0.119689737,
       "segments": 1,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -587,23 +587,22 @@
         "idle": 4,
         "reused": 3
       },
-      "cpu_seconds": 0.061711,
+      "cpu_seconds": 0.08327599999999999,
       "metrics": {
-        "checkpoint_seconds": 0.158065235,
+        "checkpoint_seconds": 0.011541333,
         "checkpoints": 1,
-        "publication_seconds": 0.000172061,
+        "publication_seconds": 0.000222036,
         "scan_seconds": 0,
-        "verification_seconds": 0.018497202
+        "verification_seconds": 0.024453497
       },
-      "peak_rss_bytes": 43147264,
+      "peak_rss_bytes": 45821952,
       "phases_seconds": {
-        "Assembling": 0.010070877,
-        "Downloading": 0.225654118,
-        "Queued": 0.010094072,
-        "Verifying": 0.010069725
+        "Downloading": 0.136010371,
+        "Queued": 0.010080163,
+        "Verifying": 0.020152201
       },
       "resumed": false,
-      "seconds": 0.261105832,
+      "seconds": 0.171896517,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -659,22 +658,22 @@
         "idle": 4,
         "reused": 3
       },
-      "cpu_seconds": 0.065543,
+      "cpu_seconds": 0.114865,
       "metrics": {
-        "checkpoint_seconds": 0.162920873,
+        "checkpoint_seconds": 0.011011314,
         "checkpoints": 1,
-        "publication_seconds": 0.000188436,
+        "publication_seconds": 0.000198512,
         "scan_seconds": 0,
-        "verification_seconds": 0.017454933
+        "verification_seconds": 0.023577264
       },
-      "peak_rss_bytes": 79044608,
+      "peak_rss_bytes": 81620992,
       "phases_seconds": {
-        "Downloading": 0.229439494,
-        "Queued": 0.010088834,
-        "Verifying": 0.010063405
+        "Downloading": 0.131871597,
+        "Queued": 0.010081697,
+        "Verifying": 0.020149786
       },
       "resumed": false,
-      "seconds": 0.254821346,
+      "seconds": 0.167898177,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -730,22 +729,22 @@
         "idle": 4,
         "reused": 3
       },
-      "cpu_seconds": 0.084049,
+      "cpu_seconds": 0.14968299999999998,
       "metrics": {
-        "checkpoint_seconds": 0.154936666,
+        "checkpoint_seconds": 0.011045245,
         "checkpoints": 1,
-        "publication_seconds": 0.000152451,
+        "publication_seconds": 0.000197751,
         "scan_seconds": 0,
-        "verification_seconds": 0.017380721
+        "verification_seconds": 0.023521589
       },
-      "peak_rss_bytes": 80650240,
+      "peak_rss_bytes": 85241856,
       "phases_seconds": {
-        "Downloading": 0.232841616,
-        "Queued": 0.010074472,
-        "Verifying": 0.010077166
+        "Downloading": 0.162124442,
+        "Queued": 0.010096974,
+        "Verifying": 0.020150447
       },
       "resumed": false,
-      "seconds": 0.258076279,
+      "seconds": 0.198236392,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -801,22 +800,22 @@
         "idle": 4,
         "reused": 3
       },
-      "cpu_seconds": 0.070447,
+      "cpu_seconds": 0.087385,
       "metrics": {
-        "checkpoint_seconds": 0.15561652,
+        "checkpoint_seconds": 0.011417491,
         "checkpoints": 1,
-        "publication_seconds": 0.000170037,
+        "publication_seconds": 0.000176341,
         "scan_seconds": 0,
-        "verification_seconds": 0.017489055
+        "verification_seconds": 0.024116324
       },
-      "peak_rss_bytes": 82137088,
+      "peak_rss_bytes": 86298624,
       "phases_seconds": {
-        "Downloading": 0.194825017,
-        "Queued": 0.010072579,
-        "Verifying": 0.010062514
+        "Downloading": 0.117084159,
+        "Queued": 0.010077989,
+        "Verifying": 0.020149767
       },
       "resumed": false,
-      "seconds": 0.220289603,
+      "seconds": 0.153360598,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -872,22 +871,22 @@
         "idle": 4,
         "reused": 3
       },
-      "cpu_seconds": 0.06337000000000001,
+      "cpu_seconds": 0.083509,
       "metrics": {
-        "checkpoint_seconds": 0.155423363,
+        "checkpoint_seconds": 0.01069739,
         "checkpoints": 1,
-        "publication_seconds": 0.000167204,
+        "publication_seconds": 0.000174818,
         "scan_seconds": 0,
-        "verification_seconds": 0.017365447
+        "verification_seconds": 0.023639931
       },
-      "peak_rss_bytes": 82137088,
+      "peak_rss_bytes": 86355968,
       "phases_seconds": {
-        "Downloading": 0.383329911,
-        "Queued": 0.010090646,
-        "Verifying": 0.010062303
+        "Downloading": 0.118887076,
+        "Queued": 0.010083239,
+        "Verifying": 0.020158774
       },
       "resumed": false,
-      "seconds": 0.408500702,
+      "seconds": 0.155217716,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -943,23 +942,22 @@
         "idle": 4,
         "reused": 3
       },
-      "cpu_seconds": 0.066268,
+      "cpu_seconds": 0.087948,
       "metrics": {
-        "checkpoint_seconds": 0.153895306,
+        "checkpoint_seconds": 0.011432829,
         "checkpoints": 1,
-        "publication_seconds": 0.000180243,
+        "publication_seconds": 0.000177242,
         "scan_seconds": 0,
-        "verification_seconds": 0.017553542
+        "verification_seconds": 0.023896984
       },
-      "peak_rss_bytes": 82137088,
+      "peak_rss_bytes": 86659072,
       "phases_seconds": {
-        "Connecting": 0.010070978,
-        "Downloading": 0.191015919,
-        "Queued": 0.251837847,
-        "Verifying": 0.01007003
+        "Downloading": 0.114560914,
+        "Queued": 0.010074903,
+        "Verifying": 0.020157802
       },
       "resumed": false,
-      "seconds": 0.468116169,
+      "seconds": 0.15060699,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -1009,7 +1007,7 @@
         "tls": "OpenSSL/3.0.13",
         "version": "8.5.0"
       },
-      "seconds": 0.023821988,
+      "seconds": 0.032273943,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
     {
@@ -1058,7 +1056,7 @@
         "tls": "OpenSSL/3.0.13",
         "version": "8.5.0"
       },
-      "seconds": 0.025601274,
+      "seconds": 0.033811025,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
     {
@@ -1113,23 +1111,23 @@
         "idle": 1,
         "reused": 1
       },
-      "cpu_seconds": 0.049629999999999994,
+      "cpu_seconds": 0.073312,
       "metrics": {
-        "checkpoint_seconds": 0.158956086,
+        "checkpoint_seconds": 0.010910169,
         "checkpoints": 1,
-        "publication_seconds": 0.000157538,
+        "publication_seconds": 0.00018695,
         "scan_seconds": 0,
-        "verification_seconds": 0.016690394
+        "verification_seconds": 0.023516209
       },
-      "peak_rss_bytes": 82202624,
+      "peak_rss_bytes": 86671360,
       "phases_seconds": {
-        "Connecting": 0.05031925,
-        "Downloading": 0.234888928,
-        "Queued": 0.010067472,
-        "Verifying": 0.010061672
+        "Connecting": 0.110824979,
+        "Downloading": 0.16197203,
+        "Queued": 0.010073724,
+        "Verifying": 0.020150578
       },
       "resumed": false,
-      "seconds": 0.310646073,
+      "seconds": 0.311125164,
       "segments": 1,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -1236,26 +1234,26 @@
       },
       "connections": {
         "active": 0,
-        "created": 4,
-        "idle": 4,
-        "reused": 4
+        "created": 3,
+        "idle": 3,
+        "reused": 5
       },
-      "cpu_seconds": 0.069422,
+      "cpu_seconds": 0.08758400000000001,
       "metrics": {
-        "checkpoint_seconds": 0.162222346,
+        "checkpoint_seconds": 0.011495848,
         "checkpoints": 1,
-        "publication_seconds": 0.000174304,
+        "publication_seconds": 0.000183995,
         "scan_seconds": 0,
-        "verification_seconds": 0.017337995
+        "verification_seconds": 0.023570752
       },
-      "peak_rss_bytes": 82202624,
+      "peak_rss_bytes": 86671360,
       "phases_seconds": {
-        "Downloading": 1.172774238,
-        "Queued": 0.010083024,
-        "Verifying": 0.010062974
+        "Downloading": 1.025914258,
+        "Queued": 0.010090999,
+        "Verifying": 0.020153032
       },
       "resumed": false,
-      "seconds": 1.197908955,
+      "seconds": 1.062548644,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -1311,23 +1309,23 @@
         "idle": 4,
         "reused": 3
       },
-      "cpu_seconds": 0.07288399999999999,
+      "cpu_seconds": 0.097281,
       "metrics": {
-        "checkpoint_seconds": 0.160736923,
+        "checkpoint_seconds": 0.011670435,
         "checkpoints": 1,
-        "publication_seconds": 0.000180884,
+        "publication_seconds": 0.002270939,
         "scan_seconds": 0,
-        "verification_seconds": 0.017529837
+        "verification_seconds": 0.02396321
       },
-      "peak_rss_bytes": 82202624,
+      "peak_rss_bytes": 86671360,
       "phases_seconds": {
-        "Assembling": 0.010073731,
-        "Downloading": 0.21377827,
-        "Queued": 0.010076072,
-        "Verifying": 0.010072459
+        "Connecting": 0.010087143,
+        "Downloading": 0.09658426,
+        "Queued": 0.010070916,
+        "Verifying": 0.020149306
       },
       "resumed": false,
-      "seconds": 0.249019146,
+      "seconds": 0.142713011,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -1383,23 +1381,22 @@
         "idle": 1,
         "reused": 3
       },
-      "cpu_seconds": 0.052992,
+      "cpu_seconds": 0.065367,
       "metrics": {
-        "checkpoint_seconds": 0.196749489,
+        "checkpoint_seconds": 0.010289083,
         "checkpoints": 1,
-        "publication_seconds": 0.000173233,
+        "publication_seconds": 0.000191188,
         "scan_seconds": 0,
-        "verification_seconds": 0.017267439
+        "verification_seconds": 0.023494666
       },
-      "peak_rss_bytes": 82337792,
+      "peak_rss_bytes": 86728704,
       "phases_seconds": {
-        "Connecting": 0.01007348,
-        "Downloading": 0.222734494,
-        "Queued": 0.251850326,
-        "Verifying": 0.010064156
+        "Downloading": 0.045477442,
+        "Queued": 0.010068602,
+        "Verifying": 0.020144343
       },
       "resumed": false,
-      "seconds": 0.500320698,
+      "seconds": 0.081591869,
       "segments": 1,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -1455,23 +1452,22 @@
         "idle": 1,
         "reused": 3
       },
-      "cpu_seconds": 0.055436,
+      "cpu_seconds": 0.068809,
       "metrics": {
-        "checkpoint_seconds": 0.160684542,
+        "checkpoint_seconds": 0.012213292,
         "checkpoints": 1,
-        "publication_seconds": 0.000162115,
+        "publication_seconds": 0.000178956,
         "scan_seconds": 0,
-        "verification_seconds": 0.016902767
+        "verification_seconds": 0.023596787
       },
-      "peak_rss_bytes": 82337792,
+      "peak_rss_bytes": 86728704,
       "phases_seconds": {
-        "Connecting": 0.070547273,
-        "Downloading": 0.191521779,
-        "Queued": 0.25182875,
-        "Verifying": 0.010063756
+        "Downloading": 0.049005963,
+        "Queued": 0.010075263,
+        "Verifying": 0.020152629
       },
       "resumed": false,
-      "seconds": 0.529074792,
+      "seconds": 0.08534794,
       "segments": 1,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -1527,23 +1523,22 @@
         "idle": 1,
         "reused": 3
       },
-      "cpu_seconds": 0.051512,
+      "cpu_seconds": 0.06938899999999999,
       "metrics": {
-        "checkpoint_seconds": 0.158560887,
+        "checkpoint_seconds": 0.0112208,
         "checkpoints": 1,
-        "publication_seconds": 0.000181565,
+        "publication_seconds": 0.000190998,
         "scan_seconds": 0,
-        "verification_seconds": 0.016856095
+        "verification_seconds": 0.02349181
       },
-      "peak_rss_bytes": 87519232,
+      "peak_rss_bytes": 86728704,
       "phases_seconds": {
-        "Connecting": 0.010139207,
-        "Downloading": 0.183611195,
-        "Queued": 0.252194424,
-        "Verifying": 0.01006635
+        "Downloading": 0.048819326,
+        "Queued": 0.010143992,
+        "Verifying": 0.020150044
       },
       "resumed": false,
-      "seconds": 0.461104353,
+      "seconds": 0.085173124,
       "segments": 1,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -1599,24 +1594,23 @@
         "idle": 4,
         "reused": 3
       },
-      "cpu_seconds": 0.074104,
+      "cpu_seconds": 0.10767600000000001,
       "metrics": {
-        "checkpoint_seconds": 0.157560761,
+        "checkpoint_seconds": 0.011150329,
         "checkpoints": 1,
-        "publication_seconds": 0.00016541,
+        "publication_seconds": 0.000216065,
         "scan_seconds": 0,
-        "verification_seconds": 0.018107932
+        "verification_seconds": 0.023596807
       },
-      "peak_rss_bytes": 87531520,
+      "peak_rss_bytes": 91770880,
       "phases_seconds": {
-        "Assembling": 0.010069394,
-        "Connecting": 0.010073435,
-        "Downloading": 0.190527279,
-        "Queued": 0.251905165,
-        "Verifying": 0.010083666
+        "Connecting": 0.010088984,
+        "Downloading": 0.059202984,
+        "Queued": 0.252065971,
+        "Verifying": 0.020144974
       },
       "resumed": false,
-      "seconds": 0.477855371,
+      "seconds": 0.347182334,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -1672,24 +1666,22 @@
         "idle": 4,
         "reused": 3
       },
-      "cpu_seconds": 0.075846,
+      "cpu_seconds": 0.10986,
       "metrics": {
-        "checkpoint_seconds": 0.160124683,
+        "checkpoint_seconds": 0.011367627,
         "checkpoints": 1,
-        "publication_seconds": 0.000189575,
+        "publication_seconds": 0.000199755,
         "scan_seconds": 0,
-        "verification_seconds": 0.017977885
+        "verification_seconds": 0.02368385
       },
-      "peak_rss_bytes": 87539712,
+      "peak_rss_bytes": 91770880,
       "phases_seconds": {
-        "Assembling": 0.01007311,
-        "Connecting": 0.010159972,
-        "Downloading": 0.192856581,
-        "Queued": 0.251891699,
-        "Verifying": 0.010060982
+        "Downloading": 0.068927665,
+        "Queued": 0.252758771,
+        "Verifying": 0.020155885
       },
       "resumed": false,
-      "seconds": 0.480364111,
+      "seconds": 0.348286254,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -1745,23 +1737,22 @@
         "idle": 4,
         "reused": 3
       },
-      "cpu_seconds": 0.076974,
+      "cpu_seconds": 0.110875,
       "metrics": {
-        "checkpoint_seconds": 0.158805647,
+        "checkpoint_seconds": 0.011607175,
         "checkpoints": 1,
-        "publication_seconds": 0.000192712,
+        "publication_seconds": 0.000190296,
         "scan_seconds": 0,
-        "verification_seconds": 0.018118528
+        "verification_seconds": 0.02360901
       },
-      "peak_rss_bytes": 87539712,
+      "peak_rss_bytes": 91770880,
       "phases_seconds": {
-        "Assembling": 0.010068068,
-        "Downloading": 0.201200422,
-        "Queued": 0.252272073,
-        "Verifying": 0.010064246
+        "Downloading": 0.062374341,
+        "Queued": 0.01008045,
+        "Verifying": 0.020146868
       },
       "resumed": false,
-      "seconds": 0.47904596,
+      "seconds": 0.09881988,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -1817,23 +1808,23 @@
         "idle": 1,
         "reused": 3
       },
-      "cpu_seconds": 0.060627999999999994,
+      "cpu_seconds": 0.07190400000000001,
       "metrics": {
-        "checkpoint_seconds": 0.14634939,
+        "checkpoint_seconds": 0.012276731,
         "checkpoints": 2,
-        "publication_seconds": 0.000300706,
+        "publication_seconds": 0.000197521,
         "scan_seconds": 0,
-        "verification_seconds": 0.025954678
+        "verification_seconds": 0.023423522
       },
-      "peak_rss_bytes": 87539712,
+      "peak_rss_bytes": 91770880,
       "phases_seconds": {
-        "Connecting": 0.010068493,
-        "Downloading": 1.1512304,
-        "Queued": 0.251878805,
-        "Verifying": 0.030263826
+        "Connecting": 0.010067017,
+        "Downloading": 1.103512401,
+        "Queued": 0.251970498,
+        "Verifying": 0.020165995
       },
       "resumed": false,
-      "seconds": 1.44858797,
+      "seconds": 1.39204422,
       "segments": 1,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -1889,22 +1880,22 @@
         "idle": 1,
         "reused": 3
       },
-      "cpu_seconds": 0.051636,
+      "cpu_seconds": 0.071494,
       "metrics": {
-        "checkpoint_seconds": 0.151276576,
+        "checkpoint_seconds": 0.012837491999999999,
         "checkpoints": 2,
-        "publication_seconds": 0.000193273,
+        "publication_seconds": 0.00021308,
         "scan_seconds": 0,
-        "verification_seconds": 0.017294839
+        "verification_seconds": 0.023473306
       },
-      "peak_rss_bytes": 87539712,
+      "peak_rss_bytes": 91770880,
       "phases_seconds": {
-        "Downloading": 1.185616595,
-        "Queued": 0.25248317,
-        "Verifying": 0.010060019
+        "Downloading": 1.094113731,
+        "Queued": 0.010042802,
+        "Verifying": 0.030214367
       },
       "resumed": false,
-      "seconds": 1.45357725,
+      "seconds": 1.140925845,
       "segments": 1,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -1960,22 +1951,22 @@
         "idle": 1,
         "reused": 3
       },
-      "cpu_seconds": 0.052816999999999996,
+      "cpu_seconds": 0.076073,
       "metrics": {
-        "checkpoint_seconds": 0.15304220999999998,
+        "checkpoint_seconds": 0.011810097,
         "checkpoints": 2,
-        "publication_seconds": 0.000185551,
+        "publication_seconds": 0.000195407,
         "scan_seconds": 0,
-        "verification_seconds": 0.017379718
+        "verification_seconds": 0.023459831
       },
-      "peak_rss_bytes": 87539712,
+      "peak_rss_bytes": 91770880,
       "phases_seconds": {
-        "Downloading": 1.17304071,
-        "Queued": 0.010063985,
-        "Verifying": 0.010060059
+        "Downloading": 1.110833021,
+        "Queued": 0.252661307,
+        "Verifying": 0.020161737
       },
       "resumed": false,
-      "seconds": 1.198020631,
+      "seconds": 1.3897198849999999,
       "segments": 1,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -2031,22 +2022,22 @@
         "idle": 4,
         "reused": 3
       },
-      "cpu_seconds": 0.057503,
+      "cpu_seconds": 0.079872,
       "metrics": {
-        "checkpoint_seconds": 0.157661227,
+        "checkpoint_seconds": 0.013523814,
         "checkpoints": 1,
-        "publication_seconds": 0.000158861,
+        "publication_seconds": 0.000183364,
         "scan_seconds": 0,
-        "verification_seconds": 0.017174136
+        "verification_seconds": 0.02341156
       },
-      "peak_rss_bytes": 87539712,
+      "peak_rss_bytes": 91770880,
       "phases_seconds": {
-        "Downloading": 0.450525596,
-        "Queued": 0.252694831,
-        "Verifying": 0.010062994
+        "Downloading": 0.308538828,
+        "Queued": 0.252739547,
+        "Verifying": 0.020146137
       },
       "resumed": false,
-      "seconds": 0.718804905,
+      "seconds": 0.587283328,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -2102,22 +2093,22 @@
         "idle": 4,
         "reused": 3
       },
-      "cpu_seconds": 0.056663,
+      "cpu_seconds": 0.07867,
       "metrics": {
-        "checkpoint_seconds": 0.147354182,
+        "checkpoint_seconds": 0.011646059,
         "checkpoints": 1,
-        "publication_seconds": 0.000198981,
+        "publication_seconds": 0.000165962,
         "scan_seconds": 0,
-        "verification_seconds": 0.017523977
+        "verification_seconds": 0.023411409
       },
-      "peak_rss_bytes": 87543808,
+      "peak_rss_bytes": 91885568,
       "phases_seconds": {
-        "Downloading": 0.4358656,
-        "Queued": 0.010071127,
-        "Verifying": 0.020151456
+        "Downloading": 0.296003681,
+        "Queued": 0.010075614,
+        "Verifying": 0.020151857
       },
       "resumed": false,
-      "seconds": 0.471099464,
+      "seconds": 0.332135443,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -2173,22 +2164,23 @@
         "idle": 4,
         "reused": 3
       },
-      "cpu_seconds": 0.061167000000000006,
+      "cpu_seconds": 0.081232,
       "metrics": {
-        "checkpoint_seconds": 0.156694913,
+        "checkpoint_seconds": 0.011172791,
         "checkpoints": 1,
-        "publication_seconds": 0.00014485,
+        "publication_seconds": 0.000226374,
         "scan_seconds": 0,
-        "verification_seconds": 0.017606702
+        "verification_seconds": 0.023490338
       },
-      "peak_rss_bytes": 87543808,
+      "peak_rss_bytes": 91885568,
       "phases_seconds": {
-        "Downloading": 0.448559615,
-        "Queued": 0.25229777,
-        "Verifying": 0.01006678
+        "Connecting": 0.010074592,
+        "Downloading": 0.299922214,
+        "Queued": 0.25215567,
+        "Verifying": 0.020150646
       },
       "resumed": false,
-      "seconds": 0.716321552,
+      "seconds": 0.588302019,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -2244,23 +2236,22 @@
         "idle": 1,
         "reused": 3
       },
-      "cpu_seconds": 0.050152,
+      "cpu_seconds": 0.07591600000000001,
       "metrics": {
-        "checkpoint_seconds": 0.1513214,
+        "checkpoint_seconds": 0.011882168,
         "checkpoints": 2,
-        "publication_seconds": 0.00017802,
+        "publication_seconds": 0.000188994,
         "scan_seconds": 0,
-        "verification_seconds": 0.017210846
+        "verification_seconds": 0.02342191
       },
-      "peak_rss_bytes": 87543808,
+      "peak_rss_bytes": 91885568,
       "phases_seconds": {
-        "Connecting": 0.010061752,
-        "Downloading": 1.160358032,
-        "Queued": 0.251825262,
-        "Verifying": 0.010061692
+        "Downloading": 1.100698886,
+        "Queued": 0.252572167,
+        "Verifying": 0.030230788
       },
       "resumed": false,
-      "seconds": 1.437551375,
+      "seconds": 1.390637775,
       "segments": 1,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -2316,22 +2307,22 @@
         "idle": 1,
         "reused": 3
       },
-      "cpu_seconds": 0.050544,
+      "cpu_seconds": 0.071186,
       "metrics": {
-        "checkpoint_seconds": 0.14694881999999998,
+        "checkpoint_seconds": 0.011737976,
         "checkpoints": 2,
-        "publication_seconds": 0.000181445,
+        "publication_seconds": 0.000170219,
         "scan_seconds": 0,
-        "verification_seconds": 0.016757765
+        "verification_seconds": 0.023468817
       },
-      "peak_rss_bytes": 87543808,
+      "peak_rss_bytes": 91885568,
       "phases_seconds": {
-        "Downloading": 1.155133436,
-        "Queued": 0.010062794,
-        "Verifying": 0.020132557
+        "Downloading": 1.094107476,
+        "Queued": 0.010100891,
+        "Verifying": 0.030212993
       },
       "resumed": false,
-      "seconds": 1.190222991,
+      "seconds": 1.140059573,
       "segments": 1,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -2387,22 +2378,22 @@
         "idle": 1,
         "reused": 3
       },
-      "cpu_seconds": 0.050574,
+      "cpu_seconds": 0.078631,
       "metrics": {
-        "checkpoint_seconds": 0.147725045,
+        "checkpoint_seconds": 0.012281895000000001,
         "checkpoints": 2,
-        "publication_seconds": 0.00017163,
+        "publication_seconds": 0.000167765,
         "scan_seconds": 0,
-        "verification_seconds": 0.016844588
+        "verification_seconds": 0.023435455
       },
-      "peak_rss_bytes": 87543808,
+      "peak_rss_bytes": 91885568,
       "phases_seconds": {
-        "Downloading": 1.164023536,
-        "Queued": 0.252229357,
-        "Verifying": 0.020121862
+        "Downloading": 1.112303448,
+        "Queued": 0.252648185,
+        "Verifying": 0.020143051
       },
       "resumed": false,
-      "seconds": 1.441638236,
+      "seconds": 1.3909628889999999,
       "segments": 1,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -2454,26 +2445,26 @@
       },
       "connections": {
         "active": 0,
-        "created": 3,
-        "idle": 3,
+        "created": 4,
+        "idle": 4,
         "reused": 6
       },
-      "cpu_seconds": 0.050558,
+      "cpu_seconds": 0.08585799999999999,
       "metrics": {
-        "checkpoint_seconds": 0.154548671,
+        "checkpoint_seconds": 0.011241464,
         "checkpoints": 1,
-        "publication_seconds": 0.000196397,
+        "publication_seconds": 0.000189616,
         "scan_seconds": 0,
-        "verification_seconds": 0.01705082
+        "verification_seconds": 0.023363791
       },
-      "peak_rss_bytes": 87543808,
+      "peak_rss_bytes": 91885568,
       "phases_seconds": {
-        "Downloading": 1.7034353690000001,
-        "Queued": 0.010062273,
-        "Verifying": 0.010063195
+        "Downloading": 1.834267895,
+        "Queued": 0.010069873,
+        "Verifying": 0.020181143
       },
       "resumed": false,
-      "seconds": 1.7282946670000001,
+      "seconds": 1.872389238,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -2527,24 +2518,24 @@
         "active": 0,
         "created": 4,
         "idle": 4,
-        "reused": 6
+        "reused": 5
       },
-      "cpu_seconds": 0.056681999999999996,
+      "cpu_seconds": 0.085811,
       "metrics": {
-        "checkpoint_seconds": 0.15302289,
+        "checkpoint_seconds": 0.012209064,
         "checkpoints": 1,
-        "publication_seconds": 0.000186752,
+        "publication_seconds": 0.000195357,
         "scan_seconds": 0,
-        "verification_seconds": 0.017484546
+        "verification_seconds": 0.023444953
       },
-      "peak_rss_bytes": 87543808,
+      "peak_rss_bytes": 91885568,
       "phases_seconds": {
-        "Downloading": 1.972387628,
-        "Queued": 0.010062954,
-        "Verifying": 0.010065388
+        "Downloading": 1.576445315,
+        "Queued": 0.01006889,
+        "Verifying": 0.020147189
       },
       "resumed": false,
-      "seconds": 1.997735997,
+      "seconds": 1.612288666,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     },
@@ -2598,24 +2589,24 @@
         "active": 0,
         "created": 4,
         "idle": 4,
-        "reused": 6
+        "reused": 5
       },
-      "cpu_seconds": 0.053954,
+      "cpu_seconds": 0.08033,
       "metrics": {
-        "checkpoint_seconds": 0.150365479,
+        "checkpoint_seconds": 0.010676861,
         "checkpoints": 1,
-        "publication_seconds": 0.000173914,
+        "publication_seconds": 0.000200295,
         "scan_seconds": 0,
-        "verification_seconds": 0.017195319
+        "verification_seconds": 0.023472234
       },
-      "peak_rss_bytes": 87543808,
+      "peak_rss_bytes": 91885568,
       "phases_seconds": {
-        "Downloading": 1.9687456380000001,
-        "Queued": 0.010069714,
-        "Verifying": 0.01006648
+        "Downloading": 1.594146502,
+        "Queued": 0.010075984,
+        "Verifying": 0.020144965
       },
       "resumed": false,
-      "seconds": 1.998973189,
+      "seconds": 1.630133514,
       "segments": 4,
       "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
     }
@@ -2648,6 +2639,12 @@
         "path": "/file",
         "version": "1.1",
         "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
         "range": "bytes=25165824-33554431"
       },
       {
@@ -2655,12 +2652,6 @@
         "version": "1.1",
         "method": "GET",
         "range": "bytes=8388608-16777215"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=16777216-33554431"
       },
       {
         "path": "/file",
@@ -2694,13 +2685,13 @@
         "path": "/file",
         "version": "1.1",
         "method": "GET",
-        "range": "bytes=25165824-33554431"
+        "range": "bytes=8388608-16777215"
       },
       {
         "path": "/file",
         "version": "1.1",
         "method": "GET",
-        "range": "bytes=8388608-16777215"
+        "range": "bytes=25165824-33554431"
       },
       {
         "path": "/file",
@@ -2728,12 +2719,6 @@
         "path": "/file",
         "version": "2.0",
         "method": "GET",
-        "range": "bytes=25165824-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "2.0",
-        "method": "GET",
         "range": "bytes=16777216-33554431"
       },
       {
@@ -2744,6 +2729,52 @@
       },
       {
         "path": "/file",
+        "version": "2.0",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
         "version": "1.1",
         "method": "HEAD"
       },
@@ -2854,46 +2885,6 @@
         "path": "/file",
         "version": "1.1",
         "method": "GET",
-        "range": "bytes=8388608-16777215"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=25165824-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-0"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=16777216-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
         "range": "bytes=25165824-33554431"
       },
       {
@@ -2928,7 +2919,7 @@
         "path": "/file",
         "version": "1.1",
         "method": "GET",
-        "range": "bytes=8388608-16777215"
+        "range": "bytes=25165824-33554431"
       },
       {
         "path": "/file",
@@ -2940,7 +2931,7 @@
         "path": "/file",
         "version": "1.1",
         "method": "GET",
-        "range": "bytes=25165824-33554431"
+        "range": "bytes=8388608-16777215"
       },
       {
         "path": "/file",
@@ -2968,6 +2959,12 @@
         "path": "/file",
         "version": "1.1",
         "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
         "range": "bytes=16777216-33554431"
       },
       {
@@ -2975,12 +2972,6 @@
         "version": "1.1",
         "method": "GET",
         "range": "bytes=8388608-16777215"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=25165824-33554431"
       },
       {
         "path": "/basic",
@@ -3132,13 +3123,13 @@
         "path": "/retry",
         "version": "1.1",
         "method": "GET",
-        "range": "bytes=8388608-16777215"
+        "range": "bytes=25165824-33554431"
       },
       {
         "path": "/retry",
         "version": "1.1",
         "method": "GET",
-        "range": "bytes=25165824-33554431"
+        "range": "bytes=8388608-16777215"
       },
       {
         "path": "/retry",
@@ -3193,12 +3184,6 @@
         "method": "GET"
       },
       {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-33554431"
-      },
-      {
         "path": "/proxy.pac",
         "version": "1.1",
         "method": "GET"
@@ -3207,146 +3192,6 @@
         "path": "/file",
         "version": "1.1",
         "method": "GET",
-        "range": "bytes=25165824-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=8388608-16777215"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=16777216-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-0"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-0"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-0"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-0"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=25165824-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=16777216-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=8388608-16777215"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-0"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
         "range": "bytes=0-33554431"
       },
       {
@@ -3360,232 +3205,6 @@
         "version": "1.1",
         "method": "GET",
         "range": "bytes=8388608-16777215"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=25165824-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-0"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=8388608-16777215"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=16777216-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=25165824-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-0"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-0"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-0"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-0"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=16777216-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=8388608-16777215"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=25165824-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-0"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=16777216-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=25165824-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=8388608-16777215"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "HEAD"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-0"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=0-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=8388608-16777215"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=16777216-33554431"
       },
       {
         "path": "/file",
@@ -3697,19 +3316,7 @@
         "path": "/file",
         "version": "1.1",
         "method": "GET",
-        "range": "bytes=8388608-16777215"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=25165824-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=16777216-25165823"
+        "range": "bytes=8396634-16777215"
       },
       {
         "path": "/file",
@@ -3737,6 +3344,12 @@
         "path": "/file",
         "version": "1.1",
         "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
         "range": "bytes=25165824-33554431"
       },
       {
@@ -3748,8 +3361,334 @@
       {
         "path": "/file",
         "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
         "method": "GET",
         "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8396634-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
       },
       {
         "path": "/file",
@@ -3761,13 +3700,13 @@
         "path": "/file",
         "version": "1.1",
         "method": "GET",
-        "range": "bytes=8388608-16777215"
+        "range": "bytes=25165824-33554431"
       },
       {
         "path": "/file",
         "version": "1.1",
         "method": "GET",
-        "range": "bytes=25165824-33554431"
+        "range": "bytes=8388608-16777215"
       },
       {
         "path": "/file",
@@ -3790,12 +3729,6 @@
         "version": "1.1",
         "method": "GET",
         "range": "bytes=0-33554431"
-      },
-      {
-        "path": "/file",
-        "version": "1.1",
-        "method": "GET",
-        "range": "bytes=8388608-16777215"
       },
       {
         "path": "/file",
@@ -3825,7 +3758,59 @@
         "path": "/file",
         "version": "1.1",
         "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
         "range": "bytes=16777216-25165823"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
       }
     ],
     "proxy": 22,
@@ -3835,7 +3820,8 @@
     "maxActive": 9,
     "active": 4
   },
-  "source_revision": "d07e43f00c079c306e3a40baa17bae059757be70",
-  "ci_run": "https://github.com/gduplessy/Downloader/actions/runs/38102452983",
-  "scope": "Transfer fixtures passed; this run has a separate macOS CLI startup failure, repaired in a later revision. Native GUI/install/browser acceptance is separate."
+  "source_revision": "83cdd8fb157ff4b368ccaa90957cb49e8d3029a3",
+  "product_version": "0.2.0",
+  "ci_run": "https://github.com/gduplessy/Downloader/actions/runs/38103251279",
+  "scope": "All jobs in this post-IPC-repair run passed. Native GUI/install/browser acceptance and newer patch fixtures remain separate."
 }

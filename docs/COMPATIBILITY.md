@@ -10,7 +10,7 @@ This is a development build. An implemented workflow is not a verified public re
 | Ubuntu 24.04+ x64       | Engine/client CI passed       | Not yet run              | Not yet run                                  | Not yet run     | Unqualified |
 
 Chrome and Edge use Manifest V3. Firefox uses a separate WebExtension manifest.
-The [engine evidence](TRANSFER_ENGINE.md) records actual protocol, proxy, PAC, ZIP64 and >4 GiB checks on Windows/macOS/Linux. macOS socket permission/rebind and CLI restart now pass CI; the latest native creation/privacy fixture is awaiting cross-platform confirmation. CI source compilation is distinct from installers and visible native workflows; macOS CI is Apple Silicon, not Intel.
+The [engine evidence](TRANSFER_ENGINE.md) records actual protocol, proxy, PAC, ZIP64, >4 GiB and real native-messaging/CLI checks on Windows/macOS/Linux, including macOS socket permission/rebind and service restart. CI source compilation is distinct from installers and visible native workflows; macOS CI is Apple Silicon, not Intel.
 Safari, mobile operating systems, Windows ARM, DRM circumvention, MMS, and system-wide network interception are not supported.
 
 Hosted download pages are navigated in a real browser tab. Countdown timers are respected.
