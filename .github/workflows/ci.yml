@@ -12,9 +12,28 @@ on:
         description: Qualify disk-full, permission and cross-volume recovery on disposable images
         type: boolean
         default: false
+      realm:
+        description: Qualify Linux NTLM and Kerberos against a disposable Samba AD realm
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
+  authentication-realm:
+    if: github.event_name == 'workflow_dispatch' && inputs.realm
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Disposable real AD authentication
+        run: node scripts/qualify-auth-realm.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: authentication-realm-evidence
+          path: .local/auth-realm-results.json
   test:
     strategy:
       fail-fast: false

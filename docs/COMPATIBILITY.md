@@ -11,6 +11,8 @@ This is a development build. An implemented workflow is not a verified public re
 
 Chrome and Edge use Manifest V3. Firefox uses a separate WebExtension manifest.
 The [engine evidence](TRANSFER_ENGINE.md) records actual protocol, proxy, PAC, ZIP64, >4 GiB and real native-messaging/CLI checks on Windows/macOS/Linux, including macOS socket permission/rebind and service restart. CI source compilation is distinct from installers and visible native workflows; macOS CI is Apple Silicon, not Intel.
+
+Ordered PAC failover passes on all three CI platforms. Real filesystem recovery is qualified on Windows NTFS, macOS HFS+ and Linux ext4 disposable images. A Samba AD realm qualifies native Windows NTLM and Docker Debian Linux NTLM/Kerberos. Native macOS authentication, Windows domain-based Kerberos and OS credential-store integration remain separate acceptance rows; see [realm scope](AUTH_REALM.md).
 Safari, mobile operating systems, Windows ARM, DRM circumvention, MMS, and system-wide network interception are not supported.
 
 Hosted download pages are navigated in a real browser tab. Countdown timers are respected.

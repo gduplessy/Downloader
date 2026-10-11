@@ -2,6 +2,14 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.3.3 — Real AD authentication acceptance
+
+- Add a disposable Samba AD realm, Kerberos-only Apache service and domain-backed NTLM endpoint; exercise real authenticated jobs with a volatile fixture credential adapter.
+- Pass nine Linux NTLM/Kerberos checks and four native Windows NTLM checks, including wrong-password/missing-ticket recovery without published output.
+- Add opt-in realm CI, bounded compiler concurrency, generated-secret cleanup and reusable setup instructions.
+- Record passing three-platform PAC and filesystem acceptance; close ENG-06 for the documented NTFS/HFS+/ext4 image matrix. Native SSO/enterprise policy and installer provenance remain explicit.
+- Report the local-only omission of the CI hostname/direct-fallback case and reject invalid fixture selectors.
+
 ## 0.3.2 — Windows fixture stack repair
 
 - Move the filesystem filler buffer to the heap after real Windows CI exposed its default-stack overflow.

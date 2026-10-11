@@ -1,6 +1,6 @@
 # Transfer engine: implementation and evidence
 
-This increment covers ENG-01 through ENG-10. It implements the transfer/control workflows and publishes deterministic evidence; external authentication realms, some native filesystem policies and the IDM comparison remain qualification work. Product major stays at 0 until the full parity release gate is satisfied.
+This increment covers ENG-01 through ENG-10. It implements transfer/control workflows, qualifies ordered PAC and filesystem recovery on three platforms, and tests a real Samba AD realm. Native SSO/managed policies, final installer provenance and the IDM comparison remain qualification work. Product major stays at 0 until the full parity release gate is satisfied.
 
 ## Transfer and recovery rules
 
@@ -23,7 +23,7 @@ Reusable libcurl handles are bounded and keyed by origin, request context, routi
 | Windows system/PAC | Current-user WinHTTP configuration and PAC | Local PAC fixture; enterprise policy/WPAD/bypass matrices remain |
 | macOS system/PAC | CFNetwork settings and bounded PAC callback | Ordered PAC results; managed policy qualification remains |
 | Linux system/PAC | libproxy system resolution; serialized pacparser for explicit PAC | Runtime libraries required; local PAC fixture; desktop policy matrices remain |
-| Authentication | OS keyring references, Basic/Digest and available NTLM/Negotiate | Basic/Digest challenge fixtures; NTLM/Kerberos external realms remain |
+| Authentication | OS keyring references, Basic/Digest and available NTLM/Negotiate | Real Windows/Linux NTLM and Docker Linux Kerberos pass; native SSO/enterprise variants remain |
 
 PAC adapters preserve ordered route lists, bounded to 16 entries per request. Metadata, range fetches and workers advance only on connection/DNS-proxy/timeouts before any response or body; TLS/authentication/source errors never trigger failover. Direct access must appear explicitly in the resolved list. Pool keys include the selected route. Windows uses the [cancellable ordered WinHTTP API](https://learn.microsoft.com/en-us/windows/win32/api/winhttp/nf-winhttp-winhttpgetproxyforurlex), with a twenty-second limit and explicit PAC cache/DirectAccess overrides disabled. An implicit native loopback bypass is refused for explicit PAC, with guidance to choose system/direct routing. PAC scripts are explicitly configured/trusted; downloading them is bounded, but Linux parser execution has no separate timeout. Missing Linux libproxy falls back to libcurl environment routing; explicit PAC requires libpacparser. DEB declares runtime libraries; AppImage packaging still needs acceptance.
 
@@ -46,7 +46,11 @@ Wire version **1** is independent of product versions. Restricted per-user named
 
 ## Recorded evidence
 
-The 0.3.0 Windows follow-up passes six PAC cases with proxy traversal observations. The older numeric-loopback PAC fixture did not check traversal and cannot establish that routing worked; WinHTTP can impose a native loopback bypass. Cross-platform ordered-failover acceptance is still pending.
+The [0.3.1 follow-up](https://github.com/gduplessy/Downloader/actions/runs/38108335654) passes 40 Windows / 41 Unix Rust regressions and 44 Windows / 43 Unix network/performance cases. PAC checks assert actual traversal, ordered failover, explicit direct fallback and exhausted/TLS/authentication refusal. The older numeric-loopback PAC fixture did not check traversal and cannot establish that routing worked; WinHTTP can impose a native loopback bypass.
+
+[Filesystem CI on 0.3.2](https://github.com/gduplessy/Downloader/actions/runs/38108936320) passes actual disk-full/restart, readonly-file refusal/recovery and cross-volume publication/collision preservation on NTFS, HFS+ and ext4 disposable images. Windows required a heap buffer in the fixture; the earlier stack-overflow attempt is not passing acceptance.
+
+The [disposable AD realm](AUTH_REALM.md) passes nine Linux NTLM/Kerberos and four Windows NTLM checks. Complete jobs verify 1,028,096 bytes against SHA-256 `08e33aedf25337c87eb15e08c32a58f6f4caa21fe073d00b53014c57f8d148e0`; wrong passwords and absent tickets cannot publish output. Docker Linux uses Debian/libcurl 7.88.1/OpenSSL 3.0.22. A volatile fixture credential adapter avoids modifying host keyrings; it does not qualify native credential-store integration or macOS/Windows domain-based Kerberos.
 
 Tests are deterministic local fixtures, not proof of universal server/browser support. The [acceptance record](ACCEPTANCE.md) and [compatibility matrix](COMPATIBILITY.md) distinguish source builds from native GUI, browser and installer acceptance.
 
@@ -62,7 +66,7 @@ Tests are deterministic local fixtures, not proof of universal server/browser su
 | macOS Apple Silicon | 8.7.1 / SecureTransport, LibreSSL 3.3.6 | Reported available; protocol fixtures passed |
 | Ubuntu 24.04 x64 | 8.5.0 / OpenSSL 3.0.13 | Reported available; protocol fixtures passed |
 
-Capability flags do not establish external NTLM/Kerberos realm acceptance or final installer dependency provenance. The application accepts only HTTP/HTTPS/FTP/FTPS even if the linked curl reports additional protocols.
+Capability flags alone do not establish realm acceptance. The tested real-realm clients are identified above; native SSO and final installer dependency provenance remain separate. The application accepts only HTTP/HTTPS/FTP/FTPS even if linked curl reports additional protocols.
 
 ### Actual large file and ZIP64
 
@@ -121,12 +125,12 @@ node scripts/qualify-control.mjs .local/control-qualification
 
 On PowerShell, set `$env:CARGO_TARGET_DIR = "$PWD/.local/engine-target"` before building. It also selects the CLI target for the control fixture. `OPENSSL`, `QUALIFY_BINARY` and `CLI_BINARY` can override executable paths. Use a fresh output folder for each run. Large fixtures use over 4 GiB of space; the completed output and partial state can temporarily coexist.
 
-CI `workflow_dispatch` with `large=true` runs the large fixture on every matrix platform. Normal pushes run crash/protocol/performance/control fixtures. Artifacts separate transfer and IPC evidence. After confirming IDM is responsive, use `--only __none__ --idm "FULL_PATH_TO_IDMan.exe"` for an isolated IDM attempt.
+CI `workflow_dispatch` supports `large=true`, `filesystem=true` and `realm=true`. The realm runs a separate disposable Linux client; Windows hosts additionally test their native NTLM runner locally. Normal pushes run crash/protocol/performance/control fixtures. Local network runs record one skipped named direct-fallback case; disposable CI runners provision its hostname and execute it. Artifacts separate transfer, realm and IPC evidence. After confirming IDM is responsive, use `--idm-only --idm "FULL_PATH_TO_IDMan.exe"` for an isolated IDM attempt.
 
 ## Remaining engine qualification
 
-- Actual disk-full/permission/cross-volume failure matrices beyond injected I/O, locked-file, symlink/hardlink, collision and staged-copy regressions.
-- External NTLM/Negotiate/Kerberos realms; platform system proxy/WPAD/PAC failure policies and all-platform ordered-failover qualification, shipped installer/AppImage library provenance.
+- Native macOS authentication, Windows domain-based Kerberos, proxy SSO and managed system/WPAD/PAC policies beyond the qualified fixture clients.
+- Filesystems beyond the documented NTFS/HFS+/ext4 image matrix, and final shipped installer/AppImage library provenance.
 - Intel macOS remains a separate launch target from the Apple Silicon CI runner.
 - Successful identical-fixture IDM comparison. Stable-browser source refresh and desktop GUI acceptance remain in WEB/UI/REL gates.
 
