@@ -14,9 +14,9 @@ The [engine evidence](TRANSFER_ENGINE.md) records actual protocol, proxy, PAC, Z
 Safari, mobile operating systems, Windows ARM, DRM circumvention, MMS, and system-wide network interception are not supported.
 
 Hosted download pages are navigated in a real browser tab. Countdown timers are respected.
-CAPTCHA, sign-in, payment, and ambiguous buttons require user interaction.
+Custom CAPTCHA, sign-in, payment, and ambiguous buttons require user interaction.
 Non-replayable POST, blob, and one-use requests remain browser-managed.
-No automatic premium purchase, CAPTCHA bypass, or anti-bot evasion is performed.
+Optional loopback FlareSolverr integration attempts recognized browser protection once after opt-in and supports manual retry. The pinned 3.4.6 Linux amd64 image was qualified on Docker Desktop/Windows using a generated GET/cookie fixture and a hash-verified range/resume transfer. This does not establish live Cloudflare, g4u CAPTCHA or downstream-host compatibility. See [solver qualification](FLARESOLVERR_QUALIFICATION.md) and [Docker setup](FLARESOLVERR_DOCKER.md). Premium purchase and custom CAPTCHA automation remain unsupported.
 
 Current exclusions and unsupported workflows are tracked in the [complete roadmap](ROADMAP.md), including challenge automation/bypass research, premium/authorized protected-content integration, POST/blob/one-use transfer paths, Safari/mobile/ARM, legacy protocols, and system-wide interception. Roadmap inclusion does not change this preview's support matrix.
 

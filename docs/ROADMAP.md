@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.5.0<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.5.1<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks the limitations stated in the README, implementation status, compatibility matrix, acceptance evidence, and component notices. It explicitly includes currently unsupported capabilities, including **CAPTCHA automation / bypass**.
 
@@ -25,7 +25,7 @@ The initial release still targets Windows 11 x64, macOS 14+ Intel and Apple Sili
 | NAV-11 | Profile claims lack comprehensive privacy/container qualification    | Test private browsing, separate profiles, Firefox containers, partitioned cookies, competing workers, claim transfer, and extension-worker restart. Navigation context must never cross an unintended session boundary.                                                                                                                                                             | Qualification           |
 | NAV-12 | Browser-driven rendered discovery is unfinished                      | Add extension-controlled discovery tabs, user-visible navigation state, and resume when a browser becomes available. Keep rendered discovery and final download handoff under the same session ownership rules.                                                                                                                                                                     | Planned                 |
 
-FlareSolverr service, owned navigation, desktop configuration, extension retry and six-locale recovery messages are implemented with deterministic lifecycle fixtures. Live qualification remains open. See [the implementation plan](FLARESOLVERR_PLAN.md).
+FlareSolverr service, owned navigation, desktop configuration, extension retry and six-locale recovery messages are implemented. The pinned local Docker deployment passed generated rendered-GET/cookie resolution and a SHA-256-verified 2 MiB range/resume fixture. Real browser-challenge clearance, custom CAPTCHA, fresh g4u links and downstream hosts remain unqualified. See [qualification](FLARESOLVERR_QUALIFICATION.md), [Docker setup](FLARESOLVERR_DOCKER.md), [CAPTCHA research](CAPTCHA_RESEARCH.md) and [the implementation plan](FLARESOLVERR_PLAN.md).
 
 ## 2. Transfer engine, correctness, and networking
 

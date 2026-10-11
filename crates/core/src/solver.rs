@@ -132,7 +132,7 @@ impl SolverContext {
                 domain_match
                     && path_match
                     && (!c.secure || target.scheme() == "https")
-                    && c.expires.is_none_or(|n| n <= 0.0 || n > now)
+                    && c.expires.is_none_or(|n| n < 0.0 || n > now)
             })
             .collect();
         cookies.sort_by_key(|c| std::cmp::Reverse(c.path.len()));
@@ -584,6 +584,28 @@ pub fn is_html(content_type: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn stalled_api_times_out_and_pre_cancelled_api_is_rejected() {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let settings = SolverSettings {
+            endpoint: format!("http://{}/", listener.local_addr().unwrap()),
+            timeout_seconds: 1,
+            ..Default::default()
+        };
+        std::thread::spawn(move || {
+            let (_stream, _) = listener.accept().unwrap();
+            std::thread::sleep(Duration::from_secs(7));
+        });
+        let error = api(&settings, None, &AtomicU8::new(0)).unwrap_err();
+        assert_eq!(outcome(&error.to_string()), "solver_timeout");
+        let settings = endpoint(b"{}".to_vec(), 200);
+        assert_eq!(
+            api(&settings, None, &AtomicU8::new(2))
+                .unwrap_err()
+                .to_string(),
+            "operation_cancelled"
+        );
+    }
     fn endpoint(body: Vec<u8>, status: u16) -> SolverSettings {
         use std::io::{Read, Write};
         let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
@@ -651,6 +673,15 @@ mod tests {
         let s: SolverSettings = serde_json::from_str("{}").unwrap();
         assert!(!s.enabled);
         assert!(s.validate().is_ok());
+        let mut legacy = serde_json::to_value(Settings::default()).unwrap();
+        legacy.as_object_mut().unwrap().remove("solver");
+        let legacy: Settings = serde_json::from_value(legacy).unwrap();
+        assert!(!legacy.solver.enabled);
+        assert_eq!(legacy.solver.endpoint, "http://localhost:9191/");
+        assert_eq!(legacy.solver.timeout_seconds, 60);
+        let untrusted: RequestContext =
+            serde_json::from_value(json!({"solver":{"cookies":"secret"}})).unwrap();
+        assert!(untrusted.solver.is_none());
         for endpoint in ["http://127.0.0.1:9191/", "http://[::1]:9191/"] {
             assert!(SolverSettings {
                 endpoint: endpoint.into(),
@@ -694,7 +725,7 @@ mod tests {
                     domain: "files.example.test".into(),
                     path: "/".into(),
                     secure: false,
-                    expires: Some(1.0),
+                    expires: Some(0.0),
                 },
             ],
         };

@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.5.1 — Qualified Docker setup and challenge limits
+
+- Publish the pinned Compose deployment, Docker walkthrough, measured real-service fixture evidence and g4u/CoordinatesTask research gates.
+- Add an opt-in isolated qualification script for rendered GET resolution, cookie/User-Agent propagation, range pause/resume, SHA-256 and zero-byte unsupported-page refusal.
+- Verify stalled/cancelled API handling and reject epoch-expired cookies. Live Cloudflare clearance, fresh g4u links and downstream hosts remain unqualified; no paid calls were made.
+
 ## 0.5.0 — Solver configuration and recovery
 
 - Add desktop enablement, loopback endpoint and timeout controls, connection testing with service version, and manual desktop/extension solver actions.

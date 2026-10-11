@@ -17,6 +17,16 @@ Recorded locally on Windows x64 and in platform CI, 2026-10-10/11. This records 
 
 ## Actual browser and native evidence
 
+### FlareSolverr increment (0.5.1)
+
+- Rust: 26 core units, 7 solver lifecycle integrations, 15 transfer/recovery integrations and 3 service units pass (51 total); four subprocess helpers remain ignored entry points invoked by parent regressions. Fault injection is enabled. The new settings-event projection assertion verifies that only notification metadata reaches the browser.
+- TypeScript: 14 extension and 6 desktop tests pass (20 total), including identical nonempty keys across all six locales. Type checks and client builds pass. Rust formatting, Clippy with warnings denied, CLI/service builds and Windows native desktop source compilation pass.
+- Existing local FlareSolverr and a separately created pinned Docker deployment passed three valid generated 2 MiB rendered-GET/cookie, matching User-Agent, range pause/resume and SHA-256 transfers. Three CAPTCHA and three expiry fixture requests stopped with zero bytes. [Detailed stage evidence and timing](FLARESOLVERR_QUALIFICATION.md) distinguish readiness, rendering, source resolution and transfer completion.
+- The isolated Compose deployment was healthy, loopback-bound and configured with HTML logging disabled. Native IPC regression passed creation projection/idempotency, snapshot-first sequencing, pause/resume and completed-state persistence after restart.
+- Real Cloudflare clearance, actual g4u CAPTCHA submissions, fresh links, downstream hosts, new visible desktop settings interactions and cross-platform/browser acceptance remain unqualified. No paid CAPTCHA requests or external uploads were made.
+
+### Earlier hosted-page preview
+
 - Unpacked Chromium extension in an isolated Chrome for Testing profile; permissions granted only for 127.0.0.1, with no history or all-site grant.
 - Hosted fixture: free download link, 3-second countdown, enabled final GET form, HttpOnly session cookie, temporary token and 12 MiB output.
 - Desktop job 30c6b97e-b7b2-4387-9338-f3aea20a12eb completed with SHA-256 b6967a4c54cdab8a16907be0774af71e5db8198045f91933ebed106ddba22dfb. Browser download was paused and subsequently cancelled after viable desktop acceptance.
