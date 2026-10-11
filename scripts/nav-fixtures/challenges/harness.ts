@@ -110,73 +110,107 @@ async function run() {
     });
     iframe.remove();
   }
-  // Cancellation while authorization is pending must produce no form submission.
-  const iframe = await load('g4u'),
-    doc = iframe.contentDocument!;
-  let shadow: ShadowRoot | undefined;
-  const original = doc.createElement.bind(doc);
-  doc.createElement = ((tag: string, options: any) => {
-    const el = original(tag, options);
-    if (tag === 'div') {
-      const attach = el.attachShadow.bind(el);
-      el.attachShadow = (init) => {
-        const root = attach(init);
-        if (init.mode === 'closed') shadow = root;
-        return root;
-      };
-    }
-    return el;
-  }) as typeof doc.createElement;
-  let authorizeResolve: (v: boolean) => void = () => {},
-    attempts = 0;
-  doc.querySelector('form')!.addEventListener('submit', (e) => {
-    e.preventDefault();
-    attempts++;
-  });
-  const ctx: any = {
-    tabId: 1,
-    frameId: 0,
-    scope: {
-      browser: 'chromium',
-      profile,
-      private: false,
-      cookie_store_id: null,
-      container_id: null,
-      partition_key: null,
-      claim_generation: 1,
-    },
-    sourceGeneration: 1,
-    selectedHost: 'gofile.io',
-    locale: 'en',
-  };
-  const handle = await showChallenge(
-    doc,
-    {
-      context: async () => ctx,
-      authorize: async () =>
-        new Promise((resolve) => {
-          authorizeResolve = resolve;
-        }),
-      paid: async () => {
-        throw Error('zero');
+
+  const staleRows: any[] = [];
+  for (const scenario of [
+    'cancel',
+    'csrf',
+    'host',
+    'form_action',
+    'image_replacement',
+    'expiry',
+    'claim',
+    'source',
+  ]) {
+    const iframe = await load('g4u'),
+      doc = iframe.contentDocument!;
+    let shadow: ShadowRoot | undefined;
+    const original = doc.createElement.bind(doc);
+    doc.createElement = ((tag: string, options: any) => {
+      const el = original(tag, options);
+      if (tag === 'div') {
+        const attach = el.attachShadow.bind(el);
+        el.attachShadow = (init) => {
+          const root = attach(init);
+          if (init.mode === 'closed') shadow = root;
+          return root;
+        };
+      }
+      return el;
+    }) as typeof doc.createElement;
+    let authorizeResolve: (v: boolean) => void = () => {},
+      pending = false,
+      attempts = 0;
+    doc.querySelector('form')!.addEventListener('submit', (e) => {
+      e.preventDefault();
+      attempts++;
+    });
+    const ctx: any = {
+      tabId: 1,
+      frameId: 0,
+      scope: {
+        browser: 'chromium',
+        profile,
+        private: false,
+        cookie_store_id: null,
+        container_id: null,
+        partition_key: null,
+        claim_generation: 1,
       },
-    },
-    1,
-    () => {},
-  );
-  Array.from(shadow!.querySelectorAll('button'))
-    .find((b) => b.textContent === 'Solve locally')!
-    .click();
-  await new Promise((resolve) => setTimeout(resolve, 50));
-  handle!.close();
-  authorizeResolve(true);
-  await new Promise((resolve) => setTimeout(resolve, 50));
-  if (attempts) throw Error('Cancelled submission occurred');
-  iframe.remove();
+      sourceGeneration: 1,
+      selectedHost: 'gofile.io',
+      locale: 'en',
+    };
+    const handle = await showChallenge(
+      doc,
+      {
+        context: async () => ctx,
+        authorize: async () =>
+          new Promise((resolve) => {
+            pending = true;
+            authorizeResolve = resolve;
+          }),
+        paid: async () => {
+          throw Error('zero');
+        },
+      },
+      1,
+      () => {},
+    );
+    Array.from(shadow!.querySelectorAll('button'))
+      .find((b) => b.textContent === 'Solve locally')!
+      .click();
+    const deadline = Date.now() + 5000;
+    while (!pending && Date.now() < deadline)
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    if (!pending) throw Error('Authorization did not begin');
+    if (scenario === 'cancel') handle!.close();
+    if (scenario === 'csrf')
+      doc.querySelector<HTMLInputElement>('input[name=csrf]')!.value = 'changed';
+    if (scenario === 'host')
+      doc.querySelector<HTMLInputElement>('input[name=selected_host]')!.value = 'ddownload.com';
+    if (scenario === 'form_action')
+      doc.querySelector<HTMLFormElement>('form')!.action = '/unexpected';
+    if (scenario === 'image_replacement') {
+      const image = doc.querySelector('img')!;
+      image.replaceWith(image.cloneNode(true));
+    }
+    if (scenario === 'expiry')
+      doc.querySelector<HTMLImageElement>('img')!.dataset.expiresAt = String(Date.now() - 1);
+    if (scenario === 'claim') ctx.scope = { ...ctx.scope, claim_generation: 2 };
+    if (scenario === 'source') ctx.sourceGeneration = 2;
+    authorizeResolve(true);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    if (attempts) throw Error('Stale submission occurred:' + scenario);
+    staleRows.push({ scenario, submissions: attempts });
+    handle!.close();
+    iframe.remove();
+  }
   return {
     fixture: 'synthetic-challenge-dom-v1',
     rows,
-    cancelled_submissions: attempts,
+    cancelled_submissions: 0,
+    stale_rows: staleRows,
     browser: navigator.userAgent,
     qualification:
       'DOM production module; mocked worker authorization; fetch bytes are not native desktop acceptance',

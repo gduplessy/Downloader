@@ -72,6 +72,7 @@ const binding: ChallengeBinding = {
   selectedHost: 'gofile.io',
   imageDigest: 'image',
   csrfDigest: 'csrf',
+  formDigest: 'form',
   expiresAt: 100,
 };
 describe('submission lifecycle', () => {
@@ -105,4 +106,3 @@ describe('submission lifecycle', () => {
     expect(() => other.authorize(binding, binding, 1)).toThrow('already');
   });
 });
-

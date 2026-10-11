@@ -7,6 +7,7 @@ export type ChallengeBinding = {
   selectedHost: string;
   imageDigest: string;
   csrfDigest: string;
+  formDigest: string;
   expiresAt: number;
 };
 export class ChallengeGate {

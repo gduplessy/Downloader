@@ -44,7 +44,8 @@ export function challengeHandler(deps: ChallengeDependencies) {
       deps.now() >= binding.expiresAt ||
       binding.expiresAt > deps.now() + 10 * 60 * 1000 ||
       !/^([a-f0-9]{64})$/.test(binding.imageDigest) ||
-      !/^([a-f0-9]{64})$/.test(binding.csrfDigest)
+      !/^([a-f0-9]{64})$/.test(binding.csrfDigest) ||
+      !/^([a-f0-9]{64})$/.test(binding.formDigest)
     )
       throw Error('challenge_session_rejected');
     return owned;

@@ -17,6 +17,7 @@ const initial: ChallengeBinding = {
   selectedHost: 'gofile.io',
   imageDigest: 'a'.repeat(64),
   csrfDigest: 'b'.repeat(64),
+  formDigest: 'c'.repeat(64),
   expiresAt: 10000,
 };
 const sender = { tabId: 5, frameId: 0, page: initial.page };

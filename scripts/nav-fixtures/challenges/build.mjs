@@ -10,3 +10,13 @@ await build({
   target: 'es2022',
   outfile: '.local/nav-challenges/harness.js',
 });
+
+await build({
+  entryPoints: ['scripts/nav-fixtures/challenges/controls.tsx'],
+  bundle: true,
+  format: 'esm',
+  target: 'es2022',
+  jsx: 'automatic',
+  nodePaths: [process.cwd() + '/apps/desktop/node_modules'],
+  outfile: '.local/nav-challenges/controls.js',
+});

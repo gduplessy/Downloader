@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.10.1<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.10.2<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -265,3 +265,5 @@ Browser stream foundations now support owner-fenced durable original-response wr
 Local image challenges: qualified open-circle geometry and optional disabled-by-default 2Captcha accounting are implemented; see docs/evidence/nav-challenges/README.md for synthetic and pending browser/live acceptance.
 
 Challenge recovery 0.10.1 adds bounded service-owned paid accounting, source/claim task fences, current desktop budget controls and runnable four-host local fixtures; recorded evidence distinguishes mocked-worker DOM from real CLI desktop bytes.
+
+Challenge control qualification 0.10.2 covers production React FlareSolverr settings through isolated native state and eight browser stale-answer cases. Installed extension navigation remains the next integration gate.

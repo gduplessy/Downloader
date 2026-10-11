@@ -18,6 +18,10 @@ Service reconciliation resumes durable task IDs after worker or daemon restart. 
 
 Installed worker/native-port challenge acceptance, visible production desktop/extension controls, true browser-challenge clearance, live host/account acceptance, and paid-provider acceptance remain pending. The DOM harness plus separate CLI transfer does not close the installed navigation path.
 
+- [Production solver controls](solver-controls-windows-x64.json): actual React controls backed by an isolated native CLI/service. Enable/save, fake-local-health test, stale-setting invalidation, disable/save and daemon restart pass. A fake readiness result is not challenge clearance.
+- Eight DOM cases produce zero stale submissions: cancellation, CSRF change, hidden host change, form action change, image replacement, expiry, claim change, and source change.
+- Official [CoordinatesTask documentation](https://2captcha.com/api-docs/coordinates) rechecked through gstack on 2026-10-11 confirms image limits, create/poll, click bounds and cost fields. No live API request was made.
+
 ## Reproduce
 
 1. Run node scripts/nav-fixtures/challenges/corpus.mjs.
@@ -25,5 +29,7 @@ Installed worker/native-port challenge acceptance, visible production desktop/ex
 3. Keep node scripts/nav-fixtures/challenges/server.mjs running.
 4. Through gstack browse, navigate to the printed loopback base and evaluate window.runChallenges(). Save returned JSON to .local/nav-challenges/dom-result.json.
 5. Run node scripts/nav-fixtures/challenges/desktop.mjs while the same fixture server remains running.
+
+For production settings, keep node scripts/nav-fixtures/challenges/controls-server.mjs running, navigate through gstack to its printed loopback URL and evaluate window.runSolverControls().
 
 Run focused tests with pnpm --filter @downloader/extension test -- challenges and cargo test -p downloader-core captcha::.

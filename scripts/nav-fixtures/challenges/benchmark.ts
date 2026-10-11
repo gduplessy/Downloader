@@ -63,4 +63,3 @@ const report = {
 };
 writeFileSync('.local/nav-challenges/corpus-result.json', JSON.stringify(report, null, 2) + '\n');
 console.log(JSON.stringify(report, null, 2));
-

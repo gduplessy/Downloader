@@ -41,11 +41,23 @@ export function discover(doc: Document) {
     !/open circle/i.test(instruction)
   )
     return null;
+  const hostInput = form.querySelector<HTMLInputElement>('input[name=selected_host]');
+  if (
+    !hostInput ||
+    form.method.toLowerCase() !== 'post' ||
+    new URL(form.action).origin !== doc.location.origin ||
+    submit.hasAttribute('formaction') ||
+    submit.hasAttribute('formmethod') ||
+    form.querySelector('input[type=file]')
+  )
+    return null;
+  for (const name of ['csrf', 'captcha_x', 'captcha_y', 'selected_host'])
+    if (form.querySelectorAll('input[name=' + name + ']').length !== 1) return null;
   const width = image.naturalWidth,
     height = image.naturalHeight;
   if (doc.defaultView!.getComputedStyle(image).objectFit !== 'fill') return null;
   if (width > 1000 || height > 1000 || width < 32 || height < 32) return null;
-  return { image, form, x, y, csrf, submit, instruction, width, height };
+  return { image, form, x, y, csrf, submit, instruction, width, height, hostInput };
 }
 export async function showChallenge(
   doc: Document,
@@ -59,6 +71,7 @@ export async function showChallenge(
     !found ||
     !ctx ||
     !ctx.selectedHost ||
+    found.hostInput.value !== ctx.selectedHost ||
     !Number.isSafeInteger(ctx.sourceGeneration) ||
     ctx.sourceGeneration < 1
   )
@@ -82,13 +95,20 @@ export async function showChallenge(
   const expiry = Number(found.image.dataset.expiresAt);
   if (!Number.isSafeInteger(expiry) || expiry <= Date.now()) return null;
   const capture = async (current: Context): Promise<ChallengeBinding> => ({
-    scope: current.scope,
+    scope: structuredClone(current.scope),
     sourceGeneration: current.sourceGeneration,
     documentGeneration,
     page: doc.location.href,
     selectedHost: current.selectedHost ?? '',
     imageDigest: await digest(found.image.currentSrc + '|' + dataUrl),
     csrfDigest: await digest(found.csrf.value),
+    formDigest: await digest(
+      JSON.stringify({
+        action: found.form.action,
+        method: found.form.method,
+        fields: Array.from(new FormData(found.form).entries()),
+      }),
+    ),
     expiresAt: expiry,
   });
   const initial = await capture(ctx);
@@ -112,10 +132,12 @@ export async function showChallenge(
   const status = doc.createElement('p');
   status.setAttribute('role', 'status');
   panel.append(status);
+  const previous = doc.activeElement as HTMLElement | null;
   const close = () => {
     controller.abort();
     gate.cancel(initial);
     host.remove();
+    if (previous?.isConnected) previous.focus();
     if (paidBinding) void bridge.paid('cancel', initial).catch(() => {});
   };
   const fresh = async () => {
@@ -255,5 +277,6 @@ export async function showChallenge(
   });
   controller.signal.addEventListener('abort', () => observer.disconnect(), { once: true });
   doc.documentElement.append(host);
+  panel.querySelector<HTMLButtonElement>('button')?.focus();
   return { close };
 }

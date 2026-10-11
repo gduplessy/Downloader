@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.10.1<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.10.2<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -165,3 +165,5 @@ NAV-07/08/09/11 implementation increment (0.7.0): durable direct-response receiv
 NAV-13 increment 0.10.0: local geometry/lifecycle and durable mocked paid-provider accounting implemented. Browser submission, fresh selected-host links, intended-hash and live acceptance remain separate pending gates.
 
 NAV-01 local Rust solver lifecycle: 7/7 fixtures pass. NAV-13 synthetic corpus 120/120 unique accepted-correct images, 80/80 negative abstentions; 4/4 fresh selected-host desktop files match intended SHA256. Installed extension challenge path and live/paid qualification remain pending.
+
+NAV-01 production settings controls: local enable/save/test/stale-setting invalidation/disable/restart pass in the browser component harness backed by isolated native state. NAV-13 form/host/occlusion fences pass eight stale DOM cases with zero submissions. Installed extension acceptance remains pending.

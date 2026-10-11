@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.2
+
+- Bind image challenge submissions to complete form state and selected-host fields, reject occluded targets, and preserve immutable session snapshots.
+- Qualify production React FlareSolverr settings against isolated native state, including save/test/stale result/disable/restart; eight stale browser lifecycle cases submit zero forms.
+
+
 ## 0.10.1
 
 - Add service restart/late-result reconciliation with source/claim-bound paid tasks, actual image dimension checks, translated budget controls and strict worker authorization.

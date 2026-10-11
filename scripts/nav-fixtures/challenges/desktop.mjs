@@ -81,11 +81,17 @@ try {
       native_desktop_state: completed.state,
     });
   }
+  const diagnostics = await call('diagnostics');
   const evidence = {
     fixture: 'challenge-fresh-link-desktop-v1',
     browser: dom.browser,
+    native_product_version: diagnostics.version,
+    cli_sha256: createHash('sha256')
+      .update(await readFile(cli))
+      .digest('hex'),
     rows,
     cancelled_submissions: dom.cancelled_submissions,
+    stale_rows: dom.stale_rows,
     qualification:
       'Production page module with mocked worker; extracted fresh links then real CLI desktop transfer. Installed worker/navigation path still pending.',
   };

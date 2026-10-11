@@ -731,7 +731,7 @@ function AddModal({
     </Modal>
   );
 }
-function SettingsPage({ settings, t, run }: { settings: Settings; t: T; run: Run }) {
+export function SettingsPage({ settings, t, run }: { settings: Settings; t: T; run: Run }) {
   const [value, setValue] = useState(settings),
     [saved, setSaved] = useState(false),
     [id, setId] = useState(''),
