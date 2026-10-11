@@ -10,6 +10,7 @@ export type Control = Candidate & {
   group?: string;
   order: number;
   fixture?: boolean;
+  premium?: boolean;
   contextualText?: string;
 };
 export type EvidenceCandidate = Control & {
@@ -113,6 +114,7 @@ export function inspectCandidates(
     blocked?: boolean;
     countdown?: boolean;
     allowPageBlob?: boolean;
+    allowPremium?: boolean;
   } = {},
 ): Inspection {
   const adapter = matchAdapter(url, options.disabledAdapters);
@@ -134,10 +136,14 @@ export function inspectCandidates(
     const evidence: string[] = [];
     if (!c.visible) rejections.push('hidden');
     if (c.disabled) rejections.push('disabled');
-    if (forbidden.test([c.text, c.contextualText, target].join(' ')))
+    const premiumAuthorized = options.allowPremium === true && adapter.qualification === 'synthetic' && c.premium === true && c.fixture === true;
+    const forbiddenText = premiumAuthorized ? [c.text, c.contextualText, target].join(' ').replace(/premium/gi, '') : [c.text, c.contextualText, target].join(' ');
+    if (forbidden.test(forbiddenText))
       rejections.push('ad-purchase-premium-or-torrent');
     if (target && !destination && !blob) rejections.push('unsafe-destination');
     if (blob) evidence.push('same-origin-scoped-blob');
+    if (premiumAuthorized) evidence.push('qualified-selected-session-entitlement');
+    if (c.premium && !premiumAuthorized) rejections.push('premium-entitlement-required');
     if (
       selectedHost &&
       c.panelHost?.toLowerCase() !== selectedHost &&

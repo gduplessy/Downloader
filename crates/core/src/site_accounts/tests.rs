@@ -1,0 +1,319 @@
+use super::*;
+use std::cell::RefCell;
+#[derive(Default)]
+struct FakeVault(RefCell<HashMap<String, (String, String)>>);
+impl Vault for FakeVault {
+    fn write(&self, id: &str, u: &str, p: &str) -> Result<()> {
+        self.0.borrow_mut().insert(id.into(), (u.into(), p.into()));
+        Ok(())
+    }
+    fn read(&self, id: &str) -> Result<(String, String)> {
+        self.0
+            .borrow()
+            .get(id)
+            .cloned()
+            .ok_or_else(|| anyhow::anyhow!("missing"))
+    }
+    fn delete(&self, id: &str) -> Result<()> {
+        self.0.borrow_mut().remove(id);
+        Ok(())
+    }
+}
+fn scope() -> SessionScope {
+    SessionScope {
+        browser: "chromium".into(),
+        profile: uuid::Uuid::new_v4().to_string(),
+        private: false,
+        cookie_store_id: Some("0".into()),
+        container_id: None,
+        partition_key: None,
+        claim_generation: 1,
+    }
+}
+fn account(scope: SessionScope) -> Account {
+    Account {
+        id: uuid::Uuid::new_v4().to_string(),
+        label: "Fixture Alice".into(),
+        origin: "http://127.0.0.1:18783".into(),
+        provider: "local-fixture".into(),
+        account_id: "alice".into(),
+        scope,
+        saved_fill: false,
+        credential_ref: None,
+    }
+}
+fn form() -> FormProof {
+    FormProof {
+        tab_id: 10,
+        frame_id: 0,
+        origin: "http://127.0.0.1:18783".into(),
+        page: "http://127.0.0.1:18783/nav-adapters/ddownload/login".into(),
+        action: "http://127.0.0.1:18783/nav-adapters/ddownload/login".into(),
+        adapter_id: "local-fixture".into(),
+        adapter_version: "1.0.0".into(),
+        fingerprint: "a".repeat(64),
+        document_generation: 1,
+        document_id: Some("fixture-document".into()),
+        username_name: "username".into(),
+        password_name: "password".into(),
+    }
+}
+#[test]
+fn passwords_only_in_vault_and_identity_immutable() {
+    let dir = tempfile::tempdir().unwrap();
+    let store = Store::open(&dir.path().join("db")).unwrap();
+    let vault = FakeVault::default();
+    let mut a = account(scope());
+    a.saved_fill = true;
+    let saved = save(
+        &store,
+        a.clone(),
+        Some("test-secret-never-persisted".into()),
+        &vault,
+    )
+    .unwrap();
+    assert_eq!(
+        vault
+            .read(saved.credential_ref.as_ref().unwrap())
+            .unwrap()
+            .1,
+        "test-secret-never-persisted"
+    );
+    assert!(
+        !serde_json::to_string(&store.all::<Account>("site_account").unwrap())
+            .unwrap()
+            .contains("test-secret")
+    );
+    a.scope.container_id = Some("firefox-container-2".into());
+    assert!(save(&store, a, None, &vault).is_err());
+    let forged = Account {
+        credential_ref: Some("other-service".into()),
+        ..account(scope())
+    };
+    assert!(save(&store, forged, None, &vault).is_err());
+}
+#[test]
+fn private_selection_is_ephemeral_and_private_password_rejected() {
+    let dir = tempfile::tempdir().unwrap();
+    let db = dir.path().join("db");
+    let store = Store::open(&db).unwrap();
+    let vault = FakeVault::default();
+    let mut s = scope();
+    s.private = true;
+    let a = account(s);
+    assert!(save(&store, a.clone(), Some("secret".into()), &vault).is_err());
+    save(&store, a, None, &vault).unwrap();
+    assert_eq!(store.all::<Account>("site_account").unwrap().len(), 1);
+    drop(store);
+    assert!(Store::open(&db)
+        .unwrap()
+        .all::<Account>("site_account")
+        .unwrap()
+        .is_empty());
+}
+#[test]
+fn forms_fail_closed_for_frames_origin_fields_live_layouts() {
+    let a = account(scope());
+    let f = form();
+    proof(&f, &a, true).unwrap();
+    for changed in [
+        FormProof {
+            frame_id: 1,
+            ..f.clone()
+        },
+        FormProof {
+            origin: "https://evil.invalid".into(),
+            ..f.clone()
+        },
+        FormProof {
+            action: "https://evil.invalid/login".into(),
+            ..f.clone()
+        },
+        FormProof {
+            password_name: "payment".into(),
+            ..f.clone()
+        },
+        FormProof {
+            adapter_version: "2.0.0".into(),
+            ..f.clone()
+        },
+    ] {
+        assert!(proof(&changed, &a, true).is_err());
+    }
+    let live = Account {
+        origin: "https://ddownload.com".into(),
+        provider: "ddownload".into(),
+        ..a
+    };
+    let f = FormProof {
+        origin: live.origin.clone(),
+        page: format!("{}/login", live.origin),
+        action: format!("{}/login", live.origin),
+        ..f
+    };
+    assert!(proof(&f, &live, true).is_err());
+}
+fn setup() -> (tempfile::TempDir, Arc<Engine>, String, Account) {
+    let dir = tempfile::tempdir().unwrap();
+    let engine = Engine::open(dir.path()).unwrap();
+    let a = account(scope());
+    let owner = a.scope.profile.clone();
+    let value = engine
+        .command(crate::Command::Navigate(crate::AddJob {
+            request_id: uuid::Uuid::new_v4().to_string(),
+            url: form().page,
+            filename: None,
+            directory: None,
+            queue: None,
+            checksum: None,
+            paused: true,
+            context: crate::RequestContext {
+                profile: Some(owner.clone()),
+                ..Default::default()
+            },
+            media: None,
+            description: String::new(),
+        }))
+        .unwrap();
+    let id = value["id"].as_str().unwrap().to_string();
+    engine
+        .command(crate::Command::ClaimNavigation {
+            id: id.clone(),
+            owner,
+            force: false,
+            scope: Some(a.scope.clone()),
+            source_generation: Some(1),
+        })
+        .unwrap();
+    engine
+        .command(crate::Command::SiteAccount(DesktopRequest::Save {
+            account: Box::new(a.clone()),
+            password: None,
+        }))
+        .unwrap();
+    engine
+        .command(crate::Command::SiteAccount(DesktopRequest::Select {
+            job_id: id.clone(),
+            account_id: Some(a.id.clone()),
+            mode: Mode::Premium,
+        }))
+        .unwrap();
+    (dir, engine, id, a)
+}
+fn request(engine: &Arc<Engine>, id: &str, action: BrowserAction) -> BrowserRequest {
+    let job = engine.job(id).unwrap();
+    let job = job.lock().unwrap();
+    BrowserRequest {
+        job_id: id.into(),
+        owner: job.navigation_owner.clone().unwrap(),
+        scope: job.navigation_scope.clone().unwrap(),
+        source_generation: job.source_generation,
+        request: action,
+    }
+}
+#[test]
+fn selection_fences_profile_claim_source_and_unknown_entitlement() {
+    let (_d, e, id, a) = setup();
+    let req = request(&e, &id, BrowserAction::Selection);
+    let selection = browser(&e, req.clone()).unwrap();
+    assert_eq!(selection["entitlement"], "unknown");
+    assert_eq!(selection["mode"], "premium");
+    for changed in [
+        BrowserRequest {
+            scope: SessionScope {
+                profile: uuid::Uuid::new_v4().to_string(),
+                ..req.scope.clone()
+            },
+            ..req.clone()
+        },
+        BrowserRequest {
+            source_generation: 1,
+            ..req.clone()
+        },
+        BrowserRequest {
+            scope: SessionScope {
+                container_id: Some("other".into()),
+                ..req.scope.clone()
+            },
+            ..req.clone()
+        },
+        BrowserRequest {
+            scope: SessionScope {
+                claim_generation: 1,
+                ..req.scope.clone()
+            },
+            ..req.clone()
+        },
+    ] {
+        assert!(browser(&e, changed).is_err());
+    }
+    let action = BrowserAction::Observe {
+        proof: form(),
+        auth: AuthState::Authenticated,
+        entitlement: Entitlement::Active,
+        account_id: Some("wrong-account".into()),
+        selected_host: None,
+    };
+    assert!(browser(&e, request(&e, &id, action)).is_err());
+    let action = BrowserAction::Observe {
+        proof: form(),
+        auth: AuthState::Authenticated,
+        entitlement: Entitlement::Active,
+        account_id: Some(a.account_id),
+        selected_host: Some("ddownload.com".into()),
+    };
+    assert_eq!(
+        browser(&e, request(&e, &id, action)).unwrap()["entitlement"],
+        "active"
+    );
+    e.command(crate::Command::SiteAccount(DesktopRequest::Remove {
+        id: a.id,
+    }))
+    .unwrap();
+    assert!(browser(&e, req).is_err());
+}
+#[test]
+fn grants_are_bound_once_and_attempts_bounded_without_loading_secrets() {
+    let (_d, e, id, _a) = setup();
+    let store = e.store.lock().unwrap();
+    let mut s = store
+        .get::<Selection>("site_account_selection", &id)
+        .unwrap();
+    s.account.saved_fill = true;
+    s.account.credential_ref = Some("not-created".into());
+    store
+        .put("site_account", &s.account.id, &s.account)
+        .unwrap();
+    drop(store);
+    let grant = browser(&e, request(&e, &id, BrowserAction::Grant { proof: form() })).unwrap();
+    let grant_id = grant["grant_id"].as_str().unwrap().to_string();
+    assert!(browser(&e, request(&e, &id, BrowserAction::Grant { proof: form() })).is_err());
+    let wrong = FormProof {
+        tab_id: 11,
+        ..form()
+    };
+    assert!(browser(
+        &e,
+        request(
+            &e,
+            &id,
+            BrowserAction::Consume {
+                grant_id: grant_id.clone(),
+                proof: wrong
+            }
+        )
+    )
+    .is_err());
+    assert!(browser(
+        &e,
+        request(
+            &e,
+            &id,
+            BrowserAction::Consume {
+                grant_id,
+                proof: form()
+            }
+        )
+    )
+    .is_err());
+}

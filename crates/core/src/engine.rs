@@ -11,6 +11,7 @@ use std::{
 };
 
 pub struct Engine {
+    pub(crate) site_accounts: Mutex<crate::site_accounts::Runtime>,
     pub store: Arc<Mutex<Store>>,
     pub jobs: Mutex<HashMap<String, transfer::SharedJob>>,
     pub settings: Mutex<Settings>,
@@ -109,6 +110,7 @@ impl Engine {
             controls: Mutex::new(HashMap::new()),
             solver_tasks: Mutex::new(HashMap::new()),
             browser_stream_locks: Mutex::new(HashMap::new()),
+            site_accounts: Mutex::default(),
             stopping: AtomicBool::new(false),
         });
         engine.cleanup_solver_sessions();
@@ -545,6 +547,8 @@ impl Engine {
     }
     pub fn command(self: &Arc<Self>, command: Command) -> Result<serde_json::Value> {
         match command {
+            Command::SiteAccount(request) => crate::site_accounts::desktop(self, request),
+            Command::BrowserAccount(request) => crate::site_accounts::browser(self, request),
             Command::BrowserStream(operation) => Ok(serde_json::to_value(
                 crate::browser_stream::operation(self, operation)?,
             )?),

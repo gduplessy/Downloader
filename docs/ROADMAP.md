@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.8.4<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.9.0<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -161,3 +161,7 @@ NAV-04 / NAV-10 implementation increment: durable scheduler policy and wait cloc
 NAV-04 / NAV-10 browser increment: service admission and extension queue controls integrated; 25 extension checks plus service restart/profile/private-state regressions pass. Live host, stable browser and resource acceptance remain pending.
 
 NAV-07/08/09/11 implementation increment (0.7.0): durable direct-response receiver, strict replay policy, generation fences, scoped projections and transient private records implemented. Real extension transport/browser matrix, private legacy-history review and live-provider acceptance remain pending.
+
+### NAV-02/03 account foundation (0.9.0)
+
+Desktop account creation/selection/removal, exact-session metadata, OS-keyring references, typed auth/entitlement recovery and one-use expiring grants are implemented. Browser form integration, native credential lifecycle and downstream file-hash acceptance remain in progress. Live host/account qualification and provider APIs remain pending.
