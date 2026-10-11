@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.2.5<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.2.6<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -179,7 +179,7 @@ pnpm test
 pnpm build
 ```
 
-The transfer-engine increment adds crash, storage, protocol, event-replay, and privacy regressions; **18 TypeScript tests** cover desktop events, utilities/translations, and extension policies. The [engine evidence](docs/TRANSFER_ENGINE.md) records exact Rust/CI results, a real **4.016 GiB** pause/reopen/resume/hash run, remote ZIP64 offsets, and **38 networking/benchmark cases**. The CLI/service lifecycle has also been exercised over real restricted IPC. A real browser fixture navigated a free-download step and countdown, carried an HttpOnly session cookie, and produced a hash-verified 12 MiB desktop file. Separate fixtures exercised CAPTCHA pauses and POST fallback.
+The transfer-engine increment includes **38 Windows / 39 Unix Rust regressions** and **18 TypeScript tests** for recovery, networking, events and browser policies. The [engine evidence](docs/TRANSFER_ENGINE.md) records source revisions, real **4.016 GiB** pause/reopen/resume/hash transfers on Windows/macOS/Linux, remote ZIP64 offsets, and **38 networking/benchmark cases**. Real native-messaging/CLI fixtures verify response privacy, duplicate creation, ordered events and service restart on all three platforms. A browser fixture navigated a free-download step and countdown, carried an HttpOnly session cookie, and produced a hash-verified 12 MiB desktop file. Separate fixtures exercised CAPTCHA pauses and POST fallback.
 
 ```sh
 node scripts/fixture-server.mjs

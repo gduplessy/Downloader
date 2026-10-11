@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.2.6 — Acceptance records and synchronized documentation
+
+- Publish post-repair platform transfer, large-file and real native-messaging/CLI evidence with exact source versions and CI runs.
+- Complete the deterministic control-protocol roadmap gate; retain external realms, enterprise proxy policies, native filesystem matrices and the unsuccessful IDM comparison as open qualification work.
+- Align README, roadmap, compatibility, implementation plan and acceptance records with the verified increment and product version.
+
 ## 0.2.5 — Validate Last-Modified alongside weak ETags
 
 - Use Last-Modified when an ETag is weak, including actual range responses and redirect identity checks.
