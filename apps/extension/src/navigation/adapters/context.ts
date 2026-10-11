@@ -3,6 +3,7 @@ export type ResolverContext = {
   tabId: number;
   frameId: number;
   scope: SessionScope;
+  sourceGeneration: number;
   selectedHost?: string;
   disabledAdapters?: string[];
   capabilities?: { pageBlob?: boolean };

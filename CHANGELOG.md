@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.8.10
+
+- Wire one-use prepare/commit/abort for adapter actions; fence source generation, document, bundled adapter and actual top-level sender before capture.
+- Persist prepared provider selection through scoped native metadata; support owned adapter disable and selected-resource navigation with original provenance retained.
+- Full installed-worker acceptance remains pending; local module checks do not establish complete browser flows.
+
 ## 0.8.9 — Integrate original-response capture and scoped recovery
 
 - Combine Chromium/Firefox response capture, page-owned blob reads and persistent native byte transport with scheduler admission, wait recovery and adapter previews.

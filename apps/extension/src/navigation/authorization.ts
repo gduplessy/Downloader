@@ -12,7 +12,7 @@ export type NavigationAuthorizationBinding = {
   adapterVersion: string;
   fingerprint: string;
 };
-export type NavigationAction = { url: string; method: string };
+export type NavigationAction = { url: string; method: string; selectedHost?: string | null };
 type Grant = { binding: string; action: NavigationAction; expires: number };
 
 // Preparing a grant does not attach a debugger, read a blob or submit a request.
@@ -55,7 +55,11 @@ export class NavigationAuthorizations {
     const token = crypto.randomUUID();
     this.grants.set(token, {
       binding: this.key(binding),
-      action: { url: destination.href, method: action.method },
+      action: {
+        url: destination.href,
+        method: action.method,
+        ...(action.selectedHost !== undefined ? { selectedHost: action.selectedHost } : {}),
+      },
       expires: this.now() + this.lifetimeMs,
     });
     return token;

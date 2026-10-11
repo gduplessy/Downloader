@@ -52,6 +52,13 @@ describe('one-use navigation authorization', () => {
       expect(() => grants.consume(token, binding)).toThrow('stale');
     }
   });
+  it('retains the prepared provider choice until consume', () => {
+    const grants = new NavigationAuthorizations();
+    const prepared = { ...action, selectedHost: 'ddownload.com' };
+    const token = grants.issue(binding, prepared);
+    prepared.selectedHost = 'gofile.io';
+    expect(grants.consume(token, binding).selectedHost).toBe('ddownload.com');
+  });
   it('expires and cancels pending authorization', () => {
     let now = 0;
     const grants = new NavigationAuthorizations(() => now, 100);
