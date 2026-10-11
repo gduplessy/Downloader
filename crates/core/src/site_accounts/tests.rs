@@ -518,3 +518,55 @@ fn authenticated_redirect_observation_updates_current_page_and_preserves_origina
     assert_eq!(job.navigation_url.as_deref(), Some(page));
     assert_eq!(job.page_url, original);
 }
+
+#[test]
+fn explicit_same_session_continue_and_refresh_keep_selection_but_invalidate_old_grants() {
+    let (_d, e, id, a) = setup();
+    let store = e.store.lock().unwrap();
+    let mut selection = store
+        .get::<Selection>("site_account_selection", &id)
+        .unwrap();
+    selection.account.saved_fill = true;
+    selection.account.credential_ref = Some("not-created".into());
+    store
+        .put("site_account", &a.id, &selection.account)
+        .unwrap();
+    drop(store);
+    let old = request(&e, &id, BrowserAction::Grant { proof: form() });
+    let grant = browser(&e, old.clone()).unwrap();
+    let claimed = e
+        .command(crate::Command::ClaimNavigation {
+            id: id.clone(),
+            owner: old.owner.clone(),
+            force: true,
+            scope: Some(old.scope.clone()),
+            source_generation: Some(old.source_generation),
+        })
+        .unwrap();
+    assert_eq!(claimed["scope"]["claim_generation"], 3);
+    let selected = browser(&e, request(&e, &id, BrowserAction::Selection)).unwrap();
+    assert_eq!(selected["account"]["id"], a.id);
+    assert_eq!(selected["scope"]["claim_generation"], 3);
+    assert_eq!(selected["entitlement"], "unknown");
+    let action = BrowserAction::Consume {
+        grant_id: grant["grant_id"].as_str().unwrap().into(),
+        proof: form(),
+    };
+    assert!(browser(&e, request(&e, &id, action)).is_err());
+    // Continue cannot manufacture another automatic attempt in the same source/revision.
+    assert!(browser(&e, request(&e, &id, BrowserAction::Grant { proof: form() })).is_err());
+    let current = request(&e, &id, BrowserAction::Selection);
+    e.command(crate::Command::RefreshBrowser {
+        id: id.clone(),
+        owner: current.owner,
+        scope: Some(current.scope),
+        source_generation: Some(current.source_generation),
+        url: form().page,
+        context: crate::RequestContext::default(),
+    })
+    .unwrap();
+    let selected = browser(&e, request(&e, &id, BrowserAction::Selection)).unwrap();
+    assert_eq!(selected["source_generation"], 3);
+    assert_eq!(selected["scope"]["claim_generation"], 4);
+    assert_eq!(selected["account"]["id"], a.id);
+}

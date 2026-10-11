@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.9.5<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.9.6<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -191,3 +191,5 @@ Account browser wiring (0.9.2) uses the owned resolver context for observations 
 Account authority integration (0.9.4) adopts intentional source/claim changes only in the original session, supports explicit saved-account edits, validates actual Chromium document identity before grants, and rechecks premium account/revision at capture commit. Owned authenticated observations retain original provenance across redirects. Installed worker qualification is in progress.
 
 Account integration (0.9.5) uses canonical native/browser partition comparison and the exact scheduler private lane. Installed production worker authentication/premium acceptance is being qualified with local permitted files.
+
+Selected account recovery (0.9.6) preserves an explicit account only through same-session owner continuation/refresh, renews nonsecret association fences, invalidates earlier grants and observations, and retains bounded sign-in attempts. Installed worker authentication/premium acceptance remains in progress.

@@ -412,6 +412,40 @@ pub fn desktop(engine: &Arc<Engine>, request: DesktopRequest) -> Result<serde_js
         }
     }
 }
+/// Retain an explicitly selected account only through a successful same-session owner action.
+pub(crate) fn renew_association(engine: &Engine, job: &crate::Job) -> Result<()> {
+    let Some(scope) = &job.navigation_scope else {
+        return Ok(());
+    };
+    let store = engine.store.lock().unwrap();
+    let Ok(mut selection) = store.get::<Selection>("site_account_selection", &job.id) else {
+        return Ok(());
+    };
+    if selection.scope == *scope && selection.source_generation == job.source_generation {
+        return Ok(());
+    }
+    if !same_session(&selection.scope, scope)
+        || !same_session(&selection.account.scope, scope)
+        || selection.scope.claim_generation > scope.claim_generation
+        || selection.source_generation > job.source_generation
+    {
+        return Ok(());
+    }
+    selection.scope = scope.clone();
+    selection.source_generation = job.source_generation;
+    selection.auth = AuthState::Unknown;
+    selection.entitlement = Entitlement::Unknown;
+    selection.observed_at = None;
+    store.put("site_account_selection", &job.id, &selection)?;
+    drop(store);
+    engine
+        .site_accounts
+        .lock()
+        .unwrap()
+        .grants
+        .retain(|_, grant| grant.job_id != job.id);
+    Ok(())
+}
 pub fn browser(engine: &Arc<Engine>, request: BrowserRequest) -> Result<serde_json::Value> {
     request.scope.validate()?;
     let job = engine.job(&request.job_id)?;

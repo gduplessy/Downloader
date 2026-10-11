@@ -705,6 +705,7 @@ impl Engine {
                 }
                 self.persist(&job)?;
                 let claimed = job.lock().unwrap().clone();
+                crate::site_accounts::renew_association(self, &claimed)?;
                 Ok(
                     serde_json::json!({"id":id,"scope":claimed.navigation_scope,"source_generation":claimed.source_generation}),
                 )
@@ -991,7 +992,9 @@ impl Engine {
                         );
                     }
                     self.persist(&shared)?;
-                    return Ok(serde_json::to_value(shared.lock().unwrap().clone())?);
+                    let renewed = shared.lock().unwrap().clone();
+                    crate::site_accounts::renew_association(self, &renewed)?;
+                    return Ok(serde_json::to_value(renewed)?);
                 }
                 Ok(result)
             }

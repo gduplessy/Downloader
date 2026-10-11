@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.9.6 — Keep selected accounts through explicit same-session recovery
+
+- Successful same-session claim continuation and scoped source refresh retain the selected nonsecret account association at the new source/claim fence.
+- Clear previous authentication/entitlement observations and revoke older credential grants; Continue does not reset the once-per-source/account-revision login limit.
+- Retain exact browser/profile/private/store/container/partition checks and require fresh document observations before premium capture.
+
 ## 0.9.5 — Canonical account session authority and private queue lane
 
 - Merge coordinator `093a447`, compare account/browser session partitions canonically, and carry the exact private scheduler lane.
