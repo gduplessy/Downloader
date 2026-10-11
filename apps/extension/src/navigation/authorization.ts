@@ -95,7 +95,12 @@ export class NavigationAuthorizations {
         private: binding.scope.private,
         cookie_store_id: binding.scope.cookie_store_id,
         container_id: binding.scope.container_id,
-        partition_key: binding.scope.partition_key,
+        partition_key: binding.scope.partition_key
+          ? {
+              top_level_site: binding.scope.partition_key.top_level_site,
+              has_cross_site_ancestor: binding.scope.partition_key.has_cross_site_ancestor,
+            }
+          : null,
         claim_generation: binding.scope.claim_generation,
       },
       sourceGeneration: binding.sourceGeneration,

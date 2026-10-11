@@ -2,6 +2,11 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.9.5 — Canonical account session authority and private queue lane
+
+- Merge coordinator `093a447`, compare account/browser session partitions canonically, and carry the exact private scheduler lane.
+- Keep actual Chrome document checks, typed account recovery and separate premium commit checks intact. Installed auth/premium source-to-desktop qualification remains in progress.
+
 ## 0.9.4 — Adopt intentional account changes in the original browser context
 
 - Merge verified coordinator `d6594d3` readonly authority renewal and preserve the exact owning tab/profile/container/private session while old readers and capture authorizations are invalidated.
@@ -31,6 +36,13 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Add desktop-selected site accounts keyed by exact origin and browser session, OS-keyring credential references, ephemeral private session metadata, typed authentication/entitlement observations and expiring one-use form grants.
 - Add six-language desktop account controls and browser form/cancellation modules. Qualified premium controls require the explicitly selected active session; purchase, advertisements and unqualified live layouts remain excluded.
 - Browser worker integration and native keyring/file acceptance remain in progress; local fixtures do not qualify live accounts or provider APIs.
+
+## 0.8.12
+
+- Isolate regular/private scheduler projections, mutation authority and recovery while retaining shared service capacity and host locks.
+- Add a native mixed-lane regression proving regular recovery cannot release private leases or expose private task identifiers.
+- Canonicalize native/browser partition-key comparison and mark validated scoped claims as browser sources for desktop-created navigation jobs.
+- Add a production background/resolver installed POST fixture runner. Initial runs remain waiting before submission; full-worker acceptance is pending despite passing module/native regressions.
 
 ## 0.8.11
 

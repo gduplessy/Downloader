@@ -6,7 +6,12 @@ export function sessionKey(scope: SessionScope): string {
     private: scope.private,
     cookie_store_id: scope.cookie_store_id,
     container_id: scope.container_id,
-    partition_key: scope.partition_key,
+    partition_key: scope.partition_key
+      ? {
+          top_level_site: scope.partition_key.top_level_site,
+          has_cross_site_ancestor: scope.partition_key.has_cross_site_ancestor,
+        }
+      : null,
   });
 }
 export function sameScope(a: SessionScope, b: SessionScope): boolean {

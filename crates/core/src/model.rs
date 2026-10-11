@@ -358,6 +358,8 @@ pub enum Command {
     NavigationScheduler {
         owner: String,
         #[serde(default)]
+        private_lane: bool,
+        #[serde(default)]
         scope: Option<crate::navigation::SessionScope>,
         request: crate::navigation_scheduler::SchedulerRequest,
     },

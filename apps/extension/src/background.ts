@@ -33,7 +33,7 @@ import { translate, type Key } from '../../../packages/shared/src/i18n';
 declare const BROWSER: string;
 const HOST = 'org.downloader.native';
 const scheduler = new NavigationScheduler(
-  (request) => native('navigation_scheduler', { request }),
+  (request) => native('navigation_scheduler', { request, private_lane: privateWorker }),
   async (id) => {
     const storage = await navigationStore.get('resolver-' + id);
     const record = storage['resolver-' + id] as ResolverRecord | undefined;
@@ -1062,15 +1062,18 @@ type ResolverRecord = {
   private?: boolean;
 };
 async function navigationPermissions(url: string) {
-  return browser.permissions.request({
+  const required: browser.Permissions.Permissions = {
     permissions: [
       'webRequest',
       'cookies',
       ...(BROWSER === 'chromium' ? ['scripting' as const] : ['webRequestBlocking' as const]),
     ],
     origins: [sitePattern(url)],
-  });
+  };
+  if (await browser.permissions.contains(required)) return true;
+  return browser.permissions.request(required);
 }
+
 async function injectResolver(tabId: number) {
   if (BROWSER === 'chromium')
     await browser.scripting.executeScript({
@@ -1546,6 +1549,14 @@ async function resolverStep(message: any, tabId: number, currentUrl: string, doc
   }
   if (decision.kind === 'click' && !repeated) {
     const bound = authorizationBinding(message, record, tabId, currentUrl, documentId);
+    await native('browser_status', {
+      id,
+      state: 'waiting_browser',
+      url: currentUrl,
+      message: String(decision.reason).slice(0, 1024),
+      bytes: 0,
+      total: null,
+    });
     const token = navigationAuthorizations.issue(bound, {
       ...message.request,
       selectedHost: message.selected_host ?? null,
