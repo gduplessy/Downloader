@@ -156,7 +156,14 @@ fn respond(mut stream: TcpStream, data: &[u8], version: u8) -> std::io::Result<(
         stream,
         "HTTP/1.1 {status} OK\r\nConnection: close\r\nContent-Type: application/octet-stream\r\n"
     )?;
-    if path != "/missingvalidator" || head || range == Some((0, 0)) {
+    if path == "/weakvalidator" {
+        let modified = if head || range == Some((0, 0)) {
+            "Sat, 10 Oct 2026 00:00:00 GMT"
+        } else {
+            "Sun, 11 Oct 2026 00:00:00 GMT"
+        };
+        write!(stream, "ETag: W/\"v1\"\r\nLast-Modified: {modified}\r\n")?;
+    } else if path != "/missingvalidator" || head || range == Some((0, 0)) {
         write!(stream, "ETag: \"v{version}\"\r\n")?;
     }
     if !unknown {
@@ -686,23 +693,25 @@ fn scanner_stub() {}
 #[test]
 fn missing_actual_response_validator_requires_safe_restart() {
     let server = Server::new();
-    let dir = tempfile::tempdir().unwrap();
-    let e = isolated_engine(dir.path());
-    e.start();
-    let j = add(&e, &server, "/missingvalidator", dir.path(), None);
-    let result = wait(&e, &j.id, |j| {
-        matches!(
-            j.state,
-            JobState::WaitingSource | JobState::Failed | JobState::Complete
-        )
-    });
-    e.shutdown();
-    assert_eq!(result.state, JobState::WaitingSource, "{:?}", result.error);
-    assert_eq!(
-        result.failure.unwrap().code,
-        downloader_core::failure::FailureCode::SourceChanged
-    );
-    assert!(!result.destination.exists());
+    for path in ["/missingvalidator", "/weakvalidator"] {
+        let dir = tempfile::tempdir().unwrap();
+        let e = isolated_engine(dir.path());
+        e.start();
+        let j = add(&e, &server, path, dir.path(), None);
+        let result = wait(&e, &j.id, |j| {
+            matches!(
+                j.state,
+                JobState::WaitingSource | JobState::Failed | JobState::Complete
+            )
+        });
+        e.shutdown();
+        assert_eq!(result.state, JobState::WaitingSource, "{:?}", result.error);
+        assert_eq!(
+            result.failure.unwrap().code,
+            downloader_core::failure::FailureCode::SourceChanged
+        );
+        assert!(!result.destination.exists());
+    }
 }
 
 #[test]

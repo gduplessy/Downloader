@@ -2,6 +2,11 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.2.5 — Validate Last-Modified alongside weak ETags
+
+- Use Last-Modified when an ETag is weak, including actual range responses and redirect identity checks.
+- Reject a changed response date before writing its body even when the weak ETag stays unchanged; retain the explicit safe-restart workflow.
+
 ## 0.2.4 — Windows system proxy protocol maps
 
 - Parse system proxy protocol labels case-insensitively and trim map entries, so an uppercase HTTPS mapping does not silently select direct routing.

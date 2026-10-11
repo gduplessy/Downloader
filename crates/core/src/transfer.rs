@@ -715,7 +715,11 @@ fn worker(
                                         invalid=Some("range_invalid: Server returned an unexpected range; explicitly restart with one connection".into());return Ok(0);
                                     }
                                     if !ranged && h.status!=200 {invalid=Some(format!("HTTP {} while downloading",h.status));return Ok(0);}
-                                    if metadata.etag.as_ref().is_some_and(|v|!v.starts_with("W/")) && h.etag!=metadata.etag || ranged && metadata.etag.is_none() && h.modified!=metadata.modified {invalid=Some("source_changed: Remote validator changed during transfer".into());return Ok(0);}
+                                    let changed = metadata.etag.as_ref().filter(|v| !v.starts_with("W/")).map_or(
+                                        ranged && h.modified != metadata.modified,
+                                        |etag| h.etag.as_ref() != Some(etag),
+                                    );
+                                    if changed {invalid=Some("source_changed: Remote validator changed during transfer".into());return Ok(0);}
                                 }
                                 drop(h);
                                 let mut f=file.lock().unwrap();let mut j=job.lock().unwrap();
@@ -761,10 +765,14 @@ fn worker(
                     drop(h);
                     drop(easy);
                     let next = inspect_controlled(&url, &context, &settings, &control)?;
-                    if next.total != metadata.total
-                        || metadata.etag.is_some() && next.etag != metadata.etag
-                        || metadata.etag.is_none() && next.modified != metadata.modified
-                    {
+                    let changed = metadata
+                        .etag
+                        .as_ref()
+                        .filter(|v| !v.starts_with("W/"))
+                        .map_or(next.modified != metadata.modified, |etag| {
+                            next.etag.as_ref() != Some(etag)
+                        });
+                    if next.total != metadata.total || changed {
                         bail!("source_changed: Redirect target differs from the validated source");
                     }
                     metadata = next;
