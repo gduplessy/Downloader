@@ -68,6 +68,7 @@ const binding: ChallengeBinding = {
   },
   sourceGeneration: 1,
   documentGeneration: 1,
+  documentNonce: 'c3b45e0f-227f-41fc-b9c5-af170af9a65d',
   page: 'https://g4u.to/file',
   selectedHost: 'gofile.io',
   imageDigest: 'image',

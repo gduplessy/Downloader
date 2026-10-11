@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.5
+
+- Adopt canonical scope ordering and validated CLI navigation ownership from coordinator integration.
+- Normalize image binding scope identity and stop cancelled host-choice callbacks from reopening the solver.
+
+
 ## 0.10.4
 
 - Integrate coordinator two-phase capture and read-only authority adoption while retaining live-document and challenge form fences.
@@ -31,6 +37,13 @@
 
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
+
+## 0.8.12
+
+- Isolate regular/private scheduler projections, mutation authority and recovery while retaining shared service capacity and host locks.
+- Add a native mixed-lane regression proving regular recovery cannot release private leases or expose private task identifiers.
+- Canonicalize native/browser partition-key comparison and mark validated scoped claims as browser sources for desktop-created navigation jobs.
+- Add a production background/resolver installed POST fixture runner. Initial runs remain waiting before submission; full-worker acceptance is pending despite passing module/native regressions.
 
 ## 0.8.11
 

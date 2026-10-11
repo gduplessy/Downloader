@@ -5,26 +5,10 @@ export type ResolverContext = {
   scope: SessionScope;
   sourceGeneration: number;
   documentGeneration: number;
+  documentNonce: string;
   selectedHost?: string;
   disabledAdapters?: string[];
   capabilities?: { pageBlob?: boolean };
   locale: string;
 };
-export function scopeKey(scope: SessionScope): string {
-  const {
-    browser,
-    profile,
-    private: privateSession,
-    cookie_store_id,
-    container_id,
-    partition_key,
-  } = scope;
-  return JSON.stringify({
-    browser,
-    profile,
-    private: privateSession,
-    cookie_store_id,
-    container_id,
-    partition_key,
-  });
-}
+export { sessionKey as scopeKey } from '../session/scope';

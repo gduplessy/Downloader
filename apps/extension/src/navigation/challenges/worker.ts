@@ -1,4 +1,5 @@
 import type { ChallengeBinding } from './lifecycle';
+import { sameScope } from '../session/scope';
 import type { SessionScope } from '../../../../../packages/shared/src/navigation';
 type OwnedChallengeContext = {
   tabId: number;
@@ -6,6 +7,7 @@ type OwnedChallengeContext = {
   scope: SessionScope;
   sourceGeneration: number;
   documentGeneration: number;
+  documentNonce: string;
   page: string;
   selectedHost: string;
 };
@@ -22,7 +24,6 @@ export type ChallengeDependencies = {
   jobId(tabId: number): Promise<string | null>;
   now(): number;
 };
-const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 export function challengeHandler(deps: ChallengeDependencies, used = new Set<string>()) {
   async function validate(
     sender: { tabId: number; frameId: number; page: string },
@@ -35,9 +36,10 @@ export function challengeHandler(deps: ChallengeDependencies, used = new Set<str
       owned.frameId !== 0 ||
       sender.page !== binding.page ||
       owned.page !== binding.page ||
-      !same(owned.scope, binding.scope) ||
+      !sameScope(owned.scope, binding.scope) ||
       owned.sourceGeneration !== binding.sourceGeneration ||
       owned.documentGeneration !== binding.documentGeneration ||
+      owned.documentNonce !== binding.documentNonce ||
       owned.selectedHost !== binding.selectedHost ||
       !binding.selectedHost ||
       deps.now() >= binding.expiresAt ||

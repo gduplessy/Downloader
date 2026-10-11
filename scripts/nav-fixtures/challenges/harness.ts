@@ -44,6 +44,8 @@ async function run() {
         claim_generation: 1,
       },
       sourceGeneration: 1,
+      documentGeneration: 1,
+      documentNonce: profile,
       selectedHost: 'gofile.io',
       locale: 'en',
     };
@@ -121,6 +123,7 @@ async function run() {
     'expiry',
     'claim',
     'source',
+    'document_nonce',
   ]) {
     const iframe = await load('g4u'),
       doc = iframe.contentDocument!;
@@ -199,6 +202,7 @@ async function run() {
       doc.querySelector<HTMLImageElement>('img')!.dataset.expiresAt = String(Date.now() - 1);
     if (scenario === 'claim') ctx.scope = { ...ctx.scope, claim_generation: 2 };
     if (scenario === 'source') ctx.sourceGeneration = 2;
+    if (scenario === 'document_nonce') ctx.documentNonce = '019b0c41-8226-477f-8f3f-bc9f8eeb079d';
     authorizeResolve(true);
     await new Promise((resolve) => setTimeout(resolve, 100));
     if (attempts) throw Error('Stale submission occurred:' + scenario);

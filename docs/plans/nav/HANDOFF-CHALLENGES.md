@@ -6,14 +6,15 @@ Feature branch: codex/nav-challenges. Current coordinator parent integrated: 1da
 
 The resolver sets globalThis.__downloaderDocumentNonce once per actual isolated document and keeps its genuine documentGeneration counter. Context and challenge messages carry document: {nonce, generation}. verifyLiveDocument in apps/extension/src/navigation/session/document.ts reads that marker from the current top-frame isolated world. Chromium additionally checks the live scripting result documentId against the sender when available. Missing markers, wrong frames, old same-URL documents and regressing generations refuse authority.
 
-ResolverContext requires sourceGeneration and documentGeneration. The native source generation is never defaulted. Existing scope/profile/private/container/partition checks remain enforced.
+ResolverContext requires sourceGeneration, documentGeneration and documentNonce. The native source generation is never defaulted. Existing scope/profile/private/container/partition checks remain enforced.
 
 Challenge messages:
+
 - resolver_challenge_select: explicit selectedHost plus document claim. The worker checks the current owned tab, live document and scheduler admission, then calls scoped navigation_selection with the bundled adapter identity. An absent selected host is handled by a closed-shadow choice action before any solve.
 - resolver_challenge_authorize: complete ChallengeBinding plus document claim. Worker and content both revalidate after asynchronous admission; one authorization is consumed once. This authorizes an original browser form POST returning HTML; it must not arm file capture.
 - resolver_challenge_paid: start/poll/cancel plus binding and document claim. Only the compatible image and fixed instruction can leave the browser. The worker forwards exact owner/scope/source fences to the native captcha command.
 
-ChallengeBinding contains scope, source/document generations, page, selected host, image digest, CSRF digest, full form digest and expiry. Form digests also bind action, method, encoding and submitter. Sensitive source values stay transient.
+ChallengeBinding contains scope, source/document generations, the live document nonce, page, selected host, image digest, CSRF digest, full form digest and expiry. Form digests also bind action, method, encoding and submitter. Sensitive source values stay transient.
 
 ## Coordinator integration
 

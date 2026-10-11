@@ -27,6 +27,7 @@ fn navigate(engine: &std::sync::Arc<Engine>, owner: &str, host: &str, private: b
 fn schedule(engine: &std::sync::Arc<Engine>, owner: &str, request: SchedulerRequest) -> Value {
     engine
         .command(Command::NavigationScheduler {
+            private_lane: false,
             owner: owner.into(),
             scope: None,
             request,
@@ -55,6 +56,7 @@ fn service_owns_queue_across_restart_and_profiles() {
     assert_eq!(admitted["tasks"][0]["host_keys"], json!([]));
     assert!(engine
         .command(Command::NavigationScheduler {
+            private_lane: false,
             owner: other.clone(),
             scope: None,
             request: SchedulerRequest::Release {
@@ -86,14 +88,17 @@ fn private_task_metadata_is_not_written_to_scheduler_record() {
     let engine = Engine::open(dir.path()).unwrap();
     let owner = uuid::Uuid::new_v4().to_string();
     let id = navigate(&engine, &owner, "private.invalid", true);
-    schedule(
-        &engine,
-        &owner,
-        SchedulerRequest::Admit {
-            id: id.clone(),
-            generation: 1,
-        },
-    );
+    engine
+        .command(Command::NavigationScheduler {
+            owner: owner.clone(),
+            private_lane: true,
+            scope: None,
+            request: SchedulerRequest::Admit {
+                id: id.clone(),
+                generation: 1,
+            },
+        })
+        .unwrap();
     let records = engine
         .store
         .lock()
@@ -139,6 +144,7 @@ fn settings_validation_does_not_interrupt_existing_lease() {
     assert_eq!(result["active"], 2);
     assert!(engine
         .command(Command::NavigationScheduler {
+            private_lane: false,
             owner,
             scope: None,
             request: SchedulerRequest::Settings {
@@ -176,6 +182,7 @@ fn persisted_source_and_claim_changes_fence_scheduler_recovery() {
         .unwrap();
     let request = |scope: SessionScope, request: SchedulerRequest| {
         engine.command(Command::NavigationScheduler {
+            private_lane: false,
             owner: owner.clone(),
             scope: Some(scope),
             request,
@@ -293,4 +300,54 @@ fn released_unresolved_navigation_can_be_admitted_again_without_reviving_cancell
     let snapshot = schedule(&engine, &owner, SchedulerRequest::Snapshot);
     assert_eq!(snapshot["tasks"][0]["status"], "finished");
     assert_eq!(snapshot["active"], 0);
+}
+
+#[test]
+fn regular_and_private_workers_share_capacity_without_peer_metadata_or_reconciliation() {
+    let dir = tempfile::tempdir().unwrap();
+    let engine = Engine::open(dir.path()).unwrap();
+    let owner = uuid::Uuid::new_v4().to_string();
+    let regular = navigate(&engine, &owner, "regular.invalid", false);
+    let private = navigate(&engine, &owner, "private.invalid", true);
+    let call = |private_lane, request| {
+        engine.command(Command::NavigationScheduler {
+            owner: owner.clone(),
+            private_lane,
+            scope: None,
+            request,
+        })
+    };
+    let regular_snapshot = call(
+        false,
+        SchedulerRequest::Admit {
+            id: regular.clone(),
+            generation: 1,
+        },
+    )
+    .unwrap();
+    assert_eq!(regular_snapshot["tasks"].as_array().unwrap().len(), 1);
+    assert_eq!(regular_snapshot["tasks"][0]["id"], regular);
+    let private_snapshot = call(
+        true,
+        SchedulerRequest::Admit {
+            id: private.clone(),
+            generation: 1,
+        },
+    )
+    .unwrap();
+    assert_eq!(private_snapshot["active"], 2);
+    assert_eq!(private_snapshot["tasks"].as_array().unwrap().len(), 1);
+    assert_eq!(private_snapshot["tasks"][0]["id"], private);
+    assert!(call(
+        false,
+        SchedulerRequest::Release {
+            id: private.clone(),
+            generation: 1
+        }
+    )
+    .is_err());
+    call(false, SchedulerRequest::Reconcile { live: vec![] }).unwrap();
+    let private_snapshot = call(true, SchedulerRequest::Snapshot).unwrap();
+    assert_eq!(private_snapshot["tasks"][0]["status"], "active");
+    assert_eq!(private_snapshot["active"], 1);
 }

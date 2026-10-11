@@ -3,6 +3,7 @@ export type ChallengeBinding = {
   scope: SessionScope;
   sourceGeneration: number;
   documentGeneration: number;
+  documentNonce: string;
   page: string;
   selectedHost: string;
   imageDigest: string;

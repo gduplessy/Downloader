@@ -146,9 +146,25 @@ export async function showChallenge(
   const expiry = Number(found.image.dataset.expiresAt);
   if (!Number.isSafeInteger(expiry) || expiry <= Date.now()) return null;
   const capture = async (current: Context): Promise<ChallengeBinding> => ({
-    scope: structuredClone(current.scope),
+    scope: {
+      browser: current.scope.browser,
+      profile: current.scope.profile,
+      private: current.scope.private,
+      cookie_store_id: current.scope.cookie_store_id,
+      container_id: current.scope.container_id,
+      partition_key: current.scope.partition_key
+        ? {
+            top_level_site: current.scope.partition_key.top_level_site,
+            ...(current.scope.partition_key.has_cross_site_ancestor === undefined
+              ? {}
+              : { has_cross_site_ancestor: current.scope.partition_key.has_cross_site_ancestor }),
+          }
+        : null,
+      claim_generation: current.scope.claim_generation,
+    },
     sourceGeneration: current.sourceGeneration,
     documentGeneration,
+    documentNonce: current.documentNonce,
     page: doc.location.href,
     selectedHost: current.selectedHost ?? '',
     imageDigest: await digest(found.image.currentSrc + '|' + dataUrl),

@@ -20,7 +20,7 @@ fn setup(private: bool) -> (tempfile::TempDir, std::sync::Arc<Engine>, Selection
             paused: true,
             context: RequestContext {
                 profile: Some(owner.clone()),
-                browser: Some("chromium".into()),
+                browser: None,
                 private,
                 ..Default::default()
             },
@@ -38,6 +38,7 @@ fn setup(private: bool) -> (tempfile::TempDir, std::sync::Arc<Engine>, Selection
         partition_key: None,
         claim_generation: 1,
     };
+    assert!(!engine.job(&id).unwrap().lock().unwrap().browser_source);
     engine
         .command(Command::ClaimNavigation {
             id: id.clone(),
@@ -47,6 +48,7 @@ fn setup(private: bool) -> (tempfile::TempDir, std::sync::Arc<Engine>, Selection
             source_generation: Some(1),
         })
         .unwrap();
+    assert!(engine.job(&id).unwrap().lock().unwrap().browser_source);
     (
         dir,
         engine,
