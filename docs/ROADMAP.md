@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.6.4<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.6.5<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -11,6 +11,8 @@ The initial release still targets Windows 11 x64, macOS 14+ Intel and Apple Sili
 ## 1. Hosted download pages and challenges
 
 Detailed [NAV plans and execution batches](plans/nav/README.md) cover the remaining scope of NAV-01 through NAV-13. These plans preserve implemented FlareSolverr support, require direct POST/blob streaming for supported lanes, and separate local fixtures from pending live-host/account and paid-provider qualification.
+
+Shared navigation contracts are defined for the feature batches; all unfinished NAV implementation and qualification statuses remain open until their stated acceptance criteria pass.
 
 | ID     | Capability and remaining scope                                    | Next work and completion criteria                                                                                                                                                                                                                                                                                                                                                                                                                  | Status                         |
 | :----- | :---------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------- |

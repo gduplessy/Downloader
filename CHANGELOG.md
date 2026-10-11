@@ -2,6 +2,11 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.6.5 — Reconcile adapters with shared navigation contracts
+
+- Merge the shared navigation prerequisite into the adapter branch while preserving owned selection, preview cancellation, and all prior roadmap and release entries.
+- Keep installed-extension/native binding and live-provider qualification pending; the adapter PR remains a draft.
+
 ## 0.6.4 — Cancel pending preview authorization safely
 
 - Abort preview lifetime on Cancel, Refresh or replacement; check that lifetime before and after async worker authorization so a closed dialog cannot submit later.
@@ -27,6 +32,11 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Add generation/session/DOM-bound preview validation, one-authorization submission gates and accessible selection controls in all six locales.
 - Integrate the content resolver with an ownership-aware context hook; retain conservative behavior until worker integration is present. Provider layouts remain unqualified.
 - Verify 44 extension regressions and extension TypeScript checks.
+
+## 0.5.7 — Shared navigation contracts
+
+- Define matching Rust/TypeScript session scope, fenced navigation task, wait metadata, replay policy and bounded browser-stream envelopes for the parallel implementation batches.
+- Validate profile/generation/partition metadata and test native-frame size and serialization. Feature behavior remains in its respective NAV batch.
 
 ## 0.5.6 — Plan remaining hosted-page navigation work
 
