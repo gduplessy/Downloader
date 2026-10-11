@@ -32,18 +32,24 @@ impl Engine {
         for mut job in store.all::<Job>("job")? {
             if matches!(
                 job.state,
-                JobState::Assembling | JobState::Scanning | JobState::Complete
+                JobState::Verifying
+                    | JobState::Assembling
+                    | JobState::Scanning
+                    | JobState::Complete
             ) {
                 match crate::finalize::recover(&mut job, &settings) {
                     Ok(()) => {
                         store.put("job", &job.id, &job)?;
                         if job.state == JobState::Complete && transfer::part_path(&job).is_file() {
-                            std::fs::remove_file(transfer::part_path(&job))?;
+                            let _ = std::fs::remove_file(transfer::part_path(&job));
                         }
                     }
                     Err(e) => {
                         job.state = JobState::Failed;
                         job.error = Some(security::redact(&e.to_string()));
+                        job.failure = Some(crate::failure::TransferFailure::classify(
+                            job.error.as_deref().unwrap(),
+                        ));
                         store.put("job", &job.id, &job)?;
                     }
                 }
@@ -202,6 +208,8 @@ impl Engine {
             segments: vec![],
             checksum: request.checksum,
             error: None,
+            failure: None,
+            verified_sha256: None,
             created: chrono::Utc::now(),
             updated: chrono::Utc::now(),
             media: request.media,
@@ -411,9 +419,11 @@ impl Engine {
                     job.segments.clear();
                     job.etag = None;
                     job.modified = None;
+                    job.verified_sha256 = None;
                 }
                 job.state = JobState::Queued;
                 job.error = None;
+                job.failure = None;
                 job.viable = false;
                 drop(job);
                 self.persist(&j)?;
@@ -450,6 +460,7 @@ impl Engine {
                 Ok(serde_json::json!({"id":id}))
             }
             Command::Settings(settings) => {
+                settings.network.validate()?;
                 if settings.max_jobs == 0
                     || settings.max_jobs > 32
                     || settings.connections == 0
@@ -583,7 +594,7 @@ impl Engine {
             Command::Diagnostics => {
                 let s = self.snapshot();
                 Ok(
-                    serde_json::json!({"version":env!("CARGO_PKG_VERSION"),"protocol":PROTOCOL_VERSION,"platform":std::env::consts::OS,"curl":curl::Version::get().version(),"http2":curl::Version::get().feature_http2(),"components":s.components,"jobs":s.jobs.iter().map(|j|serde_json::json!({"id":j.id,"state":j.state,"bytes":j.bytes,"error":j.error.as_ref().map(|e|security::redact(e))})).collect::<Vec<_>>()}),
+                    serde_json::json!({"version":env!("CARGO_PKG_VERSION"),"protocol":PROTOCOL_VERSION,"platform":std::env::consts::OS,"curl":curl::Version::get().version(),"http2":curl::Version::get().feature_http2(),"capabilities":crate::network::capabilities(),"connections":crate::pool::diagnostics(),"components":s.components,"jobs":s.jobs.iter().map(|j|serde_json::json!({"id":j.id,"state":j.state,"bytes":j.bytes,"error":j.error.as_ref().map(|e|security::redact(e))})).collect::<Vec<_>>()}),
                 )
             }
             Command::Quit => {
@@ -712,25 +723,6 @@ impl Engine {
                 {
                     break;
                 }
-                let host = url::Url::parse(&candidate.url)?
-                    .host_str()
-                    .unwrap_or("")
-                    .to_string();
-                let host_active = self
-                    .snapshot()
-                    .jobs
-                    .iter()
-                    .filter(|j| {
-                        j.state.active()
-                            && url::Url::parse(&j.url)
-                                .ok()
-                                .and_then(|u| u.host_str().map(str::to_owned))
-                                == Some(host.clone())
-                    })
-                    .count();
-                if host_active * settings.connections >= settings.host_connections {
-                    continue;
-                }
                 let j = self.job(&candidate.id)?;
                 let control = Arc::new(AtomicU8::new(0));
                 self.controls
@@ -747,15 +739,7 @@ impl Engine {
                     .cloned()
                     .unwrap_or_default();
                 let engine = self.clone();
-                let mut limits = settings.clone();
-                limits.connections = limits
-                    .connections
-                    .min(
-                        limits
-                            .host_connections
-                            .saturating_sub(host_active * limits.connections),
-                    )
-                    .max(1);
+                let limits = settings.clone();
                 let rate = if settings.speed_limit > 0 {
                     settings.speed_limit / settings.max_jobs as u64
                 } else {
@@ -787,19 +771,27 @@ impl Engine {
                     {
                         let mut job = j.lock().unwrap();
                         job.speed = 0;
+                        let result = if control.load(Ordering::Relaxed) != 0 {
+                            Ok(())
+                        } else {
+                            result
+                        };
                         if let Err(e) = result {
                             let message = security::redact(&e.to_string());
-                            job.state = if message.contains("authentication_required")
-                                || message.contains("HTTP 401")
-                            {
-                                JobState::WaitingAuthentication
-                            } else if message.contains("source_changed")
-                                || message.contains("HTTP 403")
-                            {
-                                JobState::WaitingSource
-                            } else {
-                                JobState::Failed
+                            let failure = crate::failure::TransferFailure::classify(&message);
+                            job.state = match failure.code {
+                                crate::failure::FailureCode::AuthenticationRequired => {
+                                    JobState::WaitingAuthentication
+                                }
+                                crate::failure::FailureCode::SourceExpired
+                                | crate::failure::FailureCode::SourceChanged
+                                | crate::failure::FailureCode::ResumeUnsupported
+                                | crate::failure::FailureCode::RangeInvalid => {
+                                    JobState::WaitingSource
+                                }
+                                _ => JobState::Failed,
                             };
+                            job.failure = Some(failure);
                             job.error = Some(message);
                         } else if control.load(Ordering::Relaxed) != 0 {
                             job.state = match control.load(Ordering::Relaxed) {

@@ -12,7 +12,7 @@ use std::{
 #[test]
 fn interrupted_finalization_recovers_without_network() {
     let dir = tempfile::tempdir().unwrap();
-    let e = Engine::open(dir.path()).unwrap();
+    let e = isolated_engine(dir.path());
     let mut j = e
         .add(AddJob {
             request_id: "finalize".into(),
@@ -33,7 +33,7 @@ fn interrupted_finalization_recovers_without_network() {
     j.state = JobState::Assembling;
     e.store.lock().unwrap().put("job", &j.id, &j).unwrap();
     drop(e);
-    let e = Engine::open(dir.path()).unwrap();
+    let e = isolated_engine(dir.path());
     let recovered = e.job(&j.id).unwrap().lock().unwrap().clone();
     assert_eq!(recovered.state, JobState::Complete);
     assert_eq!(
@@ -104,6 +104,32 @@ fn respond(mut stream: TcpStream, data: &[u8], version: u8) -> std::io::Result<(
         write!(stream,"HTTP/1.1 302 Found\r\nLocation: /file\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")?;
         return Ok(());
     }
+    if head && matches!(path, "/nohead" | "/fallbackredirect") {
+        write!(
+            stream,
+            "HTTP/1.1 405 No HEAD\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+        )?;
+        return Ok(());
+    }
+    if !head && path == "/fallbackredirect" {
+        write!(stream,"HTTP/1.1 302 Found\r\nLocation: /file\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")?;
+        return Ok(());
+    }
+    if path == "/empty" {
+        write!(
+            stream,
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\nETag: \"empty\"\r\nConnection: close\r\n\r\n"
+        )?;
+        return Ok(());
+    }
+    if matches!(path, "/auth" | "/expired") {
+        let status = if path == "/auth" { 401 } else { 410 };
+        write!(
+            stream,
+            "HTTP/1.1 {status} Error\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+        )?;
+        return Ok(());
+    }
     let unknown = path == "/unknown";
     let range = request
         .lines()
@@ -113,7 +139,7 @@ fn respond(mut stream: TcpStream, data: &[u8], version: u8) -> std::io::Result<(
         })
         .and_then(|r| r.trim().split_once('-'))
         .and_then(|(a, b)| a.parse::<usize>().ok().zip(b.parse::<usize>().ok()));
-    let range = if path == "/ignored" || unknown {
+    let range = if path == "/ignored" || unknown || path == "/serialtruncated" {
         None
     } else {
         range
@@ -139,7 +165,7 @@ fn respond(mut stream: TcpStream, data: &[u8], version: u8) -> std::io::Result<(
     if head {
         return Ok(());
     }
-    let end = if path == "/truncated" {
+    let end = if path == "/truncated" || path == "/serialtruncated" {
         a + length / 2
     } else {
         b + 1
@@ -198,7 +224,7 @@ fn digest(bytes: &[u8]) -> String {
 fn segmented_download_and_checksum() {
     let server = Server::new();
     let dir = tempfile::tempdir().unwrap();
-    let e = Engine::open(dir.path()).unwrap();
+    let e = isolated_engine(dir.path());
     e.start();
     let j = add(&e, &server, "/file", dir.path(), Some(digest(&server.data)));
     let j = wait(&e, &j.id, |j| {
@@ -216,9 +242,15 @@ fn segmented_download_and_checksum() {
 #[test]
 fn ignored_ranges_and_unknown_length_fall_back_safely() {
     let server = Server::new();
-    for path in ["/ignored", "/unknown", "/redirect"] {
+    for path in [
+        "/ignored",
+        "/unknown",
+        "/redirect",
+        "/nohead",
+        "/fallbackredirect",
+    ] {
         let dir = tempfile::tempdir().unwrap();
-        let e = Engine::open(dir.path()).unwrap();
+        let e = isolated_engine(dir.path());
         e.start();
         let j = add(&e, &server, path, dir.path(), None);
         let j = wait(&e, &j.id, |j| {
@@ -236,7 +268,7 @@ fn ignored_ranges_and_unknown_length_fall_back_safely() {
 fn pause_checkpoint_resume_and_changed_validator() {
     let server = Server::new();
     let dir = tempfile::tempdir().unwrap();
-    let e = Engine::open(dir.path()).unwrap();
+    let e = isolated_engine(dir.path());
     e.start();
     let j = add(&e, &server, "/slow", dir.path(), Some(digest(&server.data)));
     wait(&e, &j.id, |j| j.bytes > 256 * 1024);
@@ -245,7 +277,7 @@ fn pause_checkpoint_resume_and_changed_validator() {
     assert!(paused.bytes > 0 && paused.bytes < server.data.len() as u64);
     e.shutdown();
     drop(e);
-    let e = Engine::open(dir.path()).unwrap();
+    let e = isolated_engine(dir.path());
     e.start();
     server.version.store(2, Ordering::Relaxed);
     e.command(Command::Resume {
@@ -275,7 +307,7 @@ fn pause_checkpoint_resume_and_changed_validator() {
 fn checksum_failure_never_publishes_output() {
     let server = Server::new();
     let dir = tempfile::tempdir().unwrap();
-    let e = Engine::open(dir.path()).unwrap();
+    let e = isolated_engine(dir.path());
     e.start();
     let j = add(&e, &server, "/file", dir.path(), Some("0".repeat(64)));
     let failed = wait(&e, &j.id, |j| j.state == JobState::Failed);
@@ -287,7 +319,7 @@ fn checksum_failure_never_publishes_output() {
 #[test]
 fn hosted_page_is_never_downloaded_as_the_file() {
     let dir = tempfile::tempdir().unwrap();
-    let e = Engine::open(dir.path()).unwrap();
+    let e = isolated_engine(dir.path());
     let request = AddJob {
         request_id: "page".into(),
         url: "https://example.com/hosted".into(),
@@ -354,7 +386,7 @@ fn hosted_page_is_never_downloaded_as_the_file() {
     );
     e.shutdown();
     drop(e);
-    let recovered = Engine::open(dir.path()).unwrap();
+    let recovered = isolated_engine(dir.path());
     assert_eq!(
         recovered
             .job(&j.id)
@@ -378,7 +410,7 @@ fn hosted_page_is_never_downloaded_as_the_file() {
 fn rolling_quota_stops_exactly_and_resumes_without_corruption() {
     let server = Server::new();
     let dir = tempfile::tempdir().unwrap();
-    let e = Engine::open(dir.path()).unwrap();
+    let e = isolated_engine(dir.path());
     let mut settings = e.snapshot().settings;
     settings.quota_bytes = 300_003;
     e.command(Command::Settings(settings.clone())).unwrap();
@@ -412,7 +444,7 @@ fn rolling_quota_stops_exactly_and_resumes_without_corruption() {
 fn browser_resolved_source_uses_server_filename_and_complete_hash() {
     let server = Server::new();
     let dir = tempfile::tempdir().unwrap();
-    let e = Engine::open(dir.path()).unwrap();
+    let e = isolated_engine(dir.path());
     let value = e
         .command(Command::Navigate(AddJob {
             request_id: "resolved".into(),
@@ -457,4 +489,64 @@ fn browser_resolved_source_uses_server_filename_and_complete_hash() {
         digest(&std::fs::read(complete.destination).unwrap()),
         digest(&server.data)
     );
+}
+
+#[test]
+fn empty_output_and_actionable_source_failures() {
+    let server = Server::new();
+    for (path, state, code) in [
+        ("/empty", JobState::Complete, None),
+        (
+            "/auth",
+            JobState::WaitingAuthentication,
+            Some(downloader_core::failure::FailureCode::AuthenticationRequired),
+        ),
+        (
+            "/expired",
+            JobState::WaitingSource,
+            Some(downloader_core::failure::FailureCode::SourceExpired),
+        ),
+    ] {
+        let dir = tempfile::tempdir().unwrap();
+        let e = isolated_engine(dir.path());
+        e.start();
+        let j = add(&e, &server, path, dir.path(), None);
+        let j = wait(&e, &j.id, |j| {
+            !j.state.active() && j.state != JobState::Queued
+        });
+        e.shutdown();
+        assert_eq!(j.state, state, "{:?}", j.error);
+        if let Some(code) = code {
+            assert_eq!(j.failure.unwrap().code, code);
+            assert!(!j.destination.exists());
+        } else {
+            assert_eq!(std::fs::metadata(j.destination).unwrap().len(), 0);
+            assert_eq!(j.verified_sha256, Some(digest(b"")));
+        }
+    }
+}
+#[test]
+fn malformed_headers_are_rejected() {
+    for header in [
+        "Content-Range: bytes 20-10/100",
+        "Content-Range: bytes 0-100/100",
+        "Content-Range: bytes garbage",
+        "Content-Length: nope",
+    ] {
+        let mut h = transfer::Headers::default();
+        h.accept(header.as_bytes());
+        assert!(h.invalid, "{header}");
+    }
+    let mut h = transfer::Headers::default();
+    h.accept(b"Content-Length: 10");
+    h.accept(b"Content-Length: 11");
+    assert!(h.invalid);
+}
+
+fn isolated_engine(path: &std::path::Path) -> Arc<Engine> {
+    let e = Engine::open(path).unwrap();
+    let mut settings = e.snapshot().settings;
+    settings.network.proxy_mode = downloader_core::network::ProxyMode::Direct;
+    e.command(Command::Settings(settings)).unwrap();
+    e
 }

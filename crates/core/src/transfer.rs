@@ -1,12 +1,11 @@
 use crate::{model::*, security, store::Store};
 use anyhow::{bail, Context, Result};
-use curl::easy::{Auth, Easy, List};
+use curl::easy::{Easy, List};
 use serde::Serialize;
-use sha2::{Digest, Sha256};
 use std::{
     collections::HashSet,
     fs::File,
-    io::{Read, Seek, SeekFrom, Write},
+    io::{Seek, SeekFrom, Write},
     path::PathBuf,
     sync::{
         atomic::{AtomicU8, Ordering},
@@ -40,6 +39,8 @@ pub struct Headers {
     pub content_type: String,
     pub filename: Option<String>,
     pub retry_after: Option<u64>,
+    pub encoding: Option<String>,
+    pub invalid: bool,
 }
 impl Headers {
     pub fn accept(&mut self, line: &[u8]) {
@@ -59,7 +60,12 @@ impl Headers {
         };
         let value = value.trim();
         match key.to_ascii_lowercase().as_str() {
-            "content-length" => self.length = value.parse().ok(),
+            "content-length" => {
+                let length = value.parse::<u64>().ok();
+                self.invalid |= length.is_none() || self.length.is_some_and(|n| Some(n) != length);
+                self.length = length;
+            }
+            "content-encoding" => self.encoding = Some(value.into()),
             "etag" => self.etag = Some(value.into()),
             "last-modified" => self.modified = Some(value.into()),
             "accept-ranges" => self.ranges = value.eq_ignore_ascii_case("bytes"),
@@ -73,6 +79,7 @@ impl Headers {
                 })
             }
             "content-range" => {
+                let previous = self.range;
                 if let Some(range) = value.strip_prefix("bytes ") {
                     if let Some((bounds, total)) = range.split_once('/') {
                         if let Some((a, b)) = bounds.split_once('-') {
@@ -85,6 +92,8 @@ impl Headers {
                         }
                     }
                 }
+                self.invalid |=
+                    self.range.is_none_or(|(a, b, t)| a > b || b >= t) || previous.is_some();
             }
             "content-disposition" => {
                 for item in value.split(';') {
@@ -145,6 +154,8 @@ pub fn configure(
     easy.ssl_verify_peer(true)?;
     easy.ssl_verify_host(true)?;
     easy.useragent("Downloader/0.1")?;
+    easy.accept_encoding("identity")?;
+    crate::network::apply(easy, url, settings)?;
     let mut headers = List::new();
     headers.append("Accept-Encoding: identity")?;
     for (k, v) in &context.headers {
@@ -155,19 +166,14 @@ pub fn configure(
         let (user, password) = security::credential(id)?;
         easy.username(&user)?;
         easy.password(&password)?;
-        let mut auth = Auth::new();
-        auth.basic(true).digest(true).ntlm(true).gssnegotiate(true);
+        let auth = crate::network::authentication(&settings.network.authentication)?;
         easy.http_auth(&auth)?;
-    }
-    if let Some(proxy) = settings.proxy.as_ref().filter(|s| !s.is_empty()) {
-        easy.proxy(proxy)?;
     }
     if let Some(id) = &settings.proxy_credential {
         let (user, password) = security::credential(id)?;
         easy.proxy_username(&user)?;
         easy.proxy_password(&password)?;
-        let mut auth = Auth::new();
-        auth.basic(true).digest(true).ntlm(true).gssnegotiate(true);
+        let auth = crate::network::authentication(&settings.network.proxy_authentication)?;
         easy.proxy_auth(&auth)?;
     }
     Ok(())
@@ -175,8 +181,8 @@ pub fn configure(
 pub fn inspect(url: &str, context: &RequestContext, settings: &Settings) -> Result<Metadata> {
     let mut url = security::validate_url(url)?;
     let mut context = context.clone();
-    let mut easy = Easy::new();
     for _ in 0..10 {
+        let mut easy = crate::pool::checkout(url.as_str(), &context, settings, &AtomicU8::new(0))?;
         configure(&mut easy, url.as_str(), &context, settings)?;
         easy.nobody(true)?;
         easy.fetch_filetime(true)?;
@@ -190,21 +196,6 @@ pub fn inspect(url: &str, context: &RequestContext, settings: &Settings) -> Resu
             transfer.perform()?;
         }
         headers.status = easy.response_code()?;
-        if matches!(headers.status, 301 | 302 | 303 | 307 | 308) {
-            let next = url.join(
-                headers
-                    .location
-                    .as_deref()
-                    .context("Redirect lacks Location")?,
-            )?;
-            security::validate_url(next.as_str())?;
-            if next.origin() != url.origin() {
-                context.headers.clear();
-                context.credential_id = None;
-            }
-            url = next;
-            continue;
-        }
         if matches!(headers.status, 405 | 501) {
             configure(&mut easy, url.as_str(), &context, settings)?;
             easy.range("0-0")?;
@@ -215,18 +206,35 @@ pub fn inspect(url: &str, context: &RequestContext, settings: &Settings) -> Resu
                 true
             })?;
             transfer.write_function(|_| Ok(0))?;
-            let result = transfer.perform();
-            if let Err(e) = result {
+            if let Err(e) = transfer.perform() {
                 if !e.is_write_error() {
                     return Err(e.into());
                 }
             }
         }
-        if matches!(headers.status, 401 | 407) {
-            bail!("authentication_required: HTTP {}", headers.status);
+        if matches!(headers.status, 301 | 302 | 303 | 307 | 308) {
+            let next = url.join(
+                headers
+                    .location
+                    .as_deref()
+                    .context("Redirect lacks Location")?,
+            )?;
+            security::validate_url(next.as_str())?;
+            if url.scheme() == "https" && next.scheme() != "https" {
+                bail!("protocol_unsupported: Refusing HTTPS downgrade");
+            }
+            if next.origin() != url.origin() {
+                context.headers.clear();
+                context.credential_id = None;
+            }
+            url = next;
+            continue;
         }
         if headers.status >= 400 {
-            bail!("HTTP {} while inspecting source", headers.status);
+            bail!("{}", crate::failure::http_error(headers.status));
+        }
+        if headers.invalid {
+            bail!("range_invalid: Malformed response headers");
         }
         if headers.length.is_none() {
             headers.length = easy
@@ -238,13 +246,22 @@ pub fn inspect(url: &str, context: &RequestContext, settings: &Settings) -> Resu
         if headers.modified.is_none() {
             headers.modified = easy.filetime().ok().flatten().map(|n| n.to_string());
         }
-        let total = headers.range.map(|r| r.2).or(headers.length);
+        let encoded = headers
+            .encoding
+            .as_deref()
+            .is_some_and(|v| !v.eq_ignore_ascii_case("identity"));
+        let total = if encoded {
+            None
+        } else {
+            headers.range.map(|r| r.2).or(headers.length)
+        };
         return Ok(Metadata {
             status: headers.status,
             total,
             etag: headers.etag,
             modified: headers.modified,
-            ranges: headers.ranges || headers.range.is_some(),
+            ranges: !encoded
+                && (headers.ranges || headers.range.is_some() || url.scheme().starts_with("ftp")),
             content_type: headers.content_type,
             filename: headers.filename,
             url: url.into(),
@@ -261,7 +278,12 @@ pub fn fetch_bytes(
     range: Option<(u64, u64)>,
 ) -> Result<(Headers, Vec<u8>)> {
     let metadata = inspect(url, context, settings)?;
-    let mut easy = Easy::new();
+    let mut easy = crate::pool::checkout(
+        &metadata.url,
+        &metadata.context,
+        settings,
+        &AtomicU8::new(0),
+    )?;
     configure(&mut easy, &metadata.url, &metadata.context, settings)?;
     if let Some((start, end)) = range {
         easy.range(&format!("{start}-{end}"))?;
@@ -306,7 +328,8 @@ pub fn checkpoint(
     // The file and job locks keep offsets consistent with the bytes being fsynced.
     let file = file.lock().unwrap();
     let mut job = job.lock().unwrap();
-    file.sync_data()?;
+    file.sync_data()
+        .context("storage_error: Could not flush checkpoint bytes")?;
     job.bytes = job.segments.iter().map(|s| s.downloaded).sum();
     job.updated = chrono::Utc::now();
     store.lock().unwrap().put("job", &job.id, &*job)?;
@@ -361,6 +384,9 @@ pub fn run(
     rate: u64,
 ) -> Result<()> {
     let snapshot = job.lock().unwrap().clone();
+    if snapshot.verified_sha256.is_some() && snapshot.total == Some(snapshot.bytes) {
+        return crate::finalize::finish(job, store, &settings, &control);
+    }
     let mut metadata = inspect(&snapshot.url, &context, &settings)?;
     // Advertised range support is only a hint. An actual 206 response is required.
     if metadata.url.starts_with("http") && metadata.ranges && metadata.total.is_some_and(|n| n > 0)
@@ -380,8 +406,13 @@ pub fn run(
                 && snapshot.modified == metadata.modified
                 && snapshot.total == total
         };
-        if !unchanged || !snapshot.resumable || !metadata.ranges {
+        if !unchanged {
             bail!("source_changed: Resume cannot be verified; refresh the source or explicitly restart");
+        }
+        if !snapshot.resumable || !metadata.ranges {
+            bail!(
+                "resume_unsupported: Server no longer permits verified resume; explicitly restart"
+            );
         }
     }
     if let Some(parent) = snapshot.destination.parent() {
@@ -392,19 +423,24 @@ pub fn run(
     if resumed {
         crate::storage::validate_checkpoint(&snapshot, file.lock().unwrap().metadata()?.len())?;
     }
-    let ranged = http && metadata.ranges && total.is_some_and(|n| n > 0);
+    let ranged =
+        http && settings.network.segmented && metadata.ranges && total.is_some_and(|n| n > 0);
     {
         let mut j = job.lock().unwrap();
         j.total = total;
         j.etag = metadata.etag.clone();
         j.modified = metadata.modified.clone();
-        j.resumable = ranged;
+        j.resumable = ranged || !http && metadata.total.is_some() && metadata.modified.is_some();
         if !resumed {
-            j.segments = vec![Segment {
-                start: 0,
-                end: total.map(|n| n.saturating_sub(1)).unwrap_or(u64::MAX - 1),
-                downloaded: 0,
-            }];
+            j.segments = if total == Some(0) {
+                vec![]
+            } else {
+                vec![Segment {
+                    start: 0,
+                    end: total.map(|n| n.saturating_sub(1)).unwrap_or(u64::MAX - 1),
+                    downloaded: 0,
+                }]
+            };
         }
         j.state = JobState::Downloading;
     }
@@ -429,64 +465,22 @@ pub fn run(
             let metadata = metadata.clone();
             let settings = settings.clone();
             let transferred = transferred.clone();
-            scope.spawn(move||{
-                let mut easy=Easy::new();
-                while control.load(Ordering::Relaxed)==0 && error.lock().unwrap().is_none(){
-                    let Some(index)=claim(&job,&allocator)else{break};
-                    let mut last_error=None;
-                    for attempt in 0..6 {
-                        if control.load(Ordering::Relaxed)!=0{break;}
-                        let segment=job.lock().unwrap().segments[index].clone();let offset=segment.start+segment.downloaded;
-                        if segment.remaining()==0{break;}
-                        let result=(||->Result<()> {
-                            configure(&mut easy,&metadata.url,&metadata.context,&settings)?;
-                            if rate>0{easy.max_recv_speed((rate/workers as u64).max(1))?;}
-                            if ranged{easy.range(&format!("{offset}-{}",segment.end))?;let mut list=List::new();list.append("Accept-Encoding: identity")?;for(k,v)in &metadata.context.headers{list.append(&format!("{k}: {v}"))?;}
-if resumed{if let Some(v)=metadata.etag.as_ref().filter(|v|!v.starts_with("W/")){list.append(&format!("If-Range: {v}"))?;}else if let Some(v)=&metadata.modified{list.append(&format!("If-Range: {v}"))?;}}easy.http_headers(list)?;}
-                            let headers=std::cell::RefCell::new(Headers::default());let mut invalid=None;let mut write_error=None;let mut last_checkpoint=Instant::now();let attempt_started=Instant::now();let mut attempt_bytes=0u64;
-                            let mut transfer=easy.transfer();transfer.header_function(|l|{headers.borrow_mut().accept(l);true})?;
-                            transfer.progress_function(|_,_,_,_|control.load(Ordering::Relaxed)==0)?;
-                            transfer.write_function(|data|{
-                                if control.load(Ordering::Relaxed)!=0{return Ok(0);}
-                                let h=headers.borrow();
-                                if http {
-                                    if h.status>=400{invalid=Some(format!("HTTP {}{}",h.status,h.retry_after.map(|n|format!(" retry_after={n}")).unwrap_or_default()));return Ok(0);}
-if ranged&& (h.status!=206||h.range!=Some((offset,segment.end,metadata.total.unwrap()))){invalid=Some("range_invalid: Server ignored or returned an invalid byte range; restart with one connection".to_string());return Ok(0);}
-                                    if !ranged&&h.status!=200{invalid=Some(format!("HTTP {} while downloading",h.status));return Ok(0);}
-                                    if h.etag.is_some()&&metadata.etag.is_some()&&h.etag!=metadata.etag{invalid=Some("source_changed: Remote validator changed during transfer".into());return Ok(0);}
-                                }
-                                drop(h);
-                                let mut f=file.lock().unwrap();let mut j=job.lock().unwrap();let s=&mut j.segments[index];let mut count=data.len().min(s.remaining().min(usize::MAX as u64)as usize);
-                                if settings.quota_bytes>0{let usage=store.lock().unwrap();let used=match usage.usage(settings.quota_minutes){Ok(value)=>value,Err(e)=>{write_error=Some(format!("storage_error: {e}"));return Ok(0);}};let available=settings.quota_bytes.saturating_sub(used);count=count.min(available as usize);if let Err(e)=usage.record_usage(count as u64){write_error=Some(format!("storage_error: {e}"));return Ok(0);}
-if count==0{control.store(3,Ordering::Relaxed);return Ok(0);}}
-if count==0{return Ok(0);}
-                                let write=f.seek(SeekFrom::Start(s.start+s.downloaded)).and_then(|_|f.write_all(&data[..count]));
-                                if let Err(e)=write{write_error=Some(format!("storage_error: {e}"));return Ok(0);}
-                                s.downloaded+=count as u64;j.bytes=j.segments.iter().map(|s|s.downloaded).sum();attempt_bytes+=count as u64;j.speed=(attempt_bytes as f64/attempt_started.elapsed().as_secs_f64().max(0.001))as u64;j.viable=true;*transferred.lock().unwrap()+=count as u64;
-                                drop(j);drop(f);if settings.quota_bytes>0&&count<data.len(){control.store(3,Ordering::Relaxed);}
-                                if last_checkpoint.elapsed()>Duration::from_secs(1){if let Err(e)=checkpoint(&job,&store,&file){write_error=Some(format!("storage_error: {e}"));return Ok(0);}last_checkpoint=Instant::now();}
-                                Ok(count)
-                            })?;
-                            let result=transfer.perform();drop(transfer);
-                            if let Some(e)=write_error.or(invalid){bail!(e);}
-                            let h=headers.borrow();
-                            if h.status>=400{bail!("HTTP {}{}",h.status,h.retry_after.map(|n|format!(" retry_after={n}")).unwrap_or_default());}
-                            if control.load(Ordering::Relaxed)!=0{return Ok(());}
-                            let complete=job.lock().unwrap().segments[index].remaining()==0;
-                            if complete {return Ok(());}
-                            if !ranged {result?;let mut j=job.lock().unwrap();let length=j.segments[index].downloaded;if let Some(expected)=metadata.total{if length!=expected{bail!("Truncated response: expected {expected} bytes, received {length}");}}j.segments[index].end=length.saturating_sub(1);j.total=Some(length);return Ok(());}
-                            if let Err(e)=result {bail!("Transfer interrupted: {e}");}bail!("Truncated range response")
-                        })();
-                        match result {Ok(())=>{last_error=None;break},Err(e)=>{
-                            let message=e.to_string();let fatal=message.contains("range_invalid")||message.contains("source_changed")||message.contains("storage_error")||message.contains("HTTP 401")||message.contains("HTTP 403")||message.contains("HTTP 404");
-                            last_error=Some(message);if fatal||attempt==5||!ranged{break;}
-                            let retry_after=last_error.as_ref().and_then(|s|s.split("retry_after=").nth(1)).and_then(|n|n.parse::<u64>().ok());
-                            let delay=retry_after.unwrap_or((1u64<<attempt).min(30)).min(3600);for _ in 0..delay*10{if control.load(Ordering::Relaxed)!=0{break;}std::thread::sleep(Duration::from_millis(100));}
-                        }}
-                    }
-                    allocator.lock().unwrap().active.remove(&index);
-                    if let Some(e)=last_error{*error.lock().unwrap()=Some(e);break;}
-                }
+            scope.spawn(move || {
+                worker(
+                    job,
+                    store,
+                    file,
+                    allocator,
+                    error,
+                    control,
+                    metadata,
+                    settings,
+                    transferred,
+                    ranged,
+                    http,
+                    rate,
+                    workers,
+                )
             });
         }
     });
@@ -503,64 +497,219 @@ if count==0{return Ok(0);}
     if let Some(error) = error.lock().unwrap().take() {
         bail!(error);
     }
-    {
-        let mut j = job.lock().unwrap();
-        if let Some(total) = j.total {
-            if j.bytes != total {
-                bail!("Incomplete transfer: received {} of {total}", j.bytes);
-            }
-        }
-        j.state = JobState::Verifying;
-        store.lock().unwrap().put("job", &j.id, &*j)?;
-    }
-    if let Some(expected) = &snapshot.checksum {
-        let mut f = File::open(&path)?;
-        let mut hash = Sha256::new();
-        let mut buffer = vec![0; 128 * 1024];
-        loop {
-            let n = f.read(&mut buffer)?;
-            if n == 0 {
+    file.lock()
+        .unwrap()
+        .sync_all()
+        .context("storage_error: Final output flush failed")?;
+    drop(file);
+    crate::finalize::finish(job, store, &settings, &control)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn worker(
+    job: SharedJob,
+    store: Arc<Mutex<Store>>,
+    file: Arc<Mutex<File>>,
+    allocator: Arc<Mutex<Allocator>>,
+    error: Arc<Mutex<Option<String>>>,
+    control: Arc<AtomicU8>,
+    metadata: Metadata,
+    settings: Settings,
+    transferred: Arc<Mutex<u64>>,
+    ranged: bool,
+    http: bool,
+    rate: u64,
+    workers: usize,
+) {
+    while control.load(Ordering::Relaxed) == 0 && error.lock().unwrap().is_none() {
+        let Some(index) = claim(&job, &allocator) else {
+            break;
+        };
+        let mut last_error = None;
+        for attempt in 0..=settings.network.retries {
+            if control.load(Ordering::Relaxed) != 0 {
                 break;
             }
-            hash.update(&buffer[..n]);
+            if attempt > 0 && !ranged && http {
+                // A serial response is replayed from zero, never appended to a failed body.
+                let f = file.lock().unwrap();
+                let mut j = job.lock().unwrap();
+                if let Err(e) = f.set_len(0).and_then(|_| f.sync_data()) {
+                    last_error = Some(format!("storage_error: {e}"));
+                    break;
+                }
+                j.segments[index].downloaded = 0;
+                j.bytes = 0;
+                j.viable = false;
+                if let Err(e) = store.lock().unwrap().put("job", &j.id, &*j) {
+                    last_error = Some(format!("storage_error: {e}"));
+                    break;
+                }
+            }
+            let segment = job.lock().unwrap().segments[index].clone();
+            let offset = segment.start + segment.downloaded;
+            if segment.remaining() == 0 {
+                break;
+            }
+            let mut retry_after = None;
+            let result = (|| -> Result<()> {
+                let mut easy =
+                    crate::pool::checkout(&metadata.url, &metadata.context, &settings, &control)?;
+                configure(&mut easy, &metadata.url, &metadata.context, &settings)?;
+                if rate > 0 {
+                    easy.max_recv_speed((rate / workers as u64).max(1))?;
+                }
+                if ranged {
+                    easy.range(&format!("{offset}-{}", segment.end))?;
+                    let mut list = List::new();
+                    list.append("Accept-Encoding: identity")?;
+                    for (k, v) in &metadata.context.headers {
+                        list.append(&format!("{k}: {v}"))?;
+                    }
+                    if let Some(v) = metadata.etag.as_ref().filter(|v| !v.starts_with("W/")) {
+                        list.append(&format!("If-Range: {v}"))?;
+                        list.append(&format!("If-Match: {v}"))?;
+                    } else if let Some(v) = &metadata.modified {
+                        list.append(&format!("If-Range: {v}"))?;
+                    }
+                    easy.http_headers(list)?;
+                } else if !http && offset > 0 {
+                    easy.resume_from(offset)?;
+                }
+                let headers = std::cell::RefCell::new(Headers::default());
+                let mut invalid = None;
+                let mut write_error = None;
+                let mut split_boundary = false;
+                let mut last_checkpoint = Instant::now();
+                let attempt_started = Instant::now();
+                let mut attempt_bytes = 0u64;
+                let mut transfer = easy.transfer();
+                transfer.header_function(|l| {
+                    headers.borrow_mut().accept(l);
+                    true
+                })?;
+                transfer.progress_function(|_, _, _, _| {
+                    control.load(Ordering::Relaxed) == 0 && error.lock().unwrap().is_none()
+                })?;
+                transfer.write_function(|data| {
+                                if control.load(Ordering::Relaxed)!=0 {return Ok(0);}
+                                let h=headers.borrow();
+                                if http {
+                                    if h.status>=400 {invalid=Some(crate::failure::http_error(h.status));return Ok(0);}
+                                    if h.invalid || ranged && (h.status!=206 || h.range!=Some((offset,segment.end,metadata.total.unwrap())) || h.encoding.as_deref().is_some_and(|v|!v.eq_ignore_ascii_case("identity"))) {
+                                        invalid=Some("range_invalid: Server returned an unexpected range; explicitly restart with one connection".into());return Ok(0);
+                                    }
+                                    if !ranged && h.status!=200 {invalid=Some(format!("HTTP {} while downloading",h.status));return Ok(0);}
+                                    if h.etag.is_some() && metadata.etag.is_some() && h.etag!=metadata.etag {invalid=Some("source_changed: Remote validator changed during transfer".into());return Ok(0);}
+                                }
+                                drop(h);
+                                let mut f=file.lock().unwrap();let mut j=job.lock().unwrap();
+                                let remaining=j.segments[index].remaining();
+                                let split=ranged && j.segments[index].end<segment.end;
+                                if data.len() as u64>remaining && !split {invalid=Some("range_invalid: Response exceeds its expected byte count".into());return Ok(0);}
+                                let mut count=data.len().min(remaining.min(usize::MAX as u64) as usize);
+                                if split && count<data.len() {split_boundary=true;}
+                                if count==0 {return Ok(0);}
+                                if settings.quota_bytes>0 {
+                                    let usage=store.lock().unwrap();
+                                    let used=match usage.usage(settings.quota_minutes) {Ok(v)=>v,Err(e)=>{write_error=Some(format!("storage_error: {e}"));return Ok(0);}};
+                                    count=count.min(settings.quota_bytes.saturating_sub(used).min(usize::MAX as u64) as usize);
+                                    if let Err(e)=usage.record_usage(count as u64) {write_error=Some(format!("storage_error: {e}"));return Ok(0);}
+                                    if count==0 {control.store(3,Ordering::Relaxed);return Ok(0);}
+                                }
+                                let s=&mut j.segments[index];
+                                if let Err(e)=f.seek(SeekFrom::Start(s.start+s.downloaded)).and_then(|_|f.write_all(&data[..count])) {write_error=Some(format!("storage_error: {e}"));return Ok(0);}
+                                s.downloaded+=count as u64;j.bytes=j.segments.iter().map(|s|s.downloaded).sum();attempt_bytes+=count as u64;
+                                j.speed=(attempt_bytes as f64/attempt_started.elapsed().as_secs_f64().max(0.001)) as u64;
+                                j.viable=true;*transferred.lock().unwrap()+=count as u64;
+                                drop(j);drop(f);
+                                if count<data.len() && !split_boundary {control.store(3,Ordering::Relaxed);}
+                                if last_checkpoint.elapsed()>Duration::from_millis(settings.network.checkpoint_milliseconds) {
+                                    if let Err(e)=checkpoint(&job,&store,&file) {write_error=Some(format!("storage_error: {e}"));return Ok(0);}
+                                    last_checkpoint=Instant::now();
+                                }
+                                Ok(count)
+                            })?;
+                let result = transfer.perform();
+                drop(transfer);
+                let h = headers.borrow();
+                retry_after = h.retry_after;
+                if matches!(h.status, 429 | 503) {
+                    crate::pool::backoff(&metadata.url);
+                }
+                if control.load(Ordering::Relaxed) != 0 {
+                    return Ok(());
+                }
+                if let Some(e) = write_error.or(invalid) {
+                    bail!(e);
+                }
+                if http && h.status >= 400 {
+                    bail!("{}", crate::failure::http_error(h.status));
+                }
+                if http
+                    && (h.invalid
+                        || ranged
+                            && (h.status != 206
+                                || h.range != Some((offset, segment.end, metadata.total.unwrap()))))
+                {
+                    bail!("range_invalid: Invalid or missing range response");
+                }
+                // Check libcurl's result before trusting the bytes or marking a segment complete.
+                if !(split_boundary && result.as_ref().is_err_and(|e| e.is_write_error())) {
+                    result.context("Transfer interrupted")?;
+                }
+                let mut j = job.lock().unwrap();
+                if ranged {
+                    if j.segments[index].remaining() != 0 {
+                        bail!("Truncated range response");
+                    }
+                } else {
+                    let length = j.segments[index].downloaded;
+                    if metadata.total.is_some_and(|n| n != length) {
+                        bail!("Truncated response");
+                    }
+                    if length == 0 {
+                        j.segments.clear();
+                    } else {
+                        j.segments[index].end = length - 1;
+                    }
+                    j.total = Some(length);
+                }
+                Ok(())
+            })();
+            match result {
+                Ok(()) => {
+                    last_error = None;
+                    break;
+                }
+                Err(e) => {
+                    let message = e.to_string();
+                    let fatal = !crate::failure::TransferFailure::classify(&message).retryable;
+                    last_error = Some(message);
+                    if fatal || attempt == settings.network.retries {
+                        break;
+                    }
+                    // A failed transfer that filled a range must replay that range, not finalize it.
+                    if ranged && job.lock().unwrap().segments[index].remaining() == 0 {
+                        let mut j = job.lock().unwrap();
+                        j.segments[index].downloaded = segment.downloaded;
+                    }
+                    let delay = retry_after.unwrap_or((1u64 << attempt).min(30)).min(3600);
+                    for _ in 0..delay * 10 {
+                        if control.load(Ordering::Relaxed) != 0 {
+                            break;
+                        }
+                        std::thread::sleep(Duration::from_millis(100));
+                    }
+                }
+            }
         }
-        let actual = format!("{:x}", hash.finalize());
-        if !actual.eq_ignore_ascii_case(expected) {
-            bail!("checksum_mismatch: SHA-256 does not match; partial output preserved");
+        allocator.lock().unwrap().active.remove(&index);
+        if let Some(e) = last_error {
+            *error.lock().unwrap() = Some(e);
+            break;
         }
     }
-    {
-        let mut j = job.lock().unwrap();
-        j.state = JobState::Assembling;
-        store.lock().unwrap().put("job", &j.id, &*j)?;
-    }
-    file.lock().unwrap().sync_all()?;
-    drop(file);
-    // Never overwrite an unrelated file that appeared after the destination was reserved.
-    std::fs::hard_link(&path, &snapshot.destination)
-        .context("storage_error: Could not finalize without overwriting an existing file")?;
-    security::mark_download(&snapshot.destination, &metadata.url)?;
-    if let Some(scanner) = &settings.scanner {
-        job.lock().unwrap().state = JobState::Scanning;
-        let status = std::process::Command::new(&scanner.executable)
-            .args(
-                scanner
-                    .args
-                    .iter()
-                    .map(|a| a.replace("{file}", &snapshot.destination.to_string_lossy())),
-            )
-            .status()?;
-        if !status.success() {
-            bail!("scan_failed: Scanner reported an error or threat; file was not opened");
-        }
-    }
-    {
-        let mut j = job.lock().unwrap();
-        j.state = JobState::Complete;
-        store.lock().unwrap().put("job", &j.id, &*j)?;
-    }
-    std::fs::remove_file(&path)?;
-    Ok(())
 }
 
 #[cfg(test)]

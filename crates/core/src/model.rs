@@ -110,6 +110,10 @@ pub struct Job {
     pub segments: Vec<Segment>,
     pub checksum: Option<String>,
     pub error: Option<String>,
+    #[serde(default)]
+    pub failure: Option<crate::failure::TransferFailure>,
+    #[serde(default)]
+    pub verified_sha256: Option<String>,
     pub created: DateTime<Utc>,
     pub updated: DateTime<Utc>,
     pub media: Option<MediaOptions>,
@@ -168,6 +172,8 @@ pub struct Scanner {
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
+    #[serde(default)]
+    pub network: crate::network::NetworkSettings,
     pub directory: PathBuf,
     pub max_jobs: usize,
     pub connections: usize,
@@ -224,6 +230,7 @@ impl Default for Settings {
         })
         .collect();
         Self {
+            network: Default::default(),
             directory,
             max_jobs: 3,
             connections: 4,
