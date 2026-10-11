@@ -41,6 +41,7 @@ pub struct NetworkSettings {
     pub proxy_authentication: Authentication,
     pub http_policy: HttpPolicy,
     pub segmented: bool,
+    pub ftp_tls: bool,
     pub retries: u32,
     pub connect_timeout_seconds: u64,
     pub stall_timeout_seconds: u64,
@@ -56,6 +57,7 @@ impl Default for NetworkSettings {
             proxy_authentication: Authentication::Auto,
             http_policy: HttpPolicy::Auto,
             segmented: true,
+            ftp_tls: false,
             retries: 5,
             connect_timeout_seconds: 20,
             stall_timeout_seconds: 30,
@@ -93,7 +95,7 @@ impl NetworkSettings {
 }
 pub fn capabilities() -> serde_json::Value {
     let v = curl::Version::get();
-    serde_json::json!({"version":v.version(),"protocols":v.protocols().collect::<Vec<_>>(),"tls":v.ssl_version(),"http2":v.feature_http2(),"large_files":v.feature_largefile(),"gzip":v.feature_libz(),"ntlm":v.feature_ntlm(),"negotiate":v.feature_gss_negotiate()||v.feature_spnego()||v.feature_sspi(),"https_proxy":v.feature_https_proxy(),"system_pac":cfg!(windows)})
+    serde_json::json!({"version":v.version(),"protocols":v.protocols().collect::<Vec<_>>(),"tls":v.ssl_version(),"http2":v.feature_http2(),"large_files":v.feature_largefile(),"gzip":v.feature_libz(),"ntlm":v.feature_ntlm(),"negotiate":v.feature_gss_negotiate()||v.feature_spnego()||v.feature_sspi(),"https_proxy":v.feature_https_proxy(),"system_pac":cfg!(windows)||cfg!(target_os="macos")||crate::network::linux_pac_available()})
 }
 pub fn authentication(method: &Authentication) -> Result<Auth> {
     let v = curl::Version::get();
@@ -122,6 +124,18 @@ pub fn apply(easy: &mut Easy, url: &str, settings: &crate::Settings) -> Result<(
     easy.connect_timeout(Duration::from_secs(n.connect_timeout_seconds))?;
     easy.low_speed_time(Duration::from_secs(n.stall_timeout_seconds))?;
     easy.max_connects(1)?;
+    if n.ftp_tls && url.starts_with("ftp:") {
+        let code = unsafe {
+            curl_sys::curl_easy_setopt(
+                easy.raw(),
+                curl_sys::CURLOPT_USE_SSL,
+                curl_sys::CURLUSESSL_ALL as std::ffi::c_long,
+            )
+        };
+        if code != curl_sys::CURLE_OK {
+            return Err(curl::Error::new(code).into());
+        }
+    }
     if let Some(path) = &n.ca_file {
         easy.cainfo(path)?;
         easy.proxy_cainfo(path.to_str().context("CA path must be UTF-8")?)?;
@@ -152,7 +166,7 @@ pub fn apply(easy: &mut Easy, url: &str, settings: &crate::Settings) -> Result<(
             easy.noproxy("")?;
         }
         ProxyMode::Pac => {
-            let proxy = pac(url, n.pac_url.as_deref())?;
+            let proxy = pac(url, n.pac_url.as_deref(), n)?;
             easy.proxy(&proxy)?;
             easy.noproxy("")?;
         }
@@ -163,22 +177,27 @@ pub fn apply(easy: &mut Easy, url: &str, settings: &crate::Settings) -> Result<(
             }
             #[cfg(windows)]
             if settings.proxy.is_none() {
-                easy.proxy(&pac(url, None)?)?;
+                easy.proxy(&pac(url, None, n)?)?;
             }
             #[cfg(not(windows))]
             {
-                let _ = url;
+                if settings.proxy.is_none() {
+                    if let Some(proxy) = crate::system_proxy::system(url)? {
+                        easy.proxy(&proxy)?;
+                        easy.noproxy("")?;
+                    }
+                }
             }
         }
     }
     Ok(())
 }
 #[cfg(not(windows))]
-fn pac(_url: &str, _script: Option<&str>) -> Result<String> {
-    bail!("protocol_unsupported: PAC requires Windows WinHTTP on this build; configure a manual proxy or direct routing")
+fn pac(url: &str, script: Option<&str>, settings: &NetworkSettings) -> Result<String> {
+    crate::system_proxy::pac(url, script.context("PAC URL is required")?, settings)
 }
 #[cfg(windows)]
-fn pac(url: &str, script: Option<&str>) -> Result<String> {
+fn pac(url: &str, script: Option<&str>, _settings: &NetworkSettings) -> Result<String> {
     use std::{ffi::c_void, ptr};
     #[repr(C)]
     struct Config {
@@ -336,5 +355,16 @@ fn pac(url: &str, script: Option<&str>) -> Result<String> {
         Ok(chosen)
     } else {
         Ok(format!("http://{chosen}"))
+    }
+}
+
+fn linux_pac_available() -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        unsafe { libloading::Library::new("libpacparser.so.1").is_ok() }
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        false
     }
 }

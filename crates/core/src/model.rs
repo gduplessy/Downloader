@@ -96,6 +96,8 @@ pub struct AddJob {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Job {
     #[serde(default)]
+    pub metrics: TransferMetrics,
+    #[serde(default)]
     pub request_fingerprint: Option<String>,
     #[serde(default)]
     pub credential_id: Option<String>,
@@ -122,6 +124,8 @@ pub struct Job {
     pub failure: Option<crate::failure::TransferFailure>,
     #[serde(default)]
     pub verified_sha256: Option<String>,
+    #[serde(default)]
+    pub partial_created: bool,
     pub created: DateTime<Utc>,
     pub updated: DateTime<Utc>,
     pub media: Option<MediaOptions>,
@@ -509,4 +513,13 @@ pub struct EventBatch {
     pub events: Vec<EngineEvent>,
     pub sequence: u64,
     pub has_more: bool,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct TransferMetrics {
+    pub checkpoints: u64,
+    pub checkpoint_seconds: f64,
+    pub verification_seconds: f64,
+    pub publication_seconds: f64,
+    pub scan_seconds: f64,
 }

@@ -142,7 +142,13 @@ pub fn configure(
     context: &RequestContext,
     settings: &Settings,
 ) -> Result<()> {
-    security::validate_url(url)?;
+    let parsed = security::validate_url(url)?;
+    if !curl::Version::get()
+        .protocols()
+        .any(|p| p == parsed.scheme())
+    {
+        bail!("protocol_unsupported: Source protocol is unavailable in this libcurl build");
+    }
     security::validate_context(context)?;
     easy.reset();
     easy.url(url)?;
@@ -179,10 +185,18 @@ pub fn configure(
     Ok(())
 }
 pub fn inspect(url: &str, context: &RequestContext, settings: &Settings) -> Result<Metadata> {
+    inspect_controlled(url, context, settings, &AtomicU8::new(0))
+}
+fn inspect_controlled(
+    url: &str,
+    context: &RequestContext,
+    settings: &Settings,
+    control: &AtomicU8,
+) -> Result<Metadata> {
     let mut url = security::validate_url(url)?;
     let mut context = context.clone();
     for _ in 0..10 {
-        let mut easy = crate::pool::checkout(url.as_str(), &context, settings, &AtomicU8::new(0))?;
+        let mut easy = crate::pool::checkout(url.as_str(), &context, settings, control)?;
         configure(&mut easy, url.as_str(), &context, settings)?;
         easy.nobody(true)?;
         easy.fetch_filetime(true)?;
@@ -193,6 +207,7 @@ pub fn inspect(url: &str, context: &RequestContext, settings: &Settings) -> Resu
                 headers.accept(line);
                 true
             })?;
+            transfer.progress_function(|_, _, _, _| control.load(Ordering::Relaxed) == 0)?;
             transfer.perform()?;
         }
         headers.status = easy.response_code()?;
@@ -270,6 +285,24 @@ pub fn inspect(url: &str, context: &RequestContext, settings: &Settings) -> Resu
     }
     bail!("Too many redirects")
 }
+fn redirected(
+    current: &str,
+    location: Option<&str>,
+    context: &RequestContext,
+) -> Result<(String, RequestContext)> {
+    let current = security::validate_url(current)?;
+    let next = current.join(location.context("Redirect lacks Location")?)?;
+    security::validate_url(next.as_str())?;
+    if current.scheme() == "https" && next.scheme() != "https" {
+        bail!("protocol_unsupported: Refusing HTTPS downgrade");
+    }
+    let mut context = context.clone();
+    if next.origin() != current.origin() {
+        context.headers.clear();
+        context.credential_id = None;
+    }
+    Ok((next.into(), context))
+}
 pub fn fetch_bytes(
     url: &str,
     context: &RequestContext,
@@ -278,42 +311,70 @@ pub fn fetch_bytes(
     range: Option<(u64, u64)>,
 ) -> Result<(Headers, Vec<u8>)> {
     let metadata = inspect(url, context, settings)?;
-    let mut easy = crate::pool::checkout(
-        &metadata.url,
-        &metadata.context,
-        settings,
-        &AtomicU8::new(0),
-    )?;
-    configure(&mut easy, &metadata.url, &metadata.context, settings)?;
-    if let Some((start, end)) = range {
-        easy.range(&format!("{start}-{end}"))?;
-    }
-    let mut headers = Headers::default();
-    let mut bytes = Vec::new();
-    {
-        let mut transfer = easy.transfer();
-        transfer.header_function(|l| {
-            headers.accept(l);
-            true
-        })?;
-        transfer.write_function(|data| {
-            if bytes.len() + data.len() > limit {
-                return Ok(0);
+    let (mut url, mut context) = (metadata.url, metadata.context);
+    for _ in 0..10 {
+        let mut easy = crate::pool::checkout(&url, &context, settings, &AtomicU8::new(0))?;
+        configure(&mut easy, &url, &context, settings)?;
+        if let Some((a, b)) = range {
+            if a > b {
+                bail!("range_invalid: Reversed byte range");
             }
-            bytes.extend_from_slice(data);
-            Ok(data.len())
-        })?;
-        transfer.perform()?;
-    }
-    if headers.status >= 400 {
-        bail!("HTTP {}", headers.status);
-    }
-    if let Some((a, b)) = range {
-        if headers.status != 206 || headers.range.map(|r| (r.0, r.1)) != Some((a, b)) {
-            bail!("Server ignored or returned an invalid byte range");
+            easy.range(&format!("{a}-{b}"))?;
         }
+        let headers = std::cell::RefCell::new(Headers::default());
+        let mut bytes = vec![];
+        let result = {
+            let mut t = easy.transfer();
+            t.header_function(|l| {
+                headers.borrow_mut().accept(l);
+                true
+            })?;
+            t.write_function(|d| {
+                let h = headers.borrow();
+                if matches!(h.status, 301 | 302 | 303 | 307 | 308)
+                    || h.status >= 400
+                    || h.invalid
+                    || range.is_some_and(|(a, b)| {
+                        h.status != 206 || h.range.map(|r| (r.0, r.1)) != Some((a, b))
+                    })
+                    || bytes.len().saturating_add(d.len()) > limit
+                {
+                    return Ok(0);
+                }
+                bytes.extend_from_slice(d);
+                Ok(d.len())
+            })?;
+            t.perform()
+        };
+        let headers = headers.into_inner();
+        if matches!(headers.status, 301 | 302 | 303 | 307 | 308) {
+            (url, context) = redirected(&url, headers.location.as_deref(), &context)?;
+            continue;
+        }
+        if headers.status >= 400 {
+            bail!("{}", crate::failure::http_error(headers.status));
+        }
+        if headers.invalid {
+            bail!("range_invalid: Malformed response");
+        }
+        if let Some((a, b)) = range {
+            if headers.status != 206
+                || headers.range.map(|r| (r.0, r.1)) != Some((a, b))
+                || headers
+                    .encoding
+                    .as_deref()
+                    .is_some_and(|v| !v.eq_ignore_ascii_case("identity"))
+            {
+                bail!("range_invalid: Server ignored or returned an invalid byte range");
+            }
+            if bytes.len() as u64 != b - a + 1 {
+                bail!("Truncated range response");
+            }
+        }
+        result?;
+        return Ok((headers, bytes));
     }
-    Ok((headers, bytes))
+    bail!("Too many GET redirects")
 }
 pub type SharedJob = Arc<Mutex<Job>>;
 pub fn part_path(job: &Job) -> PathBuf {
@@ -325,14 +386,19 @@ pub fn checkpoint(
     store: &Arc<Mutex<Store>>,
     file: &Arc<Mutex<File>>,
 ) -> Result<()> {
+    let started = Instant::now();
     // The file and job locks keep offsets consistent with the bytes being fsynced.
     let file = file.lock().unwrap();
     let mut job = job.lock().unwrap();
     file.sync_data()
         .context("storage_error: Could not flush checkpoint bytes")?;
+    crate::fault::point("checkpoint_before_commit");
     job.bytes = job.segments.iter().map(|s| s.downloaded).sum();
     job.updated = chrono::Utc::now();
     store.lock().unwrap().put("job", &job.id, &*job)?;
+    job.metrics.checkpoints += 1;
+    job.metrics.checkpoint_seconds += started.elapsed().as_secs_f64();
+    crate::fault::point("checkpoint_after_commit");
     Ok(())
 }
 struct Allocator {
@@ -387,7 +453,7 @@ pub fn run(
     if snapshot.verified_sha256.is_some() && snapshot.total == Some(snapshot.bytes) {
         return crate::finalize::finish(job, store, &settings, &control);
     }
-    let mut metadata = inspect(&snapshot.url, &context, &settings)?;
+    let mut metadata = inspect_controlled(&snapshot.url, &context, &settings, &control)?;
     // Advertised range support is only a hint. An actual 206 response is required.
     if metadata.url.starts_with("http") && metadata.ranges && metadata.total.is_some_and(|n| n > 0)
     {
@@ -406,25 +472,39 @@ pub fn run(
                 && snapshot.modified == metadata.modified
                 && snapshot.total == total
         };
-        if !unchanged {
+        if !unchanged || snapshot.total != total {
             bail!("source_changed: Resume cannot be verified; refresh the source or explicitly restart");
         }
-        if !snapshot.resumable || !metadata.ranges {
+        if !snapshot.resumable || !metadata.ranges || http && !settings.network.segmented {
             bail!(
                 "resume_unsupported: Server no longer permits verified resume; explicitly restart"
             );
         }
     }
     if let Some(parent) = snapshot.destination.parent() {
-        std::fs::create_dir_all(parent)?;
+        std::fs::create_dir_all(parent)
+            .context("storage_error: Could not create output directory")?;
     }
     let path = part_path(&snapshot);
-    let file = Arc::new(Mutex::new(crate::storage::open_partial(&path, !resumed)?));
+    let file = Arc::new(Mutex::new(crate::storage::open_partial(
+        &path,
+        !resumed && !snapshot.partial_created,
+    )?));
+    if !resumed && snapshot.partial_created {
+        let f = file.lock().unwrap();
+        f.set_len(0)
+            .context("storage_error: Could not discard uncommitted owned bytes")?;
+        f.sync_data()?;
+    }
     if resumed {
         crate::storage::validate_checkpoint(&snapshot, file.lock().unwrap().metadata()?.len())?;
     }
-    let ranged =
-        http && settings.network.segmented && metadata.ranges && total.is_some_and(|n| n > 0);
+    let ranged = http
+        && settings.network.segmented
+        && metadata.ranges
+        && total.is_some_and(|n| n > 0)
+        && (metadata.etag.as_ref().is_some_and(|v| !v.starts_with("W/"))
+            || metadata.modified.is_some());
     {
         let mut j = job.lock().unwrap();
         j.total = total;
@@ -432,16 +512,15 @@ pub fn run(
         j.modified = metadata.modified.clone();
         j.resumable = ranged || !http && metadata.total.is_some() && metadata.modified.is_some();
         if !resumed {
-            j.segments = if total == Some(0) {
-                vec![]
-            } else {
-                vec![Segment {
-                    start: 0,
-                    end: total.map(|n| n.saturating_sub(1)).unwrap_or(u64::MAX - 1),
-                    downloaded: 0,
-                }]
-            };
+            j.segments = vec![Segment {
+                start: 0,
+                end: total.map(|n| n.saturating_sub(1)).unwrap_or(u64::MAX - 1),
+                downloaded: 0,
+            }];
         }
+        j.partial_created = true;
+        store.lock().unwrap().put("job", &j.id, &*j)?;
+        crate::fault::point("partial_created");
         j.state = JobState::Downloading;
     }
     let workers = if ranged {
@@ -495,6 +574,24 @@ pub fn run(
         return Ok(());
     }
     if let Some(error) = error.lock().unwrap().take() {
+        if ranged && !resumed && error.contains("range_invalid") {
+            file.lock()
+                .unwrap()
+                .set_len(0)
+                .context("storage_error: Could not restart rejected ranges")?;
+            file.lock().unwrap().sync_data()?;
+            drop(file);
+            {
+                let mut j = job.lock().unwrap();
+                j.bytes = 0;
+                j.segments.clear();
+                j.viable = false;
+                store.lock().unwrap().put("job", &j.id, &*j)?;
+            }
+            let mut serial = settings;
+            serial.network.segmented = false;
+            return run(job, store, serial, context, control, rate);
+        }
         bail!(error);
     }
     file.lock()
@@ -502,6 +599,12 @@ pub fn run(
         .sync_all()
         .context("storage_error: Final output flush failed")?;
     drop(file);
+    if !http {
+        let current = inspect_controlled(&metadata.url, &metadata.context, &settings, &control)?;
+        if current.total != metadata.total || current.modified != metadata.modified {
+            bail!("source_changed: FTP file changed during transfer");
+        }
+    }
     crate::finalize::finish(job, store, &settings, &control)
 }
 
@@ -513,7 +616,7 @@ fn worker(
     allocator: Arc<Mutex<Allocator>>,
     error: Arc<Mutex<Option<String>>>,
     control: Arc<AtomicU8>,
-    metadata: Metadata,
+    mut metadata: Metadata,
     settings: Settings,
     transferred: Arc<Mutex<u64>>,
     ranged: bool,
@@ -526,8 +629,10 @@ fn worker(
             break;
         };
         let mut last_error = None;
-        for attempt in 0..=settings.network.retries {
-            if control.load(Ordering::Relaxed) != 0 {
+        let mut attempt = 0;
+        let mut redirects = 0;
+        loop {
+            if control.load(Ordering::Relaxed) != 0 || error.lock().unwrap().is_some() {
                 break;
             }
             if attempt > 0 && !ranged && http {
@@ -595,12 +700,13 @@ fn worker(
                                 if control.load(Ordering::Relaxed)!=0 {return Ok(0);}
                                 let h=headers.borrow();
                                 if http {
+                                    if matches!(h.status,301|302|303|307|308){return Ok(0);}
                                     if h.status>=400 {invalid=Some(crate::failure::http_error(h.status));return Ok(0);}
                                     if h.invalid || ranged && (h.status!=206 || h.range!=Some((offset,segment.end,metadata.total.unwrap())) || h.encoding.as_deref().is_some_and(|v|!v.eq_ignore_ascii_case("identity"))) {
                                         invalid=Some("range_invalid: Server returned an unexpected range; explicitly restart with one connection".into());return Ok(0);
                                     }
                                     if !ranged && h.status!=200 {invalid=Some(format!("HTTP {} while downloading",h.status));return Ok(0);}
-                                    if h.etag.is_some() && metadata.etag.is_some() && h.etag!=metadata.etag {invalid=Some("source_changed: Remote validator changed during transfer".into());return Ok(0);}
+                                    if metadata.etag.as_ref().is_some_and(|v|!v.starts_with("W/")) && h.etag!=metadata.etag || ranged && metadata.etag.is_none() && h.modified!=metadata.modified {invalid=Some("source_changed: Remote validator changed during transfer".into());return Ok(0);}
                                 }
                                 drop(h);
                                 let mut f=file.lock().unwrap();let mut j=job.lock().unwrap();
@@ -640,8 +746,29 @@ fn worker(
                 if control.load(Ordering::Relaxed) != 0 {
                     return Ok(());
                 }
+                if matches!(h.status, 301 | 302 | 303 | 307 | 308) {
+                    let (url, context) =
+                        redirected(&metadata.url, h.location.as_deref(), &metadata.context)?;
+                    drop(h);
+                    drop(easy);
+                    let next = inspect_controlled(&url, &context, &settings, &control)?;
+                    if next.total != metadata.total
+                        || metadata.etag.is_some() && next.etag != metadata.etag
+                        || metadata.etag.is_none() && next.modified != metadata.modified
+                    {
+                        bail!("source_changed: Redirect target differs from the validated source");
+                    }
+                    metadata = next;
+                    bail!("redirect_retry");
+                }
                 if let Some(e) = write_error.or(invalid) {
                     bail!(e);
+                }
+                if http && !ranged && !matches!(h.status, 200 | 204) && h.status < 400 {
+                    bail!(
+                        "protocol_unsupported: Unexpected successful HTTP status {}",
+                        h.status
+                    );
                 }
                 if http && h.status >= 400 {
                     bail!("{}", crate::failure::http_error(h.status));
@@ -656,6 +783,13 @@ fn worker(
                 }
                 // Check libcurl's result before trusting the bytes or marking a segment complete.
                 if !(split_boundary && result.as_ref().is_err_and(|e| e.is_write_error())) {
+                    if let Err(e) = &result {
+                        if !http && (e.is_range_error() || e.is_bad_download_resume()) {
+                            bail!(
+                                "resume_unsupported: FTP server refused REST; explicitly restart"
+                            );
+                        }
+                    }
                     result.context("Transfer interrupted")?;
                 }
                 let mut j = job.lock().unwrap();
@@ -684,6 +818,14 @@ fn worker(
                 }
                 Err(e) => {
                     let message = e.to_string();
+                    if message == "redirect_retry" {
+                        redirects += 1;
+                        if redirects <= 10 {
+                            continue;
+                        }
+                        last_error = Some("protocol_unsupported: Too many GET redirects".into());
+                        break;
+                    }
                     let fatal = !crate::failure::TransferFailure::classify(&message).retryable;
                     last_error = Some(message);
                     if fatal || attempt == settings.network.retries {
@@ -695,8 +837,9 @@ fn worker(
                         j.segments[index].downloaded = segment.downloaded;
                     }
                     let delay = retry_after.unwrap_or((1u64 << attempt).min(30)).min(3600);
+                    attempt += 1;
                     for _ in 0..delay * 10 {
-                        if control.load(Ordering::Relaxed) != 0 {
+                        if control.load(Ordering::Relaxed) != 0 || error.lock().unwrap().is_some() {
                             break;
                         }
                         std::thread::sleep(Duration::from_millis(100));

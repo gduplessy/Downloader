@@ -14,3 +14,10 @@ pub use model::*;
 
 pub mod network;
 pub mod pool;
+
+pub mod fault;
+
+mod process;
+
+#[cfg(not(windows))]
+mod system_proxy;

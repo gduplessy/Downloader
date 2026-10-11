@@ -243,6 +243,7 @@ impl Engine {
             bail!("Unknown queue");
         }
         let job = Job {
+            metrics: Default::default(),
             request_fingerprint: Some(fingerprint),
             credential_id: request.context.credential_id.clone(),
             private: request.context.private,
@@ -271,6 +272,7 @@ impl Engine {
             error: None,
             failure: None,
             verified_sha256: None,
+            partial_created: false,
             created: chrono::Utc::now(),
             updated: chrono::Utc::now(),
             media: request.media,
@@ -494,6 +496,8 @@ impl Engine {
                     job.etag = None;
                     job.modified = None;
                     job.verified_sha256 = None;
+                    job.partial_created = false;
+                    job.metrics = Default::default();
                 }
                 job.state = JobState::Queued;
                 job.error = None;

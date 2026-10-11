@@ -70,7 +70,7 @@ pub fn publish(
     force_copy: bool,
     control: &AtomicU8,
 ) -> Result<()> {
-    if !force_copy {
+    if !force_copy && !crate::fault::force_copy() {
         match std::fs::hard_link(part, destination) {
             Ok(()) => {
                 sync_parent(destination)?;
@@ -84,7 +84,24 @@ pub fn publish(
         }
     }
     // Copy into a hidden staging file on the destination filesystem, then publish.
-    let stage = destination.with_file_name(format!(".{}.publish", uuid::Uuid::new_v4()));
+    let stage = destination.with_file_name(format!(
+        "{}.publish",
+        part.file_name()
+            .context("Missing partial filename")?
+            .to_string_lossy()
+    ));
+    // A stable job-scoped staging path makes interrupted cross-volume copies recoverable.
+    if stage.exists() {
+        let file = crate::storage::open_partial(&stage, false)?;
+        if file.metadata()?.len() == std::fs::metadata(part)?.len()
+            && digest(&stage, control)? == expected
+        {
+            drop(file);
+            return rename_no_replace(&stage, destination);
+        }
+        drop(file);
+        std::fs::remove_file(&stage)?;
+    }
     let result = (|| -> Result<()> {
         let mut input = File::open(part)?;
         let mut output = OpenOptions::new()
@@ -101,12 +118,14 @@ pub fn publish(
                 break;
             }
             output.write_all(&buffer[..n])?;
+            crate::fault::point("copy_during");
         }
         output.sync_all()?;
         drop(output);
         if digest(&stage, control)? != expected {
             bail!("checksum_mismatch: Publication copy differs from verified output");
         }
+        crate::fault::point("copy_before_publish");
         rename_no_replace(&stage, destination)
     })();
     if stage.exists() {
@@ -134,12 +153,12 @@ fn scan(job: &Job, settings: &Settings, control: &AtomicU8) -> Result<()> {
         use std::os::windows::process::CommandExt;
         command.creation_flags(0x08000000);
     }
-    let mut child = command
-        .spawn()
+    let (mut child, tree) = crate::process::spawn(&mut command)
         .context("scan_failed: Could not start configured scanner")?;
     let start = Instant::now();
     loop {
         if control.load(Ordering::Relaxed) != 0 || start.elapsed() > Duration::from_secs(300) {
+            tree.terminate();
             let _ = child.kill();
             let _ = child.wait();
             bail!("scan_failed: Scanner cancelled or exceeded five-minute timeout");
@@ -199,13 +218,18 @@ pub fn finish(
         Ok(())
     };
     persist(&j)?;
+    crate::fault::point("verifying");
+    let started = Instant::now();
     verified(&mut j, control)?;
+    j.metrics.verification_seconds += started.elapsed().as_secs_f64();
     if control.load(Ordering::Relaxed) != 0 {
         return Ok(());
     }
     j.state = JobState::Assembling;
     persist(&j)?;
     let part = transfer::part_path(&j);
+    let started = Instant::now();
+    crate::fault::point("publication_before");
     if j.destination.exists() {
         if !recovering || digest(&j.destination, control)? != j.verified_sha256.as_deref().unwrap()
         {
@@ -220,15 +244,21 @@ pub fn finish(
             control,
         )?;
     }
+    j.metrics.publication_seconds += started.elapsed().as_secs_f64();
+    crate::fault::point("publication_after");
     security::mark_download(&j.destination, &security::redact(&j.url))?;
     if settings.scanner.is_some() {
         j.state = JobState::Scanning;
         persist(&j)?;
+        crate::fault::point("scanning_before");
+        let started = Instant::now();
         scan(&j, settings, control)?;
+        j.metrics.scan_seconds += started.elapsed().as_secs_f64();
     }
     if control.load(Ordering::Relaxed) != 0 {
         return Ok(());
     }
+    crate::fault::point("completion_before");
     j.state = JobState::Complete;
     j.error = None;
     j.failure = None;

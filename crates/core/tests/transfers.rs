@@ -111,7 +111,7 @@ fn respond(mut stream: TcpStream, data: &[u8], version: u8) -> std::io::Result<(
         )?;
         return Ok(());
     }
-    if !head && path == "/fallbackredirect" {
+    if !head && matches!(path, "/fallbackredirect" | "/getredirect") {
         write!(stream,"HTTP/1.1 302 Found\r\nLocation: /file\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")?;
         return Ok(());
     }
@@ -139,7 +139,11 @@ fn respond(mut stream: TcpStream, data: &[u8], version: u8) -> std::io::Result<(
         })
         .and_then(|r| r.trim().split_once('-'))
         .and_then(|(a, b)| a.parse::<usize>().ok().zip(b.parse::<usize>().ok()));
-    let range = if path == "/ignored" || unknown || path == "/serialtruncated" {
+    let range = if path == "/ignored"
+        || unknown
+        || path == "/serialtruncated"
+        || path == "/lateignored" && !head && range != Some((0, 0))
+    {
         None
     } else {
         range
@@ -148,7 +152,13 @@ fn respond(mut stream: TcpStream, data: &[u8], version: u8) -> std::io::Result<(
     let b = b.min(data.len() - 1);
     let length = b - a + 1;
     let status = if range.is_some() { 206 } else { 200 };
-    write!(stream,"HTTP/1.1 {status} OK\r\nConnection: close\r\nContent-Type: application/octet-stream\r\nETag: \"v{version}\"\r\n")?;
+    write!(
+        stream,
+        "HTTP/1.1 {status} OK\r\nConnection: close\r\nContent-Type: application/octet-stream\r\n"
+    )?;
+    if path != "/missingvalidator" || head || range == Some((0, 0)) {
+        write!(stream, "ETag: \"v{version}\"\r\n")?;
+    }
     if !unknown {
         write!(
             stream,
@@ -248,6 +258,8 @@ fn ignored_ranges_and_unknown_length_fall_back_safely() {
         "/redirect",
         "/nohead",
         "/fallbackredirect",
+        "/getredirect",
+        "/lateignored",
     ] {
         let dir = tempfile::tempdir().unwrap();
         let e = isolated_engine(dir.path());
@@ -549,4 +561,192 @@ fn isolated_engine(path: &std::path::Path) -> Arc<Engine> {
     settings.network.proxy_mode = downloader_core::network::ProxyMode::Direct;
     e.command(Command::Settings(settings)).unwrap();
     e
+}
+
+#[cfg(feature = "fault-injection")]
+#[test]
+#[ignore = "Invoked only by the process-recovery test"]
+fn crash_worker() {
+    let directory = std::path::PathBuf::from(std::env::var("DOWNLOADER_CRASH_DIRECTORY").unwrap());
+    let e = isolated_engine(&directory);
+    if std::env::var("DOWNLOADER_FAILPOINT").as_deref() == Ok("scanning_before") {
+        let mut settings = e.snapshot().settings;
+        settings.scanner = Some(Scanner {
+            executable: std::env::current_exe().unwrap(),
+            args: vec!["--exact".into(), "scanner_stub".into(), "--ignored".into()],
+        });
+        e.command(Command::Settings(settings)).unwrap();
+    }
+    e.start();
+    e.add(AddJob {
+        request_id: "crash".into(),
+        url: std::env::var("DOWNLOADER_CRASH_URL").unwrap(),
+        filename: Some("crash.bin".into()),
+        directory: Some(directory),
+        queue: None,
+        checksum: Some(std::env::var("DOWNLOADER_CRASH_HASH").unwrap()),
+        paused: false,
+        context: RequestContext::default(),
+        media: None,
+        description: String::new(),
+    })
+    .unwrap();
+    std::thread::sleep(Duration::from_secs(40));
+    panic!("Failpoint was not reached");
+}
+#[cfg(feature = "fault-injection")]
+#[test]
+fn terminated_processes_recover_durable_output() {
+    let server = Server::new();
+    for point in [
+        "partial_created",
+        "checkpoint_before_commit",
+        "checkpoint_after_commit",
+        "verifying",
+        "publication_before",
+        "publication_after",
+        "completion_before",
+        "scanning_before",
+        "copy_during",
+        "copy_before_publish",
+    ] {
+        let dir = tempfile::tempdir().unwrap();
+        let mut command = std::process::Command::new(std::env::current_exe().unwrap());
+        command
+            .args(["--exact", "crash_worker", "--ignored"])
+            .env("DOWNLOADER_FAILPOINT", point)
+            .env(
+                "DOWNLOADER_FORCE_COPY",
+                if point.starts_with("copy_") { "1" } else { "0" },
+            )
+            .env("DOWNLOADER_CRASH_DIRECTORY", dir.path())
+            .env("DOWNLOADER_CRASH_URL", format!("{}/slow", server.url))
+            .env("DOWNLOADER_CRASH_HASH", digest(&server.data))
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null());
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            command.creation_flags(0x08000000);
+        }
+        let mut child = command.spawn().unwrap();
+        let deadline = Instant::now();
+        let status = loop {
+            if let Some(status) = child.try_wait().unwrap() {
+                break status;
+            }
+            if deadline.elapsed() > Duration::from_secs(45) {
+                child.kill().unwrap();
+                panic!("Crash worker timed out at {point}");
+            }
+            std::thread::sleep(Duration::from_millis(20));
+        };
+        assert!(!status.success(), "{point}");
+        let e = isolated_engine(dir.path());
+        let j = e.snapshot().jobs.into_iter().next().unwrap();
+        e.start();
+        if j.state != JobState::Complete {
+            e.command(Command::Resume {
+                id: j.id.clone(),
+                restart: false,
+            })
+            .unwrap();
+        }
+        let done = wait(&e, &j.id, |j| {
+            matches!(
+                j.state,
+                JobState::Complete | JobState::Failed | JobState::WaitingSource
+            )
+        });
+        e.shutdown();
+        assert_eq!(done.state, JobState::Complete, "{point}: {:?}", done.error);
+        assert_eq!(
+            digest(&std::fs::read(done.destination).unwrap()),
+            digest(&server.data),
+            "{point}"
+        );
+    }
+}
+
+#[cfg(feature = "fault-injection")]
+#[test]
+#[ignore = "Scanner fixture subprocess"]
+fn scanner_stub() {}
+
+#[test]
+fn missing_actual_response_validator_requires_safe_restart() {
+    let server = Server::new();
+    let dir = tempfile::tempdir().unwrap();
+    let e = isolated_engine(dir.path());
+    e.start();
+    let j = add(&e, &server, "/missingvalidator", dir.path(), None);
+    let result = wait(&e, &j.id, |j| {
+        matches!(
+            j.state,
+            JobState::WaitingSource | JobState::Failed | JobState::Complete
+        )
+    });
+    e.shutdown();
+    assert_eq!(result.state, JobState::WaitingSource, "{:?}", result.error);
+    assert_eq!(
+        result.failure.unwrap().code,
+        downloader_core::failure::FailureCode::SourceChanged
+    );
+    assert!(!result.destination.exists());
+}
+
+#[test]
+fn cross_origin_redirect_drops_cookie_and_authorization() {
+    let source = TcpListener::bind("127.0.0.1:0").unwrap();
+    let target = TcpListener::bind("127.0.0.1:0").unwrap();
+    let target_url = format!("http://{}/file", target.local_addr().unwrap());
+    let source_url = format!("http://{}/file", source.local_addr().unwrap());
+    let read = |mut stream: TcpStream| {
+        stream
+            .set_read_timeout(Some(Duration::from_secs(5)))
+            .unwrap();
+        let mut request = vec![];
+        let mut byte = [0u8];
+        while !request.ends_with(b"\r\n\r\n") {
+            stream.read_exact(&mut byte).unwrap();
+            request.push(byte[0]);
+        }
+        (stream, String::from_utf8(request).unwrap())
+    };
+    let a = std::thread::spawn(move || {
+        let (mut stream, _) = read(source.accept().unwrap().0);
+        write!(stream,"HTTP/1.1 302 Found\r\nLocation: {target_url}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n").unwrap();
+    });
+    let b = std::thread::spawn(move || {
+        for _ in 0..2 {
+            let (mut stream, request) = read(target.accept().unwrap().0);
+            assert!(!request.to_lowercase().contains("cookie:"));
+            assert!(!request.to_lowercase().contains("authorization:"));
+            write!(
+                stream,
+                "HTTP/1.1 200 OK\r\nContent-Length: 4\r\nConnection: close\r\n\r\n"
+            )
+            .unwrap();
+            if request.starts_with("GET") {
+                stream.write_all(b"safe").unwrap();
+            }
+        }
+    });
+    let mut context = RequestContext::default();
+    context
+        .headers
+        .insert("Cookie".into(), "secret=fixture".into());
+    context
+        .headers
+        .insert("Authorization".into(), "Bearer fixture".into());
+    let mut settings = Settings::default();
+    settings.network.proxy_mode = downloader_core::network::ProxyMode::Direct;
+    assert_eq!(
+        transfer::fetch_bytes(&source_url, &context, &settings, 16, None)
+            .unwrap()
+            .1,
+        b"safe"
+    );
+    a.join().unwrap();
+    b.join().unwrap();
 }

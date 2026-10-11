@@ -75,6 +75,10 @@ pub fn call(command: downloader_core::Command) -> Result<serde_json::Value> {
     let bytes =
         read_frame(&mut stream, 8 * MAX_MESSAGE)?.context("Engine closed the connection")?;
     let response: Response = serde_json::from_slice(&bytes)?;
+    if response.version != PROTOCOL_VERSION || response.id != request.id {
+        bail!("protocol_mismatch: Engine response does not match this request");
+    }
+
     if !response.ok {
         bail!(
             "{}",
