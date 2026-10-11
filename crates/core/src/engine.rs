@@ -436,6 +436,10 @@ impl Engine {
                 }
             }
             if let Some(task) = scheduler.tasks.iter_mut().find(|t| t.id == job.id) {
+                if task.status == QueueStatus::Finished {
+                    task.status = QueueStatus::Queued;
+                    task.reason = "queued".into();
+                }
                 // Redirect/site locks extend atomically; a collision blocks further automated steps.
                 for host in hosts {
                     if !task.host_keys.contains(&host) {

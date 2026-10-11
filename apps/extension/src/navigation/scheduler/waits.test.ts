@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { WaitClock, observeWait, retryAfter, activeBudgetElapsed } from './waits';
+import { WaitClock, observeWait, retryAfter, activeBudgetElapsed, waitFingerprint } from './waits';
 describe('durable wait clock', () => {
   it('uses monotonic elapsed through forward and backward wall-clock changes', () => {
     let utc = 1000, mono = 0;
@@ -25,4 +25,10 @@ describe('durable wait clock', () => {
     expect(retryAfter('9999999999', 1000)).toBeNull();
     expect(activeBudgetElapsed(0, 900000, [{ start: 1000, end: 899000 }])).toBe(2000);
   });
+});
+
+it('durable fingerprints never contain page control identifiers or token text', async () => {
+ const value = await waitFingerprint('countdown:csrf-token-secret');
+ expect(value).toMatch(/^wait:[a-f0-9]{64}$/); expect(value).not.toContain('csrf');
+ expect(await waitFingerprint('countdown:csrf-token-secret')).toBe(value);
 });

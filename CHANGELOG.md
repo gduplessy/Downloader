@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.3
+
+- Fence browser alarms by source and wait generation so replaced countdowns cannot wake previous actions.
+- Re-admit unresolved released navigation without reviving cancelled jobs; hash durable wait fingerprints into opaque bounded values.
+- Add isolated real Engine/browser queue and lifecycle fixtures, resource observations and explicit ownership/browser/live-host qualification boundaries.
+
 ## 0.8.1
 
 - Integrate service-owned navigation admission and extension queue controls, durable alarms with fresh readiness observations, opt-in notifications, session-aware recovery, and cancellation.

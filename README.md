@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.8.1<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.8.3<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -246,3 +246,5 @@ Downloader is independent of Internet Download Manager and its owners. IDM code,
 The service scheduler persists host reservations, tab leases, queue ordering, and wait observations. The default is three navigation tabs with a validated limit of one through twenty. Deadlines trigger page revalidation; elapsed time alone never authorizes a download submission. Browser integration follows in the next increment.
 
 Navigation queue controls are available in extension options: change the 1�20 tab limit, pause/resume admission, adjust priority, continue manual work, and cancel owned tasks. Readiness notifications are opt-in and require notification permission. All unqualified hosts retain their owning tab and a serial host lock during waits; missing tabs require Continue rather than automatic session replacement. Private queue tasks are not persisted by the service.
+
+NAV-04 / NAV-10 local scheduler implementation and fixture evidence are available in [scheduler qualification](docs/evidence/nav-scheduling/README.md). Navigation defaults to three active tabs, supports limits of one through twenty, retains serial host locks and revalidates page readiness after durable waits. Persisted ownership reconciliation with NAV-11 and stable-browser/live-host qualification remain pending.

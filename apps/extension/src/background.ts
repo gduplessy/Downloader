@@ -2,7 +2,7 @@ import { applyEvents } from '../../../packages/shared/src/events';
 import browser from 'webextension-polyfill';
 import { shouldSolve } from './resolver-policy';
 import { NavigationScheduler, WAIT_ALARM_PREFIX } from './navigation/scheduler/runtime';
-import { observeWait, type DurableWait } from './navigation/scheduler/waits';
+import { observeWait, waitFingerprint, type DurableWait } from './navigation/scheduler/waits';
 import {
   defaults,
   eligible,
@@ -532,7 +532,7 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
     if (!(await navigationPermissions(job.page_url))) throw Error('Site permission required');
     const record = (await browser.storage.local.get('resolver-' + job.id))['resolver-' + job.id] as ResolverRecord | undefined;
     const state = await scheduler.request({ action: 'snapshot' });
-    if (record?.wait && state.tasks.find(task => task.id === job.id)?.status === 'waiting') await scheduler.onAlarm(WAIT_ALARM_PREFIX + job.id);
+    if (record?.wait && state.tasks.find(task => task.id === job.id)?.status === 'waiting') await scheduler.observe(job.id);
     else {
       if (record) {delete record.wait;delete record.waitStarted;await browser.storage.local.set({ ['resolver-' + job.id]: record });}
       await startResolver(job, true);
@@ -714,7 +714,7 @@ async function pollResolvers(userGesture = false) {
         const tab = await browser.tabs.get(record.tabId).catch(() => null);
         if (tab) {
           await scheduler.heartbeat(job.id, record.tabId);
-          if (record.wait) await scheduler.onAlarm(WAIT_ALARM_PREFIX + job.id);
+          if (record.wait) await scheduler.observe(job.id);
         }
         else {
           await browser.storage.local.remove(key);
@@ -797,7 +797,7 @@ async function resolverStep(message: any, tabId: number, currentUrl: string) {
   if (admission.tasks.find(task => task.id === id)?.status === 'manual') return { click: false, repeat: false };
   if (decision.kind === 'wait' && (decision.blocker === 'countdown' || decision.wait)) {
     const duration = Number(decision.wait?.duration_ms ?? 30000);
-    record.wait = observeWait(record.wait, record.generation ?? 1, duration, Date.now(), String(decision.wait?.fingerprint ?? 'countdown'));
+    record.wait = observeWait(record.wait, record.generation ?? 1, duration, Date.now(), await waitFingerprint(String(decision.wait?.fingerprint ?? 'countdown')));
     const expiry = Number(decision.wait?.expires_at_ms);
     if (Number.isSafeInteger(expiry) && expiry > 0) record.wait.expires_at_ms = expiry;
     record.waitStarted ??= Date.now();
