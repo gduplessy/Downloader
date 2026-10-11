@@ -25,7 +25,7 @@ Reusable libcurl handles are bounded and keyed by origin, request context, routi
 | Linux system/PAC | libproxy system resolution; serialized pacparser for explicit PAC | Runtime libraries required; local PAC fixture; desktop policy matrices remain |
 | Authentication | OS keyring references, Basic/Digest and available NTLM/Negotiate | Basic/Digest challenge fixtures; NTLM/Kerberos external realms remain |
 
-PAC adapters choose a supported proxy result; ordered multi-proxy failover is not yet qualified. PAC scripts are explicitly configured/trusted; downloading them is bounded, but Linux parser execution has no separate timeout. Missing Linux libproxy falls back to libcurl environment routing; explicit PAC requires libpacparser. DEB declares runtime libraries; AppImage packaging still needs acceptance.
+PAC adapters choose a supported proxy result; ordered multi-proxy failover is not implemented. PAC scripts are explicitly configured/trusted; downloading them is bounded, but Linux parser execution has no separate timeout. Missing Linux libproxy falls back to libcurl environment routing; explicit PAC requires libpacparser. DEB declares runtime libraries; AppImage packaging still needs acceptance.
 
 Browser-only VPN/proxy extensions do not route the desktop engine. Configure desktop routing explicitly when necessary. Cross-origin redirects clear source cookies/authorization, and HTTPS downgrades are rejected. Browser source refresh requires the owning profile; replacement context is temporary and incompatible partial bytes are never merged.
 

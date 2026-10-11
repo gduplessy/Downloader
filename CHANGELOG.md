@@ -2,6 +2,11 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.2.7 — Clarify remaining proxy work
+
+- Distinguish planned ordered PAC proxy failover from implemented routing whose enterprise policies still require qualification.
+- Keep README, roadmap and implementation/evidence documentation aligned with that support boundary.
+
 ## 0.2.6 — Acceptance records and synchronized documentation
 
 - Publish post-repair platform transfer, large-file and real native-messaging/CLI evidence with exact source versions and CI runs.

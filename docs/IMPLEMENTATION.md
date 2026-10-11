@@ -23,7 +23,7 @@ The [complete roadmap](ROADMAP.md) tracks all documented limitations, including 
 
 ## Required implementation and acceptance work
 
-- External NTLM/Negotiate authentication-realm acceptance, native proxy-policy/PAC failure matrices, and actual disk-full/permission/cross-volume filesystem acceptance. Deterministic write/flush, collision, path, lock/alias and recovery regressions are implemented.
+- Ordered PAC proxy failover implementation; external NTLM/Negotiate authentication-realm acceptance, native proxy-policy/PAC failure matrices, and actual disk-full/permission/cross-volume filesystem acceptance. Deterministic write/flush, collision, path, lock/alias and recovery regressions are implemented.
 - DST/missed-window scheduling and reliable synchronization; media quota accounting needs qualification.
 - Editable job properties/columns/drop target; notifications, sleep inhibition, autostart and explicit completion actions.
 - Authenticated/rendered crawler sessions, durable crawl frontier, scheduled synchronization, CSS discovery and offline HTML/CSS rewriting.
