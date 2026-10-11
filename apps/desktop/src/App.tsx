@@ -893,6 +893,14 @@ function SettingsPage({ settings, t, run }: { settings: Settings; t: T; run: Run
             />
             {t('segmented')}
           </label>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={value.network.ftp_tls}
+              onChange={(e) => update('network', { ...value.network, ftp_tls: e.target.checked })}
+            />
+            {t('ftpTLS')}
+          </label>
           <div className="form-grid">
             {(
               [

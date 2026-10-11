@@ -15,6 +15,7 @@ export const en = {
   stall_timeout_seconds: 'Stall timeout (seconds)',
   checkpoint_milliseconds: 'Checkpoint interval (ms)',
   segmented: 'Use segmented transfers',
+  ftpTLS: 'Require TLS for FTP (explicit FTPS)',
   refreshSession: 'Refresh browser session',
 
   waiting_schedule: 'Waiting for schedule',

@@ -1,5 +1,12 @@
 // Each row is French, Spanish, German, Arabic, Simplified Chinese.
 export const translations: Record<string, [string, string, string, string, string]> = {
+  ftpTLS: [
+    'Exiger TLS pour FTP (FTPS explicite)',
+    'Exigir TLS para FTP (FTPS explícito)',
+    'TLS für FTP erzwingen (explizites FTPS)',
+    'اشتراط TLS لبروتوكول FTP',
+    'FTP 必须使用 TLS（显式 FTPS）',
+  ],
   routing: ['Routage du proxy', 'Ruta del proxy', 'Proxy-Routing', 'توجيه الوكيل', '代理路由'],
   route_system: ['Système', 'Sistema', 'System', 'النظام', '系统'],
   route_direct: ['Direct', 'Directa', 'Direkt', 'مباشر', '直连'],
