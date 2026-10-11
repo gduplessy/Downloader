@@ -78,13 +78,19 @@ function binding(
 async function observe(ctx: ResolverContext | null) {
   const collected = collectControls(document),
     signals = blockers(allElements(document));
-  const inspection = inspectCandidates(location.href, collected.controls, {
-    disabledAdapters: ctx?.disabledAdapters,
-    selectedHost: ctx?.selectedHost,
-    allowPageBlob: ctx?.capabilities?.pageBlob === true,
-    blocked: !!signals.blocker && signals.blocker !== 'countdown',
-    countdown: signals.countdown,
-  });
+  const inspection = inspectCandidates(
+    location.href,
+    ctx?.selectedResource
+      ? collected.controls.filter((c) => c.target === ctx.selectedResource)
+      : collected.controls,
+    {
+      disabledAdapters: ctx?.disabledAdapters,
+      selectedHost: ctx?.selectedHost,
+      allowPageBlob: ctx?.capabilities?.pageBlob === true,
+      blocked: !!signals.blocker && signals.blocker !== 'countdown',
+      countdown: signals.countdown,
+    },
+  );
   return { collected, signals, inspection, fingerprint: await domFingerprint(collected) };
 }
 async function submit(

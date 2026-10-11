@@ -251,6 +251,7 @@ impl Discovery {
         match action {
             "cancel" => {
                 self.status = "cancelled".into();
+                self.selected.clear();
                 self.generation += 1;
                 self.lease = None;
             }
@@ -305,7 +306,7 @@ pub struct Status {
     pub generation: u64,
     pub action: String,
 }
-fn load(store: &crate::store::Store, id: &str) -> Result<Discovery> {
+pub(crate) fn load(store: &crate::store::Store, id: &str) -> Result<Discovery> {
     store
         .all::<Discovery>("rendered_discovery")?
         .into_iter()
@@ -430,7 +431,13 @@ pub fn status(engine: &crate::Engine, request: Status) -> Result<serde_json::Val
     let mut scheduler = engine.navigation_scheduler.lock().unwrap();
     let store = engine.store.lock().unwrap();
     let mut state = load(&store, &request.id)?;
-    state.authorize(&request.scope, request.generation)?;
+    if !(request.action == "snapshot"
+        && state.status == "cancelled"
+        && state.scope.as_ref() == Some(&request.scope)
+        && request.generation.checked_add(1) == Some(state.generation))
+    {
+        state.authorize(&request.scope, request.generation)?;
+    }
     if request.action != "snapshot" {
         if scheduler
             .tasks
@@ -589,10 +596,12 @@ pub fn select(
                 format!("{}:{}:{}", state.project.id, state.generation, file.url).as_bytes()
             )
         );
-        let mut context = crate::model::RequestContext::default();
-        context.profile = Some(request.scope.profile.clone());
-        context.browser = Some(request.scope.browser.clone());
-        context.private = request.scope.private;
+        let context = crate::model::RequestContext {
+            profile: Some(request.scope.profile.clone()),
+            browser: Some(request.scope.browser.clone()),
+            private: request.scope.private,
+            ..Default::default()
+        };
         let created = engine.command(crate::model::Command::Navigate(crate::model::AddJob {
             request_id,
             url: file.url.clone(),
@@ -616,7 +625,7 @@ pub fn select(
                 job.navigation_scope = Some(request.scope.clone());
                 job.navigation_owner = Some(request.scope.profile.clone());
                 job.page_url = Some(file.page_url.clone());
-                job.navigation_url = Some(file.url.clone());
+                job.navigation_url = Some(file.page_url.clone());
             }
         }
         let job = job.lock().unwrap().clone();

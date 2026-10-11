@@ -4,6 +4,7 @@ export type ResolverContext = {
   frameId: number;
   scope: SessionScope;
   selectedHost?: string;
+  selectedResource?: string;
   disabledAdapters?: string[];
   capabilities?: { pageBlob?: boolean };
   locale: string;

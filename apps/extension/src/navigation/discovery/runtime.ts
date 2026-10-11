@@ -18,13 +18,18 @@ export class RenderedDiscovery {
   constructor(
     private native: Native,
     private profile: () => Promise<string>,
+    private privateWorker: boolean,
   ) {}
   async projects(tabId: number) {
     const scope = await scopeForTab(browser, BROWSER, await this.profile(), tabId, 1);
+    if (scope.private !== this.privateWorker)
+      throw Error('Discovery belongs to another browser lane');
     return this.native('discovery_list', { scope });
   }
   async start(id: string, tabId: number, permittedOrigins: string[] = []) {
     const tab = await browser.tabs.get(tabId);
+    if (!!tab.incognito !== this.privateWorker)
+      throw Error('Discovery belongs to another browser lane');
     const scope = await scopeForTab(browser, BROWSER, await this.profile(), tabId, 1);
     const projects = await this.native('discovery_list', { scope });
     const project = projects.find((p: any) => p.id === id);
@@ -165,13 +170,46 @@ export class RenderedDiscovery {
     });
     if (next.page) await this.open(record, next.page.url);
   }
+  async liveRecords() {
+    const live = [];
+    for (const record of this.records.values()) {
+      if (record.tabId < 0) continue;
+      const state = await this.native('discovery_status', {
+        id: record.id,
+        scope: record.scope,
+        generation: record.generation,
+        action: 'snapshot',
+      }).catch(() => null);
+      if (!state?.lease || state.status !== 'exploring') continue;
+      const actual = await scopeForTab(
+        browser,
+        BROWSER,
+        record.scope.profile,
+        record.tabId,
+        record.scope.claim_generation,
+      ).catch(() => null);
+      if (actual && sameScope(actual, record.scope))
+        live.push({
+          id: 'discovery:' + record.id,
+          generation: record.generation,
+          tab_id: record.tabId,
+          scope: record.scope,
+        });
+    }
+    return live;
+  }
   async poll() {
     const storage = {
       ...(await browser.storage.local.get(null)),
       ...((await browser.storage.session?.get(null)) ?? {}),
     };
     for (const [key, value] of Object.entries(storage))
-      if (key.startsWith('discovery-') && !this.records.has(key.slice(10)))
+      if (
+        key.startsWith('discovery-') &&
+        (value as RecordState).scope.private === this.privateWorker &&
+        (value as RecordState).scope.profile === (await this.profile()) &&
+        !this.records.has(key.slice(10))
+      )
         this.records.set(key.slice(10), value as RecordState);
     for (const record of this.records.values()) {
       if (this.busy.has(record.id)) continue;
@@ -183,6 +221,24 @@ export class RenderedDiscovery {
           generation: record.generation,
           action: 'snapshot',
         });
+        if (state.status === 'cancelled') {
+          const actual =
+            record.tabId >= 0
+              ? await scopeForTab(
+                  browser,
+                  BROWSER,
+                  record.scope.profile,
+                  record.tabId,
+                  record.scope.claim_generation,
+                ).catch(() => null)
+              : null;
+          if (actual && sameScope(actual, record.scope))
+            await browser.tabs.remove(record.tabId).catch(() => {});
+          this.records.delete(record.id);
+          if (record.scope.private) await browser.storage.session?.remove('discovery-' + record.id);
+          else await browser.storage.local.remove('discovery-' + record.id);
+          continue;
+        }
         if (state.selected?.length)
           await this.native('discovery_select', {
             id: record.id,

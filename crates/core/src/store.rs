@@ -106,6 +106,8 @@ impl Store {
         job: &Job,
     ) -> Result<()> {
         if job.private {
+            let previous = self.get::<Job>("job", &job.id).ok().map_or(0, |j| j.bytes);
+            self.record_usage(job.bytes.saturating_sub(previous))?;
             self.put("browser_stream", &checkpoint.identity.stream_id, checkpoint)?;
             return self.put("job", &job.id, job);
         }
@@ -117,6 +119,20 @@ impl Store {
                 |r| r.get(0),
             )
             .ok();
+        let old_bytes = previous
+            .as_ref()
+            .and_then(|s| serde_json::from_str::<Job>(s).ok())
+            .map_or(0, |j| j.bytes);
+        let added = job.bytes.saturating_sub(old_bytes);
+        if added > 0 {
+            tx.execute(
+                "INSERT INTO usage(time,bytes) VALUES(?1,?2)",
+                params![
+                    chrono::Utc::now().timestamp(),
+                    added.min(i64::MAX as u64) as i64
+                ],
+            )?;
+        }
         for (kind, id, data) in [
             (
                 "browser_stream",
@@ -292,6 +308,13 @@ impl Store {
         )?;
         tx.commit()?;
         Ok(())
+    }
+    pub fn legacy_private_records(&self) -> Result<u64> {
+        Ok(self.connection.query_row(
+            "SELECT COUNT(*) FROM records WHERE kind='job' AND json_extract(data,'$.private')=1",
+            [],
+            |r| r.get::<_, i64>(0),
+        )? as u64)
     }
     pub fn record_usage(&self, bytes: u64) -> Result<()> {
         if bytes > 0 {

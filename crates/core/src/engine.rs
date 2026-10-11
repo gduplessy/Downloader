@@ -496,6 +496,15 @@ impl Engine {
         };
         if let crate::navigation_scheduler::SchedulerRequest::Reconcile { live } = &request {
             for lease in live {
+                if let Some(id) = lease.id.strip_prefix("discovery:") {
+                    let state = crate::rendered_grabber::load(&self.store.lock().unwrap(), id)?;
+                    let scope = lease.scope.as_ref().context("Missing discovery scope")?;
+                    state.authorize(scope, lease.generation)?;
+                    if scope.profile != owner || state.lease.is_none() {
+                        bail!("Reconciled discovery scope is stale or foreign");
+                    }
+                    continue;
+                }
                 let job = jobs
                     .iter()
                     .find(|job| job.id == lease.id)
@@ -575,7 +584,17 @@ impl Engine {
                 owner,
                 url,
                 automatic,
-            } => self.solve_challenge(id, owner, url, automatic),
+                scope,
+                source_generation,
+            } => {
+                let job = self.job(&id)?;
+                self.check_navigation_fence(
+                    &job.lock().unwrap(),
+                    scope.as_ref(),
+                    source_generation,
+                )?;
+                self.solve_challenge(id, owner, url, automatic)
+            }
             Command::Negotiate { minimum, maximum } => {
                 if minimum > PROTOCOL_VERSION || maximum < PROTOCOL_VERSION || minimum > maximum {
                     bail!("protocol_mismatch: Supported protocol is 1");
@@ -617,7 +636,7 @@ impl Engine {
                 owner,
                 force,
                 scope,
-                source_generation: _,
+                source_generation,
             } => {
                 uuid::Uuid::parse_str(&owner).context("Invalid browser profile identifier")?;
                 let job = self.job(&id)?;
@@ -635,12 +654,24 @@ impl Engine {
                     {
                         bail!("Navigation is assigned to another browser profile");
                     }
+                    if j.navigation_scope.is_some()
+                        && source_generation != Some(j.source_generation)
+                    {
+                        bail!("Stale or missing claim source generation");
+                    }
                     if let Some(mut scope) = scope {
                         scope.validate()?;
                         if scope.profile != owner || scope.private != j.private {
                             bail!("Browser claim scope does not match job");
                         }
-                        if j.navigation_scope.as_ref() != Some(&scope) {
+                        if let Some(old) = &j.navigation_scope {
+                            let mut proposed = scope.clone();
+                            proposed.claim_generation = old.claim_generation;
+                            if &proposed != old || scope.claim_generation != old.claim_generation {
+                                bail!("Claim session changed; explicit owner-authorized transfer required");
+                            }
+                        }
+                        if force || j.navigation_scope.as_ref() != Some(&scope) {
                             scope.claim_generation = j
                                 .navigation_scope
                                 .as_ref()
@@ -799,36 +830,30 @@ impl Engine {
                 self.persist(&job)?;
                 Ok(serde_json::json!({"id":id}))
             }
-            Command::BrowserSnapshot { owner } => {
-                uuid::Uuid::parse_str(&owner)?;
+            Command::BrowserSnapshot {
+                owner,
+                private,
+                scopes,
+            } => {
+                validate_browser_projection(&owner, private, &scopes)?;
                 let mut value = serde_json::to_value(self.snapshot())?;
-                if let Some(jobs) = value["jobs"].as_array_mut() {
-                    jobs.retain(|j| {
-                        j["navigation_owner"] == owner
-                            || (j["navigation_owner"].is_null() && j["private"] != true)
-                    });
-                }
+                filter_browser_projection(&mut value, &owner, private, &scopes);
                 Ok(value)
             }
             Command::BrowserSubscribe {
                 owner,
+                private,
+                scopes,
                 after_sequence,
                 limit,
             } => {
-                uuid::Uuid::parse_str(&owner)?;
+                validate_browser_projection(&owner, private, &scopes)?;
                 let mut value = serde_json::to_value(self.subscribe(after_sequence, limit)?)?;
-                if let Some(jobs) = value["snapshot"]["jobs"].as_array_mut() {
-                    jobs.retain(|j| {
-                        j["navigation_owner"] == owner
-                            || (j["navigation_owner"].is_null() && j["private"] != true)
-                    });
-                }
+                filter_browser_projection(&mut value["snapshot"], &owner, private, &scopes);
                 if let Some(events) = value["events"].as_array_mut() {
                     events.retain(|e| {
                         e["job"].is_null()
-                            || e["job"]["navigation_owner"] == owner
-                            || (e["job"]["navigation_owner"].is_null()
-                                && e["job"]["private"] != true)
+                            || browser_job_visible(&e["job"], &owner, private, &scopes)
                     });
                 }
                 Ok(value)
@@ -928,6 +953,17 @@ impl Engine {
                         bail!("Finished jobs cannot refresh their source");
                     }
                     job.url = url;
+                    job.source_generation = job
+                        .source_generation
+                        .checked_add(1)
+                        .context("Source generation exhausted")?;
+                    job.replay_decision = None;
+                    if let Some(scope) = &mut job.navigation_scope {
+                        scope.claim_generation = scope
+                            .claim_generation
+                            .checked_add(1)
+                            .context("Claim generation exhausted")?;
+                    }
                     job.credential_id = context.credential_id.clone();
                 }
                 self.contexts.lock().unwrap().insert(id, context);
@@ -1103,7 +1139,7 @@ impl Engine {
             Command::Diagnostics => {
                 let s = self.snapshot();
                 Ok(
-                    serde_json::json!({"version":env!("CARGO_PKG_VERSION"),"protocol":PROTOCOL_VERSION,"platform":std::env::consts::OS,"curl":curl::Version::get().version(),"http2":curl::Version::get().feature_http2(),"capabilities":crate::network::capabilities(),"connections":crate::pool::diagnostics(),"components":s.components,"jobs":s.jobs.iter().map(|j|serde_json::json!({"id":j.id,"state":j.state,"bytes":j.bytes,"error":j.error.as_ref().map(|e|security::redact(e))})).collect::<Vec<_>>()}),
+                    serde_json::json!({"version":env!("CARGO_PKG_VERSION"),"protocol":PROTOCOL_VERSION,"platform":std::env::consts::OS,"curl":curl::Version::get().version(),"http2":curl::Version::get().feature_http2(),"capabilities":crate::network::capabilities(),"connections":crate::pool::diagnostics(),"privacy":{"legacy_private_records":self.store.lock().unwrap().legacy_private_records()?,"legacy_cleanup":"Separate owner-approved cleanup required; existing history is preserved"},"components":s.components,"jobs":s.jobs.iter().map(|j|serde_json::json!({"id":j.id,"state":j.state,"bytes":j.bytes,"error":j.error.as_ref().map(|e|security::redact(e))})).collect::<Vec<_>>()}),
                 )
             }
             Command::Quit => {
@@ -1508,6 +1544,50 @@ impl Engine {
             }
             std::thread::sleep(Duration::from_millis(100));
         }
+    }
+}
+
+fn validate_browser_projection(
+    owner: &str,
+    private: bool,
+    scopes: &[crate::navigation::SessionScope],
+) -> Result<()> {
+    uuid::Uuid::parse_str(owner)?;
+    for scope in scopes {
+        scope.validate()?;
+        if scope.profile != owner || scope.private != private {
+            bail!("Projection scope does not match browser lane");
+        }
+    }
+    Ok(())
+}
+fn browser_job_visible(
+    job: &serde_json::Value,
+    owner: &str,
+    private: bool,
+    scopes: &[crate::navigation::SessionScope],
+) -> bool {
+    if job["private"].as_bool().unwrap_or(false) != private {
+        return false;
+    }
+    if let Ok(scope) =
+        serde_json::from_value::<crate::navigation::SessionScope>(job["navigation_scope"].clone())
+    {
+        return job["navigation_owner"] == owner && scopes.contains(&scope);
+    }
+    if private {
+        return false;
+    }
+    job["navigation_owner"].is_null() || job["navigation_owner"] == owner
+}
+fn filter_browser_projection(
+    value: &mut serde_json::Value,
+    owner: &str,
+    private: bool,
+    scopes: &[crate::navigation::SessionScope],
+) {
+    if let Some(jobs) = value["jobs"].as_array_mut() {
+        jobs.retain(|job| browser_job_visible(job, owner, private, scopes));
     }
 }
 

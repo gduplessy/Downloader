@@ -375,12 +375,12 @@ pub fn native(args: &[String]) -> Result<()> {
                 downloader_core::Command::Subscribe {
                     after_sequence,
                     limit,
-                } => browser_events(call(downloader_core::Command::Subscribe {
+                } => legacy_browser_events(call(downloader_core::Command::Subscribe {
                     after_sequence,
                     limit: limit.min(50),
                 })?),
                 downloader_core::Command::Snapshot => {
-                    browser_snapshot(call(downloader_core::Command::Snapshot)?)
+                    legacy_browser_snapshot(call(downloader_core::Command::Snapshot)?)
                 }
                 c @ (downloader_core::Command::Pause { .. }
                 | downloader_core::Command::Resume { restart: false, .. }
@@ -413,6 +413,17 @@ pub fn native(args: &[String]) -> Result<()> {
                             .any(|j| j["id"].as_str() == Some(id) && browser_visible(j))
                     }) {
                         bail!("Browser cannot control this job");
+                    }
+                    if matches!(
+                        &c,
+                        downloader_core::Command::Pause { .. }
+                            | downloader_core::Command::Resume { .. }
+                            | downloader_core::Command::Cancel { .. }
+                    ) && snapshot["jobs"].as_array().is_some_and(|jobs| {
+                        jobs.iter()
+                            .any(|j| j["id"] == id.as_str() && !j["navigation_scope"].is_null())
+                    }) {
+                        bail!("Scoped browser controls require the active session fence");
                     }
                     let returns_job = matches!(
                         c,
@@ -457,6 +468,24 @@ pub fn native(args: &[String]) -> Result<()> {
         write_frame(&mut stdout, &data, MAX_MESSAGE)?;
     }
     Ok(())
+}
+fn legacy_browser_snapshot(mut data: serde_json::Value) -> Result<serde_json::Value> {
+    if let Some(jobs) = data["jobs"].as_array_mut() {
+        jobs.retain(|j| j["private"] != true && j["navigation_owner"].is_null());
+    }
+    browser_snapshot(data)
+}
+fn legacy_browser_events(mut data: serde_json::Value) -> Result<serde_json::Value> {
+    if data["snapshot"].is_object() {
+        data["snapshot"] = legacy_browser_snapshot(data["snapshot"].take())?;
+    }
+    if let Some(events) = data["events"].as_array_mut() {
+        events.retain(|e| {
+            e["job"].is_null()
+                || (e["job"]["private"] != true && e["job"]["navigation_owner"].is_null())
+        });
+    }
+    browser_events(data)
 }
 fn browser_visible(job: &serde_json::Value) -> bool {
     job["browser_source"] == true || job["page_url"].is_string()

@@ -50,6 +50,8 @@ for (const target of ['chromium', 'firefox']) {
       ? {
           ...common,
           manifest_version: 3,
+          incognito: 'split',
+          permissions: [...common.permissions, 'debugger'],
           key,
           background: { service_worker: 'background.js' },
           action: { default_popup: 'popup.html' },
@@ -64,7 +66,15 @@ for (const target of ['chromium', 'firefox']) {
           },
           background: { scripts: ['background.js'], persistent: false },
           browser_action: { default_popup: 'popup.html' },
-          optional_permissions: ['cookies', 'webRequest', 'tabs', 'notifications', 'http://*/*', 'https://*/*'],
+          optional_permissions: [
+            'cookies',
+            'webRequest',
+            'webRequestBlocking',
+            'tabs',
+            'notifications',
+            'http://*/*',
+            'https://*/*',
+          ],
         };
   await copyFile('../desktop/src-tauri/icons/32x32.png', dir + '/icon32.png');
   await copyFile('../desktop/src-tauri/icons/128x128.png', dir + '/icon128.png');
