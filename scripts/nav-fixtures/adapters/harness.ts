@@ -252,7 +252,93 @@ async function preview(locale = 'en') {
     })),
   };
 }
+
+async function prepareRuntime() {
+  const metrics = {
+    selected_authorizations: 0,
+    control_clicks: 0,
+    file_hash: null as string | null,
+    disabled_adapter: null as string | null,
+  };
+  let authorize: ((reply: unknown) => void) | undefined;
+  const ctx = {
+    tabId: 4,
+    frameId: 0,
+    scope: {
+      browser: 'chromium',
+      profile: 'public-fixture-profile',
+      private: false,
+      cookie_store_id: null,
+      container_id: null,
+      partition_key: { top_level_site: location.origin },
+      claim_generation: 1,
+    },
+    selectedHost: undefined,
+    disabledAdapters: [] as string[],
+    locale: 'en',
+  };
+  for (const element of document.querySelectorAll<HTMLElement>('a[href],button')) {
+    element.addEventListener('click', (event) => {
+      if (!element.matches('a[href],button')) return;
+      event.preventDefault();
+      metrics.control_clicks++;
+      const request = requestFor(element);
+      if (request)
+        void fetch(request.url)
+          .then((response) => response.arrayBuffer())
+          .then((bytes) => crypto.subtle.digest('SHA-256', bytes))
+          .then((hash) => {
+            metrics.file_hash = [...new Uint8Array(hash)]
+              .map((n) => n.toString(16).padStart(2, '0'))
+              .join('');
+          });
+    });
+  }
+  (window as any).__navMockBrowser = {
+    runtime: {
+      onMessage: { addListener: () => {} },
+      sendMessage: async (message: any) => {
+        if (message.type === 'resolver_context') return structuredClone(ctx);
+        if (message.type === 'resolver_disable_adapter') {
+          ctx.disabledAdapters.push(message.adapterId);
+          metrics.disabled_adapter = message.adapterId;
+          return true;
+        }
+        if (message.type === 'resolver_step' && message.decision.kind === 'click') {
+          metrics.selected_authorizations++;
+          return await new Promise((resolve) => {
+            authorize = resolve;
+          });
+        }
+        if (message.type === 'resolver_step') return { click: false, repeat: false };
+        throw Error('Unexpected fixture worker message');
+      },
+    },
+  };
+  (window as any).navResolverUnderTest = {
+    metrics: () => structuredClone(metrics),
+    release: () => {
+      authorize?.({ click: true, repeat: false });
+    },
+    takeover: () => {
+      ctx.scope.claim_generation++;
+    },
+  };
+  const script = document.createElement('script');
+  script.src = '/resolver-under-test.js';
+  const loaded = new Promise<void>((resolve, reject) => {
+    script.addEventListener('load', () => resolve(), { once: true });
+    script.addEventListener('error', () => reject(Error('Resolver fixture bundle failed')), {
+      once: true,
+    });
+  });
+  document.head.append(script);
+  await loaded;
+  await new Promise((resolve) => setTimeout(resolve, 60));
+  return 'Real resolver loaded against scoped fixture worker; installed native dispatch remains separate';
+}
 (window as any).navAdapterFixture = {
+  prepareRuntime,
   suite,
   preview,
   inspect: () =>

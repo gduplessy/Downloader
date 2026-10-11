@@ -11,3 +11,7 @@ Local fixtures qualify the bundled selection contract. They do not qualify live 
 - Live host/account acceptance, stable Chrome/Edge/Firefox/ESR, other native platforms and combined worker ownership/desktop-transfer acceptance remain pending.
 
 Reproduce using the commands in [adapter maintenance](../../ADAPTERS.md). The JSON record distinguishes the selected synthetic host label from the actual loopback transport host.
+
+## Real resolver authorization/cancellation fixture
+
+The final cancellation fixture loads the actual resolver entry through a build-time fixture worker alias. The worker is explicitly mocked, with an isolated public fixture profile, claim generation and delayed authorization; native installed-extension dispatch remains separate. Exact final source hashes and the four observed scenarios are recorded in `resolver-authorization.json`; the current-source DOM/request suite again passed 120 checks. Normal keyboard selection yields exactly one control click and the expected SHA-256. Cancel while authorization is pending, or a changed claim generation before release, yields zero clicks. Changed-layout keyboard recovery independently disables local-fixture and clicks no page control.

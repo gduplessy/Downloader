@@ -90,13 +90,14 @@ export function showPreview(
   document: Document,
   preview: Preview,
   locale: string,
-  select: (id: string) => Promise<void>,
+  select: (id: string, signal: AbortSignal) => Promise<void>,
   refresh: () => void,
   disableAdapter?: () => Promise<void>,
 ): PreviewHandle {
   document.getElementById('__downloader_adapter_preview')?.remove();
   const words = messages[locale as keyof typeof messages] ?? messages.en;
   const previous = document.activeElement as HTMLElement | null;
+  const lifetime = new AbortController();
   const host = document.createElement('div');
   host.id = '__downloader_adapter_preview';
   const root = host.attachShadow({ mode: 'closed' });
@@ -165,6 +166,7 @@ export function showPreview(
     return b;
   };
   const close = () => {
+    lifetime.abort();
     host.remove();
     previous?.focus();
   };
@@ -174,9 +176,11 @@ export function showPreview(
     radios.forEach((radio) => {
       radio.disabled = true;
     });
-    void select(selected)
+    void select(selected, lifetime.signal)
       .then(close)
-      .catch(() => stale());
+      .catch(() => {
+        if (!lifetime.signal.aborted) stale();
+      });
   });
   submit.disabled = true;
   button(words[3], close);
@@ -199,7 +203,9 @@ export function showPreview(
           close();
           refresh();
         })
-        .catch(() => stale());
+        .catch(() => {
+          if (!lifetime.signal.aborted) stale();
+        });
     });
   }
   const stale = () => {
@@ -231,7 +237,8 @@ export function showPreview(
   });
   root.append(panel);
   document.documentElement.append(host);
-  radios[0]?.focus();
+  const firstFocus = radios[0] ?? panel.querySelector<HTMLButtonElement>('button:not(:disabled)');
+  firstFocus?.focus();
   return { close, stale };
 }
 export const previewLocales = Object.keys(messages);

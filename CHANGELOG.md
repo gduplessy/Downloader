@@ -2,6 +2,13 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.6.4 — Cancel pending preview authorization safely
+
+- Abort preview lifetime on Cancel, Refresh or replacement; check that lifetime before and after async worker authorization so a closed dialog cannot submit later.
+- Restore control highlighting even on worker failure and focus the first recovery button when no safe candidates exist.
+- Verify the real resolver bundle against a scoped mock worker: ordinary selection hashes the intended file; delayed authorization after Cancel or claim takeover produces no clicks; keyboard generic recovery disables only its adapter.
+- Combined installed-extension/native worker binding acceptance is transferred to the integration coordinator and remains pending separately.
+
 ## 0.6.3 — Complete adapter recovery and local qualification evidence
 
 - Offer localized manual/generic recovery when layout changes leave no safe candidate; preserve independent adapter disable and session-bound refresh.
@@ -155,6 +162,3 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 ## 0.1.0 — Initial development preview
 
 - Original GPL-3.0 desktop, CLI and extension foundation, hosted-page navigation fixtures, media/grabber adapters and public roadmap.
-
-
-

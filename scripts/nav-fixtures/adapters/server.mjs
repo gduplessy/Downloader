@@ -59,10 +59,16 @@ export async function startAdapterFixtureServer({
   const server = createServer(async (req, res) => {
     const url = new URL(req.url, 'http://127.0.0.1');
     const parts = url.pathname.split('/').filter(Boolean);
-    if (url.pathname === '/harness.js') {
+    if (url.pathname === '/harness.js' || url.pathname === '/resolver-under-test.js') {
       try {
         res.setHeader('Content-Type', 'application/javascript');
-        res.end(await readFile(harness));
+        res.end(
+          await readFile(
+            url.pathname === '/resolver-under-test.js'
+              ? '.local/nav-adapters/resolver-under-test.js'
+              : harness,
+          ),
+        );
       } catch {
         res.writeHead(404);
         res.end('Build the fixture harness first');
