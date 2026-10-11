@@ -19,10 +19,35 @@ export function navigationAvailable(activePages: readonly string[], page: string
   }
 }
 export type Decision = {
+  blocker?: Blocker;
   kind: 'wait' | 'user' | 'click';
   index?: number;
   reason: string;
 };
+export type Blocker = 'browser_challenge' | 'captcha' | 'authentication' | 'expired' | 'countdown';
+export function classifyBlocker(signals: {
+  text: string;
+  password: boolean;
+  captcha: boolean;
+  browserChallenge: boolean;
+  countdown: boolean;
+}): Blocker | undefined {
+  if (/link expired|link abgelaufen/i.test(signals.text)) return 'expired';
+  if (signals.password) return 'authentication';
+  if (signals.browserChallenge) return 'browser_challenge';
+  if (signals.captcha) return 'captcha';
+  if (signals.countdown) return 'countdown';
+  return undefined;
+}
+export function shouldSolve(
+  blocker: Blocker | undefined,
+  enabled: boolean,
+  direct: boolean,
+  attempted: boolean,
+  privateSession: boolean,
+): boolean {
+  return blocker === 'browser_challenge' && enabled && direct && !attempted && !privateSession;
+}
 const negative =
   /premium|torrent|magnet:|subscribe|subscription|purchase|buy\b|pay\b|advert|sponsor/i;
 const action =

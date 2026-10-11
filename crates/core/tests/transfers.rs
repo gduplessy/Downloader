@@ -387,6 +387,7 @@ fn hosted_page_is_never_downloaded_as_the_file() {
         .is_err());
     assert!(e
         .command(Command::BrowserStatus {
+            url: None,
             id: j.id.clone(),
             owner: second.clone(),
             state: JobState::BrowserComplete,

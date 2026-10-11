@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.3.4<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.5.4<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -53,7 +53,15 @@ Hosted page → free-download step → countdown → final GET link/form
 
 The resolver respects waiting periods and stops for CAPTCHA, sign-in, payment, or ambiguous controls. Complete the manual step in the tab, then choose **Continue page navigation**. Non-replayable POST requests and browser-generated blobs remain browser-managed.
 
-Navigation is bounded to three active pages and one page per host. Browser profiles claim navigation jobs exclusively to avoid competing workers. This is a heuristic workflow, not universal site automation; changing live sites require separate acceptance testing. There is currently no CAPTCHA, premium-access, or DRM bypass. These limits are tracked explicitly in the [hosted-page and challenge roadmap](docs/ROADMAP.md#1-hosted-download-pages-and-challenges) and [protected-content roadmap](docs/ROADMAP.md#5-media-and-protected-content).
+Navigation is bounded to three active pages and one page per host. Browser profiles claim navigation jobs exclusively to avoid competing workers. This is a heuristic workflow; changing live sites require separate acceptance testing. Custom CAPTCHA, premium-access and DRM bypass remain unsupported. These limits are tracked explicitly in the [hosted-page and challenge roadmap](docs/ROADMAP.md#1-hosted-download-pages-and-challenges) and [protected-content roadmap](docs/ROADMAP.md#5-media-and-protected-content).
+
+### Optional local FlareSolverr
+
+In **Settings → Networking → FlareSolverr**, test `http://localhost:9191/`, select **Direct** proxy routing, enable the integration and save. The default timeout is 60 seconds; only HTTP loopback root endpoints are supported. Use [the Docker walkthrough](docs/FLARESOLVERR_DOCKER.md) and [pinned Compose file](docker-compose.flaresolverr.yml) to install the qualified service.
+
+Recognized browser protection gets one automatic attempt after opt-in; an ordinary 403 does not trigger solving. **Try FlareSolverr** in desktop job details or the extension popup starts a fresh manual attempt. The service serializes requests, isolates temporary sessions and cookies, uses the matching User-Agent for engine requests, and discards cancelled or stale results. Browser-profile ownership and POST/blob fallback are retained. FlareSolverr handles page resolution; libcurl transfers and verifies file bytes. Solver `status: ok` alone cannot complete a download.
+
+The qualified FlareSolverr 3.4.6 deployment rendered a generated GET link/cookie and completed a 2 MiB SHA-256-verified transfer with range pause/resume. Custom-CAPTCHA and expiry fixtures stopped with zero bytes. **Real Cloudflare challenge clearance, fresh g4u links and downstream hosts remain unqualified.** Login, private/credential-backed navigation, countdowns and unsupported interactions stay manual. The g4u image CAPTCHA requires separate research; no paid solver or external CAPTCHA upload is enabled. See [evidence and limits](docs/FLARESOLVERR_QUALIFICATION.md), [CAPTCHA research](docs/CAPTCHA_RESEARCH.md), and [the implementation plan](docs/FLARESOLVERR_PLAN.md).
 
 ## Build from source
 
@@ -183,7 +191,7 @@ pnpm test
 pnpm build
 ```
 
-The 0.2.x transfer-engine evidence includes **38 Windows / 39 Unix Rust regressions** and **18 TypeScript tests** for recovery, networking, events and browser policies. The [engine evidence](docs/TRANSFER_ENGINE.md) records source revisions, real **4.016 GiB** pause/reopen/resume/hash transfers on Windows/macOS/Linux, remote ZIP64 offsets, and **38 networking/benchmark cases**. Real native-messaging/CLI fixtures verify response privacy, duplicate creation, ordered events and service restart on all three platforms. A browser fixture navigated a free-download step and countdown, carried an HttpOnly session cookie, and produced a hash-verified 12 MiB desktop file. Separate fixtures exercised CAPTCHA pauses and POST fallback.
+The transfer-engine and solver increments add crash, storage, protocol, event-replay, privacy and challenge-lifecycle regressions; **20 TypeScript tests** cover desktop events, utilities/translations, and extension policies. The [engine evidence](docs/TRANSFER_ENGINE.md) records source revisions, real **4.016 GiB** pause/reopen/resume/hash transfers on Windows/macOS/Linux, remote ZIP64 offsets, and **38 networking/benchmark cases**. Real native-messaging/CLI fixtures verify response privacy, duplicate creation, ordered events and service restart on all three platforms. A real browser fixture navigated a free-download step and countdown, carried an HttpOnly session cookie, and produced a hash-verified 12 MiB desktop file. Separate fixtures exercised CAPTCHA pauses and POST fallback. [Solver evidence](docs/FLARESOLVERR_QUALIFICATION.md) records the separate generated 2 MiB rendered-GET transfer and live-site limits.
 
 ```sh
 node scripts/fixture-server.mjs

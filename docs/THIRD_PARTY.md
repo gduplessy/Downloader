@@ -13,8 +13,11 @@ This is a source/build map and release checklist. It does not replace complete n
 | yt-dlp EJS       | Supported media JavaScript challenges    | Matching standalone release; https://github.com/yt-dlp/ejs                      |
 | FFmpeg/ffprobe   | Media assembly                           | https://github.com/yt-dlp/FFmpeg-Builds ; https://github.com/BtbN/FFmpeg-Builds |
 | Deno             | Bundled JavaScript runtime               | Locked release at https://github.com/denoland/deno                              |
+| FlareSolverr | Optional separately installed local browser service (MIT) | [3.4.6 source](https://github.com/FlareSolverr/FlareSolverr/tree/v3.4.6), [license](https://github.com/FlareSolverr/FlareSolverr/blob/v3.4.6/LICENSE) |
 
 Use the exact yt-dlp release's build instructions, dependency locks and EJS version. Preserve PyInstaller module notices/source as required.
+
+FlareSolverr is not bundled in Downloader. The [Compose file](../docker-compose.flaresolverr.yml) pins the separately qualified Linux amd64 container by digest; it contains Chromium and upstream runtime dependencies. Retain upstream notices and image provenance when redistributing it. [Qualification](FLARESOLVERR_QUALIFICATION.md) covers the exact image and limits. 2Captcha is a researched external-service candidate only; no SDK, credentials or paid integration are included.
 
 The FFmpeg asset is a GPL build. Archive the matching FFmpeg and build-script commits, configure flags, patches, dependent libraries, licenses and source inputs. The mutable upstream latest URL is pinned by content SHA-256; changed content fails installation. Immutable corresponding-source archives are still required before public binary distribution.
 

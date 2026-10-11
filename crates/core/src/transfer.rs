@@ -170,12 +170,23 @@ fn configure_route(
     easy.ssl_verify_peer(true)?;
     easy.ssl_verify_host(true)?;
     easy.useragent(concat!("Downloader/", env!("CARGO_PKG_VERSION")))?;
+    if let Some(solver) = &context.solver {
+        solver.validate()?;
+        easy.useragent(&solver.user_agent)?;
+    }
     easy.accept_encoding("identity")?;
     crate::network::apply(easy, url, settings, route)?;
     let mut headers = List::new();
     headers.append("Accept-Encoding: identity")?;
     for (k, v) in &context.headers {
         headers.append(&format!("{k}: {v}"))?;
+    }
+    if let Some(cookie) = context
+        .solver
+        .as_ref()
+        .and_then(|s| s.cookie_header(&parsed))
+    {
+        headers.append(&format!("Cookie: {cookie}"))?;
     }
     easy.http_headers(headers)?;
     if let Some(id) = &context.credential_id {
@@ -197,7 +208,7 @@ fn configure_route(
 pub fn inspect(url: &str, context: &RequestContext, settings: &Settings) -> Result<Metadata> {
     inspect_controlled(url, context, settings, &AtomicU8::new(0))
 }
-fn inspect_controlled(
+pub(crate) fn inspect_controlled(
     url: &str,
     context: &RequestContext,
     settings: &Settings,
@@ -293,6 +304,7 @@ fn inspect_controlled(
             if next.origin() != url.origin() {
                 context.headers.clear();
                 context.credential_id = None;
+                context.solver = None;
             }
             url = next;
             redirects += 1;
@@ -356,6 +368,7 @@ fn redirected(
     if next.origin() != current.origin() {
         context.headers.clear();
         context.credential_id = None;
+        context.solver = None;
     }
     Ok((next.into(), context))
 }
@@ -529,6 +542,9 @@ pub fn run(
         return crate::finalize::finish(job, store, &settings, &control);
     }
     let mut metadata = inspect_controlled(&snapshot.url, &context, &settings, &control)?;
+    if context.solver.is_some() && crate::solver::is_html(&metadata.content_type) {
+        bail!("source_expired: Hosted source returned HTML; refresh it in the browser");
+    }
     // Advertised range support is only a hint. An actual 206 response is required.
     if metadata.url.starts_with("http") && metadata.ranges && metadata.total.is_some_and(|n| n > 0)
     {
@@ -759,6 +775,13 @@ fn worker(
                     for (k, v) in &metadata.context.headers {
                         list.append(&format!("{k}: {v}"))?;
                     }
+                    if let Some(cookie) = metadata.context.solver.as_ref().and_then(|s| {
+                        url::Url::parse(&metadata.url)
+                            .ok()
+                            .and_then(|u| s.cookie_header(&u))
+                    }) {
+                        list.append(&format!("Cookie: {cookie}"))?;
+                    }
                     if let Some(v) = metadata.etag.as_ref().filter(|v| !v.starts_with("W/")) {
                         list.append(&format!("If-Range: {v}"))?;
                         list.append(&format!("If-Match: {v}"))?;
@@ -788,6 +811,9 @@ fn worker(
                                 if control.load(Ordering::Relaxed)!=0 {return Ok(0);}
                                 let h=headers.borrow();
                                 if http {
+                                    if metadata.context.solver.is_some() && crate::solver::is_html(&h.content_type) {
+                                        invalid=Some("source_expired: Hosted source returned HTML; refresh it in the browser".into());return Ok(0);
+                                    }
                                     if matches!(h.status,301|302|303|307|308){return Ok(0);}
                                     if h.status>=400 {invalid=Some(crate::failure::http_error(h.status));return Ok(0);}
                                     if h.invalid || ranged && (h.status!=206 || h.range!=Some((offset,segment.end,metadata.total.unwrap())) || h.encoding.as_deref().is_some_and(|v|!v.eq_ignore_ascii_case("identity"))) {

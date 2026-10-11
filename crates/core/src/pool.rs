@@ -90,6 +90,7 @@ pub(crate) fn checkout_route(
     let mut hash = Sha256::new();
     hash.update(u.origin().ascii_serialization());
     hash.update(serde_json::to_vec(context)?);
+    hash.update(serde_json::to_vec(&context.solver)?);
     hash.update(serde_json::to_vec(&settings.network)?);
     hash.update(settings.proxy.as_deref().unwrap_or(""));
     hash.update(settings.proxy_credential.as_deref().unwrap_or(""));

@@ -25,7 +25,14 @@ import { api, pickDirectory, fileAction } from './api';
 import type { Job, Snapshot, Settings, Queue } from './types';
 import { translate, languages, type Key, type Locale } from '../../../packages/shared/src/i18n';
 import { bytes, expandUrls } from '../../../packages/shared/src/utils';
-const activeStates = ['connecting', 'downloading', 'verifying', 'assembling', 'scanning'];
+const activeStates = [
+  'solving_challenge',
+  'connecting',
+  'downloading',
+  'verifying',
+  'assembling',
+  'scanning',
+];
 function Modal({
   title,
   onClose,
@@ -460,7 +467,29 @@ export default function App() {
                     {job.failure && <p>{job.failure.recovery.join(', ').replaceAll('_', ' ')}</p>}
                   </div>
                 )}
+                {job.solver_outcome && <p role="status">{t(job.solver_outcome as Key)}</p>}
                 <div className="actions">
+                  {job.page_url && (
+                    <button
+                      disabled={
+                        busy ||
+                        !snapshot?.settings.solver.enabled ||
+                        snapshot.settings.network.proxy_mode !== 'direct' ||
+                        !['waiting_browser', 'waiting_user'].includes(job.state)
+                      }
+                      onClick={() =>
+                        catching(
+                          run('solve_challenge', {
+                            id: job.id,
+                            automatic: false,
+                            url: job.navigation_url ?? job.page_url,
+                          }),
+                        )
+                      }
+                    >
+                      {t('trySolver')}
+                    </button>
+                  )}
                   <button
                     disabled={job.state !== 'complete'}
                     onClick={() => catching(fileAction(job.id))}
@@ -707,9 +736,15 @@ function SettingsPage({ settings, t, run }: { settings: Settings; t: T; run: Run
     [id, setId] = useState(''),
     [username, setUsername] = useState(''),
     [password, setPassword] = useState('');
+  const [solverTesting, setSolverTesting] = useState(false);
+  const [solverResult, setSolverResult] = useState('');
   const update = (key: keyof Settings, v: unknown) => {
     setValue({ ...value, [key]: v });
     setSaved(false);
+  };
+  const updateSolver = (patch: Partial<Settings['solver']>) => {
+    update('solver', { ...value.solver, ...patch });
+    setSolverResult('');
   };
   return (
     <div className="page-content">
@@ -773,6 +808,61 @@ function SettingsPage({ settings, t, run }: { settings: Settings; t: T; run: Run
         </section>
         <section className="card">
           <h2>{t('networking')}</h2>
+          <fieldset>
+            <legend>FlareSolverr</legend>
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={value.solver.enabled}
+                onChange={(e) => updateSolver({ enabled: e.target.checked })}
+              />
+              {t('solverEnable')}
+            </label>
+            <div className="form-grid">
+              <label>
+                {t('solverEndpoint')}
+                <input
+                  type="url"
+                  dir="ltr"
+                  value={value.solver.endpoint}
+                  onChange={(e) => updateSolver({ endpoint: e.target.value })}
+                />
+              </label>
+              <label>
+                {t('solverTimeout')}
+                <input
+                  type="number"
+                  min="1"
+                  max="120"
+                  value={value.solver.timeout_seconds}
+                  onChange={(e) => updateSolver({ timeout_seconds: Number(e.target.value) })}
+                />
+              </label>
+            </div>
+            <p className="hint">{t('solverHint')}</p>
+            {value.network.proxy_mode !== 'direct' && <p className="hint">{t('solver_routing')}</p>}
+            <button
+              type="button"
+              disabled={solverTesting}
+              onClick={async () => {
+                setSolverTesting(true);
+                setSolverResult('');
+                try {
+                  const result = (await run('test_solver', { settings: value.solver })) as {
+                    version: string;
+                  };
+                  setSolverResult(`${t('solverReady')} ${t('solverVersion')}: ${result.version}`);
+                } catch {
+                  setSolverResult(t('solver_unavailable'));
+                } finally {
+                  setSolverTesting(false);
+                }
+              }}
+            >
+              {t(solverTesting ? 'solverTesting' : 'solverTest')}
+            </button>
+            <p role="status">{solverResult}</p>
+          </fieldset>
           <div className="form-grid">
             <label>
               {t('routing')}

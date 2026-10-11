@@ -15,6 +15,7 @@ The [complete roadmap](ROADMAP.md) tracks all documented limitations, including 
 - Desktop table/search/filter/progress/segment detail; add/bulk templates, categories, queue settings, source refresh, import/export, clipboard opt-in and tray close.
 - Extension popup/options/context menus, automatic GET handoff, session context, exclusions, bypass and browser fallback.
 - Hosted-page resolver: dedicated tab, countdowns, bounded free-download steps, manual challenge states, browser ownership for POST/blob requests.
+- Optional loopback FlareSolverr through libcurl and the background service: globally serialized jobs, fresh origin-scoped sessions, temporary cookies/matching User-Agent, stale-result invalidation, cleanup/restart recovery and six-locale desktop/extension controls. The pinned Docker deployment passed generated rendered GET and verified range/resume fixtures; [live challenge limits](FLARESOLVERR_QUALIFICATION.md) remain explicit.
 - Durable exclusive browser-profile claims and explicit GET link/form capture; ordinary and partitioned session cookie selection.
 - Active-transfer rolling quotas with exact durable-byte limits and verified hash-correct recovery after the limit is lifted.
 - yt-dlp/media selection adapter and checksum-verified Windows FFmpeg/Deno/yt-dlp component installation.
