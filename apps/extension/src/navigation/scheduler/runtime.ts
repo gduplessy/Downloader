@@ -57,7 +57,7 @@ export class NavigationScheduler {
     const result = await this.request({ action: 'ready', id, generation: task.generation, wait_generation: task.wait.generation, ready });
     const current = result.tasks.find(t => t.id === id);
     if (!ready || current?.status !== 'active') return false;
-    await browser.alarms.clear(WAIT_ALARM_PREFIX + id);
+    await this.clearAlarms(id);
     // The service records notification emission atomically by wait generation.
     if (result.settings.notifications && current.wait && !current.wait.notified) {
       const claimed = await this.request({ action: 'notify', id, generation: current.generation, wait_generation: current.wait.generation });
@@ -74,14 +74,29 @@ export class NavigationScheduler {
     const state = await this.request({ action: 'snapshot' });
     const task = state.tasks.find(t => t.id === id);
     if (task) await this.request({ action: 'release', id, generation: task.generation });
-    await browser.alarms.clear(WAIT_ALARM_PREFIX + id);
+    await this.clearAlarms(id);
+  }
+  private alarmName(task: QueueTask): string {
+    return WAIT_ALARM_PREFIX + task.id + ':' + task.generation + ':' + task.wait!.generation;
+  }
+  private async clearAlarms(id: string) {
+    const prefix = WAIT_ALARM_PREFIX + id;
+    const alarms = await browser.alarms.getAll();
+    await Promise.all(alarms.filter(alarm => alarm.name === prefix || alarm.name.startsWith(prefix + ':')).map(alarm => browser.alarms.clear(alarm.name)));
+  }
+  async observe(id: string) {
+    const state = await this.request({ action: 'snapshot' });
+    const task = state.tasks.find(t => t.id === id);
+    if (task?.wait) await this.onAlarm(this.alarmName(task));
   }
   async onAlarm(name: string) {
     if (!name.startsWith(WAIT_ALARM_PREFIX)) return false;
-    const id = name.slice(WAIT_ALARM_PREFIX.length);
+    const match = name.slice(WAIT_ALARM_PREFIX.length).match(/^(.*):(\d+):(\d+)$/);
+    if (!match) return true;
+    const [, id, sourceGeneration, waitGeneration] = match;
     const state = await this.request({ action: 'snapshot' });
     const task = state.tasks.find(t => t.id === id);
-    if (task?.wait && task.lease && task.status === 'waiting') {
+    if (task?.wait && task.lease && task.status === 'waiting' && task.generation === Number(sourceGeneration) && task.wait.generation === Number(waitGeneration)) {
       if (this.wakes.has(id)) return true;
       const wake = this.wake(id);
       this.wakes.set(id, wake);
@@ -89,13 +104,16 @@ export class NavigationScheduler {
       finally {
         this.wakes.delete(id);
         const latest = await this.request({ action: 'snapshot' }).catch(() => state);
-        if (latest.tasks.some(t => t.id === id && t.status === 'waiting' && !!t.lease))
-          await browser.alarms.create(name, { when: Date.now() + 30000 });
+        const current = latest.tasks.find(t => t.id === id && t.status === 'waiting' && !!t.lease && !!t.wait);
+        if (current) await browser.alarms.create(this.alarmName(current), { when: Date.now() + 30000 });
       }
     }
     return true;
   }
   private async alarm(task: QueueTask) {
-    if (task.wait) await browser.alarms.create(WAIT_ALARM_PREFIX + task.id, { when: Math.max(Date.now() + 1000, task.wait.next_recheck_ms) });
+    if (task.wait) {
+      await this.clearAlarms(task.id);
+      await browser.alarms.create(this.alarmName(task), { when: Math.max(Date.now() + 1000, task.wait.next_recheck_ms) });
+    }
   }
 }

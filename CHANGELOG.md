@@ -2,11 +2,22 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.8.5 — Integrate final scheduler lifecycle checks
+
+- Preserve generation-qualified alarms, explicit current-wait observations, opaque fingerprints and unresolved-task readmission alongside exact recovered session scopes.
+- Include real-engine renderer resource/lifecycle fixtures and retain their explicit installed-extension and live-host evidence boundaries.
+
 ## 0.8.4 — Fence combined stream and scheduler recovery
 
 - Integrate the durable browser stream receiver with adapter/scheduler work and reconcile native dispatch/module registrations.
 - Derive queue ownership and generation from persisted jobs, carry each recovered tab's exact scope, reject stale/container-mismatched reports and revalidate source fences after inspection.
 - Keep the installed transport, preview cancellation and final browser lifecycle qualification dependencies open; retain ephemeral new private records and separately approved legacy cleanup.
+
+## 0.8.3
+
+- Fence browser alarms by source and wait generation so replaced countdowns cannot wake previous actions.
+- Re-admit unresolved released navigation without reviving cancelled jobs; hash durable wait fingerprints into opaque bounded values.
+- Add isolated real Engine/browser queue and lifecycle fixtures, resource observations and explicit ownership/browser/live-host qualification boundaries.
 
 ## 0.8.2 — Integrate adapters with durable waits
 

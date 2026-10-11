@@ -460,6 +460,11 @@ impl Engine {
                 task.generation = job.source_generation;
                 task.scope = job.navigation_scope.clone();
                 task.private = job.private;
+
+                if task.status == QueueStatus::Finished {
+                    task.status = QueueStatus::Queued;
+                    task.reason = "queued".into();
+                }
                 // Redirect/site locks extend atomically; a collision blocks further automated steps.
                 for host in hosts {
                     if !task.host_keys.contains(&host) {
