@@ -123,6 +123,14 @@ impl Store {
         Ok(Some((events, more)))
     }
 
+    pub fn get<T: DeserializeOwned>(&self, kind: &str, id: &str) -> Result<T> {
+        let data: String = self.connection.query_row(
+            "SELECT data FROM records WHERE kind=?1 AND id=?2",
+            params![kind, id],
+            |r| r.get(0),
+        )?;
+        Ok(serde_json::from_str(&data)?)
+    }
     pub fn all<T: DeserializeOwned>(&self, kind: &str) -> Result<Vec<T>> {
         let mut query = self
             .connection

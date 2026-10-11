@@ -750,3 +750,86 @@ fn cross_origin_redirect_drops_cookie_and_authorization() {
     a.join().unwrap();
     b.join().unwrap();
 }
+
+#[cfg(feature = "fault-injection")]
+#[test]
+#[ignore = "Storage-failure fixture subprocess"]
+fn storage_failure_worker() {
+    let directory = std::path::PathBuf::from(std::env::var("DOWNLOADER_CRASH_DIRECTORY").unwrap());
+    let server = Server {
+        url: std::env::var("DOWNLOADER_CRASH_URL").unwrap(),
+        stop: Arc::new(AtomicBool::new(false)),
+        version: Arc::new(AtomicU8::new(1)),
+        data: Arc::new(vec![]),
+    };
+    let e = isolated_engine(&directory);
+    e.start();
+    let j = add(&e, &server, "/file", &directory, None);
+    let result = wait(&e, &j.id, |j| {
+        matches!(j.state, JobState::Failed | JobState::Complete)
+    });
+    e.shutdown();
+    assert_eq!(result.state, JobState::Failed);
+    assert_eq!(
+        result.failure.unwrap().code,
+        downloader_core::failure::FailureCode::StorageFailure
+    );
+    assert!(!result.destination.exists());
+    let durable: Job = e.store.lock().unwrap().get("job", &j.id).unwrap();
+    assert_eq!(
+        durable.bytes, 0,
+        "Failed fsync must not advance durable bytes"
+    );
+}
+#[cfg(feature = "fault-injection")]
+#[test]
+fn write_and_flush_failures_never_complete() {
+    let server = Server::new();
+    for operation in ["write", "sync"] {
+        let directory = tempfile::tempdir().unwrap();
+        let mut command = std::process::Command::new(std::env::current_exe().unwrap());
+        command
+            .args(["--exact", "storage_failure_worker", "--ignored"])
+            .env("DOWNLOADER_IO_FAILURE", operation)
+            .env("DOWNLOADER_CRASH_DIRECTORY", directory.path())
+            .env("DOWNLOADER_CRASH_URL", &server.url);
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            command.creation_flags(0x08000000);
+        }
+        let mut child = command.spawn().unwrap();
+        let deadline = Instant::now();
+        loop {
+            if let Some(status) = child.try_wait().unwrap() {
+                assert!(status.success(), "{operation}");
+                break;
+            }
+            if deadline.elapsed() > Duration::from_secs(30) {
+                child.kill().unwrap();
+                panic!("Storage fixture timed out");
+            }
+            std::thread::sleep(Duration::from_millis(20));
+        }
+    }
+}
+#[test]
+fn output_directory_failure_is_actionable() {
+    let server = Server::new();
+    let directory = tempfile::tempdir().unwrap();
+    let blocker = directory.path().join("not-a-directory");
+    std::fs::write(&blocker, b"keep").unwrap();
+    let e = isolated_engine(directory.path());
+    e.start();
+    let j = add(&e, &server, "/file", &blocker, None);
+    let result = wait(&e, &j.id, |j| {
+        matches!(j.state, JobState::Failed | JobState::Complete)
+    });
+    e.shutdown();
+    assert_eq!(result.state, JobState::Failed);
+    assert_eq!(
+        result.failure.unwrap().code,
+        downloader_core::failure::FailureCode::StorageFailure
+    );
+    assert_eq!(std::fs::read(blocker).unwrap(), b"keep");
+}

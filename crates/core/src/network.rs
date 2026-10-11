@@ -316,13 +316,13 @@ fn pac(url: &str, script: Option<&str>, _settings: &NetworkSettings) -> Result<S
                 }
             }
             if ok == 0 && script.is_empty() && error.raw_os_error() == Some(12180) {
-                return Ok(manual);
-            }
-            if ok == 0 {
+                manual
+            } else if ok == 0 {
                 return Err(error)
                     .context("PAC evaluation failed; routing was not silently bypassed");
+            } else {
+                proxy
             }
-            proxy
         }
     } else {
         let host = url::Url::parse(url)?.host_str().unwrap_or("").to_owned();

@@ -208,7 +208,11 @@ fn inspect_controlled(
                 true
             })?;
             transfer.progress_function(|_, _, _, _| control.load(Ordering::Relaxed) == 0)?;
-            transfer.perform()?;
+            let result = transfer.perform();
+            if control.load(Ordering::Relaxed) != 0 {
+                bail!("operation_cancelled")
+            }
+            result?;
         }
         headers.status = easy.response_code()?;
         if matches!(headers.status, 405 | 501) {
@@ -221,7 +225,11 @@ fn inspect_controlled(
                 true
             })?;
             transfer.write_function(|_| Ok(0))?;
+            transfer.progress_function(|_, _, _, _| control.load(Ordering::Relaxed) == 0)?;
             if let Err(e) = transfer.perform() {
+                if control.load(Ordering::Relaxed) != 0 {
+                    bail!("operation_cancelled")
+                }
                 if !e.is_write_error() {
                     return Err(e.into());
                 }
@@ -390,7 +398,8 @@ pub fn checkpoint(
     // The file and job locks keep offsets consistent with the bytes being fsynced.
     let file = file.lock().unwrap();
     let mut job = job.lock().unwrap();
-    file.sync_data()
+    crate::fault::io("sync")
+        .and_then(|_| file.sync_data())
         .context("storage_error: Could not flush checkpoint bytes")?;
     crate::fault::point("checkpoint_before_commit");
     job.bytes = job.segments.iter().map(|s| s.downloaded).sum();
@@ -494,7 +503,7 @@ pub fn run(
         let f = file.lock().unwrap();
         f.set_len(0)
             .context("storage_error: Could not discard uncommitted owned bytes")?;
-        f.sync_data()?;
+        crate::fault::io("sync").and_then(|_| f.sync_data())?;
     }
     if resumed {
         crate::storage::validate_checkpoint(&snapshot, file.lock().unwrap().metadata()?.len())?;
@@ -724,7 +733,7 @@ fn worker(
                                     if count==0 {control.store(3,Ordering::Relaxed);return Ok(0);}
                                 }
                                 let s=&mut j.segments[index];
-                                if let Err(e)=f.seek(SeekFrom::Start(s.start+s.downloaded)).and_then(|_|f.write_all(&data[..count])) {write_error=Some(format!("storage_error: {e}"));return Ok(0);}
+                                if let Err(e)=crate::fault::io("write").and_then(|_|f.seek(SeekFrom::Start(s.start+s.downloaded))).and_then(|_|f.write_all(&data[..count])) {write_error=Some(format!("storage_error: {e}"));return Ok(0);}
                                 s.downloaded+=count as u64;j.bytes=j.segments.iter().map(|s|s.downloaded).sum();attempt_bytes+=count as u64;
                                 j.speed=(attempt_bytes as f64/attempt_started.elapsed().as_secs_f64().max(0.001)) as u64;
                                 j.viable=true;*transferred.lock().unwrap()+=count as u64;

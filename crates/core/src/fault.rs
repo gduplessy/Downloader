@@ -25,3 +25,13 @@ pub fn force_copy() -> bool {
 pub fn force_copy() -> bool {
     false
 }
+
+pub fn io(_operation: &str) -> std::io::Result<()> {
+    #[cfg(feature = "fault-injection")]
+    if std::env::var("DOWNLOADER_IO_FAILURE").as_deref() == Ok(_operation) {
+        return Err(std::io::Error::other(
+            "Injected storage write/flush failure",
+        ));
+    }
+    Ok(())
+}

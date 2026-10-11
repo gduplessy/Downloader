@@ -866,11 +866,26 @@ impl Engine {
                             rate,
                         )
                     };
+                    // Failure must not publish in-memory offsets whose fsync or commit failed.
+                    let durable = if !is_media && result.is_err() {
+                        let id = j.lock().unwrap().id.clone();
+                        Some(engine.store.lock().unwrap().get::<Job>("job", &id))
+                    } else {
+                        None
+                    };
+                    let allow_persist = durable.as_ref().is_none_or(|r| r.is_ok());
                     let mut controls = engine.controls.lock().unwrap();
                     {
                         let mut job = j.lock().unwrap();
+                        if let Some(Ok(durable)) = durable {
+                            *job = durable;
+                        }
                         job.speed = 0;
-                        let result = if control.load(Ordering::Relaxed) != 0 {
+                        let result = if control.load(Ordering::Relaxed) != 0
+                            && result
+                                .as_ref()
+                                .is_err_and(|e| e.to_string().contains("operation_cancelled"))
+                        {
                             Ok(())
                         } else {
                             result
@@ -901,7 +916,9 @@ impl Engine {
                             };
                         }
                     }
-                    let _ = engine.persist(&j);
+                    if allow_persist {
+                        let _ = engine.persist(&j);
+                    }
                     let id = j.lock().unwrap().id.clone();
                     controls.remove(&id);
                 });

@@ -151,4 +151,35 @@ mod tests {
         assert!(open_partial(&p, true).is_err());
         assert_eq!(std::fs::read(&p).unwrap(), b"unrelated");
     }
+    #[cfg(windows)]
+    #[test]
+    fn locked_partial_is_reported_without_modification() {
+        use std::os::windows::fs::OpenOptionsExt;
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("locked");
+        std::fs::write(&path, b"keep").unwrap();
+        let lock = OpenOptions::new()
+            .read(true)
+            .share_mode(0)
+            .open(&path)
+            .unwrap();
+        let error = open_partial(&path, false).unwrap_err();
+        assert!(error.to_string().contains("storage_error"));
+        drop(lock);
+        assert_eq!(std::fs::read(path).unwrap(), b"keep");
+    }
+    #[cfg(unix)]
+    #[test]
+    fn symlinks_and_aliased_partials_are_rejected() {
+        let directory = tempfile::tempdir().unwrap();
+        let original = directory.path().join("original");
+        std::fs::write(&original, b"keep").unwrap();
+        let symlink = directory.path().join("symlink");
+        std::os::unix::fs::symlink(&original, &symlink).unwrap();
+        assert!(open_partial(&symlink, false).is_err());
+        let alias = directory.path().join("alias");
+        std::fs::hard_link(&original, &alias).unwrap();
+        assert!(open_partial(&alias, false).is_err());
+        assert_eq!(std::fs::read(original).unwrap(), b"keep");
+    }
 }
