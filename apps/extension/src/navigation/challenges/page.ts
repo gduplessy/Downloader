@@ -5,6 +5,7 @@ import type { ResolverContext } from '../adapters/context';
 type Context = ResolverContext & { sourceGeneration: number };
 export type ChallengeBridge = {
   context(): Promise<Context | null>;
+  chooseHost?(host: string): Promise<unknown>;
   authorize(binding: ChallengeBinding, signal: AbortSignal): Promise<boolean>;
   paid(
     action: 'start' | 'poll' | 'cancel',
@@ -67,15 +68,65 @@ export async function showChallenge(
 ): Promise<{ close(): void } | null> {
   const found = discover(doc),
     ctx = await bridge.context();
-  if (
-    !found ||
-    !ctx ||
-    !ctx.selectedHost ||
-    found.hostInput.value !== ctx.selectedHost ||
-    !Number.isSafeInteger(ctx.sourceGeneration) ||
-    ctx.sourceGeneration < 1
-  )
+  if (!found || !ctx || !Number.isSafeInteger(ctx.sourceGeneration) || ctx.sourceGeneration < 1)
     return null;
+
+  if (!ctx.selectedHost || found.hostInput.value !== ctx.selectedHost) {
+    const selected = found.hostInput.value;
+    if (
+      !bridge.chooseHost ||
+      !['g4u.to', 'ddownload.com', 'rapidgator.net', 'gofile.io'].includes(selected)
+    )
+      return null;
+    const locale = words[ctx.locale] ?? words.en,
+      host = doc.createElement('div'),
+      shadow = host.attachShadow({ mode: 'closed' }),
+      panel = doc.createElement('section'),
+      heading = doc.createElement('strong'),
+      status = doc.createElement('p'),
+      choose = doc.createElement('button'),
+      manual = doc.createElement('button'),
+      labels: Record<string, string> = {
+        en: 'Use this file host',
+        fr: 'Utiliser ce serveur de fichiers',
+        es: 'Usar este servidor de archivos',
+        de: 'Diesen Dateihost verwenden',
+        ar: 'استخدام مضيف الملفات هذا',
+        'zh-CN': '使用此文件主机',
+      };
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-label', locale[0]);
+    panel.dir = ctx.locale === 'ar' ? 'rtl' : 'ltr';
+    panel.style.cssText =
+      'position:fixed;bottom:20px;right:20px;z-index:2147483647;background:white;color:#162138;padding:18px;border:2px solid #185ac5;font:15px system-ui';
+    heading.textContent = locale[0];
+    status.setAttribute('role', 'status');
+    choose.type = manual.type = 'button';
+    choose.textContent = (labels[ctx.locale] ?? labels.en) + ': ' + selected;
+    manual.textContent = locale[2];
+    const close = () => host.remove();
+    manual.onclick = close;
+    choose.onclick = () => {
+      choose.disabled = true;
+      void bridge.chooseHost!(selected)
+        .then(() => {
+          close();
+          onSubmitted();
+        })
+        .catch(() => {
+          status.textContent = locale[4];
+          choose.disabled = false;
+        });
+    };
+    panel.onkeydown = (e) => {
+      if (e.key === 'Escape') close();
+    };
+    panel.append(heading, status, choose, manual);
+    shadow.append(panel);
+    doc.documentElement.append(host);
+    choose.focus();
+    return { close };
+  }
   const controller = new AbortController(),
     gate = new ChallengeGate(),
     locale = words[ctx.locale] ?? words.en;
@@ -106,6 +157,8 @@ export async function showChallenge(
       JSON.stringify({
         action: found.form.action,
         method: found.form.method,
+        encoding: found.form.enctype,
+        submitter: { name: found.submit.name, value: found.submit.value },
         fields: Array.from(new FormData(found.form).entries()),
       }),
     ),

@@ -1,4 +1,5 @@
 import browser from 'webextension-polyfill';
+import { showChallenge, type ChallengeBridge } from './navigation/challenges/page';
 import { decide, classifyBlocker } from './resolver-policy';
 import {
   collectControls,
@@ -23,13 +24,19 @@ import { showPreview, type PreviewHandle } from './navigation/adapters/selection
 
 // Runs only in the top-level tab assigned to an explicit navigation job.
 import { scopeKey, type ResolverContext } from './navigation/adapters/context';
+const documentRoot = globalThis as typeof globalThis & { __downloaderDocumentNonce?: string };
+const documentNonce = (documentRoot.__downloaderDocumentNonce ??= crypto.randomUUID());
 let documentGeneration = 1;
+let challengeHandle: { close(): void } | undefined;
 let previewHandle: PreviewHandle | undefined;
 let running = false;
 const submissions = new SubmissionGate();
 async function context(): Promise<ResolverContext | null> {
   return (await browser.runtime
-    .sendMessage({ type: 'resolver_context' })
+    .sendMessage({
+      type: 'resolver_context',
+      document: { nonce: documentNonce, generation: documentGeneration },
+    })
     .catch(() => null)) as ResolverContext | null;
 }
 function blockers(elements: Element[]) {
@@ -91,29 +98,33 @@ async function submit(
   ctx: ResolverContext,
   observed: Awaited<ReturnType<typeof observe>>,
   chosen: EvidenceCandidate,
+  signal?: AbortSignal,
 ) {
+  if (signal?.aborted) throw Error('adapter_selection_cancelled');
   const bound = binding(ctx, observed.inspection, observed.fingerprint);
   const element = observed.collected.elements.get(chosen.localId);
   if (!element) throw Error('adapter_preview_stale');
   element.scrollIntoView({ block: 'center' });
   const originalOutline = element.style.outline;
   element.style.outline = '3px solid #185ac5';
-  const reply: any = await browser.runtime.sendMessage({
-    type: 'resolver_step',
-    url: location.href,
-    decision: {
-      kind: 'click',
-      reason: 'Following the selected download control.',
-      blocker: observed.signals.blocker,
-    },
-    request: requestFor(element),
-    fingerprint: observed.fingerprint,
-    binding: bound,
-    selected_host: chosen.panelHost ?? ctx.selectedHost ?? null,
-    adapter_id: observed.inspection.adapter.id,
-    adapter_version: observed.inspection.adapter.version,
-  });
+  let reply: any;
   try {
+    reply = await browser.runtime.sendMessage({
+      type: 'resolver_step',
+      url: location.href,
+      decision: {
+        kind: 'click',
+        reason: 'Following the selected download control.',
+        blocker: observed.signals.blocker,
+      },
+      request: requestFor(element),
+      fingerprint: observed.fingerprint,
+      binding: bound,
+      selected_host: chosen.panelHost ?? ctx.selectedHost ?? null,
+      adapter_id: observed.inspection.adapter.id,
+      adapter_version: observed.inspection.adapter.version,
+    });
+    if (signal?.aborted) throw Error('adapter_selection_cancelled');
     if (reply?.direct === true) {
       submissions.consume(bound, chosen.localId);
       return;
@@ -128,6 +139,7 @@ async function submit(
       fresh.inspection,
       chosen.localId,
     );
+    if (signal?.aborted) throw Error('adapter_selection_cancelled');
     submissions.consume(bound, chosen.localId);
     element.click();
   } finally {
@@ -139,15 +151,58 @@ async function step() {
   if (running) return;
   running = true;
   try {
+    challengeHandle?.close();
+    challengeHandle = undefined;
     previewHandle?.close();
     previewHandle = undefined;
     const ctx = await context();
+    if (ctx) {
+      challengeHandle =
+        (await showChallenge(
+          document,
+          {
+            context,
+            chooseHost: async (host: string) =>
+              browser.runtime.sendMessage({
+                type: 'resolver_challenge_select',
+                selectedHost: host,
+                document: { nonce: documentNonce, generation: documentGeneration },
+              }),
+            authorize: async (bound, signal) => {
+              if (signal.aborted) return false;
+              const reply = await browser.runtime.sendMessage({
+                type: 'resolver_challenge_authorize',
+                binding: bound,
+                document: { nonce: documentNonce, generation: documentGeneration },
+              });
+              return !signal.aborted && reply === true;
+            },
+            paid: async (action, bound, image) =>
+              browser.runtime.sendMessage({
+                type: 'resolver_challenge_paid',
+                binding: bound,
+                action,
+                image,
+                document: { nonce: documentNonce, generation: documentGeneration },
+              }),
+          } as ChallengeBridge,
+          documentGeneration,
+          () => {
+            setTimeout(() => void step().catch(() => {}), 500);
+          },
+        )) ?? undefined;
+      if (challengeHandle) return;
+    }
     const observed = await observe(ctx);
     if (ctx && observed.inspection.kind === 'click' && observed.inspection.selected) {
       await submit(ctx, observed, observed.inspection.selected);
       return;
     }
-    if (ctx && observed.inspection.kind === 'preview') {
+    if (
+      ctx &&
+      (observed.inspection.kind === 'preview' ||
+        (observed.inspection.kind === 'user' && !observed.signals.blocker))
+    ) {
       const preview = createPreview(
         binding(ctx, observed.inspection, observed.fingerprint),
         observed.inspection,
@@ -167,7 +222,8 @@ async function step() {
         document,
         preview,
         ctx.locale,
-        async (id) => {
+        async (id, signal) => {
+          if (signal.aborted) throw Error('adapter_selection_cancelled');
           const freshContext = await context();
           if (!freshContext) throw Error('adapter_preview_stale');
           const fresh = await observe(freshContext);
@@ -177,7 +233,7 @@ async function step() {
             fresh.inspection,
             id,
           );
-          await submit(freshContext, fresh, selected);
+          await submit(freshContext, fresh, selected, signal);
         },
         () => {
           documentGeneration++;

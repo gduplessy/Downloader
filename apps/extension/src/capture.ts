@@ -14,6 +14,8 @@ export function sitePattern(source: string): string {
 }
 export interface CaptureSettings {
   automatic: boolean;
+  directCapture: boolean;
+  disabledAdapters?: string[];
   extensions: string[];
   excluded: string[];
   bypassUntil: number;
@@ -22,6 +24,7 @@ export interface CaptureSettings {
 }
 export const defaults: CaptureSettings = {
   automatic: false,
+  directCapture: false,
   extensions: [
     'zip',
     '7z',

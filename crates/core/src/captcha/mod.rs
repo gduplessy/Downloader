@@ -39,7 +39,7 @@ impl ImageTask {
     fn validate(&self) -> Result<()> {
         // Encoded bound includes base64 expansion; validate canonical input and decoded magic below.
         if self.image_base64.len() > 800_000
-            || self.instruction.len() > 1000
+            || self.instruction != "Click the open circle"
             || self.width == 0
             || self.height == 0
             || self.width > 1000
@@ -80,6 +80,8 @@ struct Reservation {
     job: String,
     reserved: u64,
     task_id: Option<u64>,
+    #[serde(default)]
+    key_ref: String,
     cancelled: bool,
     terminal: bool,
     spent: u64,
@@ -165,6 +167,17 @@ pub fn handle(
     if matches!(request, ProviderRequest::Snapshot) {
         return Ok(summary(&ledger));
     }
+    if matches!(&request, ProviderRequest::Cancel { .. }) {
+        return execute(
+            store,
+            settings,
+            job,
+            request,
+            now,
+            ProviderCall { transport, key: "" },
+            &mut ledger,
+        );
+    }
     settings.validate()?;
     if !settings.enabled
         || !settings.external_opt_in
@@ -174,7 +187,17 @@ pub fn handle(
     {
         bail!("captcha_provider_disabled");
     }
-    let (_, key) = security::credential(&settings.key_ref).context("captcha_key_unavailable")?;
+    let key_ref = match &request {
+        ProviderRequest::Poll { binding } => ledger
+            .tasks
+            .iter()
+            .find(|task| task.binding == *binding && task.job == job)
+            .map(|task| task.key_ref.as_str())
+            .filter(|r| !r.is_empty())
+            .context("captcha_key_reference_unavailable")?,
+        _ => settings.key_ref.as_str(),
+    };
+    let (_, key) = security::credential(key_ref).context("captcha_key_unavailable")?;
     execute(
         store,
         settings,
@@ -230,6 +253,7 @@ fn execute(
                 job: job.into(),
                 reserved: settings.task_ceiling_microusd,
                 task_id: None,
+                key_ref: settings.key_ref.clone(),
                 cancelled: false,
                 terminal: false,
                 spent: 0,
@@ -476,13 +500,18 @@ pub fn reconcile(
         .iter()
         .filter(|t| !t.terminal && t.task_id.is_some() && t.polls < 120 && t.next_poll <= now)
         .take(4)
-        .map(|t| (t.job.clone(), t.binding.clone()))
+        .map(|t| (t.job.clone(), t.binding.clone(), t.key_ref.clone()))
         .collect::<Vec<_>>();
     if pending.is_empty() {
         return Ok(());
     }
-    let (_, key) = security::credential(&settings.key_ref).context("captcha_key_unavailable")?;
-    for (job, binding) in pending {
+    for (job, binding, key_ref) in pending {
+        if key_ref.is_empty() {
+            continue;
+        }
+        let Ok((_, key)) = security::credential(&key_ref) else {
+            continue;
+        };
         // Errors retain reservation; each next-poll deadline was persisted before IO.
         let _ = execute(
             store,
@@ -555,7 +584,7 @@ mod tests {
     fn image() -> ImageTask {
         ImageTask {
             image_base64: "iVBORw0KGgoAAAANSUhEUgAAAGQAAABk".into(),
-            instruction: "click open circle".into(),
+            instruction: "Click the open circle".into(),
             width: 100,
             height: 100,
             binding: "a".repeat(64),

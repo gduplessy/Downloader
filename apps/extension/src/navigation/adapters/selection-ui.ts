@@ -90,13 +90,14 @@ export function showPreview(
   document: Document,
   preview: Preview,
   locale: string,
-  select: (id: string) => Promise<void>,
+  select: (id: string, signal: AbortSignal) => Promise<void>,
   refresh: () => void,
   disableAdapter?: () => Promise<void>,
 ): PreviewHandle {
   document.getElementById('__downloader_adapter_preview')?.remove();
   const words = messages[locale as keyof typeof messages] ?? messages.en;
   const previous = document.activeElement as HTMLElement | null;
+  const lifetime = new AbortController();
   const host = document.createElement('div');
   host.id = '__downloader_adapter_preview';
   const root = host.attachShadow({ mode: 'closed' });
@@ -113,7 +114,15 @@ export function showPreview(
   title.id = 'preview-title';
   title.textContent = words[0];
   const hint = document.createElement('p');
-  hint.textContent = words[1];
+  const emptyLabels: Record<string, string> = {
+    en: 'No supported control found. Continue manually in the browser, or try generic controls.',
+    fr: 'Aucun contrôle pris en charge. Continuez manuellement dans le navigateur ou essayez les contrôles génériques.',
+    es: 'No se encontró un control compatible. Continúe manualmente en el navegador o pruebe los controles genéricos.',
+    de: 'Kein unterstütztes Element gefunden. Im Browser manuell fortfahren oder allgemeine Steuerelemente versuchen.',
+    ar: 'لم يُعثر على عنصر تحكم مدعوم. تابع يدويًا في المتصفح أو جرّب عناصر التحكم العامة.',
+    'zh-CN': '未找到支持的控件。请在浏览器中手动继续，或尝试通用控件。',
+  };
+  hint.textContent = preview.candidates.length ? words[1] : (emptyLabels[locale] ?? emptyLabels.en);
   const status = document.createElement('p');
   status.setAttribute('role', 'status');
   panel.append(title, hint, status);
@@ -157,6 +166,7 @@ export function showPreview(
     return b;
   };
   const close = () => {
+    lifetime.abort();
     host.remove();
     previous?.focus();
   };
@@ -166,9 +176,11 @@ export function showPreview(
     radios.forEach((radio) => {
       radio.disabled = true;
     });
-    void select(selected)
+    void select(selected, lifetime.signal)
       .then(close)
-      .catch(() => stale());
+      .catch(() => {
+        if (!lifetime.signal.aborted) stale();
+      });
   });
   submit.disabled = true;
   button(words[3], close);
@@ -191,7 +203,9 @@ export function showPreview(
           close();
           refresh();
         })
-        .catch(() => stale());
+        .catch(() => {
+          if (!lifetime.signal.aborted) stale();
+        });
     });
   }
   const stale = () => {
@@ -223,7 +237,8 @@ export function showPreview(
   });
   root.append(panel);
   document.documentElement.append(host);
-  radios[0]?.focus();
+  const firstFocus = radios[0] ?? panel.querySelector<HTMLButtonElement>('button:not(:disabled)');
+  firstFocus?.focus();
   return { close, stale };
 }
 export const previewLocales = Object.keys(messages);

@@ -23,8 +23,7 @@ export type ChallengeDependencies = {
   now(): number;
 };
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
-export function challengeHandler(deps: ChallengeDependencies) {
-  const used = new Set<string>();
+export function challengeHandler(deps: ChallengeDependencies, used = new Set<string>()) {
   async function validate(
     sender: { tabId: number; frameId: number; page: string },
     binding: ChallengeBinding,
@@ -73,6 +72,8 @@ export function challengeHandler(deps: ChallengeDependencies) {
     ) {
       const owned = await validate(sender, binding);
       if (owned.scope.private) throw Error('captcha_private_external_refused');
+      if (request.action === 'start' && !(await deps.authorizeSite(sender.tabId)))
+        throw Error('challenge_site_busy');
       const id = await deps.jobId(sender.tabId);
       if (!id) throw Error('captcha_session_rejected');
       const digest = Array.from(

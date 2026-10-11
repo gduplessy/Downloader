@@ -229,6 +229,8 @@ fn run() -> Result<()> {
             owner: None,
             url: None,
             automatic: false,
+            scope: None,
+            source_generation: None,
         },
         Action::Settings => Command::Snapshot,
         Action::Set { file } => Command::Settings(serde_json::from_slice(&std::fs::read(file)?)?),
