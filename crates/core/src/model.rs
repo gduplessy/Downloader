@@ -203,6 +203,8 @@ pub struct Scanner {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
     #[serde(default)]
+    pub captcha: crate::captcha::ProviderSettings,
+    #[serde(default)]
     pub solver: crate::solver::SolverSettings,
     #[serde(default)]
     pub network: crate::network::NetworkSettings,
@@ -263,6 +265,7 @@ impl Default for Settings {
         .collect();
         Self {
             solver: Default::default(),
+            captcha: Default::default(),
             network: Default::default(),
             directory,
             max_jobs: 3,
@@ -320,6 +323,13 @@ pub struct ComponentStatus {
 #[serde(tag = "command", content = "args", rename_all = "snake_case")]
 pub enum Command {
     BrowserStream(crate::navigation::StreamOperation),
+    Captcha {
+        id: String,
+        owner: String,
+        scope: crate::navigation::SessionScope,
+        source_generation: u64,
+        request: crate::captcha::ProviderRequest,
+    },
     Snapshot,
     BrowserSnapshot {
         owner: String,

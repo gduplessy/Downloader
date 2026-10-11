@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.0
+
+- Add qualified local open-circle geometry, stale-answer fencing, six-locale challenge controls, and service-owned optional CoordinatesTask reservations tested entirely against mocks.
+- Paid solving remains disabled with zero budget; live challenge and downstream browser acceptance remain pending.
+
+
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
 ## 0.8.4 — Fence combined stream and scheduler recovery

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { api, pickDirectory, fileAction } from './api';
 import type { Job, Snapshot, Settings, Queue } from './types';
+import { CaptchaSettings } from './features/CaptchaSettings';
 import { translate, languages, type Key, type Locale } from '../../../packages/shared/src/i18n';
 import { bytes, expandUrls } from '../../../packages/shared/src/utils';
 const activeStates = [
