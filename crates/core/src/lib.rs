@@ -5,6 +5,7 @@ pub mod finalize;
 pub mod grabber;
 pub mod media;
 pub mod model;
+pub mod navigation;
 pub mod security;
 pub mod solver;
 pub mod storage;

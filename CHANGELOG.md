@@ -2,6 +2,11 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.5.7 — Shared navigation contracts
+
+- Define matching Rust/TypeScript session scope, fenced navigation task, wait metadata, replay policy and bounded browser-stream envelopes for the parallel implementation batches.
+- Validate profile/generation/partition metadata and test native-frame size and serialization. Feature behavior remains in its respective NAV batch.
+
 ## 0.5.6 — Plan remaining hosted-page navigation work
 
 - Add thirteen NAV plans grounded in refreshed main, covering remaining FlareSolverr qualification and NAV-02 through NAV-13 implementation.
