@@ -1,0 +1,38 @@
+{
+  "service": {
+    "available": true,
+    "version": "3.4.6"
+  },
+  "elapsedSeconds": 138.988,
+  "renderedSource": {
+    "state": "complete",
+    "bytes": 2097152,
+    "sha256": "1e075c8d478ad21844e33e830a695ef03a4d2488b69ee275bd8947618bb1be1e",
+    "pausedBytes": 181926,
+    "resumable": true,
+    "solveAndTransferSeconds": 31.974
+  },
+  "customCaptcha": {
+    "outcome": "solver_captcha",
+    "bytes": 0,
+    "seconds": 4.914
+  },
+  "expiredSource": {
+    "outcome": "solver_expired",
+    "bytes": 0,
+    "seconds": 4.315
+  },
+  "events": {
+    "rangeRequests": 4,
+    "cookieRequests": 9,
+    "matchingAgent": 9,
+    "fileGets": 4
+  },
+  "browserRendering": {
+    "status": "ok",
+    "httpStatus": 200,
+    "renderedAnchor": true,
+    "fixtureCookie": true,
+    "targetMatches": true
+  }
+}

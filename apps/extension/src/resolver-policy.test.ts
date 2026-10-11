@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { decide, navigationAvailable, type Candidate } from './resolver-policy';
+import {
+  decide,
+  navigationAvailable,
+  classifyBlocker,
+  shouldSolve,
+  type Candidate,
+} from './resolver-policy';
 const c = (text: string, other: Partial<Candidate> = {}): Candidate => ({
   text,
   visible: true,
@@ -8,6 +14,31 @@ const c = (text: string, other: Partial<Candidate> = {}): Candidate => ({
   ...other,
 });
 describe('hosted-page decisions', () => {
+  it('distinguishes expiry, authentication, custom CAPTCHA, and browser protection', () => {
+    const signals = {
+      text: '',
+      password: false,
+      captcha: false,
+      browserChallenge: false,
+      countdown: false,
+    };
+    expect(
+      classifyBlocker({ ...signals, text: 'Link expired. Solve the captcha', captcha: true }),
+    ).toBe('expired');
+    expect(classifyBlocker({ ...signals, password: true, captcha: true })).toBe('authentication');
+    expect(classifyBlocker({ ...signals, captcha: true })).toBe('captcha');
+    expect(classifyBlocker({ ...signals, browserChallenge: true })).toBe('browser_challenge');
+    expect(classifyBlocker({ ...signals, text: 'HTTP 403 Forbidden' })).toBeUndefined();
+  });
+  it('automates only opted-in direct anonymous browser challenges once', () => {
+    expect(shouldSolve('browser_challenge', true, true, false, false)).toBe(true);
+    for (const blocker of ['captcha', 'authentication', 'expired', 'countdown', undefined] as const)
+      expect(shouldSolve(blocker, true, true, false, false)).toBe(false);
+    expect(shouldSolve('browser_challenge', false, true, false, false)).toBe(false);
+    expect(shouldSolve('browser_challenge', true, false, false, false)).toBe(false);
+    expect(shouldSolve('browser_challenge', true, true, true, false)).toBe(false);
+    expect(shouldSolve('browser_challenge', true, true, false, true)).toBe(false);
+  });
   it('bounds bulk navigation and protects each host session until its current page finishes', () => {
     const pages = ['https://a.example/file1', 'https://b.example/file2'];
     expect(navigationAvailable(pages, 'https://a.example/file3')).toBe(false);

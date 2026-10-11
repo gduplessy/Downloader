@@ -21,11 +21,11 @@ Reusable libcurl handles are bounded and keyed by origin, request context, routi
 | --- | --- | --- |
 | Direct/manual | Explicit direct, HTTP/HTTPS CONNECT and SOCKS4/5/5h | Local fixtures on all three CI platforms |
 | Windows system/PAC | Current-user WinHTTP configuration and PAC | Local PAC fixture; enterprise policy/WPAD/bypass matrices remain |
-| macOS system/PAC | CFNetwork settings and bounded PAC callback | Local PAC fixture; managed policy and failover remain |
+| macOS system/PAC | CFNetwork settings and bounded PAC callback | Ordered PAC results; managed policy qualification remains |
 | Linux system/PAC | libproxy system resolution; serialized pacparser for explicit PAC | Runtime libraries required; local PAC fixture; desktop policy matrices remain |
 | Authentication | OS keyring references, Basic/Digest and available NTLM/Negotiate | Basic/Digest challenge fixtures; NTLM/Kerberos external realms remain |
 
-PAC adapters choose a supported proxy result; ordered multi-proxy failover is not implemented. PAC scripts are explicitly configured/trusted; downloading them is bounded, but Linux parser execution has no separate timeout. Missing Linux libproxy falls back to libcurl environment routing; explicit PAC requires libpacparser. DEB declares runtime libraries; AppImage packaging still needs acceptance.
+PAC adapters preserve ordered route lists, bounded to 16 entries per request. Metadata, range fetches and workers advance only on connection/DNS-proxy/timeouts before any response or body; TLS/authentication/source errors never trigger failover. Direct access must appear explicitly in the resolved list. Pool keys include the selected route. Windows uses the [cancellable ordered WinHTTP API](https://learn.microsoft.com/en-us/windows/win32/api/winhttp/nf-winhttp-winhttpgetproxyforurlex), with a twenty-second limit and explicit PAC cache/DirectAccess overrides disabled. An implicit native loopback bypass is refused for explicit PAC, with guidance to choose system/direct routing. PAC scripts are explicitly configured/trusted; downloading them is bounded, but Linux parser execution has no separate timeout. Missing Linux libproxy falls back to libcurl environment routing; explicit PAC requires libpacparser. DEB declares runtime libraries; AppImage packaging still needs acceptance.
 
 Browser-only VPN/proxy extensions do not route the desktop engine. Configure desktop routing explicitly when necessary. Cross-origin redirects clear source cookies/authorization, and HTTPS downgrades are rejected. Browser source refresh requires the owning profile; replacement context is temporary and incompatible partial bytes are never merged.
 
@@ -46,9 +46,11 @@ Wire version **1** is independent of product versions. Restricted per-user named
 
 ## Recorded evidence
 
+The 0.3.0 Windows follow-up passes six PAC cases with proxy traversal observations. The older numeric-loopback PAC fixture did not check traversal and cannot establish that routing worked; WinHTTP can impose a native loopback bypass. Cross-platform ordered-failover acceptance is still pending.
+
 Tests are deterministic local fixtures, not proof of universal server/browser support. The [acceptance record](ACCEPTANCE.md) and [compatibility matrix](COMPATIBILITY.md) distinguish source builds from native GUI, browser and installer acceptance.
 
-- Final regression set: **38 Rust functional tests on Windows**, **39 on Unix** (one additional socket permission/rebind check), four ignored subprocess helpers invoked by parent tests, **18 TypeScript tests**, strict Clippy/formatting, both client builds and native desktop compilation. [Final source CI](https://github.com/gduplessy/Downloader/actions/runs/38104393525) records the response-validator patch; use its exact job statuses as build evidence.
+- The 0.2.x full-matrix regression set: **38 Rust functional tests on Windows**, **39 on Unix** (one additional socket permission/rebind check), four ignored subprocess helpers invoked by parent tests, **18 TypeScript tests**, strict Clippy/formatting, both client builds and native desktop compilation. [Final source CI](https://github.com/gduplessy/Downloader/actions/runs/38104393525) records the response-validator patch; use its exact job statuses as build evidence.
 - The [large-file run](https://github.com/gduplessy/Downloader/actions/runs/38103251279) passed all jobs, **38 network/performance cases** and the actual >4 GiB transfer on Windows, macOS and Linux, including macOS endpoint permissions/rebind and CLI restart.
 - The [native/control run](https://github.com/gduplessy/Downloader/actions/runs/38104025817) passed its real native-messaging and CLI steps on all three platforms, including browser response privacy, durable duplicate creation, ordered events and pause/resume/restart. Per-platform control JSON is included below.
 - Earlier failing attempts exposed benchmark fixture response accounting, Darwin socket chmod and a sibling-cancellation error race. Each cause was repaired with the assertions retained; five consecutive local write/flush fixture repetitions passed after the worker-race fix.
@@ -124,7 +126,7 @@ CI `workflow_dispatch` with `large=true` runs the large fixture on every matrix 
 ## Remaining engine qualification
 
 - Actual disk-full/permission/cross-volume failure matrices beyond injected I/O, locked-file, symlink/hardlink, collision and staged-copy regressions.
-- External NTLM/Negotiate/Kerberos realms; platform system proxy/WPAD/PAC failure policies, ordered proxy failover, shipped installer/AppImage library provenance.
+- External NTLM/Negotiate/Kerberos realms; platform system proxy/WPAD/PAC failure policies and all-platform ordered-failover qualification, shipped installer/AppImage library provenance.
 - Intel macOS remains a separate launch target from the Apple Silicon CI runner.
 - Successful identical-fixture IDM comparison. Stable-browser source refresh and desktop GUI acceptance remain in WEB/UI/REL gates.
 

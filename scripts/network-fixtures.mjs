@@ -16,12 +16,12 @@ const md5 = s => createHash('md5').update(s).digest('hex');
 export async function fixtures(directory) {
   await mkdir(directory,{recursive:true});
   const keyFile=path.join(directory,'key.pem'),certFile=path.join(directory,'cert.pem'),configFile=path.join(directory,'openssl.cnf');
-  await writeFile(configFile,'[req]\nprompt=no\ndistinguished_name=dn\nx509_extensions=extensions\n[dn]\nCN=localhost\n[extensions]\nbasicConstraints=critical,CA:TRUE\nkeyUsage=digitalSignature,keyEncipherment,keyCertSign\nextendedKeyUsage=serverAuth\nsubjectAltName=IP:127.0.0.1,DNS:localhost\n');
+  await writeFile(configFile,'[req]\nprompt=no\ndistinguished_name=dn\nx509_extensions=extensions\n[dn]\nCN=localhost\n[extensions]\nbasicConstraints=critical,CA:TRUE\nkeyUsage=digitalSignature,keyEncipherment,keyCertSign\nextendedKeyUsage=serverAuth\nsubjectAltName=IP:127.0.0.1,DNS:localhost,DNS:download-fixture.invalid\n');
   await exec(process.env.OPENSSL ?? 'openssl',['req','-x509','-newkey','rsa:2048','-nodes','-keyout',keyFile,'-out',certFile,'-days','2','-config',configFile],{windowsHide:true});
   const options={key:await readFile(keyFile),cert:await readFile(certFile)};
   const data=Buffer.alloc(32*1024*1024);for(let i=0;i<data.length;i++) data[i]=i%251;
   const sha256=createHash('sha256').update(data).digest('hex');
-  const stats={requests:[],proxy:0,socks:0,ftpRest:0,ftpTls:0,maxActive:0,active:0};const activeResponses=new Map();let proxyPort;
+  const stats={requests:[],proxy:0,socks:0,ftpRest:0,ftpTls:0,maxActive:0,active:0};const activeResponses=new Map();let proxyPort,secureProxyPort,authProxyPort;
   const servers=[],sockets=new Set();
   function track(server) {servers.push(server);server.on('connection',socket=>{sockets.add(socket);socket.on('close',()=>sockets.delete(socket));socket.on('error',()=>{});});return server;}
   const transient=new Set();
@@ -41,6 +41,14 @@ export async function fixtures(directory) {
     const url=new URL(req.url,'http://localhost');stats.requests.push({path:url.pathname,version:req.httpVersion,method:req.method,range:req.headers.range});
     req.on('error',()=>{});res.on('error',()=>{});
     if(url.pathname==='/proxy.pac'){res.end(`function FindProxyForURL(url,host){return "PROXY 127.0.0.1:${proxyPort}";}`);return;}
+    const pac={
+      '/failover.pac':`PROXY 127.0.0.1:1; PROXY 127.0.0.1:${proxyPort}; DIRECT`,
+      '/direct.pac':'PROXY 127.0.0.1:1; DIRECT',
+      '/unavailable.pac':'PROXY 127.0.0.1:1; PROXY 127.0.0.1:2',
+      '/tls-failure.pac':`HTTPS 127.0.0.1:${secureProxyPort}; DIRECT`,
+      '/auth-failure.pac':`PROXY 127.0.0.1:${authProxyPort}; DIRECT`,
+    }[url.pathname];
+    if(pac){res.end(`function FindProxyForURL(url,host){return ${JSON.stringify(pac)};}`);return;}
     if(url.pathname==='/basic' && req.headers.authorization!=='Basic '+Buffer.from('fixture:fixture-password').toString('base64')) {res.writeHead(401,{'WWW-Authenticate':'Basic realm="fixture"','Content-Length':'0'});res.end();return;}
     if(url.pathname==='/digest') {
       const values=Object.fromEntries([...(req.headers.authorization ?? '').matchAll(/(\w+)=(?:"([^"]*)"|([^, ]+))/g)].map(m=>[m[1],m[2]??m[3]]));
@@ -83,10 +91,13 @@ export async function fixtures(directory) {
   const httpServer=track(http.createServer((req,res)=>void respond(req,res)));const httpPort=await listen(httpServer);
   const httpsServer=track(https.createServer(options,(req,res)=>void respond(req,res)));const httpsPort=await listen(httpsServer);
   const h2Server=track(http2.createSecureServer({...options,allowHTTP1:true},(req,res)=>void respond(req,res)));h2Server.on('sessionError',()=>{});const h2Port=await listen(h2Server);
-  function forward(req,res){stats.proxy++;const target=new URL(req.url);const upstream=http.request(target,{method:req.method,headers:req.headers},r=>{res.writeHead(r.statusCode,r.headers);r.pipe(res);});upstream.on('error',()=>{res.writeHead(502);res.end();});req.pipe(upstream);}
-  function connect(req,client,head){stats.proxy++;const [host,port]=req.url.split(':');const remote=net.connect(Number(port),host,()=>{client.write('HTTP/1.1 200 Connection Established\r\n\r\n');if(head.length)remote.write(head);remote.pipe(client);client.pipe(remote);});remote.on('error',()=>client.destroy());client.on('error',()=>remote.destroy());client.on('close',()=>remote.destroy());}
+  function forward(req,res){let target;try{target=new URL(req.url);}catch{res.writeHead(404);res.end();return;}stats.proxy++;if(target.hostname==='download-fixture.invalid')target.hostname='127.0.0.1';const upstream=http.request(target,{method:req.method,headers:req.headers},r=>{res.writeHead(r.statusCode,r.headers);r.pipe(res);});upstream.on('error',()=>{res.writeHead(502);res.end();});req.pipe(upstream);}
+  function connect(req,client,head){stats.proxy++;const [host,port]=req.url.split(':');const remote=net.connect(Number(port),host==='download-fixture.invalid'?'127.0.0.1':host,()=>{client.write('HTTP/1.1 200 Connection Established\r\n\r\n');if(head.length)remote.write(head);remote.pipe(client);client.pipe(remote);});remote.on('error',()=>client.destroy());client.on('error',()=>remote.destroy());client.on('close',()=>remote.destroy());}
   const proxy=track(http.createServer(forward));proxy.on('connect',connect);proxyPort=await listen(proxy);
-  const secureProxy=track(https.createServer(options,forward));secureProxy.on('connect',connect);const secureProxyPort=await listen(secureProxy);
+  const secureProxy=track(https.createServer(options,forward));secureProxy.on('connect',connect);secureProxyPort=await listen(secureProxy);
+  const authProxy=track(http.createServer((_req,res)=>{res.writeHead(407,{'Proxy-Authenticate':'Basic realm="fixture"','Content-Length':'0'});res.end();}));
+  authProxy.on('connect',(_req,client)=>client.end('HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm="fixture"\r\nContent-Length: 0\r\n\r\n'));
+  authProxyPort=await listen(authProxy);
   const socks=track(net.createServer(socket=>{
     let buffer=Buffer.alloc(0),stage=0;let version;
     function receive(chunk){buffer=Buffer.concat([buffer,chunk]);

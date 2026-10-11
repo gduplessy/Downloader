@@ -76,14 +76,25 @@ pub fn checkout(
     settings: &Settings,
     control: &AtomicU8,
 ) -> Result<Lease> {
+    checkout_route(url, context, settings, control, None)
+}
+pub(crate) fn checkout_route(
+    url: &str,
+    context: &RequestContext,
+    settings: &Settings,
+    control: &AtomicU8,
+    route: Option<&str>,
+) -> Result<Lease> {
     let u = url::Url::parse(url)?;
     let host = u.host_str().unwrap_or("").to_owned();
     let mut hash = Sha256::new();
     hash.update(u.origin().ascii_serialization());
     hash.update(serde_json::to_vec(context)?);
+    hash.update(serde_json::to_vec(&context.solver)?);
     hash.update(serde_json::to_vec(&settings.network)?);
     hash.update(settings.proxy.as_deref().unwrap_or(""));
     hash.update(settings.proxy_credential.as_deref().unwrap_or(""));
+    hash.update(serde_json::to_vec(&route)?);
     for id in [&context.credential_id, &settings.proxy_credential]
         .into_iter()
         .flatten()

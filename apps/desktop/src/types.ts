@@ -22,6 +22,9 @@ export type Job = {
   segments: { start: number; end: number; downloaded: number }[];
   media: Record<string, unknown> | null;
   viable: boolean;
+  page_url?: string | null;
+  navigation_url?: string | null;
+  solver_outcome?: string | null;
 };
 export type Category = {
   id: string;
@@ -44,6 +47,7 @@ export type NetworkSettings = {
   checkpoint_milliseconds: number;
 };
 export type Settings = {
+  solver: { enabled: boolean; endpoint: string; timeout_seconds: number };
   network: NetworkSettings;
   directory: string;
   max_jobs: number;

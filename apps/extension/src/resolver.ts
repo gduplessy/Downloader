@@ -1,5 +1,5 @@
 import browser from 'webextension-polyfill';
-import { decide, type Candidate } from './resolver-policy';
+import { decide, classifyBlocker, type Candidate } from './resolver-policy';
 // Runs only in the top-level tab assigned to an explicit navigation job.
 const visible = (el: Element) => {
   const s = getComputedStyle(el),
@@ -23,9 +23,9 @@ async function step() {
     download: el.hasAttribute('download'),
     id: el.id,
   }));
-  const challenge = [
+  const captcha = [
     ...document.querySelectorAll(
-      'input[type=password],iframe[src*="captcha"],[class*="captcha"],[id*="captcha"]',
+      'iframe[src*="captcha"],[class*="captcha"],[id*="captcha"],iframe[src*="turnstile"]',
     ),
   ].some(visible);
   const countdown = [
@@ -33,7 +33,25 @@ async function step() {
       '[class*="countdown"],[id*="countdown"],[data-countdown],[role=timer]',
     ),
   ].some((el) => visible(el) && /\b[1-9]\d*\b/.test(el.textContent ?? ''));
-  const decision = decide(candidates, challenge, countdown);
+  const blocker = classifyBlocker({
+    text: document.body.innerText,
+    password: [...document.querySelectorAll('input[type=password]')].some(visible),
+    captcha,
+    browserChallenge:
+      [
+        ...document.querySelectorAll(
+          '#challenge-running,#challenge-stage,.cf-challenge-running,#cf-challenge-running',
+        ),
+      ].some(visible) ||
+      /checking your browser/i.test(document.body.innerText) ||
+      (/verify you are human/i.test(document.body.innerText) &&
+        /cloudflare/i.test(document.body.innerText)),
+    countdown,
+  });
+  const decision = {
+    ...decide(candidates, !!blocker && blocker !== 'countdown', countdown),
+    blocker,
+  };
   let request: { method: string; url: string } | undefined;
   if (decision.kind === 'click') {
     const control = all[decision.index!];

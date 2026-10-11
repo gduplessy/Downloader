@@ -371,6 +371,7 @@ pub fn native(args: &[String]) -> Result<()> {
                 | downloader_core::Command::Resolve { .. }
                 | downloader_core::Command::ClaimNavigation { .. }
                 | downloader_core::Command::BrowserStatus { .. }
+                | downloader_core::Command::SolveChallenge { .. }
                 | downloader_core::Command::RefreshBrowser { .. }) => {
                     let id = match &c {
                         downloader_core::Command::Pause { id }
@@ -379,9 +380,16 @@ pub fn native(args: &[String]) -> Result<()> {
                         | downloader_core::Command::Resolve { id, .. }
                         | downloader_core::Command::ClaimNavigation { id, .. }
                         | downloader_core::Command::BrowserStatus { id, .. }
+                        | downloader_core::Command::SolveChallenge { id, .. }
                         | downloader_core::Command::RefreshBrowser { id, .. } => id,
                         _ => unreachable!(),
                     };
+                    if matches!(
+                        &c,
+                        downloader_core::Command::SolveChallenge { owner: None, .. }
+                    ) {
+                        bail!("Browser profile is required for solver requests");
+                    }
                     let snapshot = call(downloader_core::Command::Snapshot)?;
                     if !snapshot["jobs"].as_array().is_some_and(|jobs| {
                         jobs.iter()
@@ -437,7 +445,7 @@ fn browser_visible(job: &serde_json::Value) -> bool {
     job["browser_source"] == true || job["page_url"].is_string()
 }
 fn browser_job(j: &serde_json::Value) -> serde_json::Value {
-    serde_json::json!({"id":j["id"],"request_id":j["request_id"],"url":j["url"],"page_url":j["page_url"],"navigation_owner":j["navigation_owner"],"filename":j["filename"],"state":j["state"],"bytes":j["bytes"],"total":j["total"],"viable":j["viable"],"private":j["private"],"error":j["failure"]["code"],"failure":{"code":j["failure"]["code"],"retryable":j["failure"]["retryable"],"recovery":j["failure"]["recovery"]}})
+    serde_json::json!({"id":j["id"],"request_id":j["request_id"],"url":j["url"],"page_url":j["page_url"],"navigation_url":j["navigation_url"],"navigation_owner":j["navigation_owner"],"solver_outcome":j["solver_outcome"],"solver_attempted":j["solver_attempted"],"filename":j["filename"],"state":j["state"],"bytes":j["bytes"],"total":j["total"],"viable":j["viable"],"private":j["private"],"error":j["failure"]["code"],"failure":{"code":j["failure"]["code"],"retryable":j["failure"]["retryable"],"recovery":j["failure"]["recovery"]}})
 }
 fn browser_snapshot(data: serde_json::Value) -> Result<serde_json::Value> {
     let jobs = data["jobs"]
@@ -447,7 +455,9 @@ fn browser_snapshot(data: serde_json::Value) -> Result<serde_json::Value> {
         .filter(|j| browser_visible(j))
         .map(browser_job)
         .collect::<Vec<_>>();
-    Ok(serde_json::json!({"version":data["version"],"sequence":data["sequence"],"jobs":jobs}))
+    Ok(
+        serde_json::json!({"version":data["version"],"sequence":data["sequence"],"jobs":jobs,"solver_enabled":data["settings"]["solver"]["enabled"],"solver_direct":data["settings"]["network"]["proxy_mode"]=="direct"}),
+    )
 }
 fn browser_events(mut data: serde_json::Value) -> Result<serde_json::Value> {
     if data["snapshot"].is_object() {
@@ -457,6 +467,7 @@ fn browser_events(mut data: serde_json::Value) -> Result<serde_json::Value> {
         match e["type"].as_str() {
             Some("job_lifecycle"|"job_progress") if browser_visible(&e["job"])=>{let mut e=e.clone();e["job"]=browser_job(&e["job"]);Some(e)},
             Some("job_removed") if e["browser_source"]==true || e["page_url"].is_string()=>Some(serde_json::json!({"type":"job_removed","sequence":e["sequence"],"at":e["at"],"id":e["id"]})),
+            Some("settings_changed")=>Some(serde_json::json!({"type":"settings_changed","sequence":e["sequence"],"at":e["at"]})),
             _=>None
         }
     }).collect::<Vec<_>>();
@@ -523,11 +534,15 @@ mod tests {
     fn browser_events_exclude_paths_settings_and_desktop_jobs() {
         let job = serde_json::json!({"id":"browser","browser_source":true,"destination":"/secret/file","url":"https://example.com/file","failure":{"code":"storage_failure","message":"/secret/file denied","recovery":["check_storage"]}});
         let result=browser_events(serde_json::json!({"snapshot":null,"sequence":4,"events":[{"type":"job_lifecycle","sequence":1,"job":job},{"type":"settings_changed","sequence":2},{"type":"job_progress","sequence":3,"job":{"id":"desktop","browser_source":false}},{"type":"job_removed","sequence":4,"id":"browser","browser_source":true}]})).unwrap();
-        assert_eq!(result["events"].as_array().unwrap().len(), 2);
+        assert_eq!(result["events"].as_array().unwrap().len(), 3);
+        assert_eq!(
+            result["events"][1],
+            serde_json::json!({"type":"settings_changed","sequence":2,"at":null})
+        );
         assert_eq!(result["sequence"], 4);
         let text = result.to_string();
         assert!(!text.contains("/secret"));
         assert!(!text.contains("desktop"));
-        assert!(!text.contains("settings_changed"));
+        assert!(!text.contains("endpoint"));
     }
 }

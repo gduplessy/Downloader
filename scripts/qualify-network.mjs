@@ -7,6 +7,7 @@ const root=path.resolve(process.argv[2]??'.local/network-qualification-'+Date.no
 const binary=path.resolve(process.env.QUALIFY_BINARY??'.local/engine-target/release/examples/qualify'+(process.platform==='win32'?'.exe':''));
 const server=await fixtures(path.join(root,'certificates'));
 const baseNetwork={proxy_mode:'direct',ca_file:server.certFile,retries:2};
+const named=url=>url.replace('127.0.0.1','download-fixture.invalid');
 const cases=[
   {name:'http',url:server.http+'/file'},
   {name:'https',url:server.https+'/file'},
@@ -25,7 +26,13 @@ const cases=[
   {name:'compressed',url:server.http+'/compressed'},
   {name:'zip64_offset',url:server.http+'/zip64',mode:'zip'},
   {name:'retry_after',url:server.http+'/retry'},
-  {name:'pac',url:server.http+'/file',network:{proxy_mode:'pac',pac_url:server.http+'/proxy.pac'}},
+  {name:'pac',url:named(server.http)+'/file',require_proxy:true,network:{proxy_mode:'pac',pac_url:server.http+'/proxy.pac'}},
+  {name:'pac_failover',url:named(server.http)+'/file',require_proxy:true,network:{proxy_mode:'pac',pac_url:server.http+'/failover.pac',retries:0,connect_timeout_seconds:1}},
+  {name:'pac_explicit_direct',url:named(server.http)+'/file',network:{proxy_mode:'pac',pac_url:server.http+'/direct.pac',retries:0,connect_timeout_seconds:1}},
+  {name:'pac_all_unavailable',url:named(server.http)+'/file',network:{proxy_mode:'pac',pac_url:server.http+'/unavailable.pac',retries:0,connect_timeout_seconds:1},expected_failure:'network_failure'},
+  {name:'pac_tls_no_bypass',url:named(server.https)+'/file',network:{proxy_mode:'pac',pac_url:server.http+'/tls-failure.pac',ca_file:null,retries:0},expected_failure:'network_failure'},
+  {name:'pac_auth_no_bypass',url:named(server.https)+'/file',network:{proxy_mode:'pac',pac_url:server.http+'/auth-failure.pac',retries:0},expected_failure:'authentication_required'},
+  ...(process.platform==='win32'?[{name:'pac_loopback_bypass_rejected',url:server.http+'/file',network:{proxy_mode:'pac',pac_url:server.http+'/unavailable.pac',retries:0},expected_failure:'protocol_unsupported'}]:[]),
 ];
 if(process.argv.includes('--benchmark'))for(const [delay,cap] of [[0,0],[2,0],[2,2]])for(const connections of [1,4])for(let repeat=1;repeat<=3;repeat++)cases.push({name:`benchmark_${delay}ms_cap${cap}_${connections}connections_run${repeat}`,url:server.http+`/file?delay=${delay}&chunk=65536&cap=${cap}`,connections});
 if(process.argv.includes('--large'))cases.push({name:'large_over_4gib',url:server.http+'/large',sha256:server.largeSha256,connections:1,network:{checkpoint_milliseconds:100},pause_at:4*1024**3+123});
@@ -34,7 +41,7 @@ function run(binary,args,timeout=900000){return new Promise(resolve=>{let out=''
 try {
   for(const fixture of cases.filter(c=>{const n=process.argv.indexOf('--only');return n<0 || process.argv[n+1].split(',').includes(c.name);})){
     const directory=path.join(root,fixture.name);await mkdir(directory,{recursive:true});const config={...fixture,directory,sha256:fixture.sha256??server.sha256,network:{...baseNetwork,...fixture.network,...(fixture.proxy?{proxy_mode:'manual'}:{})}};
-    const file=path.join(directory,'case.json');await writeFile(file,JSON.stringify(config));const result=await run(binary,[file]);results.push({name:fixture.name,...result});process.stdout.write(JSON.stringify(results.at(-1))+'\n');await writeFile(path.join(root,'results.json'),JSON.stringify({platform:process.platform,results,observations:server.stats},null,2));
+    const file=path.join(directory,'case.json');await writeFile(file,JSON.stringify(config));const before=server.stats.proxy;const result=await run(binary,[file]);if(fixture.require_proxy && !result.error && server.stats.proxy===before)result.error='PAC fixture did not actually traverse the proxy';results.push({name:fixture.name,...result});process.stdout.write(JSON.stringify(results.at(-1))+'\n');await writeFile(path.join(root,'results.json'),JSON.stringify({platform:process.platform,results,observations:server.stats},null,2));
   }
   const idmArg=process.argv.indexOf('--idm');
   if(idmArg>=0){

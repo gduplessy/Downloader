@@ -69,6 +69,15 @@ enum Action {
         file: PathBuf,
     },
     Diagnostics,
+    /// Test a local FlareSolverr endpoint without enabling it.
+    SolverTest {
+        #[arg(long, default_value = "http://localhost:9191/")]
+        endpoint: String,
+    },
+    /// Try the configured solver for an anonymous hosted-page job.
+    Solve {
+        id: String,
+    },
     Settings,
     Set {
         file: PathBuf,
@@ -209,6 +218,18 @@ fn run() -> Result<()> {
             }
         }
         Action::Diagnostics => Command::Diagnostics,
+        Action::SolverTest { endpoint } => Command::TestSolver {
+            settings: downloader_core::solver::SolverSettings {
+                endpoint,
+                ..Default::default()
+            },
+        },
+        Action::Solve { id } => Command::SolveChallenge {
+            id,
+            owner: None,
+            url: None,
+            automatic: false,
+        },
         Action::Settings => Command::Snapshot,
         Action::Set { file } => Command::Settings(serde_json::from_slice(&std::fs::read(file)?)?),
         Action::Queue { file } => Command::Queue(serde_json::from_slice(&std::fs::read(file)?)?),

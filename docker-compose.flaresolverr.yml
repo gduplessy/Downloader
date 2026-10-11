@@ -1,0 +1,21 @@
+services:
+  flaresolverr:
+    image: flaresolverr/flaresolverr@sha256:7962759d99d7e125e108e0f5e7f3cdbcd36161776d058d1d9b7153b92ef1af9e
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:${FLARESOLVERR_PORT:-9191}:8191'
+    environment:
+      LOG_LEVEL: warning
+      LOG_HTML: 'false'
+      TZ: UTC
+      TEST_URL: https://example.com
+    healthcheck:
+      test:
+        - CMD
+        - python3
+        - -c
+        - "import json,urllib.request; assert json.load(urllib.request.urlopen('http://127.0.0.1:8191/', timeout=5))['msg']=='FlareSolverr is ready!'"
+      interval: 15s
+      timeout: 6s
+      start_period: 45s
+      retries: 4
