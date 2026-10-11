@@ -2,6 +2,11 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.2.3 — Preserve primary transfer failures
+
+- Keep the first worker failure when sibling libcurl requests abort, preserving storage/source recovery actions instead of replacing them with a secondary network error.
+- Retain the storage-failure assertions and repeat the real write/flush subprocess fixture; a Windows CI failure exposed the race.
+
 ## 0.2.2 — Browser response privacy
 
 - Project native creation, navigation and refresh responses through the same browser-safe field allowlist as snapshots/events.

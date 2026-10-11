@@ -858,7 +858,12 @@ fn worker(
         }
         allocator.lock().unwrap().active.remove(&index);
         if let Some(e) = last_error {
-            *error.lock().unwrap() = Some(e);
+            // Other workers abort once this is set. Their curl cancellation
+            // must not replace the primary storage/source failure.
+            let mut primary = error.lock().unwrap();
+            if primary.is_none() {
+                *primary = Some(e);
+            }
             break;
         }
     }

@@ -781,8 +781,10 @@ fn storage_failure_worker() {
     e.shutdown();
     assert_eq!(result.state, JobState::Failed);
     assert_eq!(
-        result.failure.unwrap().code,
-        downloader_core::failure::FailureCode::StorageFailure
+        result.failure.as_ref().unwrap().code,
+        downloader_core::failure::FailureCode::StorageFailure,
+        "{:?}",
+        result.failure
     );
     assert!(!result.destination.exists());
     let durable: Job = e.store.lock().unwrap().get("job", &j.id).unwrap();
