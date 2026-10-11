@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.5.6<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.8.0<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -240,3 +240,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md), check the [open issues](https://github.
 Copyright © 2026 Downloader contributors. Original project code, text, and assets are **GPL-3.0-only**, without warranty; see [LICENSE](LICENSE). External components retain their own licenses and corresponding-source requirements.
 
 Downloader is independent of Internet Download Manager and its owners. IDM code, branding, copy, and assets are not included.
+
+### Navigation scheduling foundation
+
+The service scheduler persists host reservations, tab leases, queue ordering, and wait observations. The default is three navigation tabs with a validated limit of one through twenty. Deadlines trigger page revalidation; elapsed time alone never authorizes a download submission. Browser integration follows in the next increment.

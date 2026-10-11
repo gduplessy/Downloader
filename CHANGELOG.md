@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.0
+
+- Add durable navigation queue admission, conservative host locks, fenced tab leases and restart-safe wait metadata with deterministic regression fixtures.
+
+
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
 ## 0.5.6 — Plan remaining hosted-page navigation work
