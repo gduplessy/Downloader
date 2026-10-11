@@ -142,6 +142,16 @@ pub fn configure(
     context: &RequestContext,
     settings: &Settings,
 ) -> Result<()> {
+    let routes = crate::network::Routes::resolve(url, settings)?;
+    configure_route(easy, url, context, settings, routes.current())
+}
+fn configure_route(
+    easy: &mut Easy,
+    url: &str,
+    context: &RequestContext,
+    settings: &Settings,
+    route: Option<&str>,
+) -> Result<()> {
     let parsed = security::validate_url(url)?;
     if !curl::Version::get()
         .protocols()
@@ -161,7 +171,7 @@ pub fn configure(
     easy.ssl_verify_host(true)?;
     easy.useragent(concat!("Downloader/", env!("CARGO_PKG_VERSION")))?;
     easy.accept_encoding("identity")?;
-    crate::network::apply(easy, url, settings)?;
+    crate::network::apply(easy, url, settings, route)?;
     let mut headers = List::new();
     headers.append("Accept-Encoding: identity")?;
     for (k, v) in &context.headers {
@@ -195,9 +205,23 @@ fn inspect_controlled(
 ) -> Result<Metadata> {
     let mut url = security::validate_url(url)?;
     let mut context = context.clone();
-    for _ in 0..10 {
-        let mut easy = crate::pool::checkout(url.as_str(), &context, settings, control)?;
-        configure(&mut easy, url.as_str(), &context, settings)?;
+    let mut routes = crate::network::Routes::resolve(url.as_str(), settings)?;
+    let mut redirects = 0;
+    loop {
+        let mut easy = crate::pool::checkout_route(
+            url.as_str(),
+            &context,
+            settings,
+            control,
+            routes.current(),
+        )?;
+        configure_route(
+            &mut easy,
+            url.as_str(),
+            &context,
+            settings,
+            routes.current(),
+        )?;
         easy.nobody(true)?;
         easy.fetch_filetime(true)?;
         let mut headers = Headers::default();
@@ -209,14 +233,29 @@ fn inspect_controlled(
             })?;
             transfer.progress_function(|_, _, _, _| control.load(Ordering::Relaxed) == 0)?;
             let result = transfer.perform();
+            drop(transfer);
             if control.load(Ordering::Relaxed) != 0 {
                 bail!("operation_cancelled")
             }
-            result?;
+            if let Err(error) = result {
+                if headers.status >= 400 {
+                    bail!("{}", crate::failure::http_error(headers.status));
+                }
+                if routes.advance(&error, headers.status, 0) {
+                    continue;
+                }
+                return Err(error.into());
+            }
         }
         headers.status = easy.response_code()?;
         if matches!(headers.status, 405 | 501) {
-            configure(&mut easy, url.as_str(), &context, settings)?;
+            configure_route(
+                &mut easy,
+                url.as_str(),
+                &context,
+                settings,
+                routes.current(),
+            )?;
             easy.range("0-0")?;
             headers = Headers::default();
             let mut transfer = easy.transfer();
@@ -226,11 +265,16 @@ fn inspect_controlled(
             })?;
             transfer.write_function(|_| Ok(0))?;
             transfer.progress_function(|_, _, _, _| control.load(Ordering::Relaxed) == 0)?;
-            if let Err(e) = transfer.perform() {
+            let result = transfer.perform();
+            drop(transfer);
+            if let Err(e) = result {
                 if control.load(Ordering::Relaxed) != 0 {
                     bail!("operation_cancelled")
                 }
                 if !e.is_write_error() {
+                    if routes.advance(&e, headers.status, 0) {
+                        continue;
+                    }
                     return Err(e.into());
                 }
             }
@@ -251,6 +295,11 @@ fn inspect_controlled(
                 context.credential_id = None;
             }
             url = next;
+            redirects += 1;
+            if redirects >= 10 {
+                bail!("Too many redirects");
+            }
+            routes = crate::network::Routes::resolve(url.as_str(), settings)?;
             continue;
         }
         if headers.status >= 400 {
@@ -291,7 +340,6 @@ fn inspect_controlled(
             context,
         });
     }
-    bail!("Too many redirects")
 }
 fn redirected(
     current: &str,
@@ -320,9 +368,17 @@ pub fn fetch_bytes(
 ) -> Result<(Headers, Vec<u8>)> {
     let metadata = inspect(url, context, settings)?;
     let (mut url, mut context) = (metadata.url, metadata.context);
-    for _ in 0..10 {
-        let mut easy = crate::pool::checkout(&url, &context, settings, &AtomicU8::new(0))?;
-        configure(&mut easy, &url, &context, settings)?;
+    let mut routes = crate::network::Routes::resolve(&url, settings)?;
+    let mut redirects = 0;
+    loop {
+        let mut easy = crate::pool::checkout_route(
+            &url,
+            &context,
+            settings,
+            &AtomicU8::new(0),
+            routes.current(),
+        )?;
+        configure_route(&mut easy, &url, &context, settings, routes.current())?;
         if let Some((a, b)) = range {
             if a > b {
                 bail!("range_invalid: Reversed byte range");
@@ -355,8 +411,19 @@ pub fn fetch_bytes(
             t.perform()
         };
         let headers = headers.into_inner();
+        if result
+            .as_ref()
+            .is_err_and(|e| routes.advance(e, headers.status, bytes.len() as u64))
+        {
+            continue;
+        }
         if matches!(headers.status, 301 | 302 | 303 | 307 | 308) {
             (url, context) = redirected(&url, headers.location.as_deref(), &context)?;
+            redirects += 1;
+            if redirects >= 10 {
+                bail!("Too many GET redirects");
+            }
+            routes = crate::network::Routes::resolve(&url, settings)?;
             continue;
         }
         if headers.status >= 400 {
@@ -382,7 +449,6 @@ pub fn fetch_bytes(
         result?;
         return Ok((headers, bytes));
     }
-    bail!("Too many GET redirects")
 }
 pub type SharedJob = Arc<Mutex<Job>>;
 pub fn part_path(job: &Job) -> PathBuf {
@@ -640,6 +706,7 @@ fn worker(
         let mut last_error = None;
         let mut attempt = 0;
         let mut redirects = 0;
+        let mut routes = crate::network::Routes::resolve(&metadata.url, &settings);
         loop {
             if control.load(Ordering::Relaxed) != 0 || error.lock().unwrap().is_some() {
                 break;
@@ -667,9 +734,21 @@ fn worker(
             }
             let mut retry_after = None;
             let result = (|| -> Result<()> {
-                let mut easy =
-                    crate::pool::checkout(&metadata.url, &metadata.context, &settings, &control)?;
-                configure(&mut easy, &metadata.url, &metadata.context, &settings)?;
+                let route = routes.as_mut().map_err(|e| anyhow::anyhow!("{e}"))?;
+                let mut easy = crate::pool::checkout_route(
+                    &metadata.url,
+                    &metadata.context,
+                    &settings,
+                    &control,
+                    route.current(),
+                )?;
+                configure_route(
+                    &mut easy,
+                    &metadata.url,
+                    &metadata.context,
+                    &settings,
+                    route.current(),
+                )?;
                 if rate > 0 {
                     easy.max_recv_speed((rate / workers as u64).max(1))?;
                 }
@@ -759,6 +838,12 @@ fn worker(
                 if control.load(Ordering::Relaxed) != 0 {
                     return Ok(());
                 }
+                if result
+                    .as_ref()
+                    .is_err_and(|e| route.advance(e, h.status, attempt_bytes))
+                {
+                    bail!("proxy_failover");
+                }
                 if matches!(h.status, 301 | 302 | 303 | 307 | 308) {
                     let (url, context) =
                         redirected(&metadata.url, h.location.as_deref(), &metadata.context)?;
@@ -776,6 +861,7 @@ fn worker(
                         bail!("source_changed: Redirect target differs from the validated source");
                     }
                     metadata = next;
+                    routes = crate::network::Routes::resolve(&metadata.url, &settings);
                     bail!("redirect_retry");
                 }
                 if let Some(e) = write_error.or(invalid) {
@@ -835,6 +921,9 @@ fn worker(
                 }
                 Err(e) => {
                     let message = e.to_string();
+                    if message == "proxy_failover" {
+                        continue;
+                    }
                     if message == "redirect_retry" {
                         redirects += 1;
                         if redirects <= 10 {

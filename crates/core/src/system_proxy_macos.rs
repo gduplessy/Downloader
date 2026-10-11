@@ -91,64 +91,77 @@ unsafe fn string(value: Ref) -> Result<String> {
         .to_string_lossy()
         .into_owned())
 }
-unsafe fn route(list: Ref, target: Ref, allow_pac: bool) -> Result<String> {
+unsafe fn route(list: Ref, target: Ref, allow_pac: bool) -> Result<Vec<String>> {
     if list.is_null() || CFArrayGetCount(list) == 0 {
         bail!("Native proxy lookup returned no route")
     }
-    let dictionary = CFArrayGetValueAtIndex(list, 0);
-    let kind = CFDictionaryGetValue(dictionary, kCFProxyTypeKey);
-    if kind.is_null() {
-        bail!("Native proxy type is missing")
+    let count = CFArrayGetCount(list);
+    if count > 16 {
+        bail!("Excessive native proxy route list");
     }
-    if CFEqual(kind, kCFProxyTypeNone) != 0 {
-        return Ok(String::new());
-    }
-    if CFEqual(kind, kCFProxyTypeAutoConfigurationURL) != 0
-        || CFEqual(kind, kCFProxyTypeAutoConfigurationJavaScript) != 0
-    {
-        if !allow_pac {
-            bail!("PAC returned another PAC route")
+    let mut routes = Vec::new();
+    for index in 0..count {
+        let dictionary = CFArrayGetValueAtIndex(list, index);
+        let kind = CFDictionaryGetValue(dictionary, kCFProxyTypeKey);
+        if kind.is_null() {
+            bail!("Native proxy type is missing")
         }
-        let javascript = CFEqual(kind, kCFProxyTypeAutoConfigurationJavaScript) != 0;
-        let value = CFDictionaryGetValue(
-            dictionary,
-            if javascript {
-                kCFProxyAutoConfigurationJavaScriptKey
-            } else {
-                kCFProxyAutoConfigurationURLKey
-            },
-        );
-        if value.is_null() {
-            bail!("System PAC configuration is missing")
+        if CFEqual(kind, kCFProxyTypeNone) != 0 {
+            routes.push(String::new());
+            continue;
         }
-        return evaluate(value, target, javascript);
+        if CFEqual(kind, kCFProxyTypeAutoConfigurationURL) != 0
+            || CFEqual(kind, kCFProxyTypeAutoConfigurationJavaScript) != 0
+        {
+            if !allow_pac {
+                bail!("PAC returned another PAC route")
+            }
+            let javascript = CFEqual(kind, kCFProxyTypeAutoConfigurationJavaScript) != 0;
+            let value = CFDictionaryGetValue(
+                dictionary,
+                if javascript {
+                    kCFProxyAutoConfigurationJavaScriptKey
+                } else {
+                    kCFProxyAutoConfigurationURLKey
+                },
+            );
+            if value.is_null() {
+                bail!("System PAC configuration is missing")
+            }
+            routes.extend(evaluate(value, target, javascript)?);
+            continue;
+        }
+        let scheme = if CFEqual(kind, kCFProxyTypeSOCKS) != 0 {
+            "socks5h"
+        } else if CFEqual(kind, kCFProxyTypeHTTP) != 0 || CFEqual(kind, kCFProxyTypeHTTPS) != 0 {
+            "http"
+        } else {
+            bail!("Unsupported native proxy type")
+        };
+        let host = string(CFDictionaryGetValue(dictionary, kCFProxyHostNameKey))?;
+        let mut port = 0i32;
+        let number = CFDictionaryGetValue(dictionary, kCFProxyPortNumberKey);
+        if number.is_null()
+            || CFNumberGetValue(number, 3, (&mut port as *mut i32).cast()) == 0
+            || !(1..=65535).contains(&port)
+        {
+            bail!("Native proxy port is invalid")
+        }
+        let host = if host.contains(':') {
+            format!("[{host}]")
+        } else {
+            host
+        };
+        routes.push(format!("{scheme}://{host}:{port}"));
     }
-    let scheme = if CFEqual(kind, kCFProxyTypeSOCKS) != 0 {
-        "socks5h"
-    } else if CFEqual(kind, kCFProxyTypeHTTP) != 0 || CFEqual(kind, kCFProxyTypeHTTPS) != 0 {
-        "http"
-    } else {
-        bail!("Unsupported native proxy type")
-    };
-    let host = string(CFDictionaryGetValue(dictionary, kCFProxyHostNameKey))?;
-    let mut port = 0i32;
-    let number = CFDictionaryGetValue(dictionary, kCFProxyPortNumberKey);
-    if number.is_null()
-        || CFNumberGetValue(number, 3, (&mut port as *mut i32).cast()) == 0
-        || !(1..=65535).contains(&port)
-    {
-        bail!("Native proxy port is invalid")
+    if routes.len() > 16 {
+        bail!("Excessive native proxy route list");
     }
-    let host = if host.contains(':') {
-        format!("[{host}]")
-    } else {
-        host
-    };
-    Ok(format!("{scheme}://{host}:{port}"))
+    Ok(routes)
 }
 struct Evaluation {
     target: Ref,
-    result: Option<Result<String>>,
+    result: Option<Result<Vec<String>>>,
 }
 unsafe extern "C" fn complete(client: *mut c_void, list: Ref, error: Ref) {
     let state = &mut *(client as *mut Evaluation);
@@ -160,7 +173,7 @@ unsafe extern "C" fn complete(client: *mut c_void, list: Ref, error: Ref) {
         ))
     });
 }
-unsafe fn evaluate(script: Ref, target: Ref, javascript: bool) -> Result<String> {
+unsafe fn evaluate(script: Ref, target: Ref, javascript: bool) -> Result<Vec<String>> {
     let mut state = Evaluation {
         target,
         result: None,
@@ -188,7 +201,7 @@ unsafe fn evaluate(script: Ref, target: Ref, javascript: bool) -> Result<String>
     CFRunLoopSourceInvalidate(source.0);
     state.result.context("PAC lookup exceeded ten seconds")?
 }
-pub fn system(url: &str) -> Result<Option<String>> {
+pub fn system(url: &str) -> Result<Option<Vec<String>>> {
     let target = cf_url(url)?;
     let settings = Owned(unsafe { CFNetworkCopySystemProxySettings() });
     if settings.0.is_null() {
@@ -197,7 +210,7 @@ pub fn system(url: &str) -> Result<Option<String>> {
     let proxies = Owned(unsafe { CFNetworkCopyProxiesForURL(target.0, settings.0) });
     unsafe { route(proxies.0, target.0, true).map(Some) }
 }
-pub fn pac(url: &str, script: &str, _settings: &NetworkSettings) -> Result<String> {
+pub fn pac(url: &str, script: &str, _settings: &NetworkSettings) -> Result<Vec<String>> {
     let target = cf_url(url)?;
     let source = cf_url(script)?;
     unsafe { evaluate(source.0, target.0, false) }

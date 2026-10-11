@@ -2,6 +2,13 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.3.0 — Ordered proxy failover
+
+- Preserve bounded, ordered PAC/system route lists across Windows, macOS and Linux, including explicit direct fallback.
+- Advance metadata, range reads and download workers only after pre-response connection failures; keep TLS, authentication, source and partial-body failures on their original recovery path.
+- Isolate pooled handles by their selected route and use cancellable Windows PAC discovery. Explicit PAC refuses WinHTTP's implicit loopback bypass rather than silently selecting direct access.
+- Verify actual proxy traversal with named loopback fixtures, exhausted-route failures, TLS/authentication rejection and route-order regressions. Disposable CI runners receive a fixture-only hostname; developer host settings stay untouched.
+
 ## 0.2.7 — Clarify remaining proxy work
 
 - Distinguish planned ordered PAC proxy failover from implemented routing whose enterprise policies still require qualification.

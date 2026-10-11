@@ -119,7 +119,70 @@ pub fn authentication(method: &Authentication) -> Result<Auth> {
     .gssnegotiate(negotiate && matches!(method, Authentication::Auto | Authentication::Negotiate));
     Ok(a)
 }
-pub fn apply(easy: &mut Easy, url: &str, settings: &crate::Settings) -> Result<()> {
+/// A resolved, bounded route list belongs to one request, never global routing state.
+pub(crate) struct Routes {
+    values: Vec<Option<String>>,
+    index: usize,
+}
+impl Routes {
+    pub(crate) fn resolve(url: &str, settings: &crate::Settings) -> Result<Self> {
+        let explicit = settings.proxy.as_ref().filter(|p| !p.is_empty());
+        let values = match settings.network.proxy_mode {
+            ProxyMode::Direct => vec![Some(String::new())],
+            ProxyMode::Manual => vec![Some(
+                explicit.context("Manual proxy URL is required")?.clone(),
+            )],
+            ProxyMode::Pac => pac(url, settings.network.pac_url.as_deref(), &settings.network)?
+                .into_iter()
+                .map(Some)
+                .collect(),
+            ProxyMode::System if explicit.is_some() => vec![explicit.cloned()],
+            ProxyMode::System => {
+                #[cfg(windows)]
+                {
+                    pac(url, None, &settings.network)?
+                        .into_iter()
+                        .map(Some)
+                        .collect()
+                }
+                #[cfg(not(windows))]
+                {
+                    crate::system_proxy::system(url)?
+                        .map_or_else(|| vec![None], |v| v.into_iter().map(Some).collect())
+                }
+            }
+        };
+        if values.is_empty() || values.len() > 16 {
+            bail!("Invalid or excessive proxy route list");
+        }
+        Ok(Self { values, index: 0 })
+    }
+    pub(crate) fn current(&self) -> Option<&str> {
+        self.values[self.index].as_deref()
+    }
+    pub(crate) fn advance(&mut self, error: &curl::Error, status: u32, bytes: u64) -> bool {
+        // Never replay received data or turn authentication/TLS/source failures into DIRECT.
+        if status != 0
+            || bytes != 0
+            || self.current().is_none_or(str::is_empty)
+            || !(error.is_couldnt_connect()
+                || error.is_couldnt_resolve_proxy()
+                || error.is_operation_timedout())
+            || self.index + 1 == self.values.len()
+        {
+            return false;
+        }
+        self.index += 1;
+        true
+    }
+}
+
+pub(crate) fn apply(
+    easy: &mut Easy,
+    url: &str,
+    settings: &crate::Settings,
+    route: Option<&str>,
+) -> Result<()> {
     let n = &settings.network;
     easy.connect_timeout(Duration::from_secs(n.connect_timeout_seconds))?;
     easy.low_speed_time(Duration::from_secs(n.stall_timeout_seconds))?;
@@ -154,50 +217,18 @@ pub fn apply(easy: &mut Easy, url: &str, settings: &crate::Settings) -> Result<(
         bail!("protocol_unsupported: HTTP/2 is unavailable in this build");
     }
     easy.http_version(version)?;
-    match n.proxy_mode {
-        ProxyMode::Direct => easy.proxy("")?,
-        ProxyMode::Manual => {
-            easy.proxy(
-                settings
-                    .proxy
-                    .as_deref()
-                    .context("Manual proxy URL is required")?,
-            )?;
-            easy.noproxy("")?;
-        }
-        ProxyMode::Pac => {
-            let proxy = pac(url, n.pac_url.as_deref(), n)?;
-            easy.proxy(&proxy)?;
-            easy.noproxy("")?;
-        }
-        ProxyMode::System => {
-            if let Some(proxy) = settings.proxy.as_ref().filter(|p| !p.is_empty()) {
-                easy.proxy(proxy)?;
-                easy.noproxy("")?;
-            }
-            #[cfg(windows)]
-            if settings.proxy.is_none() {
-                easy.proxy(&pac(url, None, n)?)?;
-            }
-            #[cfg(not(windows))]
-            {
-                if settings.proxy.is_none() {
-                    if let Some(proxy) = crate::system_proxy::system(url)? {
-                        easy.proxy(&proxy)?;
-                        easy.noproxy("")?;
-                    }
-                }
-            }
-        }
+    if let Some(route) = route {
+        easy.proxy(route)?;
+        easy.noproxy("")?;
     }
     Ok(())
 }
 #[cfg(not(windows))]
-fn pac(url: &str, script: Option<&str>, settings: &NetworkSettings) -> Result<String> {
+fn pac(url: &str, script: Option<&str>, settings: &NetworkSettings) -> Result<Vec<String>> {
     crate::system_proxy::pac(url, script.context("PAC URL is required")?, settings)
 }
 #[cfg(windows)]
-fn pac(url: &str, script: Option<&str>, _settings: &NetworkSettings) -> Result<String> {
+fn pac(url: &str, script: Option<&str>, _settings: &NetworkSettings) -> Result<Vec<String>> {
     use std::{ffi::c_void, ptr};
     #[repr(C)]
     struct Config {
@@ -206,45 +237,13 @@ fn pac(url: &str, script: Option<&str>, _settings: &NetworkSettings) -> Result<S
         proxy: *mut u16,
         bypass: *mut u16,
     }
-    #[repr(C)]
-    struct Options {
-        flags: u32,
-        detect: u32,
-        url: *const u16,
-        reserved: *mut c_void,
-        flags2: u32,
-        login: i32,
-    }
-    #[repr(C)]
-    struct Info {
-        access: u32,
-        proxy: *mut u16,
-        bypass: *mut u16,
-    }
     #[link(name = "winhttp")]
     extern "system" {
-        fn WinHttpGetIEProxyConfigForCurrentUser(c: *mut Config) -> i32;
-        fn WinHttpOpen(
-            agent: *const u16,
-            access: u32,
-            proxy: *const u16,
-            bypass: *const u16,
-            flags: u32,
-        ) -> *mut c_void;
-        fn WinHttpGetProxyForUrl(
-            session: *mut c_void,
-            url: *const u16,
-            options: *mut Options,
-            info: *mut Info,
-        ) -> i32;
-        fn WinHttpCloseHandle(handle: *mut c_void) -> i32;
+        fn WinHttpGetIEProxyConfigForCurrentUser(config: *mut Config) -> i32;
     }
     #[link(name = "kernel32")]
     extern "system" {
         fn GlobalFree(p: *mut c_void) -> *mut c_void;
-    }
-    fn wide(s: &str) -> Vec<u16> {
-        s.encode_utf16().chain(Some(0)).collect()
     }
     unsafe fn string(p: *const u16) -> String {
         if p.is_null() {
@@ -279,61 +278,31 @@ fn pac(url: &str, script: Option<&str>, _settings: &NetworkSettings) -> Result<S
         }
         result
     };
+    let allow_native_bypass = script.is_none();
     let script = script.unwrap_or(&pac_url);
     let proxy = if !script.is_empty() || auto != 0 {
-        let agent = wide("Downloader");
-        let target = wide(url);
-        let script_wide = wide(script);
-        let mut options = Options {
-            flags: if script.is_empty() { 1 } else { 2 },
-            detect: if script.is_empty() { 3 } else { 0 },
-            url: if script.is_empty() {
-                ptr::null()
-            } else {
-                script_wide.as_ptr()
-            },
-            reserved: ptr::null_mut(),
-            flags2: 0,
-            login: 0,
-        };
-        let mut info = Info {
-            access: 1,
-            proxy: ptr::null_mut(),
-            bypass: ptr::null_mut(),
-        };
-        unsafe {
-            let session = WinHttpOpen(agent.as_ptr(), 1, ptr::null(), ptr::null(), 0);
-            if session.is_null() {
-                bail!("System proxy session unavailable");
-            }
-            let ok = WinHttpGetProxyForUrl(session, target.as_ptr(), &mut options, &mut info);
-            let error = std::io::Error::last_os_error();
-            WinHttpCloseHandle(session);
-            let proxy = string(info.proxy);
-            for p in [info.proxy, info.bypass] {
-                if !p.is_null() {
-                    GlobalFree(p.cast());
-                }
-            }
-            if ok == 0 && script.is_empty() && error.raw_os_error() == Some(12180) {
+        match windows_pac::resolve(url, script, allow_native_bypass) {
+            Ok(routes) => return Ok(routes),
+            Err(error)
+                if script.is_empty()
+                    && error
+                        .downcast_ref::<std::io::Error>()
+                        .is_some_and(|e| e.raw_os_error() == Some(12180)) =>
+            {
                 manual
-            } else if ok == 0 {
-                return Err(error)
-                    .context("PAC evaluation failed; routing was not silently bypassed");
-            } else {
-                proxy
             }
+            Err(error) => return Err(error),
         }
     } else {
         let host = url::Url::parse(url)?.host_str().unwrap_or("").to_owned();
         // WinHTTP's explicit bypass list supports host globs and <local>.
         if proxy_bypass(&host, &bypass) {
-            return Ok(String::new());
+            return Ok(vec![String::new()]);
         }
         manual
     };
     let scheme = url::Url::parse(url)?.scheme().to_owned();
-    Ok(system_proxy_address(&proxy, &scheme))
+    Ok(vec![system_proxy_address(&proxy, &scheme)])
 }
 
 #[cfg(any(windows, test))]
@@ -389,9 +358,101 @@ fn linux_pac_available() -> bool {
     }
 }
 
+#[cfg(any(target_os = "linux", test))]
+pub(crate) fn pac_routes(value: &str) -> Result<Vec<String>> {
+    let mut routes = Vec::new();
+    for entry in value.split(';').map(str::trim).filter(|v| !v.is_empty()) {
+        if routes.len() == 16 {
+            bail!("Excessive PAC route list");
+        }
+        if entry.eq_ignore_ascii_case("DIRECT") {
+            routes.push(String::new());
+            continue;
+        }
+        let (kind, address) = entry
+            .split_once(char::is_whitespace)
+            .context("Invalid PAC route")?;
+        let scheme = match kind.to_ascii_uppercase().as_str() {
+            "PROXY" | "HTTP" => "http",
+            "HTTPS" => "https",
+            "SOCKS" | "SOCKS5" => "socks5h",
+            "SOCKS4" => "socks4",
+            _ => bail!("Unsupported PAC proxy type"),
+        };
+        let route = format!("{scheme}://{}", address.trim());
+        let parsed = url::Url::parse(&route)?;
+        if parsed.host_str().is_none()
+            || address
+                .trim()
+                .rsplit_once(':')
+                .and_then(|(_, p)| p.parse::<u16>().ok())
+                .is_none_or(|p| p == 0)
+            || !parsed.username().is_empty()
+            || parsed.password().is_some()
+            || parsed.path() != "" && parsed.path() != "/"
+            || parsed.query().is_some()
+            || parsed.fragment().is_some()
+        {
+            bail!("Invalid PAC proxy address");
+        }
+        routes.push(route);
+    }
+    if routes.is_empty() {
+        bail!("PAC returned no route");
+    }
+    Ok(routes)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn pac_preserves_order_and_never_invents_direct() {
+        assert_eq!(
+            pac_routes("PROXY one:3128; SOCKS5 two:1080; DIRECT").unwrap(),
+            vec!["http://one:3128", "socks5h://two:1080", ""]
+        );
+        assert_eq!(
+            pac_routes("PROXY one:3128; PROXY two:8080").unwrap().len(),
+            2
+        );
+        assert_eq!(pac_routes("PROXY one:80").unwrap(), vec!["http://one:80"]);
+        for invalid in [
+            "",
+            "UNKNOWN host:1",
+            "PROXY user:pass@host:1",
+            "PROXY host:1/path",
+            "PROXY host",
+        ] {
+            assert!(pac_routes(invalid).is_err(), "{invalid}");
+        }
+        assert!(pac_routes(&vec!["DIRECT"; 17].join(";")).is_err());
+    }
+    #[test]
+    fn failover_is_bounded_and_refuses_response_tls_auth_or_body_replay() {
+        let connect = curl::Error::new(curl_sys::CURLE_COULDNT_CONNECT);
+        let mut routes = Routes {
+            values: vec![
+                Some("http://first:1".into()),
+                Some("http://second:1".into()),
+                Some("".into()),
+            ],
+            index: 0,
+        };
+        assert!(!routes.advance(&connect, 407, 0));
+        assert!(!routes.advance(&connect, 200, 0));
+        assert!(!routes.advance(&connect, 0, 1));
+        assert!(!routes.advance(
+            &curl::Error::new(curl_sys::CURLE_PEER_FAILED_VERIFICATION),
+            0,
+            0
+        ));
+        assert!(routes.advance(&connect, 0, 0));
+        assert_eq!(routes.current(), Some("http://second:1"));
+        assert!(routes.advance(&connect, 0, 0));
+        assert_eq!(routes.current(), Some(""));
+        assert!(!routes.advance(&connect, 0, 0));
+    }
     #[test]
     fn system_proxy_protocol_maps_are_case_insensitive() {
         assert_eq!(
@@ -421,3 +482,7 @@ mod tests {
         assert!(!proxy_bypass("", " ; <local>"));
     }
 }
+
+#[cfg(windows)]
+#[path = "windows_pac.rs"]
+mod windows_pac;

@@ -8,7 +8,7 @@ The [complete roadmap](ROADMAP.md) tracks all documented limitations, including 
 
 - Rust/libcurl engine, SQLite WAL, CLI and restricted native bridge.
 - HTTP/HTTPS, HTTP/2, FTP/FTPS including FTP restart, strict range/body/validator checks, compression/empty streams, GET redirects, bounded Retry-After retries and conservative serial fallback.
-- Session/routing-isolated connection reuse, global/host limits and host concurrency backoff. TLS verification stays enabled; system/direct/manual/PAC routing, CA files and available Basic/Digest/NTLM/Negotiate policies are configurable.
+- Session/routing-isolated connection reuse, global/host limits and host concurrency backoff. TLS verification stays enabled; system/direct/manual/PAC routing with bounded ordered failover, CA files and available Basic/Digest/NTLM/Negotiate policies are configurable.
 - Durable validated offsets, typed failures/recovery, verified SHA-256, no-overwrite publication, recoverable destination staging, and supervised scanner processes. Pause/cancel and failed writes/flushes cannot publish uncommitted offsets.
 - Real files above 4 GiB and remote ZIP64 offsets; ten subprocess termination boundaries cover checkpointing, verification, publication, scanning and staged copies.
 - Versioned negotiation, SQLite-backed sequenced events/replay, snapshot-first reconnect, transactional request idempotency/tombstones, browser-safe projections and CLI watch. Browser source refresh requires the owning profile.
@@ -23,7 +23,7 @@ The [complete roadmap](ROADMAP.md) tracks all documented limitations, including 
 
 ## Required implementation and acceptance work
 
-- Ordered PAC proxy failover implementation; external NTLM/Negotiate authentication-realm acceptance, native proxy-policy/PAC failure matrices, and actual disk-full/permission/cross-volume filesystem acceptance. Deterministic write/flush, collision, path, lock/alias and recovery regressions are implemented.
+- External NTLM/Negotiate authentication-realm acceptance, native proxy-policy/PAC failure matrices, and actual disk-full/permission/cross-volume filesystem acceptance. Deterministic write/flush, collision, path, lock/alias and recovery regressions are implemented.
 - DST/missed-window scheduling and reliable synchronization; media quota accounting needs qualification.
 - Editable job properties/columns/drop target; notifications, sleep inhibition, autostart and explicit completion actions.
 - Authenticated/rendered crawler sessions, durable crawl frontier, scheduled synchronization, CSS discovery and offline HTML/CSS rewriting.

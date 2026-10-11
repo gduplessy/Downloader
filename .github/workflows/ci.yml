@@ -41,6 +41,8 @@ jobs:
         run: cargo build --release -p downloader-core --example qualify
         env:
           CARGO_TARGET_DIR: .local/engine-target
+      - name: Disposable CI fixture hostname
+        run: node scripts/fixture-host.mjs
       - name: Protocol, proxy, authentication and performance fixtures
         run: node scripts/qualify-network.mjs .local/network-qualification --benchmark
       - name: Actual large-file recovery
