@@ -6,6 +6,7 @@ import {
   domFingerprint,
   isVisible,
   requestFor,
+  collectWait,
 } from './navigation/adapters/dom';
 import {
   inspectCandidates,
@@ -21,40 +22,7 @@ import {
 import { showPreview, type PreviewHandle } from './navigation/adapters/selection-ui';
 
 // Runs only in the top-level tab assigned to an explicit navigation job.
-export type ResolverContext = {
-  tabId: number;
-  frameId: number;
-  scope: {
-    browser: string;
-    profile: string;
-    private: boolean;
-    cookie_store_id: string | null;
-    container_id: string | null;
-    partition_key: { top_level_site: string; has_cross_site_ancestor?: boolean } | null;
-    claim_generation: number;
-  };
-  selectedHost?: string;
-  disabledAdapters?: string[];
-  locale: string;
-};
-export function scopeKey(scope: ResolverContext['scope']): string {
-  const {
-    browser,
-    profile,
-    private: privateSession,
-    cookie_store_id,
-    container_id,
-    partition_key,
-  } = scope;
-  return JSON.stringify({
-    browser,
-    profile,
-    private: privateSession,
-    cookie_store_id,
-    container_id,
-    partition_key,
-  });
-}
+import { scopeKey, type ResolverContext } from './navigation/adapters/context';
 let documentGeneration = 1;
 let previewHandle: PreviewHandle | undefined;
 let running = false;
@@ -118,6 +86,7 @@ async function observe(ctx: ResolverContext | null) {
   const inspection = inspectCandidates(location.href, collected.controls, {
     disabledAdapters: ctx?.disabledAdapters,
     selectedHost: ctx?.selectedHost,
+    allowPageBlob: ctx?.capabilities?.pageBlob === true,
     blocked: !!signals.blocker && signals.blocker !== 'countdown',
     countdown: signals.countdown,
   });
@@ -150,6 +119,10 @@ async function submit(
     adapter_version: observed.inspection.adapter.version,
   });
   try {
+    if (reply?.direct === true) {
+      submissions.consume(bound, chosen.localId);
+      return;
+    }
     if (!reply?.click) throw Error('adapter_authorization_rejected');
     const freshContext = await context();
     if (!freshContext) throw Error('adapter_preview_stale');
@@ -215,6 +188,13 @@ async function step() {
           documentGeneration++;
           void step();
         },
+        async () => {
+          const disabled = await browser.runtime.sendMessage({
+            type: 'resolver_disable_adapter',
+            adapterId: preview.binding.adapterId,
+          });
+          if (disabled !== true) throw Error('adapter_disable_rejected');
+        },
       );
       return;
     }
@@ -238,7 +218,10 @@ async function step() {
     const reply: any = await browser.runtime.sendMessage({
       type: 'resolver_step',
       url: location.href,
-      decision,
+      decision: {
+        ...decision,
+        ...(decision.kind === 'wait' ? { wait: collectWait(document) } : {}),
+      },
       request: element ? requestFor(element) : undefined,
       fingerprint: observed.fingerprint,
       ...(ctx ? { binding: binding(ctx, observed.inspection, observed.fingerprint) } : {}),

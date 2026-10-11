@@ -112,6 +112,7 @@ export function inspectCandidates(
     selectedHost?: string;
     blocked?: boolean;
     countdown?: boolean;
+    allowPageBlob?: boolean;
   } = {},
 ): Inspection {
   const adapter = matchAdapter(url, options.disabledAdapters);
@@ -119,20 +120,33 @@ export function inspectCandidates(
   const candidates = controls.map((c): EvidenceCandidate => {
     const target = c.target ?? c.href;
     const destination = safeUrl(target);
+    let blob: URL | undefined;
+    try {
+      const candidate = target ? new URL(target) : undefined;
+      if (
+        options.allowPageBlob &&
+        candidate?.protocol === 'blob:' &&
+        candidate.origin === new URL(url).origin
+      )
+        blob = candidate;
+    } catch {}
     const rejections: string[] = [];
     const evidence: string[] = [];
     if (!c.visible) rejections.push('hidden');
     if (c.disabled) rejections.push('disabled');
     if (forbidden.test([c.text, c.contextualText, target].join(' ')))
       rejections.push('ad-purchase-premium-or-torrent');
-    if (target && !destination) rejections.push('unsafe-destination');
+    if (target && !destination && !blob) rejections.push('unsafe-destination');
+    if (blob) evidence.push('same-origin-scoped-blob');
     if (
       selectedHost &&
       c.panelHost?.toLowerCase() !== selectedHost &&
       destination?.hostname.toLowerCase() !== selectedHost
     )
       rejections.push('different-selected-host');
-    const generic = decide([{ ...c, disabled: false }], false, false).kind === 'click';
+    const generic =
+      decide([{ ...c, href: blob ? undefined : c.href, disabled: false }], false, false).kind ===
+      'click';
     const localized = localizedDownload.test(c.text.trim());
     if (generic) evidence.push(c.download ? 'download-attribute' : 'recognized-free-control');
     if (localized) evidence.push('localized-download-label');
@@ -146,10 +160,10 @@ export function inspectCandidates(
     if (!generic && !localized && !fixtureStrong && !c.panelHost)
       rejections.push('unrecognized-control');
     // Live providers have no permitted recorded layout yet: conservative generic policy only.
-    const strong = (generic && !localized) || fixtureStrong;
+    const strong = !blob && c.action !== 'script' && ((generic && !localized) || fixtureStrong);
     return {
       ...c,
-      destinationHost: destination?.hostname,
+      destinationHost: destination?.hostname ?? (blob ? new URL(url).hostname : undefined),
       rejections,
       evidence,
       confidence: rejections.length ? 'rejected' : strong ? 'strong' : 'possible',

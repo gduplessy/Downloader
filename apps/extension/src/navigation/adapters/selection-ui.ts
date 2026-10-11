@@ -67,6 +67,24 @@ const messages = {
     '组',
   ],
 } as const;
+const actionLabels: Record<string, Record<string, string>> = {
+  en: { link: 'Follow link', GET: 'GET download', POST: 'POST download', script: 'Browser action' },
+  fr: {
+    link: 'Suivre le lien',
+    GET: 'Téléchargement GET',
+    POST: 'Téléchargement POST',
+    script: 'Action du navigateur',
+  },
+  es: {
+    link: 'Seguir enlace',
+    GET: 'Descarga GET',
+    POST: 'Descarga POST',
+    script: 'Acción del navegador',
+  },
+  de: { link: 'Link folgen', GET: 'GET-Download', POST: 'POST-Download', script: 'Browseraktion' },
+  ar: { link: 'اتباع الرابط', GET: 'تنزيل GET', POST: 'تنزيل POST', script: 'إجراء المتصفح' },
+  'zh-CN': { link: '打开链接', GET: 'GET 下载', POST: 'POST 下载', script: '浏览器操作' },
+};
 export type PreviewHandle = { close(): void; stale(): void };
 export function showPreview(
   document: Document,
@@ -74,6 +92,7 @@ export function showPreview(
   locale: string,
   select: (id: string) => Promise<void>,
   refresh: () => void,
+  disableAdapter?: () => Promise<void>,
 ): PreviewHandle {
   document.getElementById('__downloader_adapter_preview')?.remove();
   const words = messages[locale as keyof typeof messages] ?? messages.en;
@@ -123,7 +142,7 @@ export function showPreview(
       ' · ' +
       words[7] +
       ': ' +
-      c.action +
+      (actionLabels[locale] ?? actionLabels.en)[c.action] +
       (c.group ? ' · ' + words[8] + ': ' + groups.get(c.group) : '');
     label.append(radio, text);
     panel.append(label);
@@ -157,6 +176,24 @@ export function showPreview(
     close();
     refresh();
   });
+  if (disableAdapter && preview.binding.adapterId !== 'generic') {
+    const labels: Record<string, string> = {
+      en: 'Use generic controls',
+      fr: 'Utiliser les contrôles génériques',
+      es: 'Usar controles genéricos',
+      de: 'Allgemeine Steuerelemente verwenden',
+      ar: 'استخدام عناصر التحكم العامة',
+      'zh-CN': '使用通用控件',
+    };
+    button(labels[locale] ?? labels.en, () => {
+      void disableAdapter()
+        .then(() => {
+          close();
+          refresh();
+        })
+        .catch(() => stale());
+    });
+  }
   const stale = () => {
     status.textContent = words[5];
     submit.disabled = true;

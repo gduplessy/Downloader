@@ -49,7 +49,7 @@ export function collectControls(document: Document): CollectedControls {
     const input = element.tagName === 'INPUT';
     const link = element.tagName === 'A';
     const submit = element as HTMLButtonElement | HTMLInputElement;
-    const form = !link ? submit.form : null;
+    const form = !link && submit.type !== 'button' && submit.type !== 'reset' ? submit.form : null;
     const method = form ? (submit.getAttribute('formmethod') ?? form.method).toUpperCase() : '';
     const target = link
       ? (element as HTMLAnchorElement).href
@@ -70,6 +70,14 @@ export function collectControls(document: Document): CollectedControls {
         submit.getAttribute('value'),
       ]);
     }
+    forms.push([
+      localId,
+      element.getAttribute('download'),
+      element.getAttribute('target'),
+      element.getAttribute('type'),
+      element.getAttribute('name'),
+      element.getAttribute('value'),
+    ]);
     const panel = element.closest('[data-download-host]');
     const ad = element.closest('[data-ad],.advertisement,.sponsored,[aria-label*="sponsor" i]');
     controls.push({
@@ -108,7 +116,7 @@ export async function domFingerprint(collected: CollectedControls): Promise<stri
 export function requestFor(element: HTMLElement): { method: string; url: string } | undefined {
   if (element.tagName === 'A') return { method: 'GET', url: (element as HTMLAnchorElement).href };
   const control = element as HTMLButtonElement | HTMLInputElement;
-  const form = control.form;
+  const form = control.type !== 'button' && control.type !== 'reset' ? control.form : null;
   if (!form) return undefined;
   const method = (control.getAttribute('formmethod') ?? form.method).toUpperCase();
   const url = new URL(
@@ -122,4 +130,39 @@ export function requestFor(element: HTMLElement): { method: string; url: string 
     ).toString();
   }
   return { method, url: url.href };
+}
+
+export function collectWait(document: Document): {
+  duration_ms?: number;
+  fingerprint: string;
+  expires_at_ms?: number;
+} {
+  const timers = allElements(document).filter(
+    (el) =>
+      isVisible(el) &&
+      (el.matches('[class*="countdown"],[id*="countdown"],[data-countdown],[role=timer]') ||
+        (el.matches('button:disabled,input:disabled,[aria-disabled="true"]') &&
+          /download|télécharger|descargar|下载|تنزيل/i.test(el.textContent ?? ''))),
+  );
+  const seconds = timers
+    .flatMap((el) => {
+      const text = (el.getAttribute('data-countdown') ?? el.textContent ?? '').trim();
+      const clock = text.match(/\b(\d{1,3}):(\d{2})(?::(\d{2}))?\b/);
+      if (clock)
+        return [
+          clock[3]
+            ? Number(clock[1]) * 3600 + Number(clock[2]) * 60 + Number(clock[3])
+            : Number(clock[1]) * 60 + Number(clock[2]),
+        ];
+      return [...text.matchAll(/\b\d{1,6}\b/g)].map((m) => Number(m[0]));
+    })
+    .filter((seconds) => seconds > 0 && seconds <= 7 * 86400);
+  const expiry = timers
+    .map((el) => Date.parse(el.getAttribute('data-expires-at') ?? ''))
+    .filter(Number.isFinite);
+  return {
+    ...(seconds.length ? { duration_ms: Math.max(...seconds) * 1000 } : {}),
+    fingerprint: 'countdown:' + timers.map(identity).join(','),
+    ...(expiry.length ? { expires_at_ms: Math.min(...expiry) } : {}),
+  };
 }

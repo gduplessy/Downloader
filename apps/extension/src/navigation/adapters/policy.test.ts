@@ -171,3 +171,39 @@ describe('preview ownership and stale submission', () => {
   test('preview has all six locale dictionaries', () =>
     expect(previewLocales.sort()).toEqual(['ar', 'de', 'en', 'es', 'fr', 'zh-CN']));
 });
+
+test('blob requires scoped capability, same origin and explicit preview', () => {
+  const local = 'blob:http://127.0.0.1:18765/opaque-fixture';
+  expect(inspectCandidates(page, [c('blob', { target: local, href: local })]).kind).toBe('user');
+  expect(
+    inspectCandidates(page, [c('blob', { target: local, href: local })], { allowPageBlob: true })
+      .kind,
+  ).toBe('preview');
+  expect(
+    inspectCandidates(
+      page,
+      [
+        c('blob', {
+          target: 'blob:https://foreign.invalid/opaque',
+          href: 'blob:https://foreign.invalid/opaque',
+        }),
+      ],
+      { allowPageBlob: true },
+    ).kind,
+  ).toBe('user');
+});
+test('script controls require explicit choice and newly appeared blockers invalidate selection', () => {
+  expect(
+    inspectCandidates(page, [c('script', { href: undefined, target: undefined, action: 'script' })])
+      .kind,
+  ).toBe('preview');
+  const inspection = inspectCandidates(page, [c('a'), c('b')]);
+  expect(() =>
+    validateSelection(
+      createPreview(bound, inspection),
+      bound,
+      inspectCandidates(page, [c('a'), c('b')], { blocked: true }),
+      'a',
+    ),
+  ).toThrow('adapter_preview_stale');
+});

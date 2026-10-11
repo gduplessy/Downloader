@@ -20,3 +20,12 @@ No recorded or live provider layout was supplied for NAV-05/06. The four provide
 ## Integration
 
 The content script requests `resolver_context` from an owned tab. The worker supplies actual SessionScope and claim generation, rejects stale `resolver_step` bindings, records adapter/selected-host provenance, and authorizes actions only while the target job is active. Without that hook, the existing generic behavior remains available and scoped previews are not offered.
+
+## Reproducible local checks
+
+- `node scripts/nav-fixtures/adapters/qualify.mjs` checks four synthetic providers, filenames, byte hashes, redirects and single-use POST semantics on an ephemeral local port.
+- `node scripts/nav-fixtures/adapters/evidence.test.mjs` rejects wrong hashes, URL-shaped host metadata, unobserved live layouts and expired support.
+- `node scripts/nav-fixtures/adapters/build.mjs` builds the DOM harness; `node scripts/nav-fixtures/adapters/server.mjs` serves it on loopback port 18765.
+- Run gstack browse against `/nav-adapters/g4u/ambiguous`, then `js 'window.navAdapterFixture.suite()'`. The suite inspects DOMs and dispatches actual selected clicks into an in-page synthetic fetch bridge to verify request method, filename and response hash. It is not native messaging/desktop storage acceptance.
+- `js 'window.navAdapterFixture.preview("en")'` opens the real selection component; ArrowDown, Tab, Enter select a control through the keyboard. Same-HTML replacement invalidates the preview. `preview("ar")` verifies RTL rendering.
+- `node scripts/nav-fixtures/adapters/live-smoke.mjs` prints usage without contacting any site. With explicit `--url` and `--browse`, it performs one read-only page observation in a separate local gstack state. It never logs the page URL or claims a qualified transfer.

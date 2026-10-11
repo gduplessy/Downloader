@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.6.1 — Qualify local adapter layouts and request outcomes
+
+- Add sanitized four-provider synthetic DOM/HTTP fixtures, one-use POST traps, intended filename/hash verification, evidence expiry/schema checks and observation-only opt-in gstack smoke tooling.
+- Adopt shared navigation scope contracts; integrate visible timer metadata, generation-bound explicit same-origin blob capability and actual submitter form semantics.
+- Qualify 80 Chromium 149 DOM/request/hash checks and keyboard selection/stale-preview recovery on Windows x64. Live providers and native transfer acceptance remain pending.
+
 ## 0.6.0 — Versioned hosted-page adapters and explicit selection
 
 - Add exact-host bundled adapters, evidence-backed candidate selection, unsafe/ad/purchase/torrent rejection and conservative live-provider fallback.
@@ -143,4 +149,5 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 ## 0.1.0 — Initial development preview
 
 - Original GPL-3.0 desktop, CLI and extension foundation, hosted-page navigation fixtures, media/grabber adapters and public roadmap.
+
 

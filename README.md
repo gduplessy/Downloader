@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.6.0<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.6.1<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -244,4 +244,7 @@ Downloader is independent of Internet Download Manager and its owners. IDM code,
 ## Hosted-page adapters
 
 Bundled versioned adapters inspect exact hosts, reject unsafe/advertising controls and offer a generation-bound, keyboard-accessible selection preview when the browser ownership hook is available. Live g4u, ddownload, Rapidgator and Gofile layouts remain unqualified; provider-specific automation is restricted to local synthetic fixtures. Generic navigation remains conservative. See [adapter maintenance](docs/ADAPTERS.md) and [host matrix](docs/HOST-COMPATIBILITY.md).
+
+
+Adapter fixture checks: node scripts/nav-fixtures/adapters/qualify.mjs and node scripts/nav-fixtures/adapters/evidence.test.mjs. Build the browser harness with node scripts/nav-fixtures/adapters/build.mjs, then run node scripts/nav-fixtures/adapters/server.mjs on port 18765. Browser DOM/hash fixtures use gstack browse; they do not qualify live provider layouts or native transfer ownership. The read-only live-smoke command requires an explicit permitted URL and local gstack binary.
 
