@@ -2,6 +2,11 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.8.8 — Persist scoped downstream-host selection
+
+- Record bundled adapter identity and explicit downstream host under exact owner/session/source fences while retaining the original hosted page.
+- Preserve normal selections across service reopen, reject stale/foreign authority and unsupported host/adapter metadata, and keep private selections transient. Worker dispatch wiring remains an integration check.
+
 ## 0.8.7 — Define one-use navigation authorization lifecycle
 
 - Add bounded, expiring grants tied to the exact session, source, claim, document, adapter and inspected fingerprint; preparation has no capture or request side effects.

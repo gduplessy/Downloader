@@ -357,6 +357,7 @@ pub fn native(args: &[String]) -> Result<()> {
                 c @ downloader_core::Command::NavigationScheduler { .. } => call(c),
 
                 c @ downloader_core::Command::BrowserStream(_) => call(c),
+                c @ downloader_core::Command::NavigationSelection(_) => call(c),
                 c @ downloader_core::Command::BrowserSnapshot { .. } => browser_snapshot(call(c)?),
                 c @ downloader_core::Command::BrowserSubscribe { .. } => browser_events(call(c)?),
                 c @ downloader_core::Command::Negotiate { .. } => call(c),
@@ -450,7 +451,7 @@ fn browser_visible(job: &serde_json::Value) -> bool {
     job["browser_source"] == true || job["page_url"].is_string()
 }
 fn browser_job(j: &serde_json::Value) -> serde_json::Value {
-    serde_json::json!({"id":j["id"],"request_id":j["request_id"],"url":j["url"],"page_url":j["page_url"],"navigation_url":j["navigation_url"],"navigation_owner":j["navigation_owner"],"navigation_scope":j["navigation_scope"],"source_generation":j["source_generation"],"replay_decision":j["replay_decision"],"solver_outcome":j["solver_outcome"],"solver_attempted":j["solver_attempted"],"filename":j["filename"],"state":j["state"],"bytes":j["bytes"],"total":j["total"],"viable":j["viable"],"private":j["private"],"error":j["failure"]["code"],"failure":{"code":j["failure"]["code"],"retryable":j["failure"]["retryable"],"recovery":j["failure"]["recovery"]}})
+    serde_json::json!({"id":j["id"],"request_id":j["request_id"],"url":j["url"],"page_url":j["page_url"],"navigation_url":j["navigation_url"],"navigation_owner":j["navigation_owner"],"navigation_scope":j["navigation_scope"],"selected_host":j["selected_host"],"navigation_adapter":j["navigation_adapter"],"source_generation":j["source_generation"],"replay_decision":j["replay_decision"],"solver_outcome":j["solver_outcome"],"solver_attempted":j["solver_attempted"],"filename":j["filename"],"state":j["state"],"bytes":j["bytes"],"total":j["total"],"viable":j["viable"],"private":j["private"],"error":j["failure"]["code"],"failure":{"code":j["failure"]["code"],"retryable":j["failure"]["retryable"],"recovery":j["failure"]["recovery"]}})
 }
 fn browser_snapshot(data: serde_json::Value) -> Result<serde_json::Value> {
     let jobs = data["jobs"]

@@ -144,6 +144,10 @@ pub struct Job {
     pub navigation_owner: Option<String>,
     #[serde(default)]
     pub navigation_scope: Option<crate::navigation::SessionScope>,
+    #[serde(default)]
+    pub selected_host: Option<String>,
+    #[serde(default)]
+    pub navigation_adapter: Option<crate::navigation_selection::AdapterIdentity>,
     #[serde(default = "source_generation_default")]
     pub source_generation: u64,
     #[serde(default)]
@@ -347,6 +351,7 @@ pub enum Command {
         scope: Option<crate::navigation::SessionScope>,
         request: crate::navigation_scheduler::SchedulerRequest,
     },
+    NavigationSelection(crate::navigation_selection::SelectionRequest),
     ClaimNavigation {
         id: String,
         owner: String,

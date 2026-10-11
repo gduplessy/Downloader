@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.8.7<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.8.8<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -270,3 +270,5 @@ Final local adapter evidence is recorded under [NAV adapter qualification](docs/
 Preview cancellation is now lifetime-bound across async authorization. Real-resolver mock-worker fixtures verify intended-file success and no submission after Cancel/claim takeover; combined installed-extension worker qualification is owned by the integration coordinator.
 
 A bounded one-use authorization registry now separates inspection from capture side effects and rejects stale session/document grants. Production worker prepare/commit/cancel wiring remains an integration check.
+
+The native selection command now retains an explicitly chosen downstream host and bundled adapter identity within the current session/source. Private selections stay transient; production worker selection dispatch remains part of combined acceptance.

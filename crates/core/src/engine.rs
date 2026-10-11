@@ -339,6 +339,8 @@ impl Engine {
             page_url: None,
             navigation_owner: request.context.profile.clone(),
             navigation_scope: None,
+            selected_host: None,
+            navigation_adapter: None,
             source_generation: 1,
             replay_decision: None,
             navigation_url: None,
@@ -550,6 +552,9 @@ impl Engine {
     }
     pub fn command(self: &Arc<Self>, command: Command) -> Result<serde_json::Value> {
         match command {
+            Command::NavigationSelection(request) => {
+                crate::navigation_selection::record(self, request)
+            }
             Command::BrowserStream(operation) => Ok(serde_json::to_value(
                 crate::browser_stream::operation(self, operation)?,
             )?),
