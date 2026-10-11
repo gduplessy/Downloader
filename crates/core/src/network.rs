@@ -327,10 +327,7 @@ fn pac(url: &str, script: Option<&str>, _settings: &NetworkSettings) -> Result<S
     } else {
         let host = url::Url::parse(url)?.host_str().unwrap_or("").to_owned();
         // WinHTTP's explicit bypass list supports host globs and <local>.
-        if bypass
-            .split(';')
-            .any(|p| p.trim() == host || p.trim() == "<local>" && !host.contains('.'))
-        {
+        if proxy_bypass(&host, &bypass) {
             return Ok(String::new());
         }
         manual
@@ -358,6 +355,23 @@ fn pac(url: &str, script: Option<&str>, _settings: &NetworkSettings) -> Result<S
     }
 }
 
+#[cfg(any(windows, test))]
+fn proxy_bypass(host: &str, list: &str) -> bool {
+    list.split(';').any(|entry| {
+        let entry = entry.trim();
+        if entry.eq_ignore_ascii_case("<local>") {
+            return !host.is_empty() && !host.contains(['.', ':', '[', ']']);
+        }
+        if entry.is_empty() || entry.len() > 1024 {
+            return false;
+        }
+        let pattern = regex::escape(entry)
+            .replace(r"\*", ".*")
+            .replace(r"\?", ".");
+        regex::Regex::new(&format!("(?i)^{pattern}$")).is_ok_and(|pattern| pattern.is_match(host))
+    })
+}
+
 fn linux_pac_available() -> bool {
     #[cfg(target_os = "linux")]
     {
@@ -366,5 +380,22 @@ fn linux_pac_available() -> bool {
     #[cfg(not(target_os = "linux"))]
     {
         false
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn windows_bypass_matches_whole_hosts_and_local_names() {
+        assert!(proxy_bypass("cdn.example.com", "*.EXAMPLE.COM; <local>"));
+        assert!(proxy_bypass("host7.corp", "host?.corp"));
+        assert!(proxy_bypass("intranet", "<LOCAL>"));
+        assert!(proxy_bypass("127.0.0.1", "127.0.0.*"));
+        assert!(!proxy_bypass("evil-example.com", "*.example.com"));
+        assert!(!proxy_bypass("example.com.evil", "example.com"));
+        assert!(!proxy_bypass("127.0.0.1", "<local>"));
+        assert!(!proxy_bypass("[::1]", "<local>"));
+        assert!(!proxy_bypass("", " ; <local>"));
     }
 }

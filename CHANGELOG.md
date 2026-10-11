@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.2.1 — Routing and hostile-response regressions
+
+- Match Windows manual proxy bypass host wildcards and `<local>` consistently, including case-insensitive matching and whole-host boundaries.
+- Verify actual malformed range responses fall back without corrupting output, and encoded Unicode server filenames remain portable.
+- Keep README, roadmap and package versions synchronized; enterprise proxy policy qualification remains open.
+
 ## 0.2.0 — Transfer engine and control contract
 
 - Validate range responses and remote revisions; recover durable checkpoints, interrupted verification, and no-overwrite publication without false completion.

@@ -868,6 +868,12 @@ fn worker(
 mod tests {
     use super::*;
     #[test]
+    fn encoded_unicode_filename_is_portable() {
+        let mut headers = Headers::default();
+        headers.accept(b"Content-Disposition: attachment; filename*=UTF-8''%E7%95%8C-%D8%B9%D8%B1%D8%A8%D9%8A.bin\r\n");
+        assert_eq!(headers.filename.as_deref(), Some("界-عربي.bin"));
+    }
+    #[test]
     fn parse_response_and_ranges() {
         let mut h = Headers::default();
         for l in [

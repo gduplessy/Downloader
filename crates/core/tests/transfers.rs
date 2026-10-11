@@ -166,7 +166,16 @@ fn respond(mut stream: TcpStream, data: &[u8], version: u8) -> std::io::Result<(
         )?;
     }
     if range.is_some() {
-        write!(stream, "Content-Range: bytes {a}-{b}/{}\r\n", data.len())?;
+        if path == "/malformedrange" && !head && range != Some((0, 0)) {
+            write!(
+                stream,
+                "Content-Range: bytes {}-{b}/{}\r\n",
+                a + 1,
+                data.len()
+            )?;
+        } else {
+            write!(stream, "Content-Range: bytes {a}-{b}/{}\r\n", data.len())?;
+        }
     }
     write!(
         stream,
@@ -260,6 +269,7 @@ fn ignored_ranges_and_unknown_length_fall_back_safely() {
         "/fallbackredirect",
         "/getredirect",
         "/lateignored",
+        "/malformedrange",
     ] {
         let dir = tempfile::tempdir().unwrap();
         let e = isolated_engine(dir.path());
