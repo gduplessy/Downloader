@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.5.4<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.5.5<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -51,11 +51,13 @@ Hosted page → free-download step → countdown → final GET link/form
                            browser paused → desktop accepted → verified file
 ```
 
-The resolver respects waiting periods and stops for CAPTCHA, sign-in, payment, or ambiguous controls. Complete the manual step in the tab, then choose **Continue page navigation**. Non-replayable POST requests and browser-generated blobs remain browser-managed.
+With FlareSolverr enabled, recognized browser protection receives one automatic resolution attempt. The resolver respects waiting periods and stops for custom CAPTCHA, sign-in, payment, or ambiguous controls. Complete the manual step in the tab, then choose **Continue page navigation**. Non-replayable POST requests and browser-generated blobs remain browser-managed.
 
 Navigation is bounded to three active pages and one page per host. Browser profiles claim navigation jobs exclusively to avoid competing workers. This is a heuristic workflow; changing live sites require separate acceptance testing. Custom CAPTCHA, premium-access and DRM bypass remain unsupported. These limits are tracked explicitly in the [hosted-page and challenge roadmap](docs/ROADMAP.md#1-hosted-download-pages-and-challenges) and [protected-content roadmap](docs/ROADMAP.md#5-media-and-protected-content).
 
 ### Optional local FlareSolverr
+
+The local adapter is implemented ([NAV-01](docs/ROADMAP.md#1-hosted-download-pages-and-challenges)); live browser-challenge clearance still needs qualification. Custom/image CAPTCHA adapters, including the g4u click challenge, remain a separate research item (NAV-13).
 
 In **Settings → Networking → FlareSolverr**, test `http://localhost:9191/`, select **Direct** proxy routing, enable the integration and save. The default timeout is 60 seconds; only HTTP loopback root endpoints are supported. Use [the Docker walkthrough](docs/FLARESOLVERR_DOCKER.md) and [pinned Compose file](docker-compose.flaresolverr.yml) to install the qualified service.
 
@@ -215,7 +217,7 @@ The hosted-page loopback fixture serves countdown/session, CAPTCHA, POST, and ra
 
 The [complete roadmap](docs/ROADMAP.md) inventories every documented unsupported workflow and missing acceptance gate. Planned implementation, qualification, research, and later-platform items are labeled separately; inclusion does not claim current support.
 
-- **Hosted pages and challenges:** CAPTCHA automation/bypass research, login/MFA and session refresh, premium-account integration and bypass feasibility, countdown recovery, ambiguous controls/site adapters, non-replayable POST/blob/one-use downloads, configurable navigation limits, and profile isolation.
+- **Hosted pages and challenges:** live-host qualification of the implemented FlareSolverr browser-challenge workflow; custom/image CAPTCHA adapter research; login/MFA and session refresh, premium-account integration and bypass feasibility, countdown recovery, ambiguous controls/site adapters, non-replayable POST/blob/one-use downloads, configurable navigation limits, and profile isolation.
 - **Transfer engine:** implemented and covered by deterministic fixtures, including pooling, durable recovery, source refresh, typed events, >4 GiB transfers, and measured performance. Ordered PAC failover and real filesystem recovery passed on Windows/macOS/Linux. A disposable AD realm qualifies Windows/Linux NTLM and Linux Kerberos; native macOS/Windows Kerberos, enterprise routing, installer provenance and a successful IDM comparison remain qualification gates.
 - **Management:** editable properties/columns, drop target and input workflows, archive qualification, ordered queues, recurring/DST/missed-window schedules, synchronization, unified quotas, and import/export acceptance.
 - **Browser integration:** stable Chrome/Edge/Firefox/ESR coverage, capture/session/fallback and worker-restart tests, automatic native-host onboarding, media/page tools, Firefox signing, and extension-store distribution.
