@@ -80,3 +80,77 @@ fn new_private_project_is_ephemeral_and_public_cannot_relabel() {
     initialize(&engine, dir.path(), false);
     assert!(downloader_core::rendered_grabber::claim(&engine,serde_json::from_value(json!({"id":"rendered-project","scope":scope(true),"generation":1,"tab_id":3,"permitted_origins":[]})).unwrap()).is_err());
 }
+#[test]
+fn cross_origin_requires_explicit_permission_and_fresh_same_store_partition() {
+    let dir = tempfile::tempdir().unwrap();
+    let engine = Engine::open(dir.path()).unwrap();
+    let mut p = project(dir.path(), false);
+    p.same_domain = false;
+    engine.command(Command::Grabber(p.clone())).unwrap();
+    downloader_core::rendered_grabber::start(&engine, p).unwrap();
+    let mut first = scope(false);
+    first["partition_key"] = json!({"top_level_site":"http://127.0.0.1:18782"});
+    let args = json!({"id":"rendered-project","scope":first,"generation":1,"tab_id":42,"permitted_origins":["http://127.0.0.2:18783"]});
+    call(&engine, "discovery_claim", args.clone());
+    call(
+        &engine,
+        "discovery_page_result",
+        json!({"id":"rendered-project","scope":first,"generation":1,"page_url":"http://127.0.0.1:18782/","final_url":"http://127.0.0.1:18782/","bytes":20,"links":[{"url":"http://127.0.0.2:18783/page","resource":false,"name":"page","size":null,"content_type":""}],"reason":null}),
+    );
+    let next = call(&engine, "discovery_claim", args);
+    assert_eq!(next["page"]["url"], "http://127.0.0.2:18783/page");
+    let mut renewed = first.clone();
+    renewed["partition_key"] = json!({"top_level_site":"http://127.0.0.2:18783"});
+    renewed["claim_generation"] = json!(2);
+    let claim = json!({"id":"rendered-project","scope":renewed,"generation":1,"tab_id":42,"observed_url":"http://127.0.0.2:18783/page","permitted_origins":["http://127.0.0.2:18783"]});
+    let mut foreign = claim.clone();
+    foreign["scope"]["cookie_store_id"] = json!("foreign");
+    assert!(downloader_core::rendered_grabber::claim(
+        &engine,
+        serde_json::from_value(foreign).unwrap()
+    )
+    .is_err());
+    call(&engine, "discovery_claim", claim);
+    let stale: downloader_core::rendered_grabber::Status = serde_json::from_value(
+        json!({"id":"rendered-project","scope":first,"generation":1,"action":"snapshot"}),
+    )
+    .unwrap();
+    assert!(downloader_core::rendered_grabber::status(&engine, stale).is_err());
+}
+#[test]
+fn discovery_shares_global_admission_and_reconciles_only_exact_project_scope() {
+    let dir = tempfile::tempdir().unwrap();
+    let engine = Engine::open(dir.path()).unwrap();
+    let owner = scope(false)["profile"].as_str().unwrap().to_string();
+    for index in 0..3 {
+        let job = call(
+            &engine,
+            "navigate",
+            json!({"request_id":format!("navigation-{index}"),"url":format!("http://fixture-{index}.invalid/page"),"filename":null,"directory":dir.path().join("output"),"queue":null,"checksum":null,"paused":true,"context":{"profile":owner},"media":null,"description":""}),
+        );
+        call(
+            &engine,
+            "navigation_scheduler",
+            json!({"owner":owner,"scope":null,"request":{"action":"admit","id":job["id"],"generation":1}}),
+        );
+    }
+    initialize(&engine, dir.path(), false);
+    let denied = call(
+        &engine,
+        "discovery_claim",
+        json!({"id":"rendered-project","scope":scope(false),"generation":1,"tab_id":42,"permitted_origins":[]}),
+    );
+    assert_eq!(denied["admitted"], false);
+    assert_eq!(denied["page"], Value::Null);
+    let snapshot = call(
+        &engine,
+        "navigation_scheduler",
+        json!({"owner":owner,"scope":null,"request":{"action":"snapshot"}}),
+    );
+    assert_eq!(snapshot["active"], 3);
+    assert!(snapshot["tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|task| task["id"] == "discovery:rendered-project"));
+}

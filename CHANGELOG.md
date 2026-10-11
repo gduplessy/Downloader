@@ -2,6 +2,11 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.11.4
+
+- Bound delayed/open-shadow DOM extraction and add a reproducible installed Chrome/Edge discovery/native qualification fixture.
+- Add real Engine tests for global admission, cross-origin permission/partition renewal, scoped selection/restart and ephemeral private projects. Installed-browser fixture execution remains pending.
+
 ## 0.11.3
 
 - Add explicitly permitted cross-origin partition renewal and per-resource observed session provenance.

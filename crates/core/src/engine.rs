@@ -1083,6 +1083,9 @@ impl Engine {
             Command::DiscoveryStatus(request) => crate::rendered_grabber::status(self, request),
             Command::Grabber(project) => {
                 security::validate_url(&project.url)?;
+                if project.private && !project.rendered {
+                    bail!("Private projects require an explicit rendered browser session");
+                }
                 if project.depth > 20
                     || project.max_pages == 0
                     || project.max_pages > 10000

@@ -1,3 +1,4 @@
+import { allElements } from '../adapters/dom';
 export interface DiscoveredLink {
   url: string;
   resource: boolean;
@@ -18,7 +19,12 @@ export async function extractRendered(
   });
   observer.observe(doc.documentElement, { childList: true, subtree: true, attributes: true });
   try {
-    while (doc.readyState === 'loading' || Date.now() - changed < quietMs) {
+    while (
+      doc.readyState === 'loading' ||
+      Date.now() - start < 1500 ||
+      Date.now() - changed < quietMs ||
+      !!doc.querySelector('[aria-busy=true],[data-loading=true]')
+    ) {
       if (Date.now() - start >= timeoutMs)
         return { final_url: doc.URL, bytes: 0, links: [], reason: 'render_timeout' };
       await new Promise((r) => setTimeout(r, 100));
@@ -43,18 +49,21 @@ export async function extractRendered(
     }
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) continue;
     url.hash = '';
-    if (seen.has(url.href)) continue;
+    if (url.href.length > 2048 || seen.has(url.href)) continue;
     seen.add(url.href);
     const file = /\.[^/.]+$/.test(url.pathname) && !/\.(?:html?|php|aspx?)$/i.test(url.pathname);
     const resource = element.hasAttribute('download') || element.tagName !== 'A' || file;
     result.push({
       url: url.href,
       resource,
-      name: element.getAttribute('download') || url.pathname.split('/').pop() || 'download',
+      name: (element.getAttribute('download') || url.pathname.split('/').pop() || 'download').slice(
+        0,
+        128,
+      ),
       size: null,
       content_type: element.getAttribute('type') || '',
     });
-    if (result.length >= 2000) break;
+    if (result.length >= 250) break;
   }
   const bytes = new TextEncoder().encode(doc.documentElement.outerHTML).byteLength;
   return {
