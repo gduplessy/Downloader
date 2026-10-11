@@ -5,6 +5,7 @@ export type PreviewBinding = {
   frameId: number;
   sessionKey: string;
   claimGeneration: number;
+  sourceGeneration: number;
   documentGeneration: number;
   page: string;
   adapterId: string;

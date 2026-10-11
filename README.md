@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.10.3<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.10.4<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -282,3 +282,9 @@ Challenge recovery 0.10.1 adds bounded service-owned paid accounting, source/cla
 Challenge control qualification 0.10.2 covers production React FlareSolverr settings through isolated native state and eight browser stale-answer cases. Installed extension navigation remains the next integration gate.
 
 Challenge runtime 0.10.3 integrates explicit scoped host choice, live document identity, whole-site admission and browser-only challenge form submission. Installed qualification remains in progress until its intended-file hashes pass.
+
+Shared integration 0.8.10: adapter actions now prepare one-use authorization before capture, recheck current page/session/source authority before commit, and abort cancelled capture. Selected provider metadata is recorded through the scoped native command; rendered-discovery navigation opens the selected resource while retaining its provenance page. Full installed-worker acceptance remains pending.
+
+Shared integration 0.8.11: same-context read-only authority renewal adopts claim/source replacements and invalidates old grants/capture. Recovery, heartbeat and tab closure require current browser epoch and actual owned session; stale tab IDs do not authorize a substituted context. Scoped refreshed sources remain in browser navigation until replay qualification. Installed-worker/private-session acceptance remains pending.
+
+Challenge qualification can exercise the actual installed production worker/resolver through scripts/nav-fixtures/challenges/installed.mjs, with an isolated native host and local fixture permissions. Final installed native hashes remain pending.

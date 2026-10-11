@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.4
+
+- Integrate coordinator two-phase capture and read-only authority adoption while retaining live-document and challenge form fences.
+- Add an isolated actual-installed production worker/resolver qualification driver; final native hash acceptance remains pending until its checks pass.
+
+
 ## 0.10.3
 
 - Integrate the verified coordinator capture/session/scheduler base and wire owner-fenced image challenge selection, local/manual/paid controls, and HTML-form fresh-link continuation.
@@ -25,6 +31,19 @@
 
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
+
+## 0.8.11
+
+- Add narrowly scoped read-only claim/source renewal without exposing URLs or weakening stale-write fences.
+- Require current browser epoch and actual original tab context for recovery, heartbeat and closure; invalidate old authorization/capture when source authority changes.
+- Keep scoped refreshed sources awaiting browser qualification and prevent unknown-source resume from starting native probes.
+- Five native selection/renewal/refresh regressions cover generation replacement, unrelated sessions, durable metadata, private persistence and unqualified replay.
+
+## 0.8.10
+
+- Wire one-use prepare/commit/abort for adapter actions; fence source generation, document, bundled adapter and actual top-level sender before capture.
+- Persist prepared provider selection through scoped native metadata; support owned adapter disable and selected-resource navigation with original provenance retained.
+- Full installed-worker acceptance remains pending; local module checks do not establish complete browser flows.
 
 ## 0.8.9 — Integrate original-response capture and scoped recovery
 
