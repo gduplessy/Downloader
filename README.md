@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.8.8<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.8.9<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -261,7 +261,7 @@ The service scheduler persists host reservations, tab leases, queue ordering, an
 
 Navigation queue controls are available in extension options: change the one-through-twenty tab limit, pause/resume admission, adjust priority, continue manual work, and cancel owned tasks. Readiness notifications are opt-in and require notification permission. All unqualified hosts retain their owning tab and a serial host lock during waits; missing tabs require Continue rather than automatic session replacement. Private queue tasks are not persisted by the service.
 
-Browser stream foundations now support owner-fenced durable original-response writes, bounded acknowledgements, verification and no-overwrite publication. Direct-capture runtime qualification is recorded separately under docs/evidence/nav-browser-streams. Existing private database history is not sanitized by this release; new private task/stream metadata stays in memory and requires reauthorization after service loss.
+Browser streams support owner-fenced durable original-response writes, bounded acknowledgements, verification and no-overwrite publication. Stable Chrome and Edge local capture-module/native transport checks completed POST and blob files with matching hashes; the full installed worker/preview route and actual Firefox capture remain pending. See [stream qualification and handoff](docs/NAV_BROWSER_STREAMS.md). Existing private database history is not sanitized by this release; new private task/stream metadata stays in memory and requires reauthorization after service loss.
 
 NAV-04 / NAV-10 local scheduler implementation and fixture evidence are available in [scheduler qualification](docs/evidence/nav-scheduling/README.md). Navigation defaults to three active tabs, supports limits of one through twenty, retains serial host locks and revalidates page readiness after durable waits. Persisted ownership reconciliation with NAV-11 and stable-browser/live-host qualification remain pending.
 
@@ -272,3 +272,5 @@ Preview cancellation is now lifetime-bound across async authorization. Real-reso
 A bounded one-use authorization registry now separates inspection from capture side effects and rejects stale session/document grants. Production worker prepare/commit/cancel wiring remains an integration check.
 
 The native selection command now retains an explicitly chosen downstream host and bundled adapter identity within the current session/source. Private selections stay transient; production worker selection dispatch remains part of combined acceptance.
+
+Direct browser streaming (0.7.1) is off by default. Original POST and page Blob bytes completed through the native receiver in local stable Chrome/Edge fixtures; integrated preview and Firefox/private/container/live-provider acceptance remain pending. See [stream evidence and contracts](docs/NAV_BROWSER_STREAMS.md).

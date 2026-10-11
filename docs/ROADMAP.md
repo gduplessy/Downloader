@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.8.8<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.8.9<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -23,6 +23,8 @@ Final adapter preview cancellation, keyboard recovery and local qualification ev
 One-use authorization lifecycle tests cover source/claim/document changes, expiry, cancellation and tab replacement. Production prepare/commit/cancel dispatch and installed-extension acceptance remain pending integration.
 
 Scoped downstream-host/adapter metadata now survives normal service reopen and is rejected for stale owners, sessions, sources or pages. Private metadata remains transient; integrated worker persistence and transfer checks remain pending.
+
+Original-response capture modules and persistent native transport are integrated with scheduler admission and sanitized wait recovery. Stable Chrome/Edge local byte hashes passed; actual full-worker preview/selection and Firefox capture remain separate gates.
 
 | ID     | Capability and remaining scope                                      | Next work and completion criteria                                                                                                                                                                                                                                                                                                                                                   | Status                  |
 | :----- | :------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------- |

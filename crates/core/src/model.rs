@@ -327,9 +327,17 @@ pub enum Command {
     Snapshot,
     BrowserSnapshot {
         owner: String,
+        #[serde(default)]
+        private: bool,
+        #[serde(default)]
+        scopes: Vec<crate::navigation::SessionScope>,
     },
     BrowserSubscribe {
         owner: String,
+        #[serde(default)]
+        private: bool,
+        #[serde(default)]
+        scopes: Vec<crate::navigation::SessionScope>,
         after_sequence: Option<u64>,
         #[serde(default = "event_limit")]
         limit: usize,
@@ -397,6 +405,10 @@ pub enum Command {
         url: Option<String>,
         #[serde(default)]
         automatic: bool,
+        #[serde(default)]
+        scope: Option<crate::navigation::SessionScope>,
+        #[serde(default)]
+        source_generation: Option<u64>,
     },
     TestSolver {
         settings: crate::solver::SolverSettings,

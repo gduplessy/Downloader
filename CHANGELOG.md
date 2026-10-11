@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.8.9 — Integrate original-response capture and scoped recovery
+
+- Combine Chromium/Firefox response capture, page-owned blob reads and persistent native byte transport with scheduler admission, wait recovery and adapter previews.
+- Preserve nonsecret regular resolver references and normalized waits, fence reused browser-session tab IDs, prevent regular views from reading private overlays and keep private recovery/errors transient.
+- Include stable Chrome/Edge local original-response hash evidence; installed full-worker preview/session acceptance and actual Firefox capture remain separate qualification gates.
+
 ## 0.8.8 — Persist scoped downstream-host selection
 
 - Record bundled adapter identity and explicit downstream host under exact owner/session/source fences while retaining the original hosted page.
@@ -47,6 +53,13 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 ## 0.8.0
 
 - Add durable navigation queue admission, conservative host locks, fenced tab leases and restart-safe wait metadata with deterministic regression fixtures.
+
+## 0.7.1 — Direct browser stream runtime and recovery fences
+
+- Add default-off Chromium debugger capture, Firefox response metadata admission, isolated page Blob streaming and persistent bounded native transport with localized capture state/cancel controls.
+- Qualify original POST and Blob hashes on installed stable Chrome and Edge using isolated native fixtures; keep integrated preview cancellation, Firefox/browser-context matrices, live providers and large-file performance explicit pending gates.
+- Atomically commit durable stream progress, job metadata and quota; repair concurrent EOF and publication-checkpoint crash replay. Fence challenge/claim/source refresh, profile/private/container projections and browser-session restart.
+- Retain regular nonsecret task references while keeping private/session secrets ephemeral. Detect existing private history without deleting or claiming to sanitize it.
 
 ## 0.7.0 — Owner-fenced browser stream foundations
 
@@ -150,17 +163,17 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Refuse to fill the workspace device or format an existing/system disk; qualification detaches only its own image.
 - Add an opt-in platform CI acceptance run. Actual platform results remain pending until that run succeeds.
 
-## 0.3.0 — Local challenge adapter foundation (solver branch)
-
-- Add a bounded loopback FlareSolverr client, conservative GET page resolution, temporary cookie/User-Agent context, and deterministic response/policy regressions.
-- Browser navigation integration and live host qualification remain in progress.
-
 ## 0.3.0 — Ordered proxy failover (transfer-engine branch)
 
 - Preserve bounded, ordered PAC/system route lists across Windows, macOS and Linux, including explicit direct fallback.
 - Advance metadata, range reads and download workers only after pre-response connection failures; keep TLS, authentication, source and partial-body failures on their original recovery path.
 - Isolate pooled handles by their selected route and use cancellable Windows PAC discovery. Explicit PAC refuses WinHTTP's implicit loopback bypass rather than silently selecting direct access.
 - Verify actual proxy traversal with named loopback fixtures, exhausted-route failures, TLS/authentication rejection and route-order regressions. Disposable CI runners receive a fixture-only hostname; developer host settings stay untouched.
+
+## 0.3.0 — Local challenge adapter foundation (solver branch)
+
+- Add a bounded loopback FlareSolverr client, conservative GET page resolution, temporary cookie/User-Agent context, and deterministic response/policy regressions.
+- Browser navigation integration and live host qualification remain in progress.
 
 ## 0.2.7 — Clarify remaining proxy work
 

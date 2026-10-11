@@ -1,3 +1,10 @@
+import type { SessionScope, StreamIdentity } from '../../../packages/shared/src/navigation';
+import { scopeForTab, sameScope, sessionKey, type ScopedRequest } from './navigation/session/scope';
+import { navigationStorage, memoryStorage } from './navigation/session/store';
+import { classifyReplay } from './navigation/streams/replay';
+import { DurableStreamSink, NativeStreamPort } from './navigation/streams/transport';
+import { armChromium, takeFirefox, originalResponseMetadata } from './navigation/streams/capture';
+import { readOwnedBlob } from './navigation/streams/blob';
 import { applyEvents } from '../../../packages/shared/src/events';
 import browser from 'webextension-polyfill';
 import { shouldSolve } from './resolver-policy';
@@ -16,32 +23,294 @@ import { translate, type Key } from '../../../packages/shared/src/i18n';
 declare const BROWSER: string;
 const HOST = 'org.downloader.native';
 const scheduler = new NavigationScheduler(
-  request => native('navigation_scheduler', { request }),
-  async id => {
-    const storage = await browser.storage.local.get('resolver-' + id);
+  (request) => native('navigation_scheduler', { request }),
+  async (id) => {
+    const storage = await navigationStore.get('resolver-' + id);
     const record = storage['resolver-' + id] as ResolverRecord | undefined;
     if (record) {
       await scheduler.heartbeat(id, record.tabId);
-      await browser.tabs.sendMessage(record.tabId, { type: 'resolver_continue' }).catch(() => injectResolver(record.tabId));
+      await browser.tabs
+        .sendMessage(record.tabId, { type: 'resolver_continue' })
+        .catch(() => injectResolver(record.tabId));
     }
   },
 );
 let schedulerRecovered = false;
 const resolverSteps = new Map<number, Promise<unknown>>();
+
+const privateWorker = Boolean(browser.extension.inIncognitoContext);
+const ephemeralStore = browser.storage.session ?? memoryStorage();
+const navigationStore = navigationStorage(browser.storage.local, ephemeralStore, privateWorker);
+const browserEpoch = ephemeralStore.get('navigation-session-epoch').then(async (stored) => {
+  const epoch =
+    typeof stored['navigation-session-epoch'] === 'string'
+      ? stored['navigation-session-epoch']
+      : crypto.randomUUID();
+  await ephemeralStore.set({ 'navigation-session-epoch': epoch });
+  return epoch;
+});
+async function projectionScope() {
+  const owner = await profile;
+  const records = await navigationStore.get(null);
+  const scopes: SessionScope[] = [];
+  for (const [key, value] of Object.entries(records)) {
+    const record = value as ResolverRecord;
+    if (!key.startsWith('resolver-') || !record.scope || record.scope.private !== privateWorker)
+      continue;
+    if (!privateWorker && record.sessionEpoch !== (await browserEpoch)) {
+      scopes.push(record.scope);
+      continue;
+    }
+    try {
+      const actual = await scopeForTab(
+        browser as any,
+        BROWSER,
+        owner,
+        record.tabId,
+        record.scope.claim_generation,
+      );
+      if (sameScope(actual, record.scope)) scopes.push(actual);
+    } catch {}
+  }
+  return { owner, private: privateWorker, scopes };
+}
 const profile = browser.storage.local.get('profileId').then(async (stored) => {
   const id = typeof stored.profileId === 'string' ? stored.profileId : crypto.randomUUID();
   if (!stored.profileId) await browser.storage.local.set({ profileId: id });
   return id;
 });
-const requests = new Map<
+const requests = new Map<string, ScopedRequest>();
+function requestFor(url: string, privateSession?: boolean) {
+  const values = [...requests.values()].filter(
+    (r) =>
+      r.url === url &&
+      (privateSession === undefined || r.scope.private === privateSession) &&
+      Date.now() - r.time < 120000,
+  );
+  return values.length === 1 ? values[0] : undefined;
+}
+const captureCancels = new Map<number, () => Promise<void>>();
+const blobReaders = new Map<
   string,
   {
-    method: string;
-    headers: Record<string, string>;
     tabId: number;
-    time: number;
+    frameId: number;
+    scope: SessionScope;
+    sink: DurableStreamSink;
+    jobId: string;
+    sourceGeneration: number;
   }
 >();
+async function verifyStreamOwner(
+  id: string,
+  tabId: number,
+  scope: SessionScope,
+  generation: number,
+) {
+  const records = await navigationStore.get('resolver-' + id);
+  const record = records['resolver-' + id] as ResolverRecord | undefined;
+  const current = await scopeForTab(
+    browser as any,
+    BROWSER,
+    await profile,
+    tabId,
+    scope.claim_generation,
+  );
+  if (
+    record?.sessionEpoch !== (await browserEpoch) ||
+    !record?.scope ||
+    !sameScope(scope, current) ||
+    !sameScope(scope, record.scope) ||
+    record.sourceGeneration !== generation
+  )
+    throw Error('Stream ownership changed');
+  // Service checks every frame independently. No per-chunk native host spawn is needed.
+}
+async function newSink(
+  id: string,
+  record: ResolverRecord,
+  filename: string,
+  total: number | null,
+  deferred = false,
+) {
+  if (!record.scope) throw Error('Direct capture needs an explicit browser scope');
+  if (record.scope.private && !browser.storage.session)
+    throw Error('Private capture requires ephemeral browser session storage');
+  const identity: StreamIdentity = {
+    stream_id: crypto.randomUUID(),
+    scope: record.scope,
+    source_generation: record.sourceGeneration ?? 1,
+  };
+  const sink = new DurableStreamSink(identity, new NativeStreamPort(), () =>
+    verifyStreamOwner(id, record.tabId, identity.scope, identity.source_generation),
+  );
+  if (!deferred) await sink.begin({ kind: 'job', id }, filename, total);
+  return sink;
+}
+async function armDirect(
+  id: string,
+  record: ResolverRecord,
+  request: { url: string; method: string },
+  filename = 'download',
+) {
+  if (!settings.directCapture || !record.scope) return false;
+  await captureCancels.get(record.tabId)?.();
+  captureCancels.delete(record.tabId);
+  const sink = await newSink(id, record, filename, null, !request.url.startsWith('blob:'));
+  if (request.url.startsWith('blob:')) {
+    const tab = await browser.tabs.get(record.tabId);
+    if (new URL(request.url).origin !== new URL(tab.url!).origin) {
+      await sink.abort();
+      throw Error('Blob frame origin mismatch');
+    }
+    const capability = crypto.randomUUID();
+    const cancelBlob = async () => {
+      await sink.abort('cancelled').catch(() => {});
+      blobReaders.delete(capability);
+    };
+    captureCancels.set(record.tabId, cancelBlob);
+    blobReaders.set(capability, {
+      tabId: record.tabId,
+      frameId: 0,
+      scope: record.scope,
+      sink,
+      jobId: id,
+      sourceGeneration: record.sourceGeneration ?? 1,
+    });
+    if (BROWSER === 'chromium')
+      void browser.scripting
+        .executeScript({
+          target: { tabId: record.tabId, frameIds: [0] },
+          func: readOwnedBlob,
+          args: [request.url, capability, 192 * 1024],
+        })
+        .catch(() => sink.abort())
+        .finally(() => blobReaders.delete(capability));
+    else
+      void browser.tabs
+        .executeScript(record.tabId, {
+          frameId: 0,
+          code:
+            '(' +
+            readOwnedBlob.toString() +
+            ')(' +
+            JSON.stringify(request.url) +
+            ',' +
+            JSON.stringify(capability) +
+            ',196608)',
+        })
+        .catch(() => sink.abort())
+        .finally(() => blobReaders.delete(capability));
+    return true;
+  }
+  if (BROWSER === 'chromium') {
+    const api = (globalThis as any).chrome.debugger;
+    const cancel = await armChromium(
+      api,
+      record.tabId,
+      request,
+      sink,
+      async (state) => {
+        await navigationStore.set({ ['capture-' + id]: { state, tabId: record.tabId } });
+        if (['interrupted', 'detached'].includes(state))
+          await native('browser_status', {
+            id,
+            state: 'waiting_user',
+            message:
+              'Direct capture interrupted. Request a fresh provider action; original requests are never replayed.',
+            bytes: sink.offset,
+            total: null,
+          }).catch(() => {});
+      },
+      async (headers) => {
+        const metadata = originalResponseMetadata(headers);
+        await sink.begin({ kind: 'job', id }, metadata.filename ?? filename, metadata.total);
+      },
+    );
+    captureCancels.set(record.tabId, cancel);
+  } else {
+    if (
+      !(await browser.permissions.contains({
+        permissions: ['webRequest', 'webRequestBlocking'],
+        origins: [sitePattern(request.url)],
+      }))
+    ) {
+      await sink.abort();
+      throw Error('Firefox direct capture needs response-filter permissions');
+    }
+    let taken = false;
+    let requestId: string | undefined;
+    let admit: (accepted: boolean) => void = () => {};
+    const ready = new Promise<boolean>((resolve) => {
+      admit = resolve;
+    });
+    const headers = (details: any) => {
+      if (details.requestId !== requestId) return;
+      browser.webRequest.onHeadersReceived.removeListener(headers);
+      const values: Record<string, string> = Object.fromEntries(
+        (details.responseHeaders ?? []).map((h: any) => [h.name.toLowerCase(), h.value ?? '']),
+      );
+      const file =
+        details.statusCode === 200 &&
+        (/attachment/i.test(values['content-disposition'] ?? '') ||
+          !/(?:text\/html|json)/i.test(values['content-type'] ?? ''));
+      if (!file) {
+        admit(false);
+        void native('browser_status', {
+          id,
+          state: 'waiting_user',
+          message: 'Navigation response remains in its original browser context.',
+          bytes: 0,
+          total: null,
+        }).catch(() => {});
+        return;
+      }
+      const metadata = originalResponseMetadata(values);
+      void sink.begin({ kind: 'job', id }, metadata.filename ?? filename, metadata.total).then(
+        () => admit(true),
+        () => admit(false),
+      );
+    };
+    const listen = (details: any) => {
+      if (
+        taken ||
+        details.tabId !== record.tabId ||
+        details.frameId !== 0 ||
+        details.url !== request.url ||
+        details.method !== request.method
+      )
+        return;
+      taken = true;
+      requestId = details.requestId;
+      browser.webRequest.onBeforeRequest.removeListener(listen);
+      takeFirefox(
+        (browser.webRequest as any).filterResponseData(details.requestId),
+        sink,
+        () => {},
+        ready,
+      );
+    };
+    browser.webRequest.onHeadersReceived.addListener(
+      headers,
+      { urls: [sitePattern(request.url)] },
+      ['responseHeaders'],
+    );
+    browser.webRequest.onBeforeRequest.addListener(listen, { urls: [sitePattern(request.url)] }, [
+      'blocking',
+    ]);
+    const cancel = async () => {
+      admit(false);
+      browser.webRequest.onBeforeRequest.removeListener(listen);
+      browser.webRequest.onHeadersReceived.removeListener(headers);
+      await sink.abort('cancelled').catch(() => {});
+    };
+    captureCancels.set(record.tabId, cancel);
+    setTimeout(() => {
+      if (!taken) void cancel();
+    }, 60000);
+  }
+  return false;
+}
 const ongoing = new Set<number>();
 let settings: CaptureSettings = { ...defaults };
 let observerInstalled = false;
@@ -71,11 +340,30 @@ async function native(command: string, args?: unknown): Promise<any> {
   )
     args = { ...(args as object), owner: await profile };
   if (command === 'navigation_scheduler' && (args as any)?.request?.id) {
-    const record = (await browser.storage.local.get('resolver-' + (args as any).request.id))['resolver-' + (args as any).request.id] as ResolverRecord | undefined;
+    const record = (await navigationStore.get('resolver-' + (args as any).request.id))[
+      'resolver-' + (args as any).request.id
+    ] as ResolverRecord | undefined;
     if (record?.scope) args = { ...(args as object), scope: record.scope };
   }
   if (['add', 'navigate'].includes(command))
     args = { ...(args as any), context: { ...(args as any)?.context, profile: await profile } };
+  if (['resolve', 'browser_status', 'refresh_browser', 'solve_challenge'].includes(command)) {
+    const value = args as any;
+    const stored = await navigationStore.get('resolver-' + value.id);
+    const record = stored['resolver-' + value.id] as ResolverRecord | undefined;
+    if (record && record.sessionEpoch !== (await browserEpoch))
+      throw Error('Browser restarted; explicitly continue in the original context');
+    args = {
+      ...value,
+      scope: record?.scope ?? null,
+      source_generation: record?.sourceGeneration ?? null,
+    };
+  }
+  if (command === 'snapshot' || command === 'subscribe') {
+    const projection = await projectionScope();
+    command = command === 'snapshot' ? 'browser_snapshot' : 'browser_subscribe';
+    args = { ...(args as any), ...projection };
+  }
   const requestId = crypto.randomUUID();
   const response: any = await browser.runtime.sendNativeMessage(HOST, {
     version: 1,
@@ -123,32 +411,51 @@ async function observers() {
     }))
   )
     return;
-  const observe = (details: any) => {
-    const headers: Record<string, string> = {};
-    for (const h of details.requestHeaders ?? []) {
-      if (
-        ['referer', 'origin', 'user-agent', 'accept'].includes(h.name.toLowerCase()) &&
-        h.value &&
-        !/[\r\n]/.test(h.value)
-      )
-        headers[h.name] = h.value;
-    }
-    requests.set(details.url, {
-      method: details.method,
-      headers,
-      tabId: details.tabId,
-      time: Date.now(),
-    });
-    // MV3 workers can restart between the network and download events.
-    // Session storage retains ephemeral request context without writing it to disk.
-    if (browser.storage.session) {
-      void browser.storage.session
-        .set({ ['request-' + details.url]: requests.get(details.url) })
-        .catch(() => {});
-    }
-    for (const [url, record] of requests)
-      if (Date.now() - record.time > 120000) requests.delete(url);
-  };
+  const observe = (details: any) =>
+    void (async () => {
+      if (details.tabId < 0 || details.frameId < 0) return;
+      const records = await navigationStore.get(null);
+      const resolver = Object.entries(records).find(
+        ([key, value]: any) => key.startsWith('resolver-') && value.tabId === details.tabId,
+      )?.[1] as ResolverRecord | undefined;
+      const scope = await scopeForTab(
+        browser as any,
+        BROWSER,
+        await profile,
+        details.tabId,
+        resolver?.scope?.claim_generation ?? 1,
+        details.frameId,
+      );
+      const headers: Record<string, string> = {};
+      for (const h of details.requestHeaders ?? [])
+        if (
+          ['referer', 'origin', 'user-agent', 'accept'].includes(h.name.toLowerCase()) &&
+          h.value &&
+          !/[\r\n]/.test(h.value)
+        )
+          headers[h.name] = h.value;
+      const key = JSON.stringify([
+        details.requestId,
+        details.tabId,
+        details.frameId,
+        details.documentId,
+        sessionKey(scope),
+      ]);
+      requests.set(key, {
+        requestId: details.requestId,
+        tabId: details.tabId,
+        frameId: details.frameId,
+        documentId: details.documentId,
+        url: details.url,
+        method: details.method,
+        headers,
+        time: Date.now(),
+        scope,
+      });
+      for (const [id, record] of requests)
+        if (Date.now() - record.time > 120000) requests.delete(id);
+      if (requests.size > 1024) requests.delete(requests.keys().next().value!);
+    })().catch(() => {});
   browser.webRequest.onBeforeRequest.addListener(observe, {
     urls: ['http://*/*', 'https://*/*'],
   });
@@ -198,40 +505,34 @@ async function mediaScripts() {
   } catch {}
 }
 async function context(url: string, privateSession = false): Promise<any> {
-  const record = requests.get(url);
+  const record = requestFor(url, privateSession);
   const headers = { ...record?.headers };
+  if (!record) return { headers: {}, browser: BROWSER, private: privateSession };
   if (
-    await browser.permissions.contains({
-      permissions: ['cookies'],
-      origins: [sitePattern(url)],
-    })
+    await browser.permissions.contains({ permissions: ['cookies'], origins: [sitePattern(url)] })
   ) {
-    try {
-      const stores = await browser.cookies.getAllCookieStores();
-      const store =
-        record?.tabId !== undefined
-          ? stores.find((s) => s.tabIds.includes(record.tabId))
-          : undefined;
-      const details: any = { url, ...(store ? { storeId: store.id } : {}) };
-      const unpartitioned = (await browser.cookies.getAll(details)).filter(
-        (c) => !(c as any).partitionKey,
-      );
-      // Chromium partitioning is keyed to the top-level document; never mix stores.
-      if (record && BROWSER === 'chromium') {
-        try {
-          const c = browser.cookies as any;
-          const partition = await c.getPartitionKey?.({
-            tabId: record.tabId,
-            frameId: 0,
-          });
-          if (partition?.partitionKey) details.partitionKey = partition.partitionKey;
-        } catch {}
-      }
-      const cookies = details.partitionKey
-        ? [...unpartitioned, ...(await browser.cookies.getAll(details))]
-        : unpartitioned;
-      if (cookies.length) headers.Cookie = cookies.map((c) => c.name + '=' + c.value).join('; ');
-    } catch {}
+    const current = await scopeForTab(
+      browser as any,
+      BROWSER,
+      await profile,
+      record.tabId,
+      record.scope.claim_generation,
+      record.frameId,
+    );
+    if (!sameScope(current, record.scope)) throw Error('Request cookie scope changed');
+    const details: any = { url, storeId: record.scope.cookie_store_id };
+    const unpartitioned = (await browser.cookies.getAll(details)).filter(
+      (c) => !(c as any).partitionKey,
+    );
+    let cookies = unpartitioned;
+    if (record.scope.partition_key) {
+      details.partitionKey = {
+        topLevelSite: record.scope.partition_key.top_level_site,
+        hasCrossSiteAncestor: record.scope.partition_key.has_cross_site_ancestor,
+      };
+      cookies = [...unpartitioned, ...(await browser.cookies.getAll(details))];
+    }
+    if (cookies.length) headers.Cookie = cookies.map((c) => c.name + '=' + c.value).join('; ');
   }
   return { headers, browser: BROWSER, private: privateSession };
 }
@@ -266,30 +567,9 @@ async function add(
 }
 async function capture(item: browser.Downloads.DownloadItem, resolverId?: string) {
   const download = item as Download;
-  let record = requests.get(download.finalUrl || item.url) ?? requests.get(item.url);
-  if (!record && browser.storage.session) {
-    const key = 'request-' + (download.finalUrl || item.url);
-    const stored = await browser.storage.session.get(key);
-    const value = stored[key] as
-      { method: string; headers: Record<string, string>; tabId: number; time: number } | undefined;
-    if (value && Date.now() - value.time < 120000) {
-      record = value;
-      requests.set(download.finalUrl || item.url, value);
-    }
-  }
-  if (!record && resolverId) {
-    const stored = await browser.storage.local.get('resolver-' + resolverId);
-    const resolver = stored['resolver-' + resolverId] as ResolverRecord | undefined;
-    if (resolver?.request?.method === 'GET' && resolver.request.url === item.url) {
-      record = {
-        method: 'GET',
-        headers: item.referrer ? { Referer: item.referrer } : {},
-        tabId: resolver.tabId,
-        time: Date.now(),
-      };
-      requests.set(download.finalUrl || item.url, record!);
-    }
-  }
+  let record =
+    requestFor(download.finalUrl || item.url, Boolean(item.incognito)) ??
+    requestFor(item.url, Boolean(item.incognito));
   await browser.storage.local.set({
     lastCapture: {
       observedMethod: record?.method ?? null,
@@ -300,9 +580,9 @@ async function capture(item: browser.Downloads.DownloadItem, resolverId?: string
   });
   if (ongoing.has(item.id)) return;
   const replayable =
-    record?.method === 'GET' && /^https?:\/\//.test((item as Download).finalUrl || item.url);
+    classifyReplay({ method: record?.method, sourceGeneration: 1 }).disposition === 'replayable';
   if (resolverId && (!replayable || item.state === 'complete')) {
-    await browser.storage.local.set({ ['browser-job-' + item.id]: resolverId });
+    await navigationStore.set({ ['browser-job-' + item.id]: resolverId });
     await native('browser_status', {
       id: resolverId,
       state: item.state === 'complete' ? 'browser_complete' : 'browser_downloading',
@@ -313,7 +593,7 @@ async function capture(item: browser.Downloads.DownloadItem, resolverId?: string
     });
     return;
   }
-  if (!resolverId && !eligible(download, settings, record?.method)) return;
+  if (!resolverId && (!replayable || !eligible(download, settings, record?.method))) return;
   ongoing.add(item.id);
   const key = 'pending-' + item.id;
   void handoff(download, {
@@ -344,7 +624,7 @@ async function capture(item: browser.Downloads.DownloadItem, resolverId?: string
             break;
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
-        await browser.storage.local.set({
+        await navigationStore.set({
           ['browser-job-' + item.id]: resolverId,
         });
         await native('browser_status', {
@@ -357,8 +637,8 @@ async function capture(item: browser.Downloads.DownloadItem, resolverId?: string
       } else await native('cancel', { id });
     },
     pending: async (value) => {
-      if (value) await browser.storage.local.set({ [key]: value });
-      else await browser.storage.local.remove(key);
+      if (value) await navigationStore.set({ [key]: value });
+      else await navigationStore.remove(key);
     },
     wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   })
@@ -366,7 +646,7 @@ async function capture(item: browser.Downloads.DownloadItem, resolverId?: string
       if (resolverId && outcome === 'browser') {
         const [current] = await browser.downloads.search({ id: item.id });
         if (current) {
-          await browser.storage.local.set({ ['browser-job-' + item.id]: resolverId });
+          await navigationStore.set({ ['browser-job-' + item.id]: resolverId });
           await native('browser_status', {
             id: resolverId,
             state: current.state === 'complete' ? 'browser_complete' : 'browser_downloading',
@@ -378,20 +658,19 @@ async function capture(item: browser.Downloads.DownloadItem, resolverId?: string
       }
     })
     .catch(async (e) => {
-      await browser.storage.local.set({ lastError: String(e) });
+      await reportError(e);
     })
     .finally(() => ongoing.delete(item.id));
 }
 browser.downloads.onCreated.addListener(
-  (item) =>
-    void resolveDownload(item).catch((e) => browser.storage.local.set({ lastError: String(e) })),
+  (item) => void resolveDownload(item).catch((e) => reportError(e, !!item.incognito)),
 );
 async function resolveDownload(item: browser.Downloads.DownloadItem) {
   const tabId =
     (item as any).tabId ??
-    requests.get((item as Download).finalUrl || item.url)?.tabId ??
-    requests.get(item.url)?.tabId;
-  const stored: Record<string, any> = await browser.storage.local.get(null);
+    requestFor((item as Download).finalUrl || item.url)?.tabId ??
+    requestFor(item.url)?.tabId;
+  const stored: Record<string, any> = await navigationStore.get(null);
   let entry = Object.entries(stored).find(
     ([key, value]) => key.startsWith('resolver-') && value.tabId === tabId,
   );
@@ -408,7 +687,7 @@ async function resolveDownload(item: browser.Downloads.DownloadItem) {
   }
   if (entry) {
     const id = entry[0].slice('resolver-'.length);
-    await browser.storage.local.set({
+    await navigationStore.set({
       [entry[0]]: { ...entry[1], downloadId: item.id },
     });
     await capture(item, id);
@@ -418,7 +697,7 @@ browser.downloads.onChanged.addListener(
   (delta) =>
     void (async () => {
       const key = 'browser-job-' + delta.id,
-        record: Record<string, any> = await browser.storage.local.get(key);
+        record: Record<string, any> = await navigationStore.get(key);
       const [item] = await browser.downloads.search({ id: delta.id });
       if (!item) return;
       if (record[key]) {
@@ -437,29 +716,36 @@ browser.downloads.onChanged.addListener(
           bytes: item.bytesReceived,
           total: item.totalBytes > 0 ? item.totalBytes : null,
         }).catch(() => {});
-        if (item.state !== 'in_progress') await browser.storage.local.remove(key);
+        if (item.state !== 'in_progress') await navigationStore.remove(key);
       } else if (delta.filename) await resolveDownload(item);
     })().catch(() => {}),
 );
 async function recover() {
-  const storage: Record<string, any> = await browser.storage.local.get(null);
+  const storage: Record<string, any> = await navigationStore.get(null);
   for (const [key, value] of Object.entries(storage)) {
     if (!key.startsWith('pending-') || !value) continue;
     const p = value as any;
     try {
       const snap = await browserSnapshot();
       const job = snap.jobs.find((j: any) => j.id === p.jobId || j.request_id === p.requestId);
-      if (job && (job.viable || job.state === 'complete'))
+      if (
+        job &&
+        p.replay?.disposition === 'replayable' &&
+        p.sourceGeneration === job.source_generation &&
+        p.scope &&
+        sameScope(p.scope, job.navigation_scope) &&
+        (job.viable || job.state === 'complete')
+      )
         await browser.downloads.cancel(p.downloadId);
       else {
         if (job) await native('cancel', { id: job.id });
         await browser.downloads.resume(p.downloadId);
       }
-      await browser.storage.local.remove(key);
+      await navigationStore.remove(key);
     } catch {
       try {
         await browser.downloads.resume(p.downloadId);
-        await browser.storage.local.remove(key);
+        await navigationStore.remove(key);
       } catch {}
     }
   }
@@ -481,7 +767,7 @@ browser.contextMenus.onClicked.addListener((info, tab) => {
           queue: null,
           checksum: null,
         });
-        await startResolver(job);
+        await startResolver(job, false, tab?.id);
       }
     }
     if (info.menuItemId === 'link' && info.linkUrl)
@@ -496,7 +782,7 @@ browser.contextMenus.onClicked.addListener((info, tab) => {
       for (const url of (links as string[]).slice(0, 1000))
         await add(url, undefined, undefined, tab.incognito);
     }
-  })().catch((e) => browser.storage.local.set({ lastError: String(e) }));
+  })().catch((e) => reportError(e));
 });
 browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.MessageSender) => {
   if (sender.id !== browser.runtime.id) return Promise.reject(Error('Unknown message sender'));
@@ -504,41 +790,80 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
     sender.url === browser.runtime.getURL('options.html') ||
     sender.url === browser.runtime.getURL('popup.html');
   if (sender.tab && !extensionPage) {
-    if (message.type === 'resolver_step')
-      {
-        const tabId = sender.tab.id!;
-        const work = (resolverSteps.get(tabId) ?? Promise.resolve()).catch(() => {}).then(() => resolverStep(message, tabId, sender.tab!.url ?? ''));
-        resolverSteps.set(tabId, work);
-        void work.finally(() => {if (resolverSteps.get(tabId) === work) resolverSteps.delete(tabId);}).catch(() => {});
-        return work;
-      }
+    if (message.type === 'owned_blob_stream')
+      return (async () => {
+        const reader = blobReaders.get(message.capability);
+        if (!reader || reader.tabId !== sender.tab!.id || reader.frameId !== (sender.frameId ?? 0))
+          throw Error('Unknown page stream capability');
+        await verifyStreamOwner(reader.jobId, reader.tabId, reader.scope, reader.sourceGeneration);
+        if (message.operation === 'chunk') {
+          if (typeof message.data_base64 !== 'string' || message.data_base64.length > 262144)
+            throw Error('Page chunk exceeds bound');
+          await reader.sink.chunk(
+            Uint8Array.from(atob(message.data_base64), (c: string) => c.charCodeAt(0)),
+          );
+        } else if (message.operation === 'end') {
+          await reader.sink.end();
+          blobReaders.delete(message.capability);
+        } else if (message.operation === 'abort') {
+          await reader.sink.abort();
+          blobReaders.delete(message.capability);
+        } else throw Error('Unknown page stream operation');
+        return true;
+      })();
+    if (message.type === 'resolver_context')
+      return resolverContext(sender.tab.id!, sender.frameId ?? 0, (sender as any).documentId);
+    if (message.type === 'resolver_step') {
+      const tabId = sender.tab.id!;
+      const work = (resolverSteps.get(tabId) ?? Promise.resolve())
+        .catch(() => {})
+        .then(() =>
+          resolverStep(message, tabId, sender.tab!.url ?? '', (sender as any).documentId),
+        );
+      resolverSteps.set(tabId, work);
+      void work
+        .finally(() => {
+          if (resolverSteps.get(tabId) === work) resolverSteps.delete(tabId);
+        })
+        .catch(() => {});
+      return work;
+    }
     if (message.type !== 'download_media')
       return Promise.reject(Error('Content scripts cannot control the native host'));
   }
-  if (extensionPage && message.type === 'navigation_scheduler') return scheduler.request(message.request);
-  if (extensionPage && message.type === 'navigation_queue_cancel') return (async () => {
-    await native('cancel', { id: message.id });
-    await scheduler.release(message.id);
-    const storage = await browser.storage.local.get('resolver-' + message.id);
-    const record = storage['resolver-' + message.id] as ResolverRecord | undefined;
-    await browser.storage.local.remove('resolver-' + message.id);
-    if (record) await browser.tabs.remove(record.tabId).catch(() => {});
-    await pollResolvers();
-    return true;
-  })();
-  if (extensionPage && message.type === 'navigation_queue_continue') return (async () => {
-    const job = (await browserSnapshot()).jobs.find((j: any) => j.id === message.id);
-    if (!job?.page_url) throw Error('Navigation task unavailable');
-    if (!(await navigationPermissions(job.page_url))) throw Error('Site permission required');
-    const record = (await browser.storage.local.get('resolver-' + job.id))['resolver-' + job.id] as ResolverRecord | undefined;
-    const state = await scheduler.request({ action: 'snapshot' });
-    if (record?.wait && state.tasks.find(task => task.id === job.id)?.status === 'waiting') await scheduler.observe(job.id);
-    else {
-      if (record) {delete record.wait;delete record.waitStarted;await browser.storage.local.set({ ['resolver-' + job.id]: record });}
-      await startResolver(job, true);
-    }
-    return true;
-  })();
+  if (extensionPage && message.type === 'navigation_scheduler')
+    return scheduler.request(message.request);
+  if (extensionPage && message.type === 'navigation_queue_cancel')
+    return (async () => {
+      await native('cancel', { id: message.id });
+      await scheduler.release(message.id);
+      const storage = await navigationStore.get('resolver-' + message.id);
+      const record = storage['resolver-' + message.id] as ResolverRecord | undefined;
+      await navigationStore.remove('resolver-' + message.id);
+      if (record) await browser.tabs.remove(record.tabId).catch(() => {});
+      await pollResolvers();
+      return true;
+    })();
+  if (extensionPage && message.type === 'navigation_queue_continue')
+    return (async () => {
+      const job = (await browserSnapshot()).jobs.find((j: any) => j.id === message.id);
+      if (!job?.page_url) throw Error('Navigation task unavailable');
+      if (!(await navigationPermissions(job.page_url))) throw Error('Site permission required');
+      const record = (await navigationStore.get('resolver-' + job.id))['resolver-' + job.id] as
+        ResolverRecord | undefined;
+      const state = await scheduler.request({ action: 'snapshot' });
+      if (record?.wait && state.tasks.find((task) => task.id === job.id)?.status === 'waiting')
+        await scheduler.observe(job.id);
+      else {
+        if (record) {
+          delete record.wait;
+          delete record.waitStarted;
+          await navigationStore.set({ ['resolver-' + job.id]: record });
+        }
+        await startResolver(job, true);
+      }
+      return true;
+    })();
   if (message.type === 'continue_navigation')
     return navigationPermissions(message.url).then(async (allowed) => {
       if (!allowed) throw Error('Site permissions are required to navigate download pages');
@@ -555,6 +880,38 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
         url: job.navigation_url ?? job.page_url,
         automatic: false,
       });
+    })();
+  if (message.type === 'capture_status')
+    return (async () => {
+      const scope = await projectionScope();
+      const records = await navigationStore.get(null);
+      return Object.entries(records)
+        .filter(
+          ([key, value]: any) =>
+            key.startsWith('capture-') &&
+            scope.scopes.some((s) =>
+              Boolean(
+                (records['resolver-' + key.slice(8)] as ResolverRecord | undefined)?.scope &&
+                sameScope(s, (records['resolver-' + key.slice(8)] as ResolverRecord).scope!),
+              ),
+            ),
+        )
+        .map(([key, value]: any) => ({ id: key.slice(8), state: value.state }));
+    })();
+  if (message.type === 'cancel_capture')
+    return (async () => {
+      const records = await navigationStore.get('resolver-' + message.id);
+      const record = records['resolver-' + message.id] as ResolverRecord | undefined;
+      if (!record?.scope) throw Error('Capture is not owned');
+      await verifyStreamOwner(message.id, record.tabId, record.scope, record.sourceGeneration ?? 1);
+      await captureCancels.get(record.tabId)?.();
+      captureCancels.delete(record.tabId);
+      for (const [key, reader] of blobReaders)
+        if (reader.jobId === message.id) {
+          await reader.sink.abort('cancelled');
+          blobReaders.delete(key);
+        }
+      return true;
     })();
   if (message.type === 'settings_changed') return load().then(() => true);
   if (message.type === 'diagnostics')
@@ -611,6 +968,11 @@ browser.runtime.onInstalled.addListener((details) => {
 void load();
 
 type ResolverRecord = {
+  scope?: SessionScope;
+  sourceGeneration?: number;
+  documentGeneration?: number;
+  sessionEpoch?: string;
+  documentId?: string;
   tabId: number;
   started: number;
   steps: number;
@@ -624,14 +986,13 @@ type ResolverRecord = {
   generation?: number;
   lastOrigin?: string;
   private?: boolean;
-  scope?: import('../../../packages/shared/src/navigation').SessionScope;
 };
 async function navigationPermissions(url: string) {
   return browser.permissions.request({
     permissions: [
       'webRequest',
       'cookies',
-      ...(BROWSER === 'chromium' ? ['scripting' as const] : []),
+      ...(BROWSER === 'chromium' ? ['scripting' as const] : ['webRequestBlocking' as const]),
     ],
     origins: [sitePattern(url)],
   });
@@ -648,36 +1009,103 @@ async function injectResolver(tabId: number) {
       runAt: 'document_idle',
     });
 }
-async function startResolver(job: any, force = false) {
+async function startResolver(job: any, force = false, sourceTabId?: number) {
   if (!/^https?:\/\//.test(job.page_url)) throw Error('Page navigation requires HTTP or HTTPS');
-  if (force) await scheduler.request({ action: 'control', id: job.id, paused: false, priority: null });
+  if (force)
+    await scheduler.request({ action: 'control', id: job.id, paused: false, priority: null });
   if (!(await scheduler.admitted(job.id))) return;
-  await native('claim_navigation', { id: job.id, force });
   const key = 'resolver-' + job.id,
-    stored = await browser.storage.local.get(key);
+    stored = await navigationStore.get(key);
+  if (stored[key] && (stored[key] as ResolverRecord).sessionEpoch !== (await browserEpoch)) {
+    if (!force)
+      throw Error('Browser restarted; explicitly continue this task in its original context');
+    await navigationStore.remove(key);
+    delete stored[key];
+  }
   if (stored[key]) {
     const record = stored[key] as ResolverRecord;
     try {
       await browser.tabs.get(record.tabId);
       await scheduler.heartbeat(job.id, record.tabId);
       await browser.tabs.update(record.tabId, { active: true });
+      const proposed = await scopeForTab(
+        browser as any,
+        BROWSER,
+        await profile,
+        record.tabId,
+        record.scope?.claim_generation ?? 1,
+      );
+      if (record.scope && !sameScope(record.scope, proposed))
+        throw Error('Task session changed; explicit transfer required');
+      const claim = await native('claim_navigation', {
+        id: job.id,
+        force,
+        scope: proposed,
+        source_generation: record.sourceGeneration ?? job.source_generation,
+      });
+      record.scope = claim.scope;
+      record.sourceGeneration = claim.source_generation;
       record.started = Date.now();
       record.steps = 0;
-      await browser.storage.local.set({ [key]: record });
-      await browser.tabs.sendMessage(record.tabId, { type: 'resolver_continue' }).catch(() => injectResolver(record.tabId));
+      await navigationStore.set({ [key]: record });
+      await injectResolver(record.tabId);
+      await browser.tabs.sendMessage(record.tabId, {
+        type: 'resolver_continue',
+      });
       return;
     } catch {
-      await browser.storage.local.remove(key);
+      await navigationStore.remove(key);
     }
   }
-  const tab = await browser.tabs.create({ url: job.page_url, active: true });
-  await scheduler.heartbeat(job.id, tab.id!);
-  await browser.storage.local.set({
+  const source = sourceTabId === undefined ? undefined : await browser.tabs.get(sourceTabId);
+  if (job.private && (!browser.storage.session || source?.incognito !== true || !privateWorker))
+    throw Error(
+      'Private navigation needs the original private context and ephemeral session storage',
+    );
+  if (
+    (job.private || job.navigation_scope?.private || job.navigation_scope?.container_id) &&
+    !source
+  )
+    throw Error(
+      'Reopen the original private/container task explicitly; default tab substitution denied',
+    );
+  if (source && Boolean(source.incognito) !== Boolean(job.private))
+    throw Error('Source tab private context does not match task');
+  const tab = await browser.tabs.create({
+    url: job.page_url,
+    active: true,
+    ...(source?.windowId !== undefined ? { windowId: source.windowId } : {}),
+    ...(BROWSER === 'firefox' && source?.cookieStoreId
+      ? { cookieStoreId: source.cookieStoreId }
+      : {}),
+  });
+  for (let attempts = 0; attempts < 200; attempts++) {
+    if ((await browser.tabs.get(tab.id!)).status === 'complete') break;
+    if (attempts === 199) throw Error('Page did not settle before its session claim');
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  const proposed = await scopeForTab(
+    browser as any,
+    BROWSER,
+    await profile,
+    tab.id!,
+    job.navigation_scope?.claim_generation ?? 1,
+  );
+  const claim = await native('claim_navigation', {
+    id: job.id,
+    force,
+    scope: proposed,
+    source_generation: job.source_generation,
+  });
+  await navigationStore.set({
     [key]: {
       tabId: tab.id!,
+      scope: claim.scope,
+      sourceGeneration: claim.source_generation,
+      sessionEpoch: await browserEpoch,
       started: Date.now(),
       steps: 0,
-      generation: 1,
+      generation: claim.source_generation,
       lastOrigin: new URL(job.page_url).origin,
       private: job.private ?? false,
     } satisfies ResolverRecord,
@@ -689,7 +1117,8 @@ async function startResolver(job: any, force = false) {
     bytes: 0,
     total: null,
   });
-  if (tab.status === 'complete') await injectResolver(tab.id!);
+  await scheduler.heartbeat(job.id, tab.id!);
+  await injectResolver(tab.id!);
 }
 let polling = false;
 async function pollResolvers(userGesture = false) {
@@ -697,9 +1126,20 @@ async function pollResolvers(userGesture = false) {
   polling = true;
   try {
     const snapshot = await browserSnapshot();
-    const storage: Record<string, any> = await browser.storage.local.get(null);
+    const storage: Record<string, any> = await navigationStore.get(null);
     if (!schedulerRecovered) {
-      await scheduler.reconcile(Object.entries(storage).filter(([key]) => key.startsWith('resolver-')).map(([key, record]) => ({ id: key.slice(9), tabId: record.tabId, origin: record.lastOrigin, private: record.private, cookieStoreId: record.scope?.cookie_store_id, scope: record.scope })));
+      await scheduler.reconcile(
+        Object.entries(storage)
+          .filter(([key]) => key.startsWith('resolver-'))
+          .map(([key, record]) => ({
+            id: key.slice(9),
+            tabId: record.tabId,
+            origin: record.lastOrigin,
+            private: record.private,
+            cookieStoreId: record.scope?.cookie_store_id,
+            scope: record.scope,
+          })),
+      );
       schedulerRecovered = true;
     }
     const active: any[] = [];
@@ -708,17 +1148,27 @@ async function pollResolvers(userGesture = false) {
       const job = snapshot.jobs.find((job: any) => job.id === key.slice(9));
       if (!job || ['complete', 'browser_complete', 'cancelled', 'failed'].includes(job.state)) {
         await scheduler.release(key.slice(9));
-        await browser.storage.local.remove(key);
+        await navigationStore.remove(key);
         await browser.tabs.remove(record.tabId).catch(() => {});
       } else {
         const tab = await browser.tabs.get(record.tabId).catch(() => null);
         if (tab) {
           await scheduler.heartbeat(job.id, record.tabId);
           if (record.wait) await scheduler.observe(job.id);
-        }
-        else {
-          await browser.storage.local.remove(key);
-          await scheduler.reconcile(Object.entries(storage).filter(([otherKey]) => otherKey.startsWith('resolver-') && otherKey !== key).map(([otherKey, r]) => ({ id: otherKey.slice(9), tabId: r.tabId, scope: r.scope, origin: r.lastOrigin, private: r.private, cookieStoreId: r.scope?.cookie_store_id })));
+        } else {
+          await navigationStore.remove(key);
+          await scheduler.reconcile(
+            Object.entries(storage)
+              .filter(([otherKey]) => otherKey.startsWith('resolver-') && otherKey !== key)
+              .map(([otherKey, r]) => ({
+                id: otherKey.slice(9),
+                tabId: r.tabId,
+                scope: r.scope,
+                origin: r.lastOrigin,
+                private: r.private,
+                cookieStoreId: r.scope?.cookie_store_id,
+              })),
+          );
         }
         active.push(job);
       }
@@ -735,7 +1185,7 @@ async function pollResolvers(userGesture = false) {
       if (!allowed) {
         continue;
       }
-      const stored: Record<string, any> = await browser.storage.local.get('resolver-' + job.id);
+      const stored: Record<string, any> = await navigationStore.get('resolver-' + job.id);
       if (!stored['resolver-' + job.id]) {
         // Admission is atomic in the service; workers cannot race tab limits.
         if (!(await scheduler.admitted(job.id))) continue;
@@ -750,8 +1200,8 @@ async function pollResolvers(userGesture = false) {
     polling = false;
   }
 }
-async function resolverStep(message: any, tabId: number, currentUrl: string) {
-  const storage: Record<string, any> = await browser.storage.local.get(null);
+async function resolverStep(message: any, tabId: number, currentUrl: string, documentId?: string) {
+  const storage: Record<string, any> = await navigationStore.get(null);
   const entry = Object.entries(storage).find(
     ([key, r]) => key.startsWith('resolver-') && r.tabId === tabId,
   );
@@ -763,6 +1213,24 @@ async function resolverStep(message: any, tabId: number, currentUrl: string) {
   if (!job || !['waiting_browser', 'waiting_user'].includes(job.state) || record.downloadId)
     return { click: false, repeat: false };
   record.lastOrigin = new URL(currentUrl).origin;
+
+  if (record.scope) {
+    if (record.documentId && record.documentId !== documentId)
+      return { click: false, repeat: false };
+    const binding = message.binding;
+    if (
+      !binding ||
+      binding.tabId !== tabId ||
+      binding.frameId !== 0 ||
+      binding.page !== currentUrl ||
+      binding.sessionKey !== sessionKey(record.scope) ||
+      binding.claimGeneration !== record.scope.claim_generation ||
+      !Number.isSafeInteger(binding.documentGeneration) ||
+      binding.documentGeneration < (record.documentGeneration ?? 0)
+    )
+      return { click: false, repeat: false };
+    record.documentGeneration = binding.documentGeneration;
+  }
   const decision = message.decision;
   if (!['wait', 'user', 'click'].includes(decision?.kind))
     throw Error('Invalid navigation decision');
@@ -788,22 +1256,40 @@ async function resolverStep(message: any, tabId: number, currentUrl: string) {
       return { click: false, repeat: false };
     } catch (error) {
       if (String(error).includes('solver_busy')) return { click: false, repeat: true };
-      await browser.storage.local.set({ lastError: String(error) });
+      await reportError(error);
       return { click: false, repeat: false };
     }
   }
   await scheduler.heartbeat(id, tabId);
-  const admission = await scheduler.request({ action: 'validate', id, generation: record.generation ?? 1 });
-  if (admission.tasks.find(task => task.id === id)?.status === 'manual') return { click: false, repeat: false };
+  const admission = await scheduler.request({
+    action: 'validate',
+    id,
+    generation: record.generation ?? 1,
+  });
+  if (admission.tasks.find((task) => task.id === id)?.status === 'manual')
+    return { click: false, repeat: false };
   if (decision.kind === 'wait' && (decision.blocker === 'countdown' || decision.wait)) {
     const duration = Number(decision.wait?.duration_ms ?? 30000);
-    record.wait = observeWait(record.wait, record.generation ?? 1, duration, Date.now(), await waitFingerprint(String(decision.wait?.fingerprint ?? 'countdown')));
+    record.wait = observeWait(
+      record.wait,
+      record.generation ?? 1,
+      duration,
+      Date.now(),
+      await waitFingerprint(String(decision.wait?.fingerprint ?? 'countdown')),
+    );
     const expiry = Number(decision.wait?.expires_at_ms);
     if (Number.isSafeInteger(expiry) && expiry > 0) record.wait.expires_at_ms = expiry;
     record.waitStarted ??= Date.now();
     await scheduler.wait(id, record.wait);
-    await browser.storage.local.set({ [entry[0]]: record });
-    await native('browser_status', { id, url: currentUrl, state: 'waiting_browser', message: 'Waiting for server readiness; the owning tab remains open.', bytes: 0, total: null });
+    await navigationStore.set({ [entry[0]]: record });
+    await native('browser_status', {
+      id,
+      url: currentUrl,
+      state: 'waiting_browser',
+      message: 'Waiting for server readiness; the owning tab remains open.',
+      bytes: 0,
+      total: null,
+    });
     return { click: false, repeat: false };
   }
   if (record.wait) {
@@ -811,13 +1297,23 @@ async function resolverStep(message: any, tabId: number, currentUrl: string) {
     // stale sessions cannot be made ready by a locally elapsed deadline.
     if (decision.kind === 'user') {
       await scheduler.request({ action: 'manual', id, generation: record.generation ?? 1 });
-      await native('browser_status', { id, url: currentUrl, state: 'waiting_user', message: String(decision.reason).slice(0, 1024), bytes: 0, total: null });
+      await native('browser_status', {
+        id,
+        url: currentUrl,
+        state: 'waiting_user',
+        message: String(decision.reason).slice(0, 1024),
+        bytes: 0,
+        total: null,
+      });
       return { click: false, repeat: false };
     }
-    if (!(await scheduler.readiness(id, decision.kind === 'click'))) return { click: false, repeat: true };
-    record.waitedMs = (record.waitedMs ?? 0) + Math.max(0, Date.now() - (record.waitStarted ?? Date.now()));
-    delete record.wait; delete record.waitStarted;
-    await browser.storage.local.set({ [entry[0]]: record });
+    if (!(await scheduler.readiness(id, decision.kind === 'click')))
+      return { click: false, repeat: true };
+    record.waitedMs =
+      (record.waitedMs ?? 0) + Math.max(0, Date.now() - (record.waitStarted ?? Date.now()));
+    delete record.wait;
+    delete record.waitStarted;
+    await navigationStore.set({ [entry[0]]: record });
   }
   const repeated =
     record.fingerprint === message.fingerprint && Date.now() - (record.clickedAt ?? 0) < 15000;
@@ -839,6 +1335,10 @@ async function resolverStep(message: any, tabId: number, currentUrl: string) {
     return { click: false, repeat: false };
   }
   if (decision.kind === 'click' && !repeated) {
+    if (settings.directCapture && message.request) {
+      const direct = await armDirect(id, record, message.request, job.filename ?? 'download');
+      if (direct) return { click: false, repeat: false, direct: true };
+    }
     record.steps++;
     record.fingerprint = String(message.fingerprint).slice(0, 4096);
     record.clickedAt = Date.now();
@@ -848,7 +1348,7 @@ async function resolverStep(message: any, tabId: number, currentUrl: string) {
       if (['http:', 'https:'].includes(url.protocol) && !url.username && !url.password)
         record.request = { method: request.method, url: url.href };
     } else delete record.request;
-    await browser.storage.local.set({ [entry[0]]: record });
+    await navigationStore.set({ [entry[0]]: record });
   }
   await native('browser_status', {
     id,
@@ -861,9 +1361,22 @@ async function resolverStep(message: any, tabId: number, currentUrl: string) {
   return { click: decision.kind === 'click' && !repeated, repeat: true };
 }
 browser.tabs.onUpdated.addListener((tabId, change) => {
+  if (change.status === 'loading')
+    void (async () => {
+      const records = await navigationStore.get(null);
+      for (const [key, value] of Object.entries(records)) {
+        const record = value as ResolverRecord;
+        if (key.startsWith('resolver-') && record.tabId === tabId) {
+          record.documentGeneration = 0;
+          delete record.documentId;
+          delete record.fingerprint;
+          await navigationStore.set({ [key]: record });
+        }
+      }
+    })().catch(() => {});
   if (change.url)
     void (async () => {
-      const storage = await browser.storage.local.get(null);
+      const storage = await navigationStore.get(null);
       const entry = Object.entries(storage).find(
         ([key, r]) => key.startsWith('resolver-') && (r as ResolverRecord).tabId === tabId,
       );
@@ -894,7 +1407,7 @@ browser.tabs.onUpdated.addListener((tabId, change) => {
             .catch(() => {});
         }
       }
-      const storage: Record<string, any> = await browser.storage.local.get(null);
+      const storage: Record<string, any> = await navigationStore.get(null);
       if (
         Object.entries(storage).some(
           ([key, r]) => key.startsWith('resolver-') && r.tabId === tabId && !r.downloadId,
@@ -906,10 +1419,13 @@ browser.tabs.onUpdated.addListener((tabId, change) => {
 browser.tabs.onRemoved.addListener(
   (tabId) =>
     void (async () => {
-      const storage: Record<string, any> = await browser.storage.local.get(null);
+      await captureCancels.get(tabId)?.();
+      captureCancels.delete(tabId);
+      for (const [key, r] of requests) if (r.tabId === tabId) requests.delete(key);
+      const storage: Record<string, any> = await navigationStore.get(null);
       for (const [key, r] of Object.entries(storage)) {
         if (key.startsWith('resolver-') && r.tabId === tabId) {
-          await browser.storage.local.remove(key);
+          await navigationStore.remove(key);
           if (!r.downloadId)
             await native('browser_status', {
               id: key.slice(9),
@@ -948,4 +1464,58 @@ async function browserSnapshot(): Promise<any> {
   } finally {
     eventPoll = null;
   }
+}
+
+async function resolverContext(tabId: number, frameId: number, documentId?: string) {
+  if (frameId !== 0 || (await browser.tabs.get(tabId)).status !== 'complete') return null;
+  const records = await navigationStore.get(null);
+  const entry = Object.entries(records).find(
+    ([key, value]: any) => key.startsWith('resolver-') && value.tabId === tabId,
+  );
+  if (!entry) return null;
+  const record = entry[1] as ResolverRecord;
+  if (record.sessionEpoch !== (await browserEpoch)) return null;
+  const job = (await browserSnapshot()).jobs.find((job: any) => job.id === entry[0].slice(9));
+  if (
+    !job ||
+    !record.scope ||
+    !sameScope(record.scope, job.navigation_scope) ||
+    ['cancelled', 'complete', 'failed'].includes(job.state)
+  )
+    return null;
+  const current = await scopeForTab(
+    browser as any,
+    BROWSER,
+    await profile,
+    tabId,
+    record.scope.claim_generation,
+    frameId,
+  );
+  if (!sameScope(current, record.scope)) return null;
+  if (documentId && record.documentId !== documentId) {
+    record.documentId = documentId;
+    record.documentGeneration = 0;
+    await navigationStore.set({ [entry[0]]: record });
+  }
+  return {
+    tabId,
+    frameId,
+    scope: record.scope,
+    sourceGeneration: record.sourceGeneration,
+    selectedHost: job.selected_host,
+    disabledAdapters: settings.disabledAdapters ?? [],
+    locale: settings.locale,
+    capabilities: { pageBlob: settings.directCapture },
+  };
+}
+
+async function reportError(error: unknown, privateSession = privateWorker) {
+  if (privateSession) {
+    if (browser.storage.session)
+      await browser.storage.session.set({
+        lastError: 'Private browser operation failed; inspect the current owned task.',
+      });
+    return;
+  }
+  await browser.storage.local.set({ lastError: String(error) });
 }
