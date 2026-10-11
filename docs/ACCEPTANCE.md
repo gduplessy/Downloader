@@ -32,7 +32,7 @@ Ignored local evidence is under .local/evidence. Fixture URLs and request/sessio
 
 ## Limits and remaining qualification
 
-- The 0.3.1 disposable filesystem harness compiles and has an opt-in three-platform CI workflow. Local Windows image formatting was not attempted without administrator rights; actual platform results are pending.
+- [Filesystem CI on 0.3.1](https://github.com/gduplessy/Downloader/actions/runs/38108337612) passed actual disk-full/restart, readonly-file recovery, collision and cross-volume publication on Linux and macOS. Windows exposed a fixture stack overflow; 0.3.2 moves the 1 MiB filler buffer to the heap. Windows acceptance remains pending until the repaired run passes. Local Windows image formatting was not attempted without administrator rights.
 
 - The screenshot's specific host and changing live websites have not been qualified.
 - Ordinary automatic interception needs further real-browser coverage. Hosted GET forms can provide explicit replay context when request observation is unavailable.

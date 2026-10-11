@@ -2,6 +2,11 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.3.2 — Windows fixture stack repair
+
+- Move the filesystem filler buffer to the heap after real Windows CI exposed its default-stack overflow.
+- Record successful Linux/macOS disk-full, permission, collision and cross-volume recovery acceptance; Windows remains pending until the repaired fixture passes.
+
 ## 0.3.1 — Disposable filesystem qualification
 
 - Add bounded 128 MiB image fixtures for actual disk-full, readonly-file refusal, cross-volume publication, collisions and recovery after service restart.

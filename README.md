@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.3.1<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.3.2<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -55,7 +55,7 @@ Navigation is bounded to three active pages and one page per host. Browser profi
 
 ## Build from source
 
-Filesystem acceptance can be run with `node scripts/qualify-filesystem.mjs` after building the `qualify_filesystem` Rust example. It creates a bounded disposable image; Windows requires administrator rights and Linux requires loop-mount permission. The optional CI `filesystem` input runs the three-platform matrix. Acceptance results remain pending; see the [transfer evidence](docs/TRANSFER_ENGINE.md).
+Filesystem acceptance can be run with `node scripts/qualify-filesystem.mjs` after building the `qualify_filesystem` Rust example. It creates a bounded disposable image; Windows requires administrator rights and Linux requires loop-mount permission. The optional CI `filesystem` input runs the three-platform matrix. Linux/macOS passed; Windows awaits the repaired harness run. See the [acceptance record](docs/ACCEPTANCE.md).
 
 ### Prerequisites
 
