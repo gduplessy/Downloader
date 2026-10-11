@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.7.0 — Owner-fenced browser stream foundations
+
+- Add direct-response begin/chunk/end/abort storage with strict bounded framing, durable acknowledgements, quotas, EOF verification, scanning and no-overwrite publication.
+- Classify replay risk before probing and fence scoped navigation status/resolve operations by profile, cookie store, partition and generation.
+- Keep new private task/stream metadata and event payloads in memory; existing private history cleanup remains a separate approval gate. Browser runtime/live-provider qualification remains pending.
+
 ## 0.5.6 — Plan remaining hosted-page navigation work
 
 - Add thirteen NAV plans grounded in refreshed main, covering remaining FlareSolverr qualification and NAV-02 through NAV-13 implementation.

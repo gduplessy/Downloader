@@ -22,3 +22,6 @@ mod process;
 
 #[cfg(not(windows))]
 mod system_proxy;
+
+pub mod browser_stream;
+pub mod navigation;
