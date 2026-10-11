@@ -14,6 +14,7 @@ pub struct Engine {
     pub store: Arc<Mutex<Store>>,
     pub jobs: Mutex<HashMap<String, transfer::SharedJob>>,
     pub settings: Mutex<Settings>,
+    navigation_scheduler: Mutex<crate::navigation_scheduler::Scheduler>,
     pub queues: Mutex<Vec<Queue>>,
     contexts: Mutex<HashMap<String, RequestContext>>,
     controls: Mutex<HashMap<String, Arc<AtomicU8>>>,
@@ -96,10 +97,12 @@ impl Engine {
                 }
             })
             .collect();
+        let navigation_scheduler = crate::navigation_scheduler::Scheduler::load(&store)?;
         let engine = Arc::new(Self {
             store: Arc::new(Mutex::new(store)),
             jobs: Mutex::new(jobs),
             settings: Mutex::new(settings),
+            navigation_scheduler: Mutex::new(navigation_scheduler),
             queues: Mutex::new(queues),
             contexts: Mutex::new(contexts),
             controls: Mutex::new(HashMap::new()),
@@ -346,8 +349,158 @@ impl Engine {
         jobs.insert(job.id.clone(), Arc::new(Mutex::new(job.clone())));
         Ok(job)
     }
+    fn schedule_navigation(
+        &self,
+        owner: &str,
+        scope: Option<crate::navigation::SessionScope>,
+        request: crate::navigation_scheduler::SchedulerRequest,
+    ) -> Result<serde_json::Value> {
+        use crate::navigation_scheduler::QueueStatus;
+        uuid::Uuid::parse_str(owner).context("Invalid browser profile identifier")?;
+        if let Some(scope) = &scope {
+            scope.validate()?;
+            if scope.profile != owner {
+                bail!("Scheduler scope owner mismatch");
+            }
+        }
+        // Snapshot live jobs before queue/store locks; do not invert job persistence lock order.
+        let mut jobs: Vec<Job> = self
+            .jobs
+            .lock()
+            .unwrap()
+            .values()
+            .map(|job| job.lock().unwrap().clone())
+            .collect();
+        jobs.sort_by_key(|job| job.created);
+        let mut scheduler = self.navigation_scheduler.lock().unwrap();
+        scheduler
+            .tasks
+            .retain(|task| jobs.iter().any(|job| job.id == task.id));
+        for job in &jobs {
+            if job.page_url.is_none() {
+                continue;
+            }
+            let terminal = matches!(
+                job.state,
+                JobState::Complete
+                    | JobState::BrowserComplete
+                    | JobState::Cancelled
+                    | JobState::Failed
+            );
+            if terminal {
+                if let Some(task) = scheduler.tasks.iter_mut().find(|t| t.id == job.id) {
+                    task.lease = None;
+                    task.wait = None;
+                    task.status = QueueStatus::Finished;
+                    task.reason = "released".into();
+                }
+                continue;
+            }
+            if !matches!(
+                job.state,
+                JobState::WaitingBrowser
+                    | JobState::WaitingUser
+                    | JobState::SolvingChallenge
+                    | JobState::BrowserDownloading
+            ) {
+                continue;
+            }
+            let context_owner = self
+                .contexts
+                .lock()
+                .unwrap()
+                .get(&job.id)
+                .and_then(|c| c.profile.clone());
+            if job
+                .navigation_owner
+                .as_deref()
+                .is_some_and(|assigned| assigned != owner)
+                || context_owner
+                    .as_deref()
+                    .is_some_and(|assigned| assigned != owner)
+            {
+                continue;
+            }
+            let original = url::Url::parse(job.page_url.as_ref().unwrap())?;
+            let mut hosts = vec![original
+                .host_str()
+                .context("Missing navigation host")?
+                .to_ascii_lowercase()];
+            if let Some(current) = &job.navigation_url {
+                let url = url::Url::parse(current)?;
+                if let Some(host) = url.host_str() {
+                    let host = host.to_ascii_lowercase();
+                    if !hosts.contains(&host) {
+                        hosts.push(host);
+                    }
+                }
+            }
+            if let Some(task) = scheduler.tasks.iter_mut().find(|t| t.id == job.id) {
+                if task.status == QueueStatus::Finished {
+                    task.status = QueueStatus::Queued;
+                    task.reason = "queued".into();
+                }
+                // Redirect/site locks extend atomically; a collision blocks further automated steps.
+                for host in hosts {
+                    if !task.host_keys.contains(&host) {
+                        task.host_keys.push(host);
+                    }
+                }
+            } else {
+                scheduler.enqueue(job.id.clone(), 1, owner.into(), hosts)?;
+                scheduler.tasks.last_mut().unwrap().private = job.private;
+            }
+        }
+        let request_id = match &request {
+            crate::navigation_scheduler::SchedulerRequest::Admit { id, .. }
+            | crate::navigation_scheduler::SchedulerRequest::Heartbeat { id, .. }
+            | crate::navigation_scheduler::SchedulerRequest::Wait { id, .. }
+            | crate::navigation_scheduler::SchedulerRequest::Ready { id, .. }
+            | crate::navigation_scheduler::SchedulerRequest::Release { id, .. }
+            | crate::navigation_scheduler::SchedulerRequest::Manual { id, .. }
+            | crate::navigation_scheduler::SchedulerRequest::Validate { id, .. }
+            | crate::navigation_scheduler::SchedulerRequest::Notify { id, .. } => Some(id),
+            crate::navigation_scheduler::SchedulerRequest::Control { id, .. } => id.as_ref(),
+            _ => None,
+        };
+        if let Some(id) = request_id {
+            let task = scheduler
+                .tasks
+                .iter_mut()
+                .find(|t| &t.id == id)
+                .context("Unknown navigation task")?;
+            if task.owner != owner {
+                bail!("Scheduler task owner mismatch");
+            }
+            if let Some(existing) = &task.scope {
+                if scope.as_ref() != Some(existing) {
+                    bail!("Scheduler scope is stale");
+                }
+            } else if let Some(scope) = scope.clone() {
+                if scope.private != task.private {
+                    bail!("Scheduler private scope mismatch");
+                }
+                task.scope = Some(scope);
+            }
+        }
+        let now = chrono::Utc::now().timestamp_millis();
+        let result = scheduler.apply(owner, request, now)?;
+        scheduler.persist(&self.store.lock().unwrap())?;
+        let mut result = result;
+        result.tasks.retain(|t| t.owner == owner);
+        // Host lock identities are service internal. Browser UI needs only the typed reason.
+        for task in &mut result.tasks {
+            task.host_keys.clear();
+        }
+        Ok(serde_json::to_value(result)?)
+    }
     pub fn command(self: &Arc<Self>, command: Command) -> Result<serde_json::Value> {
         match command {
+            Command::NavigationScheduler {
+                owner,
+                scope,
+                request,
+            } => self.schedule_navigation(&owner, scope, request),
             Command::TestSolver { settings } => {
                 let result = crate::solver::test(&settings)?;
                 self.cleanup_solver_sessions();

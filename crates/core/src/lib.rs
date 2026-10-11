@@ -5,6 +5,7 @@ pub mod finalize;
 pub mod grabber;
 pub mod media;
 pub mod model;
+pub mod navigation;
 pub mod security;
 pub mod solver;
 pub mod storage;
@@ -22,3 +23,5 @@ mod process;
 
 #[cfg(not(windows))]
 mod system_proxy;
+
+pub mod navigation_scheduler;

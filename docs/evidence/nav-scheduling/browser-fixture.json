@@ -1,0 +1,26 @@
+{
+  "fixture": "scheduler-real-engine-browser-ui",
+  "transport": "Fixture browser API shim to isolated real Rust Engine; not installed-extension/native-messaging qualification",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "rows": 50,
+  "resources": [
+    {
+      "active": 3,
+      "processes": 7,
+      "working_set_mib": 606.9,
+      "private_mib": 189
+    },
+    {
+      "active": 20,
+      "processes": 24,
+      "working_set_mib": 2424.9,
+      "private_mib": 813.6
+    }
+  ],
+  "assertions": [
+    "3 then20 real renderer tabs admitted by real engine with matching live fixture tab IDs",
+    "Lowering20 to3 retained20 existing leases and tabs",
+    "Twenty-first task denied without closing existing tabs",
+    "Visible settings saved20, pause/resume control paused admission, screenshot captured"
+  ]
+}

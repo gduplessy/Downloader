@@ -325,6 +325,12 @@ pub enum Command {
     },
     Add(AddJob),
     Navigate(AddJob),
+    NavigationScheduler {
+        owner: String,
+        #[serde(default)]
+        scope: Option<crate::navigation::SessionScope>,
+        request: crate::navigation_scheduler::SchedulerRequest,
+    },
     ClaimNavigation {
         id: String,
         owner: String,

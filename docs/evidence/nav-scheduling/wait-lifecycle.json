@@ -1,0 +1,15 @@
+{
+  "fixture": "browser-to-real-engine-wait-lifecycle",
+  "transport": "Production UI browser API transport shim; installed extension alarms/native messaging are separate acceptance",
+  "assertions": [
+    "Same-host second job held without a lease",
+    "Replaced wait rejects stale ready generation",
+    "Elapsed deadline with ready=false remains waiting",
+    "Actual engine process restart preserved replaced wait metadata",
+    "Live-tab reconciliation then current readiness activates task",
+    "Expired wait token produces manual action",
+    "Cancellation removes wait and lease"
+  ],
+  "source_generation": 1,
+  "scope_boundary": "Temporary C baseline; root integration must derive source and claim generations from persisted Job ownership before NAV11 qualification"
+}

@@ -1,6 +1,71 @@
 # Changelog
 
+## 0.8.4 — Stack scheduler on owned adapter selection
+
+- Merge the adapter prerequisite into the scheduler branch, preserving preview lifetime cancellation, session-bound selection, durable waits, configurable admission, and every prior release entry.
+- Use the scheduler countdown validator in adapter observation so visible timers, invalid clocks, and disabled download controls retain consistent wait metadata and submission blocking.
+- Preserve both adapter and scheduler qualification boundaries; installed-extension/native ownership and live-host acceptance remain pending.
+
+## 0.8.3
+
+- Fence browser alarms by source and wait generation so replaced countdowns cannot wake previous actions.
+- Re-admit unresolved released navigation without reviving cancelled jobs; hash durable wait fingerprints into opaque bounded values.
+- Add isolated real Engine/browser queue and lifecycle fixtures, resource observations and explicit ownership/browser/live-host qualification boundaries.
+
+## 0.8.1
+
+- Integrate service-owned navigation admission and extension queue controls, durable alarms with fresh readiness observations, opt-in notifications, session-aware recovery, and cancellation.
+- Add profile/restart/private-state service fixtures and browser alarm/clock/timer regressions.
+
+
+## 0.8.0
+
+- Add durable navigation queue admission, conservative host locks, fenced tab leases and restart-safe wait metadata with deterministic regression fixtures.
+
+
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
+
+## 0.6.5 — Reconcile adapters with shared navigation contracts
+
+- Merge the shared navigation prerequisite into the adapter branch while preserving owned selection, preview cancellation, and all prior roadmap and release entries.
+- Keep installed-extension/native binding and live-provider qualification pending; the adapter PR remains a draft.
+
+## 0.6.4 — Cancel pending preview authorization safely
+
+- Abort preview lifetime on Cancel, Refresh or replacement; check that lifetime before and after async worker authorization so a closed dialog cannot submit later.
+- Restore control highlighting even on worker failure and focus the first recovery button when no safe candidates exist.
+- Verify the real resolver bundle against a scoped mock worker: ordinary selection hashes the intended file; delayed authorization after Cancel or claim takeover produces no clicks; keyboard generic recovery disables only its adapter.
+- Combined installed-extension/native worker binding acceptance is transferred to the integration coordinator and remains pending separately.
+
+## 0.6.3 — Complete adapter recovery and local qualification evidence
+
+- Offer localized manual/generic recovery when layout changes leave no safe candidate; preserve independent adapter disable and session-bound refresh.
+- Expand synthetic browser request/hash checks to 120, covering submitter overrides, hidden controls, scripts, token replacement and closed shadow roots. Publish exact tested source hashes and explicit live/native acceptance limits.
+- Keep separate provider matrix rows unqualified and preserve all selected-host provenance/one-use fixtures.
+
+## 0.6.1 — Qualify local adapter layouts and request outcomes
+
+- Add sanitized four-provider synthetic DOM/HTTP fixtures, one-use POST traps, intended filename/hash verification, evidence expiry/schema checks and observation-only opt-in gstack smoke tooling.
+- Adopt shared navigation scope contracts; integrate visible timer metadata, generation-bound explicit same-origin blob capability and actual submitter form semantics.
+- Qualify 80 Chromium 149 DOM/request/hash checks and keyboard selection/stale-preview recovery on Windows x64. Live providers and native transfer acceptance remain pending.
+
+## 0.6.0 — Versioned hosted-page adapters and explicit selection
+
+- Add exact-host bundled adapters, evidence-backed candidate selection, unsafe/ad/purchase/torrent rejection and conservative live-provider fallback.
+- Add generation/session/DOM-bound preview validation, one-authorization submission gates and accessible selection controls in all six locales.
+- Integrate the content resolver with an ownership-aware context hook; retain conservative behavior until worker integration is present. Provider layouts remain unqualified.
+- Verify 44 extension regressions and extension TypeScript checks.
+
+## 0.5.7 — Shared navigation contracts
+
+- Define matching Rust/TypeScript session scope, fenced navigation task, wait metadata, replay policy and bounded browser-stream envelopes for the parallel implementation batches.
+- Validate profile/generation/partition metadata and test native-frame size and serialization. Feature behavior remains in its respective NAV batch.
+
+## 0.5.6 — Plan remaining hosted-page navigation work
+
+- Add thirteen NAV plans grounded in refreshed main, covering remaining FlareSolverr qualification and NAV-02 through NAV-13 implementation.
+- Record owner-selected hosts, direct POST/blob streaming, required Chromium debugger declaration with capture off by default, local-first CAPTCHA with a $0 paid-test budget, and navigation limits of three by default/up to twenty.
+- Define six implementation owners, shared contracts, isolated worktrees, frequent verified commits, dependent PRs and explicit acceptance boundaries. Planning does not close implementation or live-qualification roadmap items.
 
 ## 0.5.5 — Correct challenge roadmap status
 
