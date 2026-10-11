@@ -51,12 +51,22 @@ await build({
       name: 'isolated-fixture-host',
       setup(builder) {
         builder.onLoad({ filter: /(?:background|transport|resolver)\.ts$/ }, async ({ path }) => ({
-          contents: (await readFile(path, 'utf8'))
+          contents: process.env.NAV_TRACE === '1' ? (await readFile(path, 'utf8'))
             .replaceAll('org.downloader.native', host)
+            .replace(
+              'async function resolverContext(tabId: number, frameId: number, documentId?: string) {',
+              'async function resolverContext(tabId: number, frameId: number, documentId?: string) { console.info("resolver-context-entry",tabId,frameId,documentId);',
+            )
+            .replace("if (frameId !== 0 || (await browser.tabs.get(tabId)).status !== 'complete') return null;", "const ctxTab = await browser.tabs.get(tabId); console.info('resolver-context-tab',JSON.stringify(ctxTab)); if(frameId !== 0 || ctxTab.status !== 'complete') return null;")
+            .replace("if (record.sessionEpoch !== (await browserEpoch)) return null;", "console.info('resolver-context-record',JSON.stringify(record),await browserEpoch); if (record.sessionEpoch !== (await browserEpoch)) return null;")
+            .replace(
+              'const job = (await browserSnapshot()).jobs.find((job: any) => job.id === entry[0].slice(9));',
+              'const job = (await browserSnapshot()).jobs.find((job: any) => job.id === entry[0].slice(9)); console.info("resolver-context-authority",JSON.stringify({record,job}));',
+            )
             .replaceAll(
               '.catch(() => {})',
               '.catch(error => console.error("fixture resolver error",String(error)))',
-            ),
+            ) : (await readFile(path, 'utf8')).replaceAll('org.downloader.native', host),
           loader: 'ts',
         }));
       },
@@ -252,11 +262,7 @@ try {
     event.error ? waiter?.reject(Error(event.error.message)) : waiter?.resolve(event.result);
   };
   const version = await command('Browser.getVersion');
-  await command('Target.setAutoAttach', {
-    autoAttach: true,
-    waitForDebuggerOnStart: false,
-    flatten: true,
-  });
+
   let loadResult;
   try {
     loadResult = await command('Extensions.loadUnpacked', { path: ext });
@@ -308,6 +314,7 @@ try {
     targetId: worker.targetId,
     flatten: true,
   });
+  await command('Runtime.enable', {}, sessionId);
   const evaluate = async (expression) => {
     const value = await command(
       'Runtime.evaluate',
@@ -342,7 +349,13 @@ try {
     `chrome.runtime.sendMessage({type:'navigation_queue_continue',id:${JSON.stringify(jobId)}})`,
   );
   let job;
-  const deadline = Date.now() + 90000;
+  if (process.env.NAV_TRACE === '1') {
+  const scopeProbe = await evaluate(
+    `(async()=>{const tabs=await chrome.tabs.query({});const owned=tabs.find(t=>t.url?.includes('/nav-adapters/'));const results=[];for(const details of [{tabId:owned.id,frameId:0},{tabId:owned.id}]){try{results.push({details,value:await chrome.cookies.getPartitionKey(details)})}catch(error){results.push({details,error:String(error)})}}return {owned,results}})()`,
+  );
+  console.log(JSON.stringify({ scopeProbe }));
+  }
+  const deadline = Date.now() + Number(process.env.NAV_DEADLINE_MS ?? 90000);
   for (let attempt = 0; attempt < 600 && Date.now() < deadline; attempt++) {
     const listed = JSON.parse(
       execFileSync(cli, ['--json', 'list'], { env, windowsHide: true, encoding: 'utf8' }),
@@ -360,6 +373,7 @@ try {
       job,
       requests,
       consoleEvents,
+      extensionSnapshot: await evaluate(`chrome.runtime.sendMessage({type:'snapshot'})`),
       diagnostics: await evaluate(`chrome.runtime.sendMessage({type:'diagnostics'})`),
     }),
   );
@@ -379,6 +393,7 @@ try {
     architecture: process.arch,
     extensionAPI: 'chrome.debugger Fetch.takeResponseBodyAsStream / IO.read',
     transport: 'persistent chrome.runtime.connectNative',
+    diagnosticSourceChanges: process.env.NAV_TRACE === '1',
     submissions: requests.length,
     sha256: digest(payload),
     ...run.result.value,

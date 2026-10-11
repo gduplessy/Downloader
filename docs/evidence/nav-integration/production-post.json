@@ -1,0 +1,28 @@
+{
+  "browser": "Chrome/155.0.8059.39",
+  "os": "win32",
+  "architecture": "x64",
+  "extensionAPI": "chrome.debugger Fetch.takeResponseBodyAsStream / IO.read",
+  "transport": "persistent chrome.runtime.connectNative",
+  "diagnosticSourceChanges": false,
+  "submissions": 1,
+  "sha256": "ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862",
+  "productionBackground": true,
+  "productionResolver": true,
+  "limitations": [
+    "Local fixtures; live hosts/accounts pending",
+    "No stable/ESR Firefox or other OS qualification from this run",
+    "Fixture manifest grants loopback optional permissions; runtime permission prompt is not qualified",
+    "Only POST full-worker acceptance in this increment; blob/cancel/replacement matrix pending"
+  ],
+  "version": "0.8.13",
+  "bytes": 262161,
+  "state": "complete",
+  "nativeVerifiedSha256": "ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862",
+  "sourceHashes": {
+    "apps/extension/src/background.ts": "e4bb1d09a8a537b5cc8aebdac67c147696a19d83b38a2a48b57e076a75cb3444",
+    "apps/extension/src/resolver.ts": "2a5dedddd2a5d895d0109b1d4f127a4bb00699390fb9d9942f1386a51940754b",
+    "apps/extension/src/navigation/streams/transport.ts": "5b5b3ba530b907e4fc728fa6dd29d3c56acfed7d3025d0c9bf9b6343b25b010c",
+    "apps/extension/src/navigation/session/projection.ts": "cafde43f53565cced1d2000615ffd0aeaecc35506ec48e8089bf03b4cabf381f"
+  }
+}

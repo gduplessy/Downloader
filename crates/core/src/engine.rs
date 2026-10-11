@@ -1634,6 +1634,11 @@ fn filter_browser_projection(
     private: bool,
     scopes: &[crate::navigation::SessionScope],
 ) {
+    // Incremental subscriptions have a null snapshot. Mutable indexing would
+    // otherwise turn null into {"jobs": null}, breaking the native event bridge.
+    if !value.is_object() {
+        return;
+    }
     if let Some(jobs) = value["jobs"].as_array_mut() {
         jobs.retain(|job| browser_job_visible(job, owner, private, scopes));
     }

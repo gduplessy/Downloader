@@ -2,6 +2,13 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.8.13
+
+- Preserve null snapshots in scoped incremental subscriptions; prevent cached event cursors from surviving visible authority changes.
+- Add six native selection/subscription regressions and three authority-cursor tests; 90 extension tests and type checks pass.
+- Qualify the production Chrome 155 worker/resolver POST flow: one original submission, 262,161 bytes and matching native SHA-256, with diagnostic source changes disabled.
+- Broader installed-flow acceptance remains pending; preserve prior failures and qualification boundaries in evidence.
+
 ## 0.8.12
 
 - Isolate regular/private scheduler projections, mutation authority and recovery while retaining shared service capacity and host locks.
