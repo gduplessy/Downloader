@@ -1,80 +1,197 @@
-# Downloader
+<div align="center">
 
-An original GPL-3.0 download manager: Rust/libcurl engine, Tauri desktop UI, Chrome/Edge/Firefox extension sources. All operation stays local.
+![Downloader — Reliable downloads, under your control](docs/assets/banner.svg)
 
-**Development preview; full IDM parity is not complete.** See [implementation status](docs/IMPLEMENTATION.md) and [compatibility](docs/COMPATIBILITY.md).
+**An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-## Build
+[![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
+[![Status: development preview](https://img.shields.io/badge/status-development_preview-E9BD75?style=flat-square&labelColor=18212B)](docs/IMPLEMENTATION.md)
 
-Install Rust 1.93.1, Node 22+, pnpm 10 and the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).
+[Features](#what-you-can-do) · [Build](#build-from-source) · [Browser extension](#connect-your-browser) · [Architecture](#architecture) · [Contribute](#contributing)
+
+</div>
+
+## Downloads you can trust
+
+Downloader is an original, GPL-3.0 alternative to Internet Download Manager. It keeps transfers local and makes recovery visible: downloading, verification, assembly, scanning, and completion have distinct states. Browser downloads stay recoverable if a desktop handoff fails.
+
+No accounts, advertising, or telemetry. Credentials belong in the operating system's credential store; browser session material is temporary.
+
+> **Development preview.** A Windows desktop build and hosted-page browser fixtures have been verified locally. Full IDM parity, installer acceptance, and the complete platform/browser matrix are still in progress. See the [implementation roadmap](docs/IMPLEMENTATION.md), [acceptance evidence](docs/ACCEPTANCE.md), and [compatibility matrix](docs/COMPATIBILITY.md).
+
+![Downloader desktop showing completed transfers, browser-owned downloads, and a page waiting for user input](docs/assets/desktop.png)
+
+<p align="center"><sub>Actual Windows preview, using local download fixtures. No sample production downloads or private session data.</sub></p>
+
+## What you can do
+
+| Capability                     | In the preview                                                                                                                                              |
+| :----------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Reliable transfers**         | Rust/libcurl, validated byte ranges, dynamic segmentation, single-connection fallback, bounded retries, and SHA-256 verification.                           |
+| **Recover interrupted work**   | SQLite checkpoints, pause/resume, remote validator checks, safe restart decisions, and recoverable finalization.                                            |
+| **Organize downloads**         | Searchable table, categories, queues, bulk URLs and numbered templates, source refresh, and import/export.                                                  |
+| **Connect your browser**       | Chrome/Edge and Firefox extension sources, context menus, opt-in capture, per-site access, exclusions, and browser fallback.                                |
+| **Navigate hosted pages**      | Dedicated browser tabs, recognizable free-download controls, countdowns, GET form/session capture, and explicit manual steps.                               |
+| **Control bandwidth**          | Configurable concurrency, speed limits, rolling quotas, and queue scheduling. Advanced scheduling remains release work.                                     |
+| **Inspect media and websites** | yt-dlp adapter, verified Windows component installation, static crawl selection, and remote ZIP/ZIP64 metadata. These workflows need broader qualification. |
+| **Use your language**          | English, French, Spanish, German, Arabic, and Simplified Chinese dictionaries; RTL and light/dark/system themes. Native-language review is pending.         |
+
+### Hosted pages, not just direct links
+
+Some file hosts place the actual download behind several pages. Choose **Navigate download page** in the desktop Add dialog, or use the extension context menu:
+
+```text
+Hosted page → free-download step → countdown → final GET link/form
+                                                    ↓
+                           browser paused → desktop accepted → verified file
+```
+
+The resolver respects waiting periods and stops for CAPTCHA, sign-in, payment, or ambiguous controls. Complete the manual step in the tab, then choose **Continue page navigation**. Non-replayable POST requests and browser-generated blobs remain browser-managed.
+
+Navigation is bounded to three active pages and one page per host. Browser profiles claim navigation jobs exclusively to avoid competing workers. This is a heuristic workflow, not universal site automation; changing live sites require separate acceptance testing. There is no CAPTCHA, premium-access, or DRM bypass.
+
+## Build from source
+
+### Prerequisites
+
+- **Rust 1.93.1**, pinned by `rust-toolchain.toml`.
+- **Node.js 22+** and **pnpm 10.28.2**, pinned in `package.json`.
+- The [Tauri 2 platform prerequisites](https://v2.tauri.app/start/prerequisites/), including the native compiler and webview dependencies.
 
 ```sh
+git clone https://github.com/gduplessy/Downloader.git
+cd Downloader
 pnpm install --frozen-lockfile
 cargo build -p downloader-service -p downloader-cli
 node scripts/prepare-sidecar.mjs --debug
 pnpm --filter @downloader/desktop exec tauri dev
 ```
 
-For an installer, use `cargo build --release`, prepare the sidecar without `--debug`, then `pnpm --filter @downloader/desktop exec tauri build`. Binaries live in `target/debug` or `target/release`; append `.exe` on Windows. Set `DOWNLOADER_DATA_DIR` to isolate testing.
+For a production build:
 
-## Browser extension
+```sh
+cargo build --release -p downloader-service -p downloader-cli
+node scripts/prepare-sidecar.mjs
+pnpm --filter @downloader/desktop exec tauri build
+```
+
+The CLI is `target/debug/downloader` or `target/release/downloader`; add `.exe` on Windows. Set `DOWNLOADER_DATA_DIR` to an absolute directory to isolate a test instance. Installer targets are NSIS, DMG, DEB, and AppImage; cross-platform build configuration is not platform acceptance evidence.
+
+## Connect your browser
 
 ```sh
 pnpm --filter @downloader/extension build
-downloader register --chrome-id EXTENSION_ID
 ```
 
-Read the generated ID from `apps/extension/dist/extension-id.txt`. Load `apps/extension/dist/chromium` unpacked in Chrome/Edge; load the Firefox manifest temporarily in Firefox. Permanent Firefox distribution requires Mozilla signing.
+| Browser       | Load the development extension                                                                                                          |
+| :------------ | :-------------------------------------------------------------------------------------------------------------------------------------- |
+| Chrome / Edge | Open `chrome://extensions` / `edge://extensions`, enable Developer mode, and **Load unpacked** from `apps/extension/dist/chromium`.     |
+| Firefox       | Open `about:debugging#/runtime/this-firefox`, choose **Load Temporary Add-on**, and select `apps/extension/dist/firefox/manifest.json`. |
 
-Enable integration in extension options. Capture starts disabled. The browser download is paused and cancelled only after a durable job and a viable desktop transfer. Failed handoffs resume browser handling.
+Read the Chromium ID from `apps/extension/dist/extension-id.txt`, then register the native host from the desktop integration settings or with the CLI:
 
-Site access is granted for one site by default. Enabling all websites is an explicit optional choice. Navigation jobs have an exclusive browser-profile claim; choosing Continue in another profile transfers the claim.
+```sh
+target/debug/downloader register --chrome-id EXTENSION_ID
+```
 
-### Hosted pages
+On Windows use `target/debug/downloader.exe`. Registration uses your current user account and configures Chrome, Edge, and Firefox native messaging. Permanent Firefox distribution requires Mozilla signing.
 
-Enable **Navigate download page** in the desktop Add dialog or use that extension context menu. A dedicated browser tab follows recognizable free-download controls, respects countdowns, and stops for CAPTCHA, login or ambiguity. Use **Continue page navigation** after manual steps. Cookies and relevant headers are temporary. POST/blob downloads remain browser-owned.
-
-This is a bounded heuristic, not universal website automation. No premium access, CAPTCHA, waiting period or DRM bypass is implemented.
+Enable integration in the extension options and grant access to a specific site. Capture is disabled initially; access to all sites is a separate opt-in. The browser download is cancelled only after durable desktop acceptance and a viable transfer. The options page includes native-host diagnostics.
 
 ## Media components
 
-The Windows component lock pins official yt-dlp, FFmpeg/ffprobe and Deno assets by SHA-256. Standalone yt-dlp includes matching EJS; no external Python installation is needed.
+The Windows component lock pins official yt-dlp, FFmpeg/ffprobe, and Deno assets by SHA-256. Standalone yt-dlp includes matching EJS components, so a separate Python installation is unnecessary.
 
 ```sh
-node scripts/components.mjs install /absolute/components/directory
+node scripts/components.mjs install /absolute/path/to/components
 ```
 
-Set that path in **Media components**. Explicit lock updates retain the previous bundle for rollback. Cross-platform component qualification and full source distribution remain release gates; see [third-party components](docs/THIRD_PARTY.md).
+Set the resulting path in **Media components** in the desktop settings. Component replacement retains the previous bundle for rollback. Media tools are currently installed separately; complete assembly/playlist/live fixtures, cross-platform bundles, and corresponding-source distribution remain release gates. See [third-party components](docs/THIRD_PARTY.md).
 
 ## CLI
+
+After building, add the CLI directory to your `PATH` or invoke its full path:
 
 ```sh
 downloader add https://example.com/file.zip --directory /absolute/download/path
 downloader add https://example.com/file.zip --sha256 EXPECTED_SHA256
 downloader add https://example.com/download-page --navigate
-downloader --json diagnostics
 downloader list
 downloader pause JOB_ID
 downloader resume JOB_ID
 downloader resume JOB_ID --restart
 downloader media https://example.com/video
+downloader --json diagnostics
 downloader export downloads.json
 downloader import downloads.json
 downloader quit
 ```
 
-Restart discards partial bytes explicitly. Embedded URL credentials are rejected; saved credentials use the OS keyring. The engine uses a private named pipe/Unix socket, with no public HTTP control server.
+`--restart` explicitly discards partial bytes. Embedded URL credentials are rejected; saved credentials use the OS keyring. Diagnostics redact sensitive download context.
 
-## Tests
+## Architecture
+
+```mermaid
+flowchart LR
+    Desktop["Desktop · Tauri / React"] --> IPC["Restricted per-user IPC"]
+    CLI["CLI · human / JSON output"] --> IPC
+    Browser["Chrome / Edge / Firefox"] --> Native["Native messaging bridge"]
+    Native --> IPC
+    IPC --> Engine["Rust engine · jobs / queues / recovery"]
+    Engine --> Curl["libcurl · file transfers"]
+    Engine --> Media["yt-dlp / FFmpeg · media"]
+    Engine --> Grabber["Static crawler · discovery"]
+    Engine --> Store[("SQLite · WAL / checkpoints")]
+    Engine --> Keys["OS credential store"]
+```
+
+One background engine owns jobs per signed-in user. Closing the desktop window leaves it in the tray; explicit **Quit** checkpoints and stops work. Control traffic uses a restricted Windows named pipe or Unix-domain socket, with no public HTTP control server. The native bridge restricts browser commands and removes local destinations/settings from browser snapshots.
+
+| Location          | Responsibility                                                                     |
+| :---------------- | :--------------------------------------------------------------------------------- |
+| `crates/core`     | Transfers, durable state, scheduling, media/grabber adapters, and validation.      |
+| `crates/service`  | Background engine, restricted IPC, native messaging, and host registration.        |
+| `crates/cli`      | Download control, inspection, queues, import/export, and diagnostics.              |
+| `apps/desktop`    | Tauri 2 shell and React/TypeScript interface.                                      |
+| `apps/extension`  | Chromium and Firefox builds, handoff, hosted-page resolver, popup, and settings.   |
+| `packages/shared` | Six-language dictionaries and shared UI utilities.                                 |
+| `scripts`         | Fixtures, component verification, sidecar preparation, and local evidence tooling. |
+
+## Verification
 
 ```sh
+cargo fmt --all -- --check
+cargo clippy -p downloader-core -p downloader-service -p downloader-cli --all-targets -- -D warnings
 cargo test -p downloader-core -p downloader-service -p downloader-cli
 pnpm typecheck
 pnpm test
 pnpm build
+```
+
+The recorded Windows preview passed **15 Rust tests and 16 TypeScript tests**, plus native-message boundary checks. A real browser fixture navigated a free-download step and countdown, carried an HttpOnly session cookie, and produced a hash-verified 12 MiB desktop file. Separate fixtures exercised CAPTCHA pauses and POST fallback.
+
+```sh
 node scripts/fixture-server.mjs
 ```
 
-The loopback fixture exposes hosted/countdown/session, CAPTCHA, POST and direct/range/unknown-length scenarios. It is a test utility, not the application control interface.
+The loopback fixture serves hosted-page, countdown/session, CAPTCHA, POST, and range/unknown-length cases. It is a test utility, not the application's control interface. CI checks source builds on Windows, macOS, and Ubuntu; its live status is shown above. GUI, installer, and browser acceptance remain separate gates.
 
-Copyright © 2026 Downloader contributors. **GPL-3.0-only**, without warranty; see [LICENSE](LICENSE). External components retain their licenses. IDM branding, implementation, copy and assets are not included.
+## Roadmap
+
+- **Transfer qualification:** broader protocol/auth/proxy fixtures, large files, pooling, and hostile filesystem cases.
+- **Management:** advanced schedules and synchronization, editable properties/columns, notifications, sleep inhibition, and completion integrations.
+- **Media and grabber:** deterministic assembly/live tests, authenticated/rendered crawling, durable crawl recovery, and offline rewriting.
+- **Public release:** all supported browser/platform combinations, accessibility and native translation review, installer upgrade/uninstall, signed updates, SBOM, and bundled-source provenance.
+
+The detailed scope and current boundaries are tracked in [IMPLEMENTATION.md](docs/IMPLEMENTATION.md). Contributions that close correctness and recovery gaps are especially welcome.
+
+## Contributing
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md), check the [open issues](https://github.com/gduplessy/Downloader/issues), and include deterministic regression fixtures for changes to transfers, recovery, or browser handoff. Name the actual platform/browser tested when reporting acceptance evidence.
+
+## License
+
+Copyright © 2026 Downloader contributors. Original project code, text, and assets are **GPL-3.0-only**, without warranty; see [LICENSE](LICENSE). External components retain their own licenses and corresponding-source requirements.
+
+Downloader is independent of Internet Download Manager and its owners. IDM code, branding, copy, and assets are not included.

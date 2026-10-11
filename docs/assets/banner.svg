@@ -1,0 +1,99 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1200"
+  height="320"
+  viewBox="0 0 1200 320"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">Downloader</title>
+  <desc id="desc">
+    Reliable downloads, under your control. An open-source desktop app with browser integration.
+  </desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#101820" />
+      <stop offset="1" stop-color="#192832" />
+    </linearGradient>
+    <linearGradient id="mint" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#8CE6D1" />
+      <stop offset="1" stop-color="#4FC9AD" />
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#5DD6BC" stroke-opacity=".06" />
+    </pattern>
+  </defs>
+  <rect width="1200" height="320" rx="24" fill="url(#bg)" />
+  <rect width="1200" height="320" rx="24" fill="url(#grid)" />
+  <path d="M920 0V320M1000 0V320M1080 0V320" stroke="#5DD6BC" stroke-opacity=".08" />
+  <g transform="translate(70 76)">
+    <rect width="124" height="124" rx="34" fill="url(#mint)" />
+    <path
+      d="M62 27V76M42 57L62 77L82 57M34 87V97H90V87"
+      fill="none"
+      stroke="#102E28"
+      stroke-width="8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </g>
+  <text
+    x="228"
+    y="128"
+    fill="#F1F7FA"
+    font-family="Segoe UI,Arial,sans-serif"
+    font-size="60"
+    font-weight="700"
+    letter-spacing="-2"
+  >
+    Downloader
+  </text>
+  <text x="231" y="174" fill="#98ACBB" font-family="Segoe UI,Arial,sans-serif" font-size="25">
+    Reliable downloads, under your control.
+  </text>
+  <g
+    transform="translate(231 210)"
+    font-family="Segoe UI,Arial,sans-serif"
+    font-size="13"
+    font-weight="600"
+    letter-spacing="1.5"
+  >
+    <text y="0" fill="#70DBC3">OPEN SOURCE</text>
+    <circle cx="141" cy="-5" r="2" fill="#5D7689" />
+    <text x="158" y="0" fill="#98ACBB">LOCAL FIRST</text>
+    <circle cx="276" cy="-5" r="2" fill="#5D7689" />
+    <text x="293" y="0" fill="#98ACBB">BROWSER INTEGRATION</text>
+  </g>
+  <g transform="translate(850 80)">
+    <rect width="270" height="160" rx="18" fill="#121D26" stroke="#354854" />
+    <circle cx="22" cy="24" r="4" fill="#5DD6BC" />
+    <circle cx="38" cy="24" r="4" fill="#39505D" />
+    <circle cx="54" cy="24" r="4" fill="#39505D" />
+    <path d="M0 44H270" stroke="#354854" />
+    <g fill="#39505D">
+      <rect x="20" y="65" width="84" height="6" rx="3" />
+      <rect x="20" y="95" width="62" height="6" rx="3" />
+      <rect x="20" y="125" width="72" height="6" rx="3" />
+    </g>
+    <g fill="#223640">
+      <rect x="128" y="63" width="120" height="10" rx="5" />
+      <rect x="128" y="93" width="120" height="10" rx="5" />
+      <rect x="128" y="123" width="120" height="10" rx="5" />
+    </g>
+    <g fill="url(#mint)">
+      <rect x="128" y="63" width="120" height="10" rx="5" />
+      <rect x="128" y="93" width="86" height="10" rx="5" />
+      <rect x="128" y="123" width="47" height="10" rx="5" />
+    </g>
+  </g>
+  <rect
+    x=".5"
+    y=".5"
+    width="1199"
+    height="319"
+    rx="24"
+    fill="none"
+    stroke="#354854"
+    stroke-opacity=".7"
+  />
+</svg>
