@@ -2,6 +2,13 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.6.0 — Versioned hosted-page adapters and explicit selection
+
+- Add exact-host bundled adapters, evidence-backed candidate selection, unsafe/ad/purchase/torrent rejection and conservative live-provider fallback.
+- Add generation/session/DOM-bound preview validation, one-authorization submission gates and accessible selection controls in all six locales.
+- Integrate the content resolver with an ownership-aware context hook; retain conservative behavior until worker integration is present. Provider layouts remain unqualified.
+- Verify 44 extension regressions and extension TypeScript checks.
+
 ## 0.5.6 — Plan remaining hosted-page navigation work
 
 - Add thirteen NAV plans grounded in refreshed main, covering remaining FlareSolverr qualification and NAV-02 through NAV-13 implementation.
@@ -136,3 +143,4 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 ## 0.1.0 — Initial development preview
 
 - Original GPL-3.0 desktop, CLI and extension foundation, hosted-page navigation fixtures, media/grabber adapters and public roadmap.
+
