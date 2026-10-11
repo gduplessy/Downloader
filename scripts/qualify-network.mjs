@@ -10,6 +10,8 @@ const baseNetwork={proxy_mode:'direct',ca_file:server.certFile,retries:2};
 const cases=[
   {name:'http',url:server.http+'/file'},
   {name:'https',url:server.https+'/file'},
+  {name:'tls_untrusted',url:server.https+'/file',network:{ca_file:null,retries:0},expected_failure:'network_failure'},
+  {name:'proxy_unavailable',url:server.http+'/file',proxy:'http://127.0.0.1:1',network:{retries:0,connect_timeout_seconds:1},expected_failure:'network_failure'},
   {name:'http2_tls',url:server.h2+'/file',network:{http_policy:'http2_tls'}},
   {name:'ftp',url:server.ftp,pause_at:1024*1024,speed_limit:3*1024*1024},
   {name:'ftp_explicit_tls',url:server.ftp,network:{ftp_tls:true}},

@@ -23,6 +23,7 @@ struct Case {
     password: Option<String>,
     pause_at: Option<u64>,
     speed_limit: Option<u64>,
+    expected_failure: Option<String>,
 }
 fn main() {
     if let Err(e) = run() {
@@ -134,6 +135,9 @@ fn run() -> Result<()> {
             resumed = true;
         }
         if j.state == JobState::Complete {
+            if case.expected_failure.is_some() {
+                bail!("Failure fixture incorrectly completed");
+            }
             let (cpu, memory) = cpu_memory();
             println!(
                 "{}",
@@ -147,6 +151,18 @@ fn run() -> Result<()> {
             JobState::Failed | JobState::WaitingSource | JobState::WaitingAuthentication
         ) {
             engine.shutdown();
+            if let Some(expected) = &case.expected_failure {
+                let failure = j.failure.context("Missing structured failure")?;
+                let actual = serde_json::to_value(&failure.code)?;
+                if actual != *expected || j.destination.exists() {
+                    bail!("Failure fixture did not fail safely: {actual}");
+                }
+                println!(
+                    "{}",
+                    serde_json::json!({"name":case.name,"expected_failure":actual,"recovery":failure.recovery,"destination_exists":false,"capabilities":network::capabilities()})
+                );
+                return Ok(());
+            }
             bail!("{}: {:?}", case.name, j.error);
         }
         if start.elapsed() > Duration::from_secs(900) {

@@ -21,7 +21,7 @@ export async function fixtures(directory) {
   const options={key:await readFile(keyFile),cert:await readFile(certFile)};
   const data=Buffer.alloc(32*1024*1024);for(let i=0;i<data.length;i++) data[i]=i%251;
   const sha256=createHash('sha256').update(data).digest('hex');
-  const stats={requests:[],proxy:0,socks:0,ftpRest:0,ftpTls:0,maxActive:0};let active=0;let proxyPort;
+  const stats={requests:[],proxy:0,socks:0,ftpRest:0,ftpTls:0,maxActive:0,active:0};const activeResponses=new Map();let proxyPort;
   const servers=[],sockets=new Set();
   function track(server) {servers.push(server);server.on('connection',socket=>{sockets.add(socket);socket.on('close',()=>sockets.delete(socket));socket.on('error',()=>{});});return server;}
   const transient=new Set();
@@ -50,7 +50,8 @@ export async function fixtures(directory) {
     if(url.pathname==='/redirect'){res.writeHead(302,{Location:'/file','Content-Length':'0'});res.end();return;}
     if(url.pathname==='/retry' && req.method!=='HEAD' && req.headers.range!=='bytes=0-0' && !transient.has(req.url)) {transient.add(req.url);res.writeHead(503,{'Retry-After':'1','Content-Length':'0'});res.end();return;}
     const cap=Number(url.searchParams.get('cap')??0);
-    if(cap && req.method!=='HEAD' && req.headers.range!=='bytes=0-0' && active>=cap){res.writeHead(429,{'Retry-After':'1','Content-Length':'0'});res.end();return;}
+    for(const [response] of activeResponses)if(response.destroyed || response.writableFinished || response.finished)activeResponses.delete(response);
+    if(cap && req.method!=='HEAD' && req.headers.range!=='bytes=0-0' && [...activeResponses.values()].filter(group=>group===cap).length>=cap){res.writeHead(429,{'Retry-After':'1','Content-Length':'0'});res.end();return;}
     const size=url.pathname==='/large'  ? largeSize : url.pathname==='/zip64' ? zipSize : data.length;
     let from=0,to=size-1;let ranged=false;
     if(req.headers.range){const m=/^bytes=(\d+)-(\d*)$/.exec(req.headers.range);if(m){from=Number(m[1]);to=m[2]?Math.min(Number(m[2]),to):to;ranged=true;}}
@@ -61,7 +62,8 @@ export async function fixtures(directory) {
     if(ranged) headers['Content-Range']=`bytes ${from}-${to}/${size}`;
     if(compressed) headers['Content-Encoding']='gzip';
     res.writeHead(ranged?206:200,headers);if(req.method==='HEAD'){res.end();return;}
-    active++;stats.maxActive=Math.max(active,stats.maxActive);
+    activeResponses.set(res,cap);stats.active=activeResponses.size;stats.maxActive=Math.max(activeResponses.size,stats.maxActive);
+    const release=()=>{activeResponses.delete(res);stats.active=activeResponses.size;};res.once('finish',release);res.once('close',release);
     try {
       if(compressed){res.end(compressedData);return;}
       const delay=Number(url.searchParams.get('delay')??0), chunkSize=Number(url.searchParams.get('chunk')??65536);
@@ -72,11 +74,11 @@ export async function fixtures(directory) {
         if(url.pathname==='/large'){bytes=Buffer.allocUnsafe(count);for(let i=0;i<count;i++)bytes[i]=(position+i)%251;}
         else if(url.pathname==='/zip64')bytes=zipBytes(position,count);
         else bytes=data.subarray(position,position+count);
-        if(!res.write(bytes)) {await new Promise(resolve=>{const done=()=>{res.removeListener('drain',done);res.removeListener('close',done);resolve();};res.once('drain',done);res.once('close',done);});}
+        if(!res.write(bytes) && !res.destroyed) {await new Promise(resolve=>{const done=()=>{res.removeListener('drain',done);res.removeListener('close',done);resolve();};res.once('drain',done);res.once('close',done);if(res.destroyed)done();});}
         if(delay || url.pathname==='/large' && position>=4*1024**3) await new Promise(resolve=>setTimeout(resolve,delay||2));
       }
       res.end();
-    } finally {active--;}
+    } finally {release();}
   }
   const httpServer=track(http.createServer((req,res)=>void respond(req,res)));const httpPort=await listen(httpServer);
   const httpsServer=track(https.createServer(options,(req,res)=>void respond(req,res)));const httpsPort=await listen(httpsServer);
