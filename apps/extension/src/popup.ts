@@ -3,6 +3,7 @@ import { translate, type Key } from '../../../packages/shared/src/i18n';
 const element = (id: string) => document.getElementById(id)!;
 let pendingURL = '';
 let refreshJob: any = null;
+let solverJob: any = null;
 async function main() {
   const { settings, lastError } = (await browser.storage.local.get(['settings', 'lastError'])) as {
     settings?: { locale?: string };
@@ -24,6 +25,13 @@ async function main() {
         });
   };
   element('options').onclick = () => void browser.runtime.openOptionsPage();
+  element('try-solver').onclick = () =>
+    void browser.runtime
+      .sendMessage({ type: 'try_solver', id: solverJob.id })
+      .then(() => window.close())
+      .catch((e) => {
+        element('error').textContent = String(e);
+      });
   element('bypass').onclick = () =>
     void browser.runtime.sendMessage({ type: 'bypass' }).then(() => window.close());
   element('continue-navigation').onclick = () =>
@@ -46,11 +54,23 @@ async function main() {
         (j: any) => j.page_url && ['waiting_browser', 'waiting_user'].includes(j.state),
       )?.page_url ?? '';
     (element('continue-navigation') as HTMLButtonElement).disabled = !pendingURL;
+    solverJob = snapshot.jobs.find(
+      (j: any) => j.page_url && ['waiting_browser', 'waiting_user'].includes(j.state),
+    );
+    (element('try-solver') as HTMLButtonElement).disabled =
+      !solverJob || !snapshot.solver_enabled || !snapshot.solver_direct;
     element('connection').textContent = translate(locale, 'connected');
     element('connection').classList.add('good');
     element('active').textContent = String(
       snapshot.jobs.filter((j: any) =>
-        ['connecting', 'downloading', 'assembling', 'verifying', 'scanning'].includes(j.state),
+        [
+          'solving_challenge',
+          'connecting',
+          'downloading',
+          'assembling',
+          'verifying',
+          'scanning',
+        ].includes(j.state),
       ).length,
     );
     element('complete').textContent = String(

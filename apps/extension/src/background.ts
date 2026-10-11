@@ -495,6 +495,17 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
       await pollResolvers(true);
       return true;
     });
+  if (message.type === 'try_solver')
+    return (async () => {
+      const job = (await browserSnapshot()).jobs.find((j: any) => j.id === message.id);
+      if (!job || !['waiting_browser', 'waiting_user'].includes(job.state))
+        throw Error('Job is not waiting for browser navigation');
+      return native('solve_challenge', {
+        id: job.id,
+        url: job.navigation_url ?? job.page_url,
+        automatic: false,
+      });
+    })();
   if (message.type === 'settings_changed') return load().then(() => true);
   if (message.type === 'diagnostics')
     return native('diagnostics').then(async (desktop) => ({

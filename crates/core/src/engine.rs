@@ -32,12 +32,6 @@ impl Engine {
         let mut jobs = HashMap::new();
         for mut job in store.all::<Job>("job")? {
             if job.state == JobState::SolvingChallenge {
-                if let Some(session) = job.solver_session.take() {
-                    let config = settings.solver.clone();
-                    std::thread::spawn(move || {
-                        let _ = crate::solver::destroy(&config, &session);
-                    });
-                }
                 job.state = JobState::WaitingUser;
                 job.solver_outcome = Some("solver_interrupted".into());
                 job.error = Some("Solver interrupted; continue in the browser or try again".into());
@@ -102,7 +96,7 @@ impl Engine {
                 }
             })
             .collect();
-        Ok(Arc::new(Self {
+        let engine = Arc::new(Self {
             store: Arc::new(Mutex::new(store)),
             jobs: Mutex::new(jobs),
             settings: Mutex::new(settings),
@@ -111,7 +105,9 @@ impl Engine {
             controls: Mutex::new(HashMap::new()),
             solver_tasks: Mutex::new(HashMap::new()),
             stopping: AtomicBool::new(false),
-        }))
+        });
+        engine.cleanup_solver_sessions();
+        Ok(engine)
     }
     pub fn start(self: &Arc<Self>) {
         let engine = self.clone();
@@ -122,6 +118,48 @@ impl Engine {
                 }
                 std::thread::sleep(Duration::from_millis(250));
             }
+        });
+    }
+    fn cleanup_solver_sessions(self: &Arc<Self>) {
+        let pending: Vec<_> = self
+            .jobs
+            .lock()
+            .unwrap()
+            .values()
+            .filter_map(|job| {
+                let j = job.lock().unwrap();
+                (j.state != JobState::SolvingChallenge)
+                    .then(|| j.solver_session.clone())
+                    .flatten()
+                    .map(|session| (job.clone(), session))
+            })
+            .collect();
+        if pending.is_empty() {
+            return;
+        }
+        let mut tasks = self.solver_tasks.lock().unwrap();
+        if !tasks.is_empty() {
+            return;
+        }
+        tasks.insert("cleanup".into(), Arc::new(AtomicU8::new(0)));
+        drop(tasks);
+        let engine = self.clone();
+        let settings = self.settings.lock().unwrap().solver.clone();
+        std::thread::spawn(move || {
+            for (job, session) in pending {
+                let cleaned = crate::solver::destroy(&settings, &session).is_ok();
+                let mut j = job.lock().unwrap();
+                if j.solver_session.as_ref() == Some(&session) {
+                    if cleaned {
+                        j.solver_session = None;
+                    } else {
+                        j.solver_outcome = Some("solver_cleanup".into());
+                    }
+                }
+                drop(j);
+                let _ = engine.persist(&job);
+            }
+            engine.solver_tasks.lock().unwrap().remove("cleanup");
         });
     }
     pub fn snapshot(&self) -> Snapshot {
@@ -310,7 +348,11 @@ impl Engine {
     }
     pub fn command(self: &Arc<Self>, command: Command) -> Result<serde_json::Value> {
         match command {
-            Command::TestSolver { settings } => crate::solver::test(&settings),
+            Command::TestSolver { settings } => {
+                let result = crate::solver::test(&settings)?;
+                self.cleanup_solver_sessions();
+                Ok(result)
+            }
             Command::SolveChallenge {
                 id,
                 owner,
@@ -642,11 +684,23 @@ impl Engine {
                 if !["en", "fr", "es", "de", "ar", "zh-CN"].contains(&settings.locale.as_str()) {
                     bail!("Unsupported language");
                 }
+                let previous = self.settings.lock().unwrap().clone();
+                let changed_solver = serde_json::to_value(&previous.solver)?
+                    != serde_json::to_value(&settings.solver)?
+                    || previous.network.proxy_mode != settings.network.proxy_mode;
+                let controls = self.controls.lock().unwrap();
+                if changed_solver {
+                    for control in self.solver_tasks.lock().unwrap().values() {
+                        let _ =
+                            control.compare_exchange(0, 5, Ordering::Relaxed, Ordering::Relaxed);
+                    }
+                }
                 self.store
                     .lock()
                     .unwrap()
                     .put("settings", "main", &settings)?;
                 *self.settings.lock().unwrap() = settings;
+                drop(controls);
                 Ok(serde_json::to_value(self.snapshot())?)
             }
             Command::Queue(queue) => {
@@ -786,6 +840,9 @@ impl Engine {
         }
         let (page, profile, session) = {
             let mut j = job.lock().unwrap();
+            if j.solver_session.is_some() {
+                bail!("solver_cleanup: Test the connection to retry pending session cleanup");
+            }
             if !matches!(j.state, JobState::WaitingBrowser | JobState::WaitingUser)
                 || j.page_url.is_none()
                 || j.private
@@ -841,6 +898,10 @@ impl Engine {
         std::thread::spawn(move || {
             let result =
                 crate::solver::resolve(&page, profile.clone(), &settings, &control, &session);
+            let cleanup_failed = result
+                .as_ref()
+                .err()
+                .is_some_and(|e| e.to_string() == "solver_cleanup");
             let mut controls = engine.controls.lock().unwrap();
             let mut tasks = engine.solver_tasks.lock().unwrap();
             let mut j = job.lock().unwrap();
@@ -855,6 +916,10 @@ impl Engine {
                     }
                     1 | 4 => {
                         j.state = JobState::Paused;
+                        j.solver_outcome = Some("solver_interrupted".into());
+                    }
+                    5 => {
+                        j.state = JobState::WaitingUser;
                         j.solver_outcome = Some("solver_interrupted".into());
                     }
                     _ => match result {
@@ -892,7 +957,9 @@ impl Engine {
                     },
                 }
             }
-            j.solver_session = None;
+            if !cleanup_failed {
+                j.solver_session = None;
+            }
             drop(j);
             let _ = engine.persist(&job);
             tasks.remove(&id);

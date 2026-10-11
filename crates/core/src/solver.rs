@@ -437,7 +437,7 @@ pub fn resolve(
     })();
     // Cleanup must proceed even when the job has been cancelled.
     let cleanup = destroy(&settings.solver, id);
-    if result.is_ok() && cleanup.is_err() {
+    if cleanup.is_err() {
         bail!("solver_cleanup");
     }
     result
@@ -560,7 +560,18 @@ fn resolve_session(
                 });
             }
             // Cross-origin hops need a fresh browser navigation and scoped cookies.
-            _ => current = next,
+            _ => {
+                let next_url = security::validate_url(&next)?;
+                if next_url.origin() != parsed.origin() {
+                    destroy(&settings.solver, session)?;
+                    api(
+                        &settings.solver,
+                        Some(&json!({"cmd":"sessions.create", "session":session})),
+                        control,
+                    )?;
+                }
+                current = next;
+            }
         }
     }
     bail!("solver_step_limit")

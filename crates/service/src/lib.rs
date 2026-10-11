@@ -534,11 +534,12 @@ mod tests {
     fn browser_events_exclude_paths_settings_and_desktop_jobs() {
         let job = serde_json::json!({"id":"browser","browser_source":true,"destination":"/secret/file","url":"https://example.com/file","failure":{"code":"storage_failure","message":"/secret/file denied","recovery":["check_storage"]}});
         let result=browser_events(serde_json::json!({"snapshot":null,"sequence":4,"events":[{"type":"job_lifecycle","sequence":1,"job":job},{"type":"settings_changed","sequence":2},{"type":"job_progress","sequence":3,"job":{"id":"desktop","browser_source":false}},{"type":"job_removed","sequence":4,"id":"browser","browser_source":true}]})).unwrap();
-        assert_eq!(result["events"].as_array().unwrap().len(), 2);
+        assert_eq!(result["events"].as_array().unwrap().len(), 3);
+        assert_eq!(result["events"][1], serde_json::json!({"type":"settings_changed","sequence":2,"at":null}));
         assert_eq!(result["sequence"], 4);
         let text = result.to_string();
         assert!(!text.contains("/secret"));
         assert!(!text.contains("desktop"));
-        assert!(!text.contains("settings_changed"));
+        assert!(!text.contains("endpoint"));
     }
 }

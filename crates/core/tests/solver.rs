@@ -17,6 +17,7 @@ struct Fixture {
     sessions: Arc<Mutex<Vec<String>>>,
     requests: Arc<AtomicUsize>,
     file_requests: Arc<AtomicUsize>,
+    cleanup_fail: Arc<AtomicBool>,
 }
 const DATA: &[u8] = b"solver transfer fixture, hashed and never HTML";
 impl Fixture {
@@ -31,6 +32,8 @@ impl Fixture {
         let sessions = Arc::new(Mutex::new(Vec::new()));
         let requests = Arc::new(AtomicUsize::new(0));
         let file_requests = Arc::new(AtomicUsize::new(0));
+        let cleanup_fail = Arc::new(AtomicBool::new(false));
+        let cleanup_flag = cleanup_fail.clone();
         let (base, stopped, ss, rs, fs) = (
             url.clone(),
             stop.clone(),
@@ -41,9 +44,15 @@ impl Fixture {
         std::thread::spawn(move || {
             while !stopped.load(Ordering::Relaxed) {
                 if let Ok((stream, _)) = listener.accept() {
-                    let (base, ss, rs, fs) = (base.clone(), ss.clone(), rs.clone(), fs.clone());
+                    let (base, ss, rs, fs, fail) = (
+                        base.clone(),
+                        ss.clone(),
+                        rs.clone(),
+                        fs.clone(),
+                        cleanup_flag.clone(),
+                    );
                     std::thread::spawn(move || {
-                        let _ = respond(stream, &base, html, delay, data, &ss, (&rs, &fs));
+                        let _ = respond(stream, &base, html, delay, data, &ss, (&rs, &fs, &fail));
                     });
                 } else {
                     std::thread::sleep(Duration::from_millis(5));
@@ -56,6 +65,7 @@ impl Fixture {
             sessions,
             requests,
             file_requests,
+            cleanup_fail,
         }
     }
 }
@@ -71,9 +81,9 @@ fn respond(
     delay: bool,
     data: &[u8],
     sessions: &Mutex<Vec<String>>,
-    counters: (&AtomicUsize, &AtomicUsize),
+    counters: (&AtomicUsize, &AtomicUsize, &AtomicBool),
 ) -> std::io::Result<()> {
-    let (requests, files) = counters;
+    let (requests, files, cleanup_fail) = counters;
     stream.set_nonblocking(false)?;
     stream.set_read_timeout(Some(Duration::from_secs(5)))?;
     let mut bytes = Vec::new();
@@ -105,11 +115,15 @@ fn respond(
                 json!({"status":"ok","session":payload["session"]})
             }
             "sessions.destroy" => {
-                sessions
-                    .lock()
-                    .unwrap()
-                    .retain(|s| Some(s.as_str()) != payload["session"].as_str());
-                json!({"status":"ok"})
+                if cleanup_fail.load(Ordering::Relaxed) {
+                    json!({"status":"error","message":"not published"})
+                } else {
+                    sessions
+                        .lock()
+                        .unwrap()
+                        .retain(|s| Some(s.as_str()) != payload["session"].as_str());
+                    json!({"status":"ok"})
+                }
             }
             "request.get" => {
                 requests.fetch_add(1, Ordering::Relaxed);
@@ -390,4 +404,67 @@ fn interrupted_solver_recovers_to_manual_and_cleans_its_owned_session() {
         assert!(start.elapsed() < Duration::from_secs(5));
         std::thread::sleep(Duration::from_millis(10));
     }
+}
+
+#[test]
+fn cleanup_failure_retains_owned_session_for_restart_recovery() {
+    let fixture = Fixture::new("<a href='/file.bin'>Download</a>", false);
+    fixture.cleanup_fail.store(true, Ordering::Relaxed);
+    let dir = tempfile::tempdir().unwrap();
+    let e = engine(dir.path(), &fixture);
+    let owner = uuid::Uuid::new_v4().to_string();
+    let id = navigate(&e, &fixture, dir.path(), &owner);
+    e.command(solve(&id, &owner, false)).unwrap();
+    wait(&e, &id, JobState::WaitingUser);
+    assert_eq!(
+        e.job(&id)
+            .unwrap()
+            .lock()
+            .unwrap()
+            .solver_outcome
+            .as_deref(),
+        Some("solver_cleanup")
+    );
+    e.shutdown();
+    assert!(e.job(&id).unwrap().lock().unwrap().solver_session.is_some());
+    assert!(e.command(solve(&id, &owner, false)).is_err());
+    drop(e);
+    fixture.cleanup_fail.store(false, Ordering::Relaxed);
+    let e = Engine::open(dir.path()).unwrap();
+    let start = Instant::now();
+    while e.job(&id).unwrap().lock().unwrap().solver_session.is_some() {
+        assert!(start.elapsed() < Duration::from_secs(5));
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    assert!(fixture.sessions.lock().unwrap().is_empty());
+}
+
+#[test]
+fn disabling_solver_during_a_request_returns_to_manual_navigation() {
+    let fixture = Fixture::new("<a href='/file.bin'>Download</a>", true);
+    let dir = tempfile::tempdir().unwrap();
+    let e = engine(dir.path(), &fixture);
+    let owner = uuid::Uuid::new_v4().to_string();
+    let id = navigate(&e, &fixture, dir.path(), &owner);
+    e.command(solve(&id, &owner, false)).unwrap();
+    let start = Instant::now();
+    while fixture.requests.load(Ordering::Relaxed) == 0 {
+        assert!(start.elapsed() < Duration::from_secs(5));
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    let mut settings = e.settings.lock().unwrap().clone();
+    settings.solver.enabled = false;
+    e.command(Command::Settings(settings)).unwrap();
+    e.shutdown();
+    wait(&e, &id, JobState::WaitingUser);
+    assert!(fixture.sessions.lock().unwrap().is_empty());
+    assert_eq!(
+        e.job(&id)
+            .unwrap()
+            .lock()
+            .unwrap()
+            .solver_outcome
+            .as_deref(),
+        Some("solver_interrupted")
+    );
 }

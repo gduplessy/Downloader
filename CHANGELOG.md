@@ -2,6 +2,13 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.5.0 — Solver configuration and recovery
+
+- Add desktop enablement, loopback endpoint and timeout controls, connection testing with service version, and manual desktop/extension solver actions.
+- Translate solver states, settings and recovery messages across all six locales.
+- Invalidate in-flight results on routing/configuration changes, isolate cross-origin page sessions, and retain failed cleanup identifiers for restart/connection-test cleanup.
+- Live custom CAPTCHA and downstream-host compatibility remain qualification limits.
+
 ## 0.4.0 — Owned challenge navigation
 
 - Run asynchronous, globally serialized solver jobs through the service; preserve profile ownership, cancellation and restart recovery, and reject stale page results.
