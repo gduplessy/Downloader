@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.3.4 — Published qualification records
+
+- Publish sanitized three-platform PAC/network and NTFS/HFS+/ext4 filesystem results with their exact source revisions and CI runs.
+- Publish the successful real-realm CI job and local Windows/Linux authentication records, distinguishing native clients, Docker clients and overlapping scenarios.
+- Synchronize README, roadmap and acceptance links; keep native SSO, managed proxy policies, installer provenance and the IDM comparison pending.
+
 ## 0.3.3 — Real AD authentication acceptance
 
 - Add a disposable Samba AD realm, Kerberos-only Apache service and domain-backed NTLM endpoint; exercise real authenticated jobs with a volatile fixture credential adapter.

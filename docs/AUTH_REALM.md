@@ -12,6 +12,8 @@ On Windows, build the native example using the PowerShell environment assignment
 
 ## Tests
 
+The [published evidence index](evidence/transfer-engine-2026-10-11/README.md) records nine Linux checks passing in CI and locally, plus four native Windows NTLM checks locally. Linux repetitions overlap. Product versions and source revisions are recorded separately from the documentation release version.
+
 - NTLM handshakes are verified by Samba's domain controller through `ntlm_auth`, with valid and wrong-password cases.
 - Kerberos uses a real `kinit` ticket and HTTP service keytab. Apache accepts only the Kerberos mechanism; Basic authentication and NTLM fallback are disabled for that endpoint.
 - Complete engine jobs must publish the expected SHA-256. Rejected jobs must report authentication recovery without publishing an output file.

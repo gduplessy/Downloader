@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.3.3<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.3.4<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks the limitations stated in the README, implementation status, compatibility matrix, acceptance evidence, and component notices. It explicitly includes currently unsupported capabilities, including **CAPTCHA automation / bypass**.
 
@@ -27,7 +27,7 @@ The initial release still targets Windows 11 x64, macOS 14+ Intel and Apple Sili
 
 ## 2. Transfer engine, correctness, and networking
 
-- [ ] **ENG-01 — Protocol qualification (implemented; partial qualification):** HTTP/HTTPS, HTTP/2, FTP REST resume, explicit/implicit FTPS, redirects and capability diagnostics pass deterministic fixtures on Windows/macOS/Linux. A disposable Samba AD realm passes Windows/Linux NTLM and Linux Kerberos, including complete jobs and credential/ticket rejection (13 checks). Remaining: native macOS NTLM/Negotiate, Windows domain-based Kerberos, enterprise SSO variants and final shipped libcurl/installer provenance. See [realm acceptance](AUTH_REALM.md).
+- [ ] **ENG-01 — Protocol qualification (implemented; partial qualification):** HTTP/HTTPS, HTTP/2, FTP REST resume, explicit/implicit FTPS, redirects and capability diagnostics pass deterministic fixtures on Windows/macOS/Linux. A disposable Samba AD realm passes Windows/Linux NTLM and Linux Kerberos, including complete jobs and credential/ticket rejection (13 local checks; nine overlapping Linux checks also pass CI). Remaining: native macOS NTLM/Negotiate, Windows domain-based Kerberos, enterprise SSO variants and final shipped libcurl/installer provenance. See [realm acceptance](AUTH_REALM.md) and [published records](evidence/transfer-engine-2026-10-11/README.md).
 - [x] **ENG-02 — Hostile response fixtures:** strict malformed/ignored range and header validation, HEAD fallback, unknown/empty/compressed streams, truncated bodies, unexpected full responses, Retry-After/throttling, changed/missing validators, expired/authenticated sources and portable Unicode filename coverage.
 - [x] **ENG-03 — Large-file evidence:** actual 4,311,744,529-byte pause/reopen/resume/checkpoint/hash/publication passes on all three CI platforms; remote ZIP64 central-directory offsets above 4 GiB are verified.
 - [x] **ENG-04 — Connection pooling:** bounded session/routing-isolated reuse, host/global admission and concurrency backoff; repeated single/segmented measurements include server caps and hashes.
