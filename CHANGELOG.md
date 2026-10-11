@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.5.6 — Plan remaining hosted-page navigation work
+
+- Add thirteen NAV plans grounded in refreshed main, covering remaining FlareSolverr qualification and NAV-02 through NAV-13 implementation.
+- Record owner-selected hosts, direct POST/blob streaming, required Chromium debugger declaration with capture off by default, local-first CAPTCHA with a $0 paid-test budget, and navigation limits of three by default/up to twenty.
+- Define six implementation owners, shared contracts, isolated worktrees, frequent verified commits, dependent PRs and explicit acceptance boundaries. Planning does not close implementation or live-qualification roadmap items.
+
 ## 0.5.5 — Correct challenge roadmap status
 
 - Mark NAV-01 FlareSolverr browser-challenge resolution as implemented with live qualification pending; track custom/image CAPTCHA adapters separately as NAV-13 research.

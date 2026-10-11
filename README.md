@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.5.5<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.5.6<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -21,6 +21,8 @@ Downloader is an original, GPL-3.0 alternative to Internet Download Manager. It 
 No accounts, advertising, or telemetry. Credentials belong in the operating system's credential store; browser session material is temporary.
 
 > **Development preview.** A Windows desktop build and hosted-page browser fixtures have been verified locally. Full IDM parity, installer acceptance, and the complete platform/browser matrix are still in progress. See the [full roadmap](docs/ROADMAP.md), [implementation status](docs/IMPLEMENTATION.md), [acceptance evidence](docs/ACCEPTANCE.md), and [compatibility matrix](docs/COMPATIBILITY.md).
+
+The [NAV implementation plans](docs/plans/nav/README.md) cover remaining hosted-page work, direct browser-response streaming, scoped accounts, scheduling, rendered discovery and custom CAPTCHA. They define six implementation batches with separate worktrees, frequent verified commits and PRs; live host/account and paid-provider acceptance remain separate gates.
 
 Latest [qualification records](docs/evidence/transfer-engine-2026-10-11/README.md) include three-platform PAC failover and actual filesystem recovery, plus a disposable Docker AD realm. Nine Linux NTLM/Kerberos checks passed locally and in CI; four additional native Windows NTLM checks passed locally. Native SSO and managed enterprise proxy policies still need acceptance.
 
