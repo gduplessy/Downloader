@@ -1,5 +1,6 @@
 import browser from 'webextension-polyfill';
 import type { DurableWait } from './waits';
+import type { SessionScope } from '../../../../../packages/shared/src/navigation';
 import { schedulerText } from './labels';
 export type QueueStatus = 'queued' | 'active' | 'waiting' | 'manual' | 'recovering' | 'paused' | 'finished';
 export interface QueueTask { id: string; generation: number; owner: string; host_keys: string[]; priority: number; order: number; status: QueueStatus; reason: string; wait: DurableWait | null; lease: { owner: string; tab_id: number; generation: number; expires_at_ms: number } | null }
@@ -26,17 +27,19 @@ export class NavigationScheduler {
     const task = state.tasks.find(t => t.id === id);
     if (task?.lease) await this.request({ action: 'heartbeat', id, generation: task.generation, tab_id: tabId });
   }
-  async reconcile(records: { id: string; tabId: number; origin?: string; private?: boolean; cookieStoreId?: string | null }[]) {
+  async reconcile(records: { id: string; tabId: number; origin?: string; private?: boolean; cookieStoreId?: string | null; scope?: SessionScope }[]) {
     const state = await this.request({ action: 'snapshot' });
-    const live: { id: string; generation: number; tab_id: number }[] = [];
+    const live: { id: string; generation: number; tab_id: number; scope: SessionScope | null }[] = [];
     for (const record of records) {
       const task = state.tasks.find(t => t.id === record.id);
       const tab = await browser.tabs.get(record.tabId).catch(() => null);
       let matches = !!tab;
       if (tab && record.origin) {try {matches = !!tab.url && new URL(tab.url).origin === record.origin;} catch {matches = false;}}
-      if (tab && record.private !== undefined && !!tab.incognito !== record.private) matches = false;
-      if (tab && record.cookieStoreId && (tab as { cookieStoreId?: string }).cookieStoreId !== record.cookieStoreId) matches = false;
-      if (task && tab && matches) live.push({ id: task.id, generation: task.generation, tab_id: record.tabId });
+      const expectedPrivate = record.scope?.private ?? record.private;
+      const expectedStore = record.scope?.cookie_store_id ?? record.cookieStoreId;
+      if (tab && expectedPrivate !== undefined && !!tab.incognito !== expectedPrivate) matches = false;
+      if (tab && expectedStore && (tab as { cookieStoreId?: string }).cookieStoreId !== expectedStore) matches = false;
+      if (task && tab && matches) live.push({ id: task.id, generation: task.generation, tab_id: record.tabId, scope: record.scope ?? null });
     }
     const restored = await this.request({ action: 'reconcile', live });
     for (const task of restored.tasks) if (task.wait && task.lease) await this.alarm(task);

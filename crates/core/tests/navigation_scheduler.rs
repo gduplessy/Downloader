@@ -1,5 +1,6 @@
 use downloader_core::{
-    navigation_scheduler::SchedulerRequest, AddJob, Command, Engine, RequestContext,
+    navigation::SessionScope, navigation_scheduler::SchedulerRequest, AddJob, Command, Engine,
+    RequestContext,
 };
 use serde_json::{json, Value};
 fn navigate(engine: &std::sync::Arc<Engine>, owner: &str, host: &str, private: bool) -> String {
@@ -146,4 +147,113 @@ fn settings_validation_does_not_interrupt_existing_lease() {
             }
         })
         .is_err());
+}
+
+#[test]
+fn persisted_source_and_claim_changes_fence_scheduler_recovery() {
+    use downloader_core::navigation_scheduler::LiveLease;
+    let dir = tempfile::tempdir().unwrap();
+    let engine = Engine::open(dir.path()).unwrap();
+    let owner = uuid::Uuid::new_v4().to_string();
+    let id = navigate(&engine, &owner, "localhost", false);
+    let scope = SessionScope {
+        browser: "firefox".into(),
+        profile: owner.clone(),
+        private: false,
+        cookie_store_id: Some("firefox-container-1".into()),
+        container_id: Some("1".into()),
+        partition_key: None,
+        claim_generation: 1,
+    };
+    engine
+        .command(Command::ClaimNavigation {
+            id: id.clone(),
+            owner: owner.clone(),
+            force: false,
+            scope: Some(scope.clone()),
+            source_generation: Some(1),
+        })
+        .unwrap();
+    let request = |scope: SessionScope, request: SchedulerRequest| {
+        engine.command(Command::NavigationScheduler {
+            owner: owner.clone(),
+            scope: Some(scope),
+            request,
+        })
+    };
+    request(
+        scope.clone(),
+        SchedulerRequest::Admit {
+            id: id.clone(),
+            generation: 1,
+        },
+    )
+    .unwrap();
+    let job = engine.jobs.lock().unwrap().get(&id).unwrap().clone();
+    let mut renewed = scope.clone();
+    renewed.claim_generation = 2;
+    {
+        let mut job = job.lock().unwrap();
+        job.source_generation = 2;
+        job.navigation_scope = Some(renewed.clone());
+        engine.store.lock().unwrap().put("job", &id, &*job).unwrap();
+    }
+    assert!(request(
+        scope.clone(),
+        SchedulerRequest::Heartbeat {
+            id: id.clone(),
+            generation: 1,
+            tab_id: 7,
+        }
+    )
+    .is_err());
+    let snapshot = request(
+        renewed.clone(),
+        SchedulerRequest::Heartbeat {
+            id: id.clone(),
+            generation: 2,
+            tab_id: 7,
+        },
+    )
+    .unwrap();
+    assert_eq!(snapshot["tasks"][0]["generation"], 2);
+    assert_eq!(snapshot["tasks"][0]["scope"]["claim_generation"], 2);
+    assert!(request(
+        renewed.clone(),
+        SchedulerRequest::Reconcile {
+            live: vec![LiveLease {
+                id: id.clone(),
+                generation: 2,
+                tab_id: 7,
+                scope: Some(scope)
+            }],
+        }
+    )
+    .is_err());
+    let mut other_container = renewed.clone();
+    other_container.cookie_store_id = Some("firefox-container-2".into());
+    assert!(request(
+        renewed.clone(),
+        SchedulerRequest::Reconcile {
+            live: vec![LiveLease {
+                id: id.clone(),
+                generation: 2,
+                tab_id: 7,
+                scope: Some(other_container)
+            }],
+        }
+    )
+    .is_err());
+    request(
+        renewed.clone(),
+        SchedulerRequest::Reconcile {
+            live: vec![LiveLease {
+                id,
+                generation: 2,
+                tab_id: 7,
+                scope: Some(renewed),
+            }],
+        },
+    )
+    .unwrap();
 }

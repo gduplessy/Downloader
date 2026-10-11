@@ -143,6 +143,12 @@ pub struct Job {
     #[serde(default)]
     pub navigation_owner: Option<String>,
     #[serde(default)]
+    pub navigation_scope: Option<crate::navigation::SessionScope>,
+    #[serde(default = "source_generation_default")]
+    pub source_generation: u64,
+    #[serde(default)]
+    pub replay_decision: Option<crate::navigation::ReplayDecision>,
+    #[serde(default)]
     pub navigation_url: Option<String>,
     #[serde(default)]
     pub solver_attempted: bool,
@@ -313,7 +319,17 @@ pub struct ComponentStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "command", content = "args", rename_all = "snake_case")]
 pub enum Command {
+    BrowserStream(crate::navigation::StreamOperation),
     Snapshot,
+    BrowserSnapshot {
+        owner: String,
+    },
+    BrowserSubscribe {
+        owner: String,
+        after_sequence: Option<u64>,
+        #[serde(default = "event_limit")]
+        limit: usize,
+    },
     Negotiate {
         minimum: u32,
         maximum: u32,
@@ -336,6 +352,10 @@ pub enum Command {
         owner: String,
         #[serde(default)]
         force: bool,
+        #[serde(default)]
+        scope: Option<crate::navigation::SessionScope>,
+        #[serde(default)]
+        source_generation: Option<u64>,
     },
     Resolve {
         id: String,
@@ -344,6 +364,10 @@ pub enum Command {
         filename: Option<String>,
         #[serde(default)]
         context: RequestContext,
+        #[serde(default)]
+        scope: Option<crate::navigation::SessionScope>,
+        #[serde(default)]
+        source_generation: Option<u64>,
     },
     BrowserStatus {
         id: String,
@@ -355,6 +379,10 @@ pub enum Command {
         total: Option<u64>,
         #[serde(default)]
         url: Option<String>,
+        #[serde(default)]
+        scope: Option<crate::navigation::SessionScope>,
+        #[serde(default)]
+        source_generation: Option<u64>,
     },
     SolveChallenge {
         id: String,
@@ -374,6 +402,10 @@ pub enum Command {
         url: String,
         #[serde(default)]
         context: RequestContext,
+        #[serde(default)]
+        scope: Option<crate::navigation::SessionScope>,
+        #[serde(default)]
+        source_generation: Option<u64>,
     },
     Pause {
         id: String,
@@ -557,4 +589,8 @@ pub struct TransferMetrics {
     pub verification_seconds: f64,
     pub publication_seconds: f64,
     pub scan_seconds: f64,
+}
+
+fn source_generation_default() -> u64 {
+    1
 }

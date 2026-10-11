@@ -358,6 +358,8 @@ fn cancellation_serialization_and_changed_pages_discard_results() {
                 message: None,
                 bytes: 0,
                 total: None,
+                scope: None,
+                source_generation: None,
             })
             .unwrap();
         } else {

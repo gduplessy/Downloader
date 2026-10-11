@@ -6,6 +6,8 @@ use std::path::Path;
 
 pub struct Store {
     connection: Connection,
+    ephemeral_events: std::cell::RefCell<std::collections::BTreeMap<u64, EventPayload>>,
+    ephemeral: std::cell::RefCell<std::collections::BTreeMap<(String, String), String>>,
 }
 impl Store {
     pub fn open(path: &Path) -> Result<Self> {
@@ -19,10 +21,46 @@ impl Store {
             bail!("Database schema is newer than this application");
         }
         connection.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; CREATE TABLE IF NOT EXISTS records (kind TEXT NOT NULL, id TEXT NOT NULL, data TEXT NOT NULL, PRIMARY KEY(kind,id)); CREATE TABLE IF NOT EXISTS usage (time INTEGER NOT NULL, bytes INTEGER NOT NULL); CREATE TABLE IF NOT EXISTS events(sequence INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, data TEXT NOT NULL); CREATE TABLE IF NOT EXISTS requests(id TEXT PRIMARY KEY, job_id TEXT NOT NULL, fingerprint TEXT); PRAGMA user_version=2;")?;
-        Ok(Self { connection })
+        Ok(Self {
+            connection,
+            ephemeral: Default::default(),
+            ephemeral_events: Default::default(),
+        })
     }
     pub fn put<T: Serialize>(&self, kind: &str, id: &str, value: &T) -> Result<()> {
         let data = serde_json::to_string(value)?;
+        let json: serde_json::Value = serde_json::from_str(&data)?;
+        let private = (kind == "job" && json["private"] == true)
+            || json["scope"]["private"] == true
+            || json["identity"]["scope"]["private"] == true;
+        if private {
+            let old = self
+                .ephemeral
+                .borrow_mut()
+                .insert((kind.into(), id.into()), data.clone());
+            if kind == "job" && old.as_ref() != Some(&data) {
+                let job: Job = serde_json::from_str(&data)?;
+                let tx = self.connection.unchecked_transaction()?;
+                // Persist only a nonsecret sequence marker; actual private events stay in memory.
+                Self::append(&tx, EventPayload::SettingsChanged)?;
+                tx.commit()?;
+                let sequence = self.sequence()?;
+                let payload = if old
+                    .as_ref()
+                    .and_then(|value| serde_json::from_str::<Job>(value).ok())
+                    .is_none_or(|old| old.state != job.state)
+                {
+                    EventPayload::JobLifecycle { job: Box::new(job) }
+                } else {
+                    EventPayload::JobProgress { job: Box::new(job) }
+                };
+                self.ephemeral_events.borrow_mut().insert(sequence, payload);
+                self.ephemeral_events
+                    .borrow_mut()
+                    .retain(|key, _| sequence.saturating_sub(*key) < 2048);
+            }
+            return Ok(());
+        }
         let tx = self.connection.unchecked_transaction()?;
         let old: Option<String> = tx
             .query_row(
@@ -61,6 +99,49 @@ impl Store {
         tx.commit()?;
         Ok(())
     }
+    pub fn put_browser_checkpoint(
+        &self,
+        checkpoint: &crate::browser_stream::Checkpoint,
+        job: &Job,
+    ) -> Result<()> {
+        if job.private {
+            self.put("browser_stream", &checkpoint.identity.stream_id, checkpoint)?;
+            return self.put("job", &job.id, job);
+        }
+        let tx = self.connection.unchecked_transaction()?;
+        let previous: Option<String> = tx
+            .query_row(
+                "SELECT data FROM records WHERE kind='job' AND id=?1",
+                [&job.id],
+                |r| r.get(0),
+            )
+            .ok();
+        for (kind, id, data) in [
+            (
+                "browser_stream",
+                &checkpoint.identity.stream_id,
+                serde_json::to_string(checkpoint)?,
+            ),
+            ("job", &job.id, serde_json::to_string(job)?),
+        ] {
+            tx.execute("INSERT INTO records(kind,id,data) VALUES(?1,?2,?3) ON CONFLICT(kind,id) DO UPDATE SET data=excluded.data",params![kind,id,data])?;
+        }
+        let payload = if previous
+            .and_then(|s| serde_json::from_str::<Job>(&s).ok())
+            .is_none_or(|previous| previous.state != job.state)
+        {
+            EventPayload::JobLifecycle {
+                job: Box::new(job.clone()),
+            }
+        } else {
+            EventPayload::JobProgress {
+                job: Box::new(job.clone()),
+            }
+        };
+        Self::append(&tx, payload)?;
+        tx.commit()?;
+        Ok(())
+    }
     fn append(tx: &rusqlite::Transaction, event: EventPayload) -> Result<()> {
         tx.execute(
             "INSERT INTO events(at,data) VALUES(?1,?2)",
@@ -80,6 +161,14 @@ impl Store {
             })?)
     }
     pub fn request(&self, id: &str) -> Result<Option<(String, Option<String>)>> {
+        for ((kind, _), data) in self.ephemeral.borrow().iter() {
+            if kind == "job" {
+                let j: Job = serde_json::from_str(data)?;
+                if j.request_id == id {
+                    return Ok(Some((j.id, j.request_fingerprint)));
+                }
+            }
+        }
         use rusqlite::OptionalExtension;
         Ok(self
             .connection
@@ -115,7 +204,12 @@ impl Store {
             events.push(EngineEvent {
                 sequence,
                 at: chrono::DateTime::parse_from_rfc3339(&at)?.with_timezone(&chrono::Utc),
-                payload: serde_json::from_str(&data)?,
+                payload: self
+                    .ephemeral_events
+                    .borrow()
+                    .get(&sequence)
+                    .cloned()
+                    .unwrap_or(serde_json::from_str(&data)?),
             });
         }
         let more = events.len() > limit;
@@ -124,6 +218,9 @@ impl Store {
     }
 
     pub fn get<T: DeserializeOwned>(&self, kind: &str, id: &str) -> Result<T> {
+        if let Some(data) = self.ephemeral.borrow().get(&(kind.into(), id.into())) {
+            return Ok(serde_json::from_str(data)?);
+        }
         let data: String = self.connection.query_row(
             "SELECT data FROM records WHERE kind=?1 AND id=?2",
             params![kind, id],
@@ -140,9 +237,35 @@ impl Store {
         for value in values {
             result.push(serde_json::from_str(&value?)?);
         }
+        for ((record_kind, _), data) in self.ephemeral.borrow().iter() {
+            if record_kind == kind {
+                result.push(serde_json::from_str(data)?);
+            }
+        }
         Ok(result)
     }
     pub fn remove(&self, kind: &str, id: &str) -> Result<()> {
+        if let Some(data) = self
+            .ephemeral
+            .borrow_mut()
+            .remove(&(kind.into(), id.into()))
+        {
+            if kind == "job" {
+                let job: Job = serde_json::from_str(&data)?;
+                let tx = self.connection.unchecked_transaction()?;
+                Self::append(&tx, EventPayload::SettingsChanged)?;
+                tx.commit()?;
+                self.ephemeral_events.borrow_mut().insert(
+                    self.sequence()?,
+                    EventPayload::JobRemoved {
+                        id: id.into(),
+                        browser_source: job.browser_source,
+                        page_url: job.page_url,
+                    },
+                );
+            }
+            return Ok(());
+        }
         let tx = self.connection.unchecked_transaction()?;
         if kind == "job" {
             let old: String = tx.query_row(

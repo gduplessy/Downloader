@@ -13,8 +13,23 @@ describe('durable browser alarm recovery', () => {
  it('reconciles actual live tabs after restart and recreates alarms', async () => {
    const state = snapshot(); browser.tabs.get.mockResolvedValue({ id: 7 }); const native = vi.fn().mockResolvedValue(state);
    const scheduler = new NavigationScheduler(native, vi.fn()); await scheduler.reconcile([{ id: 'job', tabId: 7 }]);
-   expect(native).toHaveBeenCalledWith({ action: 'reconcile', live: [{ id: 'job', generation: 1, tab_id: 7 }] });
+   expect(native).toHaveBeenCalledWith({ action: 'reconcile', live: [{ id: 'job', generation: 1, tab_id: 7, scope: null }] });
    expect(browser.alarms.create).toHaveBeenCalledWith('navigation-wait-job', expect.any(Object));
+ });
+ it('forwards the exact claim and rejects a tab in another container', async () => {
+   const scope = {
+     browser: 'firefox' as const, profile: 'profile', private: false,
+     cookie_store_id: 'firefox-container-1', container_id: '1', partition_key: null,
+     claim_generation: 2,
+   };
+   const native = vi.fn().mockResolvedValue(snapshot());
+   browser.tabs.get.mockResolvedValue({id: 7, incognito: false, cookieStoreId: 'firefox-container-1'});
+   const scheduler = new NavigationScheduler(native, vi.fn());
+   await scheduler.reconcile([{id: 'job', tabId: 7, scope}]);
+   expect(native).toHaveBeenCalledWith({action: 'reconcile', live: [{id: 'job', generation: 1, tab_id: 7, scope}]});
+   browser.tabs.get.mockResolvedValue({id: 7, incognito: false, cookieStoreId: 'firefox-container-2'});
+   await scheduler.reconcile([{id: 'job', tabId: 7, scope}]);
+   expect(native).toHaveBeenLastCalledWith({action: 'reconcile', live: []});
  });
  it('missing tab is reported absent rather than recreating another session', async () => {
    browser.tabs.get.mockRejectedValue(Error('tab missing')); const native = vi.fn().mockResolvedValue(snapshot());

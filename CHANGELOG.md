@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.8.4 — Fence combined stream and scheduler recovery
+
+- Integrate the durable browser stream receiver with adapter/scheduler work and reconcile native dispatch/module registrations.
+- Derive queue ownership and generation from persisted jobs, carry each recovered tab's exact scope, reject stale/container-mismatched reports and revalidate source fences after inspection.
+- Keep the installed transport, preview cancellation and final browser lifecycle qualification dependencies open; retain ephemeral new private records and separately approved legacy cleanup.
+
 ## 0.8.2 — Integrate adapters with durable waits
 
 - Combine service-owned scheduling with versioned adapter previews and use one validated visible countdown parser for observations and blockers.
@@ -17,6 +23,12 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 
 - Add durable navigation queue admission, conservative host locks, fenced tab leases and restart-safe wait metadata with deterministic regression fixtures.
 
+
+## 0.7.0 — Owner-fenced browser stream foundations
+
+- Add direct-response begin/chunk/end/abort storage with strict bounded framing, durable acknowledgements, quotas, EOF verification, scanning and no-overwrite publication.
+- Classify replay risk before probing and fence scoped navigation status/resolve operations by profile, cookie store, partition and generation.
+- Keep new private task/stream metadata and event payloads in memory; existing private history cleanup remains a separate approval gate. Browser runtime/live-provider qualification remains pending.
 
 ## 0.6.2 — Stage adapter and shared-contract integration
 

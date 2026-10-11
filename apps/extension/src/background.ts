@@ -699,7 +699,7 @@ async function pollResolvers(userGesture = false) {
     const snapshot = await browserSnapshot();
     const storage: Record<string, any> = await browser.storage.local.get(null);
     if (!schedulerRecovered) {
-      await scheduler.reconcile(Object.entries(storage).filter(([key]) => key.startsWith('resolver-')).map(([key, record]) => ({ id: key.slice(9), tabId: record.tabId, origin: record.lastOrigin, private: record.private, cookieStoreId: record.scope?.cookie_store_id })));
+      await scheduler.reconcile(Object.entries(storage).filter(([key]) => key.startsWith('resolver-')).map(([key, record]) => ({ id: key.slice(9), tabId: record.tabId, origin: record.lastOrigin, private: record.private, cookieStoreId: record.scope?.cookie_store_id, scope: record.scope })));
       schedulerRecovered = true;
     }
     const active: any[] = [];
@@ -718,7 +718,7 @@ async function pollResolvers(userGesture = false) {
         }
         else {
           await browser.storage.local.remove(key);
-          await scheduler.reconcile(Object.entries(storage).filter(([otherKey]) => otherKey.startsWith('resolver-') && otherKey !== key).map(([otherKey, r]) => ({ id: otherKey.slice(9), tabId: r.tabId })));
+          await scheduler.reconcile(Object.entries(storage).filter(([otherKey]) => otherKey.startsWith('resolver-') && otherKey !== key).map(([otherKey, r]) => ({ id: otherKey.slice(9), tabId: r.tabId, scope: r.scope, origin: r.lastOrigin, private: r.private, cookieStoreId: r.scope?.cookie_store_id })));
         }
         active.push(job);
       }

@@ -145,6 +145,8 @@ pub struct LiveLease {
     pub id: String,
     pub generation: u64,
     pub tab_id: i64,
+    #[serde(default)]
+    pub scope: Option<crate::navigation::SessionScope>,
 }
 impl Scheduler {
     pub fn load(store: &Store) -> Result<Self> {

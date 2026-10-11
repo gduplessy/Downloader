@@ -17,8 +17,9 @@ pub struct Engine {
     navigation_scheduler: Mutex<crate::navigation_scheduler::Scheduler>,
     pub queues: Mutex<Vec<Queue>>,
     contexts: Mutex<HashMap<String, RequestContext>>,
-    controls: Mutex<HashMap<String, Arc<AtomicU8>>>,
+    pub(crate) controls: Mutex<HashMap<String, Arc<AtomicU8>>>,
     solver_tasks: Mutex<HashMap<String, Arc<AtomicU8>>>,
+    pub(crate) browser_stream_locks: Mutex<HashMap<String, Arc<Mutex<()>>>>,
     pub stopping: AtomicBool,
 }
 impl Engine {
@@ -107,6 +108,7 @@ impl Engine {
             contexts: Mutex::new(contexts),
             controls: Mutex::new(HashMap::new()),
             solver_tasks: Mutex::new(HashMap::new()),
+            browser_stream_locks: Mutex::new(HashMap::new()),
             stopping: AtomicBool::new(false),
         });
         engine.cleanup_solver_sessions();
@@ -336,6 +338,9 @@ impl Engine {
             viable: false,
             page_url: None,
             navigation_owner: request.context.profile.clone(),
+            navigation_scope: None,
+            source_generation: 1,
+            replay_decision: None,
             navigation_url: None,
             solver_attempted: false,
             solver_outcome: None,
@@ -415,9 +420,10 @@ impl Engine {
                 .navigation_owner
                 .as_deref()
                 .is_some_and(|assigned| assigned != owner)
-                || context_owner
-                    .as_deref()
-                    .is_some_and(|assigned| assigned != owner)
+                || (job.navigation_owner.is_none()
+                    && context_owner
+                        .as_deref()
+                        .is_some_and(|assigned| assigned != owner))
             {
                 continue;
             }
@@ -436,6 +442,24 @@ impl Engine {
                 }
             }
             if let Some(task) = scheduler.tasks.iter_mut().find(|t| t.id == job.id) {
+                let authority_changed = task.owner != owner
+                    || task.generation != job.source_generation
+                    || task.scope != job.navigation_scope;
+                if authority_changed {
+                    task.wait = None;
+                    if task.owner != owner {
+                        task.lease = None;
+                        task.status = QueueStatus::Queued;
+                    } else if let Some(lease) = &mut task.lease {
+                        lease.generation = job.source_generation;
+                        task.status = QueueStatus::Active;
+                    }
+                    task.reason = "session_changed_revalidate_page".into();
+                }
+                task.owner = owner.into();
+                task.generation = job.source_generation;
+                task.scope = job.navigation_scope.clone();
+                task.private = job.private;
                 // Redirect/site locks extend atomically; a collision blocks further automated steps.
                 for host in hosts {
                     if !task.host_keys.contains(&host) {
@@ -443,8 +467,10 @@ impl Engine {
                     }
                 }
             } else {
-                scheduler.enqueue(job.id.clone(), 1, owner.into(), hosts)?;
-                scheduler.tasks.last_mut().unwrap().private = job.private;
+                scheduler.enqueue(job.id.clone(), job.source_generation, owner.into(), hosts)?;
+                let task = scheduler.tasks.last_mut().unwrap();
+                task.private = job.private;
+                task.scope = job.navigation_scope.clone();
             }
         }
         let request_id = match &request {
@@ -459,6 +485,20 @@ impl Engine {
             crate::navigation_scheduler::SchedulerRequest::Control { id, .. } => id.as_ref(),
             _ => None,
         };
+        if let crate::navigation_scheduler::SchedulerRequest::Reconcile { live } = &request {
+            for lease in live {
+                let job = jobs
+                    .iter()
+                    .find(|job| job.id == lease.id)
+                    .context("Unknown reconciled navigation job")?;
+                if job.navigation_owner.as_deref() != Some(owner)
+                    || job.source_generation != lease.generation
+                    || job.navigation_scope != lease.scope
+                {
+                    bail!("Reconciled navigation scope is stale or foreign");
+                }
+            }
+        }
         if let Some(id) = request_id {
             let task = scheduler
                 .tasks
@@ -490,8 +530,24 @@ impl Engine {
         }
         Ok(serde_json::to_value(result)?)
     }
+    fn check_navigation_fence(
+        &self,
+        job: &Job,
+        scope: Option<&crate::navigation::SessionScope>,
+        generation: Option<u64>,
+    ) -> Result<()> {
+        if let Some(expected) = &job.navigation_scope {
+            if scope != Some(expected) || generation != Some(job.source_generation) {
+                bail!("Stale or missing navigation session fence");
+            }
+        }
+        Ok(())
+    }
     pub fn command(self: &Arc<Self>, command: Command) -> Result<serde_json::Value> {
         match command {
+            Command::BrowserStream(operation) => Ok(serde_json::to_value(
+                crate::browser_stream::operation(self, operation)?,
+            )?),
             Command::NavigationScheduler {
                 owner,
                 scope,
@@ -544,7 +600,13 @@ impl Engine {
                 let value = serde_json::to_value(job.lock().unwrap().clone())?;
                 Ok(value)
             }
-            Command::ClaimNavigation { id, owner, force } => {
+            Command::ClaimNavigation {
+                id,
+                owner,
+                force,
+                scope,
+                source_generation: _,
+            } => {
                 uuid::Uuid::parse_str(&owner).context("Invalid browser profile identifier")?;
                 let job = self.job(&id)?;
                 {
@@ -561,10 +623,28 @@ impl Engine {
                     {
                         bail!("Navigation is assigned to another browser profile");
                     }
+                    if let Some(mut scope) = scope {
+                        scope.validate()?;
+                        if scope.profile != owner || scope.private != j.private {
+                            bail!("Browser claim scope does not match job");
+                        }
+                        if j.navigation_scope.as_ref() != Some(&scope) {
+                            scope.claim_generation = j
+                                .navigation_scope
+                                .as_ref()
+                                .map_or(1, |old| old.claim_generation.saturating_add(1));
+                        }
+                        j.navigation_scope = Some(scope);
+                    } else if j.navigation_scope.is_some() {
+                        bail!("Scoped navigation requires a fenced claim");
+                    }
                     j.navigation_owner = Some(owner);
                 }
                 self.persist(&job)?;
-                Ok(serde_json::json!({"id":id}))
+                let claimed = job.lock().unwrap().clone();
+                Ok(
+                    serde_json::json!({"id":id,"scope":claimed.navigation_scope,"source_generation":claimed.source_generation}),
+                )
             }
             Command::Resolve {
                 id,
@@ -572,6 +652,8 @@ impl Engine {
                 url,
                 filename,
                 context,
+                scope,
+                source_generation,
             } => {
                 security::validate_url(&url)?;
                 security::validate_context(&context)?;
@@ -579,6 +661,18 @@ impl Engine {
                     bail!("Download is already running");
                 }
                 let job = self.job(&id)?;
+                {
+                    let j = job.lock().unwrap();
+                    self.check_navigation_fence(&j, scope.as_ref(), source_generation)?;
+                    if j.navigation_scope.is_some()
+                        && !j.replay_decision.as_ref().is_some_and(|r| {
+                            r.disposition == crate::navigation::ReplayDisposition::Replayable
+                                && r.source_generation == j.source_generation
+                        })
+                    {
+                        bail!("Source is not qualified for replay; use direct browser streaming");
+                    }
+                }
                 let filename = match filename {
                     Some(name) => Some(name),
                     None => {
@@ -587,6 +681,7 @@ impl Engine {
                     }
                 };
                 let mut j = job.lock().unwrap();
+                self.check_navigation_fence(&j, scope.as_ref(), source_generation)?;
                 if j.navigation_owner.as_ref() != Some(&owner) {
                     bail!("Navigation belongs to another browser profile");
                 }
@@ -629,6 +724,8 @@ impl Engine {
                 bytes,
                 total,
                 url,
+                scope,
+                source_generation,
             } => {
                 if let Some(ref url) = url {
                     let parsed = security::validate_url(url)?;
@@ -650,6 +747,7 @@ impl Engine {
                 let solver_control = self.solver_tasks.lock().unwrap().get(&id).cloned();
                 {
                     let mut j = job.lock().unwrap();
+                    self.check_navigation_fence(&j, scope.as_ref(), source_generation)?;
                     if j.navigation_owner.as_ref() != Some(&owner) {
                         bail!("Navigation belongs to another browser profile");
                     }
@@ -688,6 +786,40 @@ impl Engine {
                 }
                 self.persist(&job)?;
                 Ok(serde_json::json!({"id":id}))
+            }
+            Command::BrowserSnapshot { owner } => {
+                uuid::Uuid::parse_str(&owner)?;
+                let mut value = serde_json::to_value(self.snapshot())?;
+                if let Some(jobs) = value["jobs"].as_array_mut() {
+                    jobs.retain(|j| {
+                        j["navigation_owner"] == owner
+                            || (j["navigation_owner"].is_null() && j["private"] != true)
+                    });
+                }
+                Ok(value)
+            }
+            Command::BrowserSubscribe {
+                owner,
+                after_sequence,
+                limit,
+            } => {
+                uuid::Uuid::parse_str(&owner)?;
+                let mut value = serde_json::to_value(self.subscribe(after_sequence, limit)?)?;
+                if let Some(jobs) = value["snapshot"]["jobs"].as_array_mut() {
+                    jobs.retain(|j| {
+                        j["navigation_owner"] == owner
+                            || (j["navigation_owner"].is_null() && j["private"] != true)
+                    });
+                }
+                if let Some(events) = value["events"].as_array_mut() {
+                    events.retain(|e| {
+                        e["job"].is_null()
+                            || e["job"]["navigation_owner"] == owner
+                            || (e["job"]["navigation_owner"].is_null()
+                                && e["job"]["private"] != true)
+                    });
+                }
+                Ok(value)
             }
             Command::Snapshot => Ok(serde_json::to_value(self.snapshot())?),
             Command::Add(add) => Ok(serde_json::to_value(self.add(add)?)?),
@@ -759,8 +891,11 @@ impl Engine {
                 owner,
                 url,
                 mut context,
+                scope,
+                source_generation,
             } => {
                 let job = self.job(&id)?.lock().unwrap().clone();
+                self.check_navigation_fence(&job, scope.as_ref(), source_generation)?;
                 if !job.browser_source || job.navigation_owner.as_deref() != Some(&owner) {
                     bail!("Browser profile cannot refresh this job");
                 }
@@ -1480,7 +1615,9 @@ mod tests {
                 id: j.id.clone(),
                 owner: uuid::Uuid::new_v4().to_string(),
                 url: "https://example.com/refreshed".into(),
-                context: RequestContext::default()
+                context: RequestContext::default(),
+                scope: None,
+                source_generation: None,
             })
             .is_err());
         e.command(Command::RefreshBrowser {
@@ -1488,6 +1625,8 @@ mod tests {
             owner,
             url: "https://example.com/refreshed".into(),
             context: RequestContext::default(),
+            scope: None,
+            source_generation: None,
         })
         .unwrap();
         let refreshed = e.job(&j.id).unwrap().lock().unwrap().clone();

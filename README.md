@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.8.2<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.8.4<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -27,6 +27,8 @@ The [NAV implementation plans](docs/plans/nav/README.md) cover remaining hosted-
 The coordinator's shared navigation contracts define session fencing, task/wait metadata, replay disposition and bounded streaming frames. They provide interfaces for the feature branches; their presence does not establish implemented navigation behavior.
 
 The NAV staging branch combines these contracts with versioned adapters and local DOM/request/hash fixtures. Installed extension/native ownership and stream acceptance remain in progress; the [adapter handoff](docs/plans/nav/HANDOFF-ADAPTERS.md) records the integration hooks and evidence limits.
+
+Native stream storage is now staged with scheduler recovery. Queue tasks follow persisted source/claim generations, and recovered tabs report their exact session scope. Installed capture and cross-browser lifecycle acceptance remain in progress.
 
 Latest [qualification records](docs/evidence/transfer-engine-2026-10-11/README.md) include three-platform PAC failover and actual filesystem recovery, plus a disposable Docker AD realm. Nine Linux NTLM/Kerberos checks passed locally and in CI; four additional native Windows NTLM checks passed locally. Native SSO and managed enterprise proxy policies still need acceptance.
 
@@ -257,3 +259,5 @@ Adapter fixture checks: node scripts/nav-fixtures/adapters/qualify.mjs and node 
 The service scheduler persists host reservations, tab leases, queue ordering, and wait observations. The default is three navigation tabs with a validated limit of one through twenty. Deadlines trigger page revalidation; elapsed time alone never authorizes a download submission. Installed browser acceptance and combined source/session fencing remain pending.
 
 Navigation queue controls are available in extension options: change the one-through-twenty tab limit, pause/resume admission, adjust priority, continue manual work, and cancel owned tasks. Readiness notifications are opt-in and require notification permission. All unqualified hosts retain their owning tab and a serial host lock during waits; missing tabs require Continue rather than automatic session replacement. Private queue tasks are not persisted by the service.
+
+Browser stream foundations now support owner-fenced durable original-response writes, bounded acknowledgements, verification and no-overwrite publication. Direct-capture runtime qualification is recorded separately under docs/evidence/nav-browser-streams. Existing private database history is not sanitized by this release; new private task/stream metadata stays in memory and requires reauthorization after service loss.
