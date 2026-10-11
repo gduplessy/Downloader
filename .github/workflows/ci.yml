@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       large:
-        description: Run actual downloads above 4 GiB on Windows
+        description: Run actual downloads above 4 GiB on every platform
         type: boolean
         default: false
 permissions:
@@ -43,7 +43,7 @@ jobs:
       - name: Protocol, proxy, authentication and performance fixtures
         run: node scripts/qualify-network.mjs .local/network-qualification --benchmark
       - name: Actual large-file recovery
-        if: runner.os == 'Windows' && github.event_name == 'workflow_dispatch' && inputs.large
+        if: github.event_name == 'workflow_dispatch' && inputs.large
         run: node scripts/qualify-network.mjs .local/large-qualification --only large_over_4gib --large
       - uses: actions/upload-artifact@v4
         if: always()
@@ -56,6 +56,13 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - run: cargo build -p downloader-service -p downloader-cli
+      - name: CLI and native IPC lifecycle acceptance
+        run: node scripts/qualify-control.mjs .local/control-qualification
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: control-evidence-${{ runner.os }}
+          path: .local/control-qualification/results.json
       - run: node scripts/prepare-sidecar.mjs --debug
       - run: cargo check -p downloader-desktop
       - uses: actions/upload-artifact@v4
