@@ -1,4 +1,5 @@
 const en = {
+  private: 'Private session',
   edit: 'Edit saved account',
   mismatch: 'This account belongs to another site or browser session. Choose its matching job.',
   failure: 'Account operation failed. Check the selected session and saved credentials.',
@@ -33,6 +34,7 @@ const en = {
 };
 export type AccountLabel = keyof typeof en;
 const rows: Record<AccountLabel, readonly string[]> = {
+  private: ['Session privée', 'Sesión privada', 'Private Sitzung', 'جلسة خاصة', '私密会话'],
   edit: [
     'Modifier le compte enregistré',
     'Editar cuenta guardada',

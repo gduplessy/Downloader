@@ -30,14 +30,17 @@ import { showPreview, type PreviewHandle } from './navigation/adapters/selection
 // Runs only in the top-level tab assigned to an explicit navigation job.
 import { scopeKey, type ResolverContext } from './navigation/adapters/context';
 let documentGeneration = 1;
+let documentActive = true;
 let previewHandle: PreviewHandle | undefined;
 let running = false;
 let accountPanel: { close: () => void } | undefined;
 const submissions = new SubmissionGate();
 async function context(): Promise<ResolverContext | null> {
-  return (await browser.runtime
+  if (!documentActive) return null;
+  const result = (await browser.runtime
     .sendMessage({ type: 'resolver_context' })
     .catch(() => null)) as ResolverContext | null;
+  return documentActive ? result : null;
 }
 function accountBinding(ctx: ResolverContext): AccountBinding {
   const adapter = matchAdapter(location.href, ctx.disabledAdapters);
@@ -231,7 +234,7 @@ async function submit(
   if (reply?.repeat) setTimeout(() => void step(), 1000);
 }
 async function step() {
-  if (running) return;
+  if (running || !documentActive) return;
   running = true;
   try {
     accountPanel?.close();
@@ -348,6 +351,15 @@ async function step() {
 const root = globalThis as typeof globalThis & { __downloaderResolver?: boolean };
 if (!root.__downloaderResolver) {
   root.__downloaderResolver = true;
+  window.addEventListener(
+    'pagehide',
+    () => {
+      documentActive = false;
+      accountPanel?.close();
+      previewHandle?.close();
+    },
+    { once: true },
+  );
   browser.runtime.onMessage.addListener((message: any) => {
     if (message.type === 'resolver_continue') {
       documentGeneration++;

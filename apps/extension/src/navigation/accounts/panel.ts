@@ -1,3 +1,4 @@
+import { sameAccountBinding } from './binding';
 import { accountLabel } from './labels';
 import type { Selection, AccountBinding, AccountAction } from './types';
 import { accountDecision } from './policy';
@@ -12,6 +13,7 @@ export async function showAccountPanel(
 ): Promise<{ close: () => void }> {
   const abort = new AbortController();
   const box = doc.createElement('section');
+  box.dir = locale === 'ar' ? 'rtl' : 'ltr';
   box.setAttribute('role', 'region');
   box.setAttribute('aria-label', accountLabel(locale, 'title'));
   box.dataset.downloaderUi = 'account';
@@ -70,6 +72,11 @@ export async function showAccountPanel(
       close();
     }
   };
+  const current = await context();
+  if (!current || !sameAccountBinding(binding, current)) {
+    abort.abort();
+    return { close: () => {} };
+  }
   doc.body.append(box);
   return { close };
 }

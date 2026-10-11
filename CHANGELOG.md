@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.9.4 — Adopt intentional account changes in the original browser context
+
+- Merge verified coordinator `d6594d3` readonly authority renewal and preserve the exact owning tab/profile/container/private session while old readers and capture authorizations are invalidated.
+- Explicit account selection/removal waits for visible user action, keeping the existing admitted navigation lifecycle. Typed login/MFA/entitlement states remain account observations; no automatic login retry loop or replay permission expansion.
+- Saved account revisions fence concurrent credential edits; installed browser/native publication qualification follows this integration.
+
 ## 0.9.3 — Preserve account checks through two-phase capture authorization
 
 - Merge coordinator `dc63865`, bind adapter actions to source generation, and retain credential grants as a separate scoped authorization purpose.
@@ -25,6 +31,13 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Add desktop-selected site accounts keyed by exact origin and browser session, OS-keyring credential references, ephemeral private session metadata, typed authentication/entitlement observations and expiring one-use form grants.
 - Add six-language desktop account controls and browser form/cancellation modules. Qualified premium controls require the explicitly selected active session; purchase, advertisements and unqualified live layouts remain excluded.
 - Browser worker integration and native keyring/file acceptance remain in progress; local fixtures do not qualify live accounts or provider APIs.
+
+## 0.8.11
+
+- Add narrowly scoped read-only claim/source renewal without exposing URLs or weakening stale-write fences.
+- Require current browser epoch and actual original tab context for recovery, heartbeat and closure; invalidate old authorization/capture when source authority changes.
+- Keep scoped refreshed sources awaiting browser qualification and prevent unknown-source resume from starting native probes.
+- Five native selection/renewal/refresh regressions cover generation replacement, unrelated sessions, durable metadata, private persistence and unqualified replay.
 
 ## 0.8.10
 

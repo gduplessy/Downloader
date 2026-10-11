@@ -175,7 +175,7 @@ export function Accounts({ jobs, locale }: { jobs: Job[]; locale: string }) {
               {t('edit')}
             </button>{' '}
             — {a.origin} ({a.scope.browser}
-            {a.scope.private ? ' / private' : ''}){' '}
+            {a.scope.private ? ' / ' + t('private') : ''}){' '}
             <button
               disabled={busy || !selected}
               onClick={() =>

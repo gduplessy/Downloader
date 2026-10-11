@@ -484,3 +484,37 @@ fn credential_revision_change_fences_consume_and_allows_only_a_fresh_attempt() {
     assert!(new["grant_id"].is_string());
     assert!(browser(&e, request(&e, &id, BrowserAction::Grant { proof: form() })).is_err());
 }
+
+#[test]
+fn authenticated_redirect_observation_updates_current_page_and_preserves_original() {
+    let (_d, e, id, a) = setup();
+    let original = e.job(&id).unwrap().lock().unwrap().page_url.clone();
+    let page = "http://127.0.0.1:18783/nav-adapters/ddownload/account";
+    let p = FormProof {
+        page: page.into(),
+        action: page.into(),
+        method: "GET".into(),
+        username_name: String::new(),
+        password_name: String::new(),
+        ..form()
+    };
+    browser(
+        &e,
+        request(
+            &e,
+            &id,
+            BrowserAction::Observe {
+                proof: p,
+                auth: AuthState::Authenticated,
+                entitlement: Entitlement::Active,
+                account_id: Some(a.account_id),
+                selected_host: Some("ddownload.com".into()),
+            },
+        ),
+    )
+    .unwrap();
+    let shared = e.job(&id).unwrap();
+    let job = shared.lock().unwrap();
+    assert_eq!(job.navigation_url.as_deref(), Some(page));
+    assert_eq!(job.page_url, original);
+}

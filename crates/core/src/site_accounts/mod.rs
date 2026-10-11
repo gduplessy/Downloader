@@ -329,7 +329,7 @@ pub fn desktop(engine: &Arc<Engine>, request: DesktopRequest) -> Result<serde_js
                         job.state,
                         JobState::Complete | JobState::Cancelled | JobState::Failed
                     ) {
-                        job.state = JobState::WaitingAuthentication;
+                        job.state = JobState::WaitingUser;
                         job.error =
                             Some("account_removed: select an existing browser session".into());
                     }
@@ -399,7 +399,7 @@ pub fn desktop(engine: &Arc<Engine>, request: DesktopRequest) -> Result<serde_js
             } else {
                 store.remove("site_account_selection", &job.id)?;
             }
-            job.state = JobState::WaitingAuthentication;
+            job.state = JobState::WaitingUser;
             job.error = Some("account_session_selected: continue in the owning browser tab".into());
             store.put("job", &job.id, &*job)?;
             engine
@@ -415,7 +415,7 @@ pub fn desktop(engine: &Arc<Engine>, request: DesktopRequest) -> Result<serde_js
 pub fn browser(engine: &Arc<Engine>, request: BrowserRequest) -> Result<serde_json::Value> {
     request.scope.validate()?;
     let job = engine.job(&request.job_id)?;
-    let job = job.lock().unwrap();
+    let mut job = job.lock().unwrap();
     if job.navigation_owner.as_deref() != Some(&request.owner)
         || job.navigation_scope.as_ref() != Some(&request.scope)
         || job.source_generation != request.source_generation
@@ -425,6 +425,15 @@ pub fn browser(engine: &Arc<Engine>, request: BrowserRequest) -> Result<serde_js
         )
     {
         bail!("account_navigation_fence_stale");
+    }
+    if matches!(
+        request.request,
+        BrowserAction::Grant { .. } | BrowserAction::Consume { .. }
+    ) && !matches!(
+        job.state,
+        JobState::WaitingBrowser | JobState::WaitingUser | JobState::WaitingAuthentication
+    ) {
+        bail!("account_login_state_unavailable");
     }
     let store = engine.store.lock().unwrap();
     let mut selection = match store.get::<Selection>("site_account_selection", &job.id) {
@@ -447,6 +456,9 @@ pub fn browser(engine: &Arc<Engine>, request: BrowserRequest) -> Result<serde_js
     let mut runtime = engine.site_accounts.lock().unwrap();
     let now = chrono::Utc::now().timestamp_millis();
     runtime.grants.retain(|_, g| g.expires > now);
+    runtime.attempts.retain(|(id, generation, revision), _| {
+        id != &job.id || (*generation == request.source_generation && *revision == account.revision)
+    });
     match request.request {
         BrowserAction::Selection => {
             if selection.observed_at.is_none_or(|t| now - t > 90_000) {
@@ -481,6 +493,10 @@ pub fn browser(engine: &Arc<Engine>, request: BrowserRequest) -> Result<serde_js
             }
             selection.selected_host = selected_host.or(selection.selected_host);
             selection.observed_at = Some(now);
+            // The owned worker validated the current document; retain original source provenance.
+            job.navigation_url = Some(p.page.clone());
+            job.updated = chrono::Utc::now();
+            store.put("job", &job.id, &*job)?;
             store.put("site_account_selection", &job.id, &selection)?;
             Ok(serde_json::to_value(selection)?)
         }
@@ -503,6 +519,9 @@ pub fn browser(engine: &Arc<Engine>, request: BrowserRequest) -> Result<serde_js
                 bail!("account_login_attempt_exhausted");
             }
             *attempts += 1;
+            if runtime.grants.len() >= 128 {
+                bail!("account_grant_capacity");
+            }
             let grant_id = uuid::Uuid::new_v4().to_string();
             runtime.grants.insert(
                 grant_id.clone(),

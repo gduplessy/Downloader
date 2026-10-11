@@ -1,3 +1,5 @@
+import { validateAccountDocument } from './document';
+import { PremiumAuthorizations } from './premium';
 import { expect, test, vi } from 'vitest';
 import { accountDecision, readSignals } from './policy';
 import { accountRequest, type OwnedAccountTab } from './worker';
@@ -162,4 +164,53 @@ test('authority equality is structural across JSON field ordering', () => {
       scope: { ...reordered.scope, claim_generation: 2 },
     }),
   ).toBe(false);
+});
+
+test('premium commit consumes once and rejects expiry/account edits/quota/cancellation', () => {
+  let now = 11000;
+  const claims = new PremiumAuthorizations(() => now);
+  claims.issue('normal', 12, selected);
+  expect(claims.consume('normal', 12, selected)).toBe(true);
+  expect(claims.consume('normal', 12, selected)).toBe(false);
+  for (const changed of [
+    { ...selected, account: { ...selected.account, revision: 2 } },
+    { ...selected, entitlement: 'quota_exhausted' as const },
+    null,
+  ]) {
+    claims.issue('changed', 12, selected);
+    expect(() => claims.consume('changed', 12, changed)).toThrow('account_premium_stale');
+  }
+  claims.issue('expiry', 12, selected);
+  now += 15001;
+  expect(() => claims.consume('expiry', 12, selected)).toThrow();
+  now = 11000;
+  claims.issue('cancel', 12, selected);
+  claims.invalidateTab(12);
+  expect(claims.has('cancel')).toBe(false);
+});
+
+test('queued old document messages cannot replace actual current top-frame identity', async () => {
+  const api = {
+    tabs: { get: async () => ({ status: 'complete', url: page }) },
+    scripting: {
+      executeScript: async () => [{ frameId: 0, documentId: 'new-document', result: page }],
+    },
+  };
+  await expect(validateAccountDocument(api, 'chromium', 12, 'old-document')).rejects.toThrow(
+    'account_document_stale',
+  );
+  expect(await validateAccountDocument(api, 'chromium', 12, 'new-document')).toBe(page);
+  await expect(
+    validateAccountDocument(
+      {
+        ...api,
+        scripting: {
+          executeScript: async () => [{ frameId: 1, documentId: 'new-document', result: page }],
+        },
+      },
+      'chromium',
+      12,
+      'new-document',
+    ),
+  ).rejects.toThrow();
 });

@@ -18,6 +18,21 @@ export async function accountRequest(
   owned: OwnedAccountTab,
   native: (command: string, args: unknown) => Promise<unknown>,
 ) {
+  validateAccountRequest(action, binding, owned);
+  return native('browser_account', {
+    job_id: owned.jobId,
+    owner: owned.owner,
+    scope: owned.scope,
+    source_generation: owned.sourceGeneration,
+    request: action,
+  });
+}
+
+export function validateAccountRequest(
+  action: AccountAction,
+  binding: AccountBinding,
+  owned: OwnedAccountTab,
+) {
   const adapter = matchAdapter(owned.page);
   if (
     binding.tabId !== owned.tabId ||
@@ -46,11 +61,4 @@ export async function accountRequest(
     )
       throw Error('account_form_binding_stale');
   }
-  return native('browser_account', {
-    job_id: owned.jobId,
-    owner: owned.owner,
-    scope: owned.scope,
-    source_generation: owned.sourceGeneration,
-    request: action,
-  });
 }
