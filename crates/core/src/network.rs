@@ -333,13 +333,19 @@ fn pac(url: &str, script: Option<&str>, _settings: &NetworkSettings) -> Result<S
         manual
     };
     let scheme = url::Url::parse(url)?.scheme().to_owned();
+    Ok(system_proxy_address(&proxy, &scheme))
+}
+
+#[cfg(any(windows, test))]
+fn system_proxy_address(proxy: &str, scheme: &str) -> String {
     let chosen = proxy
         .split(';')
         .find_map(|entry| {
-            entry
+            let (protocol, address) = entry.trim().split_once('=')?;
+            protocol
                 .trim()
-                .strip_prefix(&format!("{scheme}="))
-                .map(str::to_owned)
+                .eq_ignore_ascii_case(scheme)
+                .then(|| address.trim().to_owned())
         })
         .or_else(|| {
             proxy
@@ -349,9 +355,9 @@ fn pac(url: &str, script: Option<&str>, _settings: &NetworkSettings) -> Result<S
         })
         .unwrap_or_default();
     if chosen.is_empty() || chosen.contains("://") {
-        Ok(chosen)
+        chosen
     } else {
-        Ok(format!("http://{chosen}"))
+        format!("http://{chosen}")
     }
 }
 
@@ -386,6 +392,22 @@ fn linux_pac_available() -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn system_proxy_protocol_maps_are_case_insensitive() {
+        assert_eq!(
+            system_proxy_address("HTTP=plain:8080; HTTPS = secure:3128", "https"),
+            "http://secure:3128"
+        );
+        assert_eq!(
+            system_proxy_address(" HTTPS=secure:3128 ; HTTP=plain:8080 ", "http"),
+            "http://plain:8080"
+        );
+        assert_eq!(
+            system_proxy_address("https://proxy:8443", "https"),
+            "https://proxy:8443"
+        );
+        assert_eq!(system_proxy_address("HTTP=plain:8080", "https"), "");
+    }
     #[test]
     fn windows_bypass_matches_whole_hosts_and_local_names() {
         assert!(proxy_bypass("cdn.example.com", "*.EXAMPLE.COM; <local>"));

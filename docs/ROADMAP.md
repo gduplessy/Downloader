@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.2.3<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.2.4<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks the limitations stated in the README, implementation status, compatibility matrix, acceptance evidence, and component notices. It explicitly includes currently unsupported capabilities, including **CAPTCHA automation / bypass**.
 
@@ -38,7 +38,7 @@ The initial release still targets Windows 11 x64, macOS 14+ Intel and Apple Sili
 - [ ] **ENG-09 — Public control protocol (implemented; confirming qualification):** transactional typed/sequence events, snapshot-first reconnect/replay, negotiation, durable idempotency/tombstones, CLI watch and browser-safe projection are covered. macOS endpoint permissions/rebind and CLI restart now pass CI. The newer real native creation/privacy fixture awaits cross-platform CI confirmation. Native GUI/browser matrix remains separate WEB/REL work.
 - [ ] **ENG-10 — Performance evidence (partial):** throughput, engine CPU/RSS, checkpoint, verification and finalization measurements and reproducible fixtures are published. Remaining: successful IDM comparison. Installed IDM produced zero fixture requests/output in two 180-second attempts; no comparative result is claimed.
 
-Patches 0.2.1–0.2.3 add Windows bypass wildcard/boundary regressions, real malformed-range fallback, encoded Unicode filenames, browser-safe native creation/refresh responses and primary-failure preservation across cancelled sibling connections. See [implementation, measurements and sanitized evidence](TRANSFER_ENGINE.md). Checked engine items establish their deterministic acceptance criteria, not full native/browser/install acceptance or universal website support.
+Patches 0.2.1–0.2.4 add Windows bypass wildcard/boundary and case-insensitive protocol-map regressions, real malformed-range fallback, encoded Unicode filenames, browser-safe native creation/refresh responses and primary-failure preservation across cancelled sibling connections. See [implementation, measurements and sanitized evidence](TRANSFER_ENGINE.md). Checked engine items establish their deterministic acceptance criteria, not full native/browser/install acceptance or universal website support.
 
 ## 3. Download management, queues, and scheduling
 
