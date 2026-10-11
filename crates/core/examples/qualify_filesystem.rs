@@ -160,7 +160,7 @@ fn run() -> Result<()> {
         .create_new(true)
         .write(true)
         .open(&filler_path)?;
-    let block = [0x51u8; 1024 * 1024];
+    let block = vec![0x51u8; 1024 * 1024];
     let mut written = 0u64;
     let disk_error = loop {
         if written >= 256 * 1024 * 1024 {

@@ -1,0 +1,16 @@
+{
+  "recorded_utc": "2026-10-11",
+  "source_revision": "e5b641c429f02c69807f19bf45d1914384842e88",
+  "ci_run": "https://github.com/gduplessy/Downloader/actions/runs/38108936320",
+  "target_filesystem": "ext4",
+  "bytes": 33554432,
+  "collision_preserved": true,
+  "cross_volume_verified": true,
+  "filler_bytes_before_failure": 65011712,
+  "permission_failure_and_recovery": true,
+  "platform": "linux",
+  "real_disk_full_and_restart_recovery": true,
+  "seconds": 0.911283722,
+  "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292",
+  "version": "0.3.2"
+}

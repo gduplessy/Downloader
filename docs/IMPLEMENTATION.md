@@ -24,7 +24,7 @@ The [complete roadmap](ROADMAP.md) tracks all documented limitations, including 
 
 ## Required implementation and acceptance work
 
-- External NTLM/Negotiate authentication-realm acceptance, native proxy-policy/PAC failure matrices, and actual disk-full/permission/cross-volume filesystem acceptance. Deterministic write/flush, collision, path, lock/alias and recovery regressions are implemented.
+- Native macOS authentication, Windows domain-based Kerberos, proxy SSO and managed proxy-policy/WPAD matrices. Windows/Linux NTLM and Docker Linux Kerberos pass a real Samba realm; ordered PAC failure/fallback and actual disk-full/permission/cross-volume recovery pass the documented platform fixture matrices.
 - DST/missed-window scheduling and reliable synchronization; media quota accounting needs qualification.
 - Editable job properties/columns/drop target; notifications, sleep inhibition, autostart and explicit completion actions.
 - Authenticated/rendered crawler sessions, durable crawl frontier, scheduled synchronization, CSS discovery and offline HTML/CSS rewriting.

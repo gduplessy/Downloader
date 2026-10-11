@@ -1,6 +1,6 @@
 # Transfer engine implementation plan
 
-Scope: ENG-01 through ENG-10 in [ROADMAP.md](ROADMAP.md). Work happens on `feat/transfer-engine-correctness`, in focused, verified commits, with one final PR. Do not merge the PR automatically.
+Scope: ENG-01 through ENG-10 in [ROADMAP.md](ROADMAP.md). The original work was merged in [PR #1](https://github.com/gduplessy/Downloader/pull/1). Qualification follow-ups continue on `feat/transfer-engine-correctness` in focused, verified commits and a new PR. Do not merge automatically.
 
 ## Batches and acceptance
 
@@ -27,8 +27,8 @@ Run Rust fixtures, formatting, Clippy, desktop/extension type checks and tests f
 
 The 0.3.0 follow-up implements bounded ordered proxy failover in all three native adapters and all file-request paths. It adds live proxy-traversal assertions and refuses Windows implicit loopback bypass in explicit PAC mode. ENG-07 still requires the managed-policy/external-realm matrix; a feature implementation does not close those acceptance criteria.
 
-Batches 1–4 are implemented with deterministic regressions. Batch 5 publishes [reproducible evidence](TRANSFER_ENGINE.md), including actual large-file and real native-messaging/CLI runs on all three CI platforms. macOS socket permissions, browser response projection, sibling-error preservation, system proxy maps and weak-validator fallback have focused regression fixes. Remaining ENG-01/06/07/10 qualification criteria stay explicit in the roadmap.
+Batches 1–4 are implemented with deterministic regressions. Batch 5 publishes [reproducible evidence](TRANSFER_ENGINE.md), including actual large-file and real native-messaging/CLI runs on all three CI platforms. Follow-ups pass ordered PAC fixtures on every platform, real NTFS/HFS+/ext4 recovery (ENG-06) and 13 real AD realm checks. Remaining ENG-01/07/10 qualification criteria stay explicit in the roadmap.
 
-The installed IDM command-line workflow yielded no request/output in two attempts; the comparison remains pending. External authentication realms, managed proxy policies, native filesystem matrices and release/browser acceptance are not inferred from fixture success.
+The installed IDM command-line workflow yielded no request/output in two attempts; the comparison remains pending. Native SSO beyond Windows NTLM/Docker Linux Kerberos, managed proxy policies, filesystem coverage beyond the documented image matrix and release/browser acceptance are not inferred from fixture success.
 
 From this increment onward, each focused commit increments `0.MINOR.PATCH` and updates README/roadmap/changelog together; major remains 0 until complete parity. Historical commits are preserved for reversibility.

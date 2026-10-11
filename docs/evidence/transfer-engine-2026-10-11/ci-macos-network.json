@@ -1,0 +1,3880 @@
+{
+  "recorded_utc": "2026-10-11",
+  "product_version": "0.3.1",
+  "source_revision": "5bba63e85eb9b6180e9b84c7688cdd2d2fd8ce0f",
+  "ci_run": "https://github.com/gduplessy/Downloader/actions/runs/38108335654",
+  "platform": "darwin",
+  "results": [
+    {
+      "name": "http",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.165727,
+      "metrics": {
+        "checkpoint_seconds": 0.020571625,
+        "checkpoints": 1,
+        "publication_seconds": 0.0011085,
+        "scan_seconds": 0,
+        "verification_seconds": 0.104936083
+      },
+      "peak_rss_bytes": 13139968,
+      "phases_seconds": {
+        "Assembling": 0.023438667,
+        "Downloading": 0.068765125,
+        "Queued": 0.405490625,
+        "Verifying": 0.073079
+      },
+      "resumed": false,
+      "seconds": 0.589473667,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "https",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.425023,
+      "metrics": {
+        "checkpoint_seconds": 0.02174775,
+        "checkpoints": 1,
+        "publication_seconds": 0.001060125,
+        "scan_seconds": 0,
+        "verification_seconds": 0.10459125
+      },
+      "peak_rss_bytes": 13991936,
+      "phases_seconds": {
+        "Assembling": 0.074657958,
+        "Downloading": 0.225590083,
+        "Queued": 0.323189916,
+        "Verifying": 0.012999292
+      },
+      "resumed": false,
+      "seconds": 0.640947584,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "tls_untrusted",
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "destination_exists": false,
+      "expected_failure": "network_failure",
+      "recovery": [
+        "check_network",
+        "resume"
+      ]
+    },
+    {
+      "name": "proxy_unavailable",
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "destination_exists": false,
+      "expected_failure": "network_failure",
+      "recovery": [
+        "check_network",
+        "resume"
+      ]
+    },
+    {
+      "name": "http2_tls",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 5
+      },
+      "cpu_seconds": 0.581309,
+      "metrics": {
+        "checkpoint_seconds": 0.019082791,
+        "checkpoints": 1,
+        "publication_seconds": 0.001044291,
+        "scan_seconds": 0,
+        "verification_seconds": 0.101158958
+      },
+      "peak_rss_bytes": 14729216,
+      "phases_seconds": {
+        "Downloading": 2.125155875,
+        "Queued": 0.462327375,
+        "Verifying": 0.128279875
+      },
+      "resumed": false,
+      "seconds": 2.726003208,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "ftp",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 4
+      },
+      "cpu_seconds": 0.141597,
+      "metrics": {
+        "checkpoint_seconds": 0.016532417,
+        "checkpoints": 2,
+        "publication_seconds": 0.001233291,
+        "scan_seconds": 0,
+        "verification_seconds": 0.10781025
+      },
+      "peak_rss_bytes": 13402112,
+      "phases_seconds": {
+        "Downloading": 1.200734459,
+        "Queued": 0.385373625,
+        "Verifying": 0.061583375
+      },
+      "resumed": true,
+      "seconds": 1.65138775,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "ftp_explicit_tls",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 2
+      },
+      "cpu_seconds": 0.251214,
+      "metrics": {
+        "checkpoint_seconds": 0.007567875,
+        "checkpoints": 1,
+        "publication_seconds": 0.00102775,
+        "scan_seconds": 0,
+        "verification_seconds": 0.105639542
+      },
+      "peak_rss_bytes": 13467648,
+      "phases_seconds": {
+        "Connecting": 0.0860885,
+        "Downloading": 0.124040583,
+        "Queued": 0.400882167,
+        "Verifying": 0.162232125
+      },
+      "resumed": false,
+      "seconds": 0.785437209,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "ftps_implicit",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 2
+      },
+      "cpu_seconds": 0.250447,
+      "metrics": {
+        "checkpoint_seconds": 0.005501916,
+        "checkpoints": 1,
+        "publication_seconds": 0.000765458,
+        "scan_seconds": 0,
+        "verification_seconds": 0.105217459
+      },
+      "peak_rss_bytes": 13549568,
+      "phases_seconds": {
+        "Connecting": 0.072520792,
+        "Downloading": 0.122280791,
+        "Queued": 0.403311167,
+        "Verifying": 0.093852042
+      },
+      "resumed": false,
+      "seconds": 0.703732542,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "http_proxy",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.148236,
+      "metrics": {
+        "checkpoint_seconds": 0.035277833,
+        "checkpoints": 1,
+        "publication_seconds": 0.000996542,
+        "scan_seconds": 0,
+        "verification_seconds": 0.105518792
+      },
+      "peak_rss_bytes": 13139968,
+      "phases_seconds": {
+        "Downloading": 0.068849583,
+        "Queued": 0.424119333,
+        "Verifying": 0.135384333
+      },
+      "resumed": false,
+      "seconds": 0.632008417,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "http_connect",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.418261,
+      "metrics": {
+        "checkpoint_seconds": 0.0162705,
+        "checkpoints": 1,
+        "publication_seconds": 0.001010208,
+        "scan_seconds": 0,
+        "verification_seconds": 0.103077541
+      },
+      "peak_rss_bytes": 13942784,
+      "phases_seconds": {
+        "Downloading": 0.156239292,
+        "Queued": 0.351193042,
+        "Verifying": 0.160397792
+      },
+      "resumed": false,
+      "seconds": 0.67211925,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "https_proxy",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.705188,
+      "metrics": {
+        "checkpoint_seconds": 0.01886825,
+        "checkpoints": 1,
+        "publication_seconds": 0.001483042,
+        "scan_seconds": 0,
+        "verification_seconds": 0.105228542
+      },
+      "peak_rss_bytes": 14237696,
+      "phases_seconds": {
+        "Downloading": 0.298398583,
+        "Queued": 0.26694225,
+        "Verifying": 0.124157625
+      },
+      "resumed": false,
+      "seconds": 0.699624875,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "socks4",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.15939399999999998,
+      "metrics": {
+        "checkpoint_seconds": 0.023568083,
+        "checkpoints": 1,
+        "publication_seconds": 0.001092625,
+        "scan_seconds": 0,
+        "verification_seconds": 0.10565975
+      },
+      "peak_rss_bytes": 13172736,
+      "phases_seconds": {
+        "Downloading": 0.150004125,
+        "Queued": 0.293032917,
+        "Verifying": 0.096149583
+      },
+      "resumed": false,
+      "seconds": 0.542935292,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "socks5",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.159588,
+      "metrics": {
+        "checkpoint_seconds": 0.023640042,
+        "checkpoints": 1,
+        "publication_seconds": 0.00094925,
+        "scan_seconds": 0,
+        "verification_seconds": 0.107625292
+      },
+      "peak_rss_bytes": 13205504,
+      "phases_seconds": {
+        "Connecting": 0.077563334,
+        "Downloading": 0.092693625,
+        "Queued": 0.397179125,
+        "Verifying": 0.0333735
+      },
+      "resumed": false,
+      "seconds": 0.605465625,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "socks5h",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.16244799999999998,
+      "metrics": {
+        "checkpoint_seconds": 0.022352125,
+        "checkpoints": 1,
+        "publication_seconds": 0.000812375,
+        "scan_seconds": 0,
+        "verification_seconds": 0.1056035
+      },
+      "peak_rss_bytes": 13156352,
+      "phases_seconds": {
+        "Connecting": 0.058936,
+        "Downloading": 0.108652834,
+        "Queued": 0.386730584,
+        "Verifying": 0.072819375
+      },
+      "resumed": false,
+      "seconds": 0.636410583,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "basic",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "seconds": 0.111102459,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "digest",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "seconds": 0.111707833,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "compressed",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 1
+      },
+      "cpu_seconds": 0.150399,
+      "metrics": {
+        "checkpoint_seconds": 0.012878625,
+        "checkpoints": 1,
+        "publication_seconds": 0.000982875,
+        "scan_seconds": 0,
+        "verification_seconds": 0.104852
+      },
+      "peak_rss_bytes": 13058048,
+      "phases_seconds": {
+        "Downloading": 0.127276875,
+        "Queued": 0.419403,
+        "Verifying": 0.115213625
+      },
+      "resumed": false,
+      "seconds": 0.667974708,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "zip64_offset",
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "entries": [
+        {
+          "compressed": 5,
+          "directory": false,
+          "name": "large-offset.txt",
+          "safe_path": true,
+          "size": 5
+        }
+      ]
+    },
+    {
+      "name": "retry_after",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 4
+      },
+      "cpu_seconds": 0.19695400000000002,
+      "metrics": {
+        "checkpoint_seconds": 0.021539083,
+        "checkpoints": 1,
+        "publication_seconds": 0.002265208,
+        "scan_seconds": 0,
+        "verification_seconds": 0.1120545
+      },
+      "peak_rss_bytes": 13320192,
+      "phases_seconds": {
+        "Assembling": 0.038311042,
+        "Downloading": 1.883859959,
+        "Queued": 0.358059,
+        "Verifying": 0.090179625
+      },
+      "resumed": false,
+      "seconds": 2.373699083,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "pac",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.151393,
+      "metrics": {
+        "checkpoint_seconds": 0.01672775,
+        "checkpoints": 1,
+        "publication_seconds": 0.000808875,
+        "scan_seconds": 0,
+        "verification_seconds": 0.101153
+      },
+      "peak_rss_bytes": 13533184,
+      "phases_seconds": {
+        "Connecting": 0.125641333,
+        "Queued": 0.285408834,
+        "Verifying": 0.157772292
+      },
+      "resumed": false,
+      "seconds": 0.57235025,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "pac_failover",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 6,
+        "idle": 6,
+        "reused": 8
+      },
+      "cpu_seconds": 0.182312,
+      "metrics": {
+        "checkpoint_seconds": 0.018204917,
+        "checkpoints": 1,
+        "publication_seconds": 0.000915458,
+        "scan_seconds": 0,
+        "verification_seconds": 0.107540458
+      },
+      "peak_rss_bytes": 13615104,
+      "phases_seconds": {
+        "Downloading": 0.087983625,
+        "Queued": 0.362955167,
+        "Verifying": 0.16127275
+      },
+      "resumed": false,
+      "seconds": 0.615412708,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "pac_explicit_direct",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 7,
+        "idle": 7,
+        "reused": 7
+      },
+      "cpu_seconds": 0.174003,
+      "metrics": {
+        "checkpoint_seconds": 0.016392167,
+        "checkpoints": 1,
+        "publication_seconds": 0.001038875,
+        "scan_seconds": 0,
+        "verification_seconds": 0.10313325
+      },
+      "peak_rss_bytes": 14548992,
+      "phases_seconds": {
+        "Downloading": 0.039308792,
+        "Queued": 0.408771041,
+        "Verifying": 0.10506675
+      },
+      "resumed": false,
+      "seconds": 0.556398625,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "pac_all_unavailable",
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "destination_exists": false,
+      "expected_failure": "network_failure",
+      "recovery": [
+        "check_network",
+        "resume"
+      ]
+    },
+    {
+      "name": "pac_tls_no_bypass",
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "destination_exists": false,
+      "expected_failure": "network_failure",
+      "recovery": [
+        "check_network",
+        "resume"
+      ]
+    },
+    {
+      "name": "pac_auth_no_bypass",
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "destination_exists": false,
+      "expected_failure": "authentication_required",
+      "recovery": [
+        "update_credentials",
+        "refresh_source"
+      ]
+    },
+    {
+      "name": "benchmark_0ms_cap0_1connections_run1",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 3
+      },
+      "cpu_seconds": 0.143614,
+      "metrics": {
+        "checkpoint_seconds": 0.006655042,
+        "checkpoints": 1,
+        "publication_seconds": 0.000880708,
+        "scan_seconds": 0,
+        "verification_seconds": 0.104119083
+      },
+      "peak_rss_bytes": 12992512,
+      "phases_seconds": {
+        "Connecting": 0.010360833,
+        "Downloading": 0.083907375,
+        "Queued": 0.313836375,
+        "Verifying": 0.09046125
+      },
+      "resumed": false,
+      "seconds": 0.501988667,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_0ms_cap0_1connections_run2",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 3
+      },
+      "cpu_seconds": 0.140592,
+      "metrics": {
+        "checkpoint_seconds": 0.004003,
+        "checkpoints": 1,
+        "publication_seconds": 0.00097525,
+        "scan_seconds": 0,
+        "verification_seconds": 0.105424958
+      },
+      "peak_rss_bytes": 13074432,
+      "phases_seconds": {
+        "Connecting": 0.047569708,
+        "Queued": 0.332469125,
+        "Verifying": 0.138334541
+      },
+      "resumed": false,
+      "seconds": 0.522235375,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_0ms_cap0_1connections_run3",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 3
+      },
+      "cpu_seconds": 0.157254,
+      "metrics": {
+        "checkpoint_seconds": 0.007277417,
+        "checkpoints": 1,
+        "publication_seconds": 0.000841375,
+        "scan_seconds": 0,
+        "verification_seconds": 0.101245625
+      },
+      "peak_rss_bytes": 13041664,
+      "phases_seconds": {
+        "Downloading": 0.096413541,
+        "Queued": 0.339207042,
+        "Verifying": 0.13516925
+      },
+      "resumed": false,
+      "seconds": 0.581826792,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_0ms_cap0_4connections_run1",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.159918,
+      "metrics": {
+        "checkpoint_seconds": 0.018355666,
+        "checkpoints": 1,
+        "publication_seconds": 0.00095275,
+        "scan_seconds": 0,
+        "verification_seconds": 0.106326583
+      },
+      "peak_rss_bytes": 13189120,
+      "phases_seconds": {
+        "Downloading": 0.08646425,
+        "Queued": 0.340802791,
+        "Verifying": 0.034088917
+      },
+      "resumed": false,
+      "seconds": 0.471750291,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_0ms_cap0_4connections_run2",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.167269,
+      "metrics": {
+        "checkpoint_seconds": 0.02100075,
+        "checkpoints": 1,
+        "publication_seconds": 0.001227792,
+        "scan_seconds": 0,
+        "verification_seconds": 0.106393667
+      },
+      "peak_rss_bytes": 13107200,
+      "phases_seconds": {
+        "Assembling": 0.072569625,
+        "Connecting": 0.010326917,
+        "Downloading": 0.091766083,
+        "Queued": 0.362056958,
+        "Verifying": 0.071598125
+      },
+      "resumed": false,
+      "seconds": 0.611482333,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_0ms_cap0_4connections_run3",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.156594,
+      "metrics": {
+        "checkpoint_seconds": 0.018915084,
+        "checkpoints": 1,
+        "publication_seconds": 0.001010166,
+        "scan_seconds": 0,
+        "verification_seconds": 0.101425708
+      },
+      "peak_rss_bytes": 13189120,
+      "phases_seconds": {
+        "Downloading": 0.050247208,
+        "Queued": 0.401302875,
+        "Verifying": 0.125191833
+      },
+      "resumed": false,
+      "seconds": 0.585380041,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap0_1connections_run1",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 3
+      },
+      "cpu_seconds": 0.180674,
+      "metrics": {
+        "checkpoint_seconds": 0.043436041999999994,
+        "checkpoints": 2,
+        "publication_seconds": 0.001407833,
+        "scan_seconds": 0,
+        "verification_seconds": 0.110849625
+      },
+      "peak_rss_bytes": 13156352,
+      "phases_seconds": {
+        "Downloading": 1.580252708,
+        "Queued": 0.010328333,
+        "Verifying": 0.133835709
+      },
+      "resumed": false,
+      "seconds": 1.735361958,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap0_1connections_run2",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 3
+      },
+      "cpu_seconds": 0.174577,
+      "metrics": {
+        "checkpoint_seconds": 0.036205084,
+        "checkpoints": 2,
+        "publication_seconds": 0.001180709,
+        "scan_seconds": 0,
+        "verification_seconds": 0.10570575
+      },
+      "peak_rss_bytes": 13139968,
+      "phases_seconds": {
+        "Assembling": 0.061998166,
+        "Downloading": 1.462860792,
+        "Queued": 0.378412791,
+        "Verifying": 0.088531583
+      },
+      "resumed": false,
+      "seconds": 1.995392166,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap0_1connections_run3",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 3
+      },
+      "cpu_seconds": 0.205295,
+      "metrics": {
+        "checkpoint_seconds": 0.015415584,
+        "checkpoints": 2,
+        "publication_seconds": 0.0011395,
+        "scan_seconds": 0,
+        "verification_seconds": 0.112641916
+      },
+      "peak_rss_bytes": 13156352,
+      "phases_seconds": {
+        "Connecting": 0.085165083,
+        "Downloading": 1.58772525,
+        "Queued": 0.39143675,
+        "Verifying": 0.081874583
+      },
+      "resumed": false,
+      "seconds": 2.154634,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap0_4connections_run1",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.18092,
+      "metrics": {
+        "checkpoint_seconds": 0.016045458,
+        "checkpoints": 1,
+        "publication_seconds": 0.000915375,
+        "scan_seconds": 0,
+        "verification_seconds": 0.104907791
+      },
+      "peak_rss_bytes": 13189120,
+      "phases_seconds": {
+        "Downloading": 0.463504,
+        "Queued": 0.281332083,
+        "Verifying": 0.057676125
+      },
+      "resumed": false,
+      "seconds": 0.805557375,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap0_4connections_run2",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.21740299999999999,
+      "metrics": {
+        "checkpoint_seconds": 0.033077625,
+        "checkpoints": 1,
+        "publication_seconds": 0.000998125,
+        "scan_seconds": 0,
+        "verification_seconds": 0.100808042
+      },
+      "peak_rss_bytes": 13189120,
+      "phases_seconds": {
+        "Downloading": 0.504844084,
+        "Queued": 0.37230025,
+        "Verifying": 0.104620209
+      },
+      "resumed": false,
+      "seconds": 0.985129292,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap0_4connections_run3",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.218086,
+      "metrics": {
+        "checkpoint_seconds": 0.023115125,
+        "checkpoints": 1,
+        "publication_seconds": 0.0012115,
+        "scan_seconds": 0,
+        "verification_seconds": 0.105533792
+      },
+      "peak_rss_bytes": 13139968,
+      "phases_seconds": {
+        "Downloading": 0.487967916,
+        "Queued": 0.373049209,
+        "Verifying": 0.09975525
+      },
+      "resumed": false,
+      "seconds": 0.965117458,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap2_1connections_run1",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 3
+      },
+      "cpu_seconds": 0.251328,
+      "metrics": {
+        "checkpoint_seconds": 0.022473292,
+        "checkpoints": 2,
+        "publication_seconds": 0.002558125,
+        "scan_seconds": 0,
+        "verification_seconds": 0.137257042
+      },
+      "peak_rss_bytes": 13123584,
+      "phases_seconds": {
+        "Assembling": 0.027128792,
+        "Downloading": 1.6499752920000001,
+        "Queued": 0.377418459,
+        "Verifying": 0.121498292
+      },
+      "resumed": false,
+      "seconds": 2.184779083,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap2_1connections_run2",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 3
+      },
+      "cpu_seconds": 0.272469,
+      "metrics": {
+        "checkpoint_seconds": 0.019675666,
+        "checkpoints": 2,
+        "publication_seconds": 0.001536458,
+        "scan_seconds": 0,
+        "verification_seconds": 0.137001166
+      },
+      "peak_rss_bytes": 13090816,
+      "phases_seconds": {
+        "Assembling": 0.038134708,
+        "Downloading": 1.7221126249999998,
+        "Queued": 0.402683084,
+        "Verifying": 0.122779084
+      },
+      "resumed": false,
+      "seconds": 2.291712,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap2_1connections_run3",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 3
+      },
+      "cpu_seconds": 0.26553600000000005,
+      "metrics": {
+        "checkpoint_seconds": 0.070062875,
+        "checkpoints": 2,
+        "publication_seconds": 0.0026625,
+        "scan_seconds": 0,
+        "verification_seconds": 0.136366708
+      },
+      "peak_rss_bytes": 13123584,
+      "phases_seconds": {
+        "Downloading": 1.6154730000000002,
+        "Queued": 0.355578125,
+        "Verifying": 0.086680792
+      },
+      "resumed": false,
+      "seconds": 2.062694792,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap2_4connections_run1",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 6
+      },
+      "cpu_seconds": 0.266296,
+      "metrics": {
+        "checkpoint_seconds": 0.027492792,
+        "checkpoints": 1,
+        "publication_seconds": 0.002742583,
+        "scan_seconds": 0,
+        "verification_seconds": 0.137434708
+      },
+      "peak_rss_bytes": 13582336,
+      "phases_seconds": {
+        "Assembling": 0.048500709,
+        "Downloading": 2.884161584,
+        "Queued": 0.324967667,
+        "Verifying": 0.070268875
+      },
+      "resumed": false,
+      "seconds": 3.380294542,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap2_4connections_run2",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 5
+      },
+      "cpu_seconds": 0.24564699999999998,
+      "metrics": {
+        "checkpoint_seconds": 0.042660792,
+        "checkpoints": 1,
+        "publication_seconds": 0.002162542,
+        "scan_seconds": 0,
+        "verification_seconds": 0.114735292
+      },
+      "peak_rss_bytes": 13828096,
+      "phases_seconds": {
+        "Downloading": 2.488939417,
+        "Queued": 0.41841225,
+        "Verifying": 0.145180584
+      },
+      "resumed": false,
+      "seconds": 3.058764375,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap2_4connections_run3",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "dict",
+          "file",
+          "ftp",
+          "ftps",
+          "gopher",
+          "gophers",
+          "http",
+          "https",
+          "imap",
+          "imaps",
+          "ldap",
+          "ldaps",
+          "mqtt",
+          "pop3",
+          "pop3s",
+          "rtsp",
+          "smb",
+          "smbs",
+          "smtp",
+          "smtps",
+          "telnet",
+          "tftp"
+        ],
+        "system_pac": true,
+        "tls": "(SecureTransport) LibreSSL/3.3.6",
+        "version": "8.7.1"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 6
+      },
+      "cpu_seconds": 0.259571,
+      "metrics": {
+        "checkpoint_seconds": 0.052557,
+        "checkpoints": 1,
+        "publication_seconds": 0.002514375,
+        "scan_seconds": 0,
+        "verification_seconds": 0.160504208
+      },
+      "peak_rss_bytes": 13795328,
+      "phases_seconds": {
+        "Downloading": 2.8091305,
+        "Queued": 0.041505,
+        "Verifying": 0.149577834
+      },
+      "resumed": false,
+      "seconds": 3.003907041,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    }
+  ],
+  "observations": {
+    "requests": [
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "2.0",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "2.0",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "2.0",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "2.0",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "2.0",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "2.0",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "2.0",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "2.0",
+        "method": "GET",
+        "range": "bytes=0-8388607"
+      },
+      {
+        "path": "/file",
+        "version": "2.0",
+        "method": "GET",
+        "range": "bytes=16777216-25165823"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/basic",
+        "version": "1.1",
+        "method": "GET"
+      },
+      {
+        "path": "/digest",
+        "version": "1.1",
+        "method": "GET"
+      },
+      {
+        "path": "/digest",
+        "version": "1.1",
+        "method": "GET"
+      },
+      {
+        "path": "/compressed",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/compressed",
+        "version": "1.1",
+        "method": "GET"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294969504-4294971551"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294971530-4294971551"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294971510-4294971529"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294971454-4294971457"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294971454-4294971509"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294971392-4294971437"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294971438-4294971453"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-29"
+      },
+      {
+        "path": "/retry",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/retry",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/retry",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/retry",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/retry",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/retry",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/retry",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/retry",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-8388607"
+      },
+      {
+        "path": "/proxy.pac",
+        "version": "1.1",
+        "method": "GET"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-25165823"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-8388607"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/failover.pac",
+        "version": "1.1",
+        "method": "GET"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-8388607"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-25165823"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/direct.pac",
+        "version": "1.1",
+        "method": "GET"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-8388607"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-25165823"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/unavailable.pac",
+        "version": "1.1",
+        "method": "GET"
+      },
+      {
+        "path": "/tls-failure.pac",
+        "version": "1.1",
+        "method": "GET"
+      },
+      {
+        "path": "/auth-failure.pac",
+        "version": "1.1",
+        "method": "GET"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-25165823"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-25165823"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-25165823"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      }
+    ],
+    "proxy": 29,
+    "socks": 12,
+    "ftpRest": 8,
+    "ftpTls": 1,
+    "maxActive": 7,
+    "active": 2
+  }
+}

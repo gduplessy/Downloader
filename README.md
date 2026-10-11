@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.5.3<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.5.4<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -21,6 +21,8 @@ Downloader is an original, GPL-3.0 alternative to Internet Download Manager. It 
 No accounts, advertising, or telemetry. Credentials belong in the operating system's credential store; browser session material is temporary.
 
 > **Development preview.** A Windows desktop build and hosted-page browser fixtures have been verified locally. Full IDM parity, installer acceptance, and the complete platform/browser matrix are still in progress. See the [full roadmap](docs/ROADMAP.md), [implementation status](docs/IMPLEMENTATION.md), [acceptance evidence](docs/ACCEPTANCE.md), and [compatibility matrix](docs/COMPATIBILITY.md).
+
+Latest [qualification records](docs/evidence/transfer-engine-2026-10-11/README.md) include three-platform PAC failover and actual filesystem recovery, plus a disposable Docker AD realm. Nine Linux NTLM/Kerberos checks passed locally and in CI; four additional native Windows NTLM checks passed locally. Native SSO and managed enterprise proxy policies still need acceptance.
 
 ![Downloader desktop showing completed transfers, browser-owned downloads, and a page waiting for user input](docs/assets/desktop.png)
 
@@ -63,7 +65,7 @@ The qualified FlareSolverr 3.4.6 deployment rendered a generated GET link/cookie
 
 ## Build from source
 
-Filesystem acceptance can be run with `node scripts/qualify-filesystem.mjs` after building the `qualify_filesystem` Rust example. It creates a bounded disposable image; Windows requires administrator rights and Linux requires loop-mount permission. The optional CI `filesystem` input runs the three-platform matrix. Acceptance results remain pending; see the [transfer evidence](docs/TRANSFER_ENGINE.md).
+Filesystem acceptance can be run with `node scripts/qualify-filesystem.mjs` after building the `qualify_filesystem` Rust example. It creates a bounded disposable image; Windows requires administrator rights and Linux requires loop-mount permission. The optional CI `filesystem` input runs the three-platform matrix. NTFS, HFS+ and ext4 disk-full/permission/cross-volume recovery passed on Windows/macOS/Linux. See the [acceptance record](docs/ACCEPTANCE.md).
 
 ### Prerequisites
 
@@ -203,7 +205,9 @@ node scripts/qualify-network.mjs .local/network-qualification --benchmark
 node scripts/qualify-network.mjs .local/large-qualification --only large_over_4gib --large
 ```
 
-On PowerShell, set `$env:CARGO_TARGET_DIR = "$PWD/.local/engine-target"` before building. The large-file run uses over 4 GiB of disk space. `OPENSSL` and `QUALIFY_BINARY` override fixture tooling paths. See [networking, recovery, protocol, and benchmark details](docs/TRANSFER_ENGINE.md).
+On PowerShell, set `$env:CARGO_TARGET_DIR = "$PWD/.local/engine-target"` before building. The large-file run uses over 4 GiB of disk space. `OPENSSL` and `QUALIFY_BINARY` override fixture tooling paths. Local runs record one omitted direct-fallback case that needs the reserved CI hostname; disposable CI runners execute it. See [networking, recovery, protocol, and benchmark details](docs/TRANSFER_ENGINE.md).
+
+Real AD authentication is reproducible with `node scripts/qualify-auth-realm.mjs` and Docker's Linux engine. Thirteen local checks passed: Linux NTLM/Kerberos and Windows NTLM, including complete hash-verified jobs and rejected credentials/missing tickets. The harness creates and cleans up its own realm without changing host domain settings. See [realm setup and acceptance boundaries](docs/AUTH_REALM.md).
 
 The hosted-page loopback fixture serves countdown/session, CAPTCHA, POST, and range/unknown-length cases. It is a test utility, not the application's control interface. CI checks source builds on Windows, macOS, and Ubuntu; its live status is shown above. GUI, installer, and browser acceptance remain separate gates.
 
@@ -212,7 +216,7 @@ The hosted-page loopback fixture serves countdown/session, CAPTCHA, POST, and ra
 The [complete roadmap](docs/ROADMAP.md) inventories every documented unsupported workflow and missing acceptance gate. Planned implementation, qualification, research, and later-platform items are labeled separately; inclusion does not claim current support.
 
 - **Hosted pages and challenges:** CAPTCHA automation/bypass research, login/MFA and session refresh, premium-account integration and bypass feasibility, countdown recovery, ambiguous controls/site adapters, non-replayable POST/blob/one-use downloads, configurable navigation limits, and profile isolation.
-- **Transfer engine:** implemented and covered by deterministic fixtures, including pooling, durable recovery, source refresh, typed events, >4 GiB transfers, and measured performance. Ordered PAC proxy failover is implemented with bounded routes and no replay after response bytes; external NTLM/Kerberos realms, enterprise routing, native filesystem matrices, and a successful IDM comparison remain qualification gates.
+- **Transfer engine:** implemented and covered by deterministic fixtures, including pooling, durable recovery, source refresh, typed events, >4 GiB transfers, and measured performance. Ordered PAC failover and real filesystem recovery passed on Windows/macOS/Linux. A disposable AD realm qualifies Windows/Linux NTLM and Linux Kerberos; native macOS/Windows Kerberos, enterprise routing, installer provenance and a successful IDM comparison remain qualification gates.
 - **Management:** editable properties/columns, drop target and input workflows, archive qualification, ordered queues, recurring/DST/missed-window schedules, synchronization, unified quotas, and import/export acceptance.
 - **Browser integration:** stable Chrome/Edge/Firefox/ESR coverage, capture/session/fallback and worker-restart tests, automatic native-host onboarding, media/page tools, Firefox signing, and extension-store distribution.
 - **Media:** deterministic assembly, HLS/DASH, playlists, subtitles/audio extraction/live recording, subprocess recovery, authenticated sessions, bundled cross-platform components, verified updates, and protected-media research.

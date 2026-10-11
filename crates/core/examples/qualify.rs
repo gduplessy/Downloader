@@ -25,6 +25,30 @@ struct Case {
     speed_limit: Option<u64>,
     expected_failure: Option<String>,
 }
+// Read-only fixture credential injection; transport/job logic uses its ordinary keyring API.
+struct RealmCredentials(String);
+impl keyring::credential::CredentialBuilderApi for RealmCredentials {
+    fn build(
+        &self,
+        target: Option<&str>,
+        service: &str,
+        user: &str,
+    ) -> keyring::Result<Box<keyring::credential::Credential>> {
+        use keyring::credential::CredentialApi;
+        if target.is_some() || service != "Downloader" || user != "disposable-realm" {
+            return Err(keyring::Error::NoEntry);
+        }
+        let credential = keyring::mock::MockCredential::default();
+        credential.set_password(&self.0)?;
+        Ok(Box::new(credential))
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn persistence(&self) -> keyring::credential::CredentialPersistence {
+        keyring::credential::CredentialPersistence::ProcessOnly
+    }
+}
 fn main() {
     if let Err(e) = run() {
         eprintln!("{e:#}");
@@ -68,25 +92,57 @@ fn run() -> Result<()> {
         easy.http_auth(&network::authentication(&settings.network.authentication)?)?;
         let mut hash = Sha256::new();
         let mut bytes = 0u64;
-        {
+        let performed = {
             let mut t = easy.transfer();
             t.write_function(|d| {
                 hash.update(d);
                 bytes += d.len() as u64;
                 Ok(d.len())
             })?;
-            t.perform()?;
-        }
+            t.perform()
+        };
         let sha = format!("{:x}", hash.finalize());
-        if easy.response_code()? != 200 || case.sha256.as_ref().is_some_and(|h| h != &sha) {
-            bail!("Authentication fixture failed");
+        let status = easy.response_code()?;
+        if case.expected_failure.as_deref() == Some("authentication_required") {
+            if status != 401 || bytes > 65536 || case.directory.join("output.bin").exists() {
+                bail!("Rejected authentication fixture was not refused safely: HTTP {status}, {bytes} response bytes");
+            }
+            println!(
+                "{}",
+                serde_json::json!({"name":case.name,"status":status,"bytes":0,"error_body_bytes":bytes,"expected_failure":"authentication_required","capabilities":network::capabilities()})
+            );
+            return Ok(());
+        }
+        performed?;
+        if status != 200 || case.sha256.as_ref().is_some_and(|h| h != &sha) {
+            bail!("Authentication fixture failed: HTTP {status}, {bytes} bytes, SHA-256 {sha}");
         }
         println!(
             "{}",
-            serde_json::json!({"name":case.name,"bytes":bytes,"sha256":sha,"seconds":start.elapsed().as_secs_f64(),"capabilities":network::capabilities()})
+            serde_json::json!({"name":case.name,"status":status,"bytes":bytes,"sha256":sha,"seconds":start.elapsed().as_secs_f64(),"capabilities":network::capabilities()})
         );
         return Ok(());
     }
+    let context = if case.mode == "auth_job" {
+        // Only the fixture substitutes volatile credential storage; transport/job logic is real.
+        keyring::set_default_credential_builder(Box::new(RealmCredentials(serde_json::to_string(
+            &(
+                case.username
+                    .as_deref()
+                    .context("Fixture username missing")?,
+                case.password
+                    .as_deref()
+                    .context("Fixture password missing")?,
+            ),
+        )?)));
+        RequestContext {
+            credential_id: Some("disposable-realm".into()),
+            private: true,
+            ..Default::default()
+        }
+    } else {
+        RequestContext::default()
+    };
     let engine = Engine::open(&case.directory.join("state"))?;
     engine.command(Command::Settings(settings.clone()))?;
     engine.start();
@@ -98,7 +154,7 @@ fn run() -> Result<()> {
         queue: None,
         checksum: case.sha256.clone(),
         paused: false,
-        context: RequestContext::default(),
+        context,
         media: None,
         description: String::new(),
     })?;

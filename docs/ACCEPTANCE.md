@@ -4,7 +4,9 @@ Recorded locally on Windows x64 and in platform CI, 2026-10-10/11. This records 
 
 ## Automated checks
 
-- The 0.3.0 follow-up adds two route-policy unit regressions (40 total Windows functional regressions; 41 expected on Unix). Strict local Clippy and six Windows PAC cases pass, including observed proxy traversal, ordered failover, exhausted routes, TLS/407 rejection and implicit-loopback-bypass refusal. All-platform follow-up qualification remains pending. Earlier 0.2.x PAC fixtures matched file hashes but did not assert proxy traversal, so those results alone do not establish PAC routing acceptance.
+- The [0.3.1 follow-up CI](https://github.com/gduplessy/Downloader/actions/runs/38108335654) passes 40 Windows / 41 Unix Rust regressions and 44 Windows / 43 Unix network/performance cases. PAC checks assert observed proxy traversal, ordered failover, explicit direct fallback, exhausted routes, TLS/407 rejection and Windows implicit-bypass refusal. Earlier 0.2.x PAC fixtures matched file hashes without checking traversal, so those results alone do not establish PAC routing acceptance.
+- The [0.3.2 filesystem CI](https://github.com/gduplessy/Downloader/actions/runs/38108936320) passes every job and real disk-full/restart, readonly-file refusal/recovery and cross-volume publication/collision preservation on NTFS, HFS+ and ext4 images. The Windows fixture's default-stack overflow was repaired with a heap buffer; no engine acceptance is inferred from the failed earlier attempt.
+- The disposable Samba AD realm passes 13 local checks: nine Linux NTLM/Kerberos and four native Windows NTLM checks. The [0.3.3 realm CI job](https://github.com/gduplessy/Downloader/actions/runs/38109846990/job/114382955899) independently passes the same nine Linux checks. Full jobs publish the expected 1,028,096-byte hash; rejected passwords and absent tickets produce authentication recovery with no output file. Kerberos-only Apache disables Basic/NTLM fallback. The fixture uses volatile credential injection; OS keyring acceptance is separate. [Reproduction and scope](AUTH_REALM.md); [sanitized records and provenance](evidence/transfer-engine-2026-10-11/README.md).
 
 - The 0.2.x full-matrix evidence: 38 functional regressions on Windows (20 core, 15 transfer/recovery, 3 service); 39 on Unix with the additional native endpoint permission/rebind check. Four ignored subprocess helpers are invoked by their parent tests. Unix uses a path-alias regression instead of the Windows locked-file regression. Full-suite evidence and source revisions are linked below; targeted local checks also cover proxy maps, weak validators and repeated write/flush failures.
 - Transfer fixtures cover segmented hashes, strict headers/ranges, HEAD fallback, unknown/empty/compressed/truncated output, redirects, Retry-After, pause/restart, changed/missing validators, source expiry/authentication, checksum refusal, rolling quotas and server filenames. Ten actual subprocess abort boundaries and write/flush failures verify durable recovery without false completion.
@@ -42,12 +44,12 @@ Ignored local evidence is under .local/evidence. Fixture URLs and request/sessio
 
 ## Limits and remaining qualification
 
-- The 0.3.1 disposable filesystem harness compiles and has an opt-in three-platform CI workflow. Local Windows image formatting was not attempted without administrator rights; actual platform results are pending.
+- Filesystem qualification covers the documented NTFS/HFS+/ext4 image matrix. Local Windows image formatting was not attempted without administrator rights; disposable CI runners performed the accepted Windows test.
 
 - The screenshot's specific host and changing live websites have not been qualified.
 - Ordinary automatic interception needs further real-browser coverage. Hosted GET forms can provide explicit replay context when request observation is unavailable.
 - Chrome stable, Edge, Firefox/ESR and macOS/Linux native GUI/browser/installer acceptance remain pending. Deterministic engine CI and Chrome for Testing evidence do not establish those matrix rows. Intel macOS is not the Apple Silicon CI runner.
-- External NTLM/Kerberos realms, managed system/PAC/WPAD routing and actual disk-full/permission/cross-volume matrices remain qualification work. Capability flags and injected I/O failures do not establish them.
+- Native macOS authentication, Windows domain-based Kerberos, proxy SSO, managed system/PAC/WPAD routing and final installer provenance remain qualification work. Docker Linux authentication and native Windows NTLM results do not establish those separate rows.
 - Profile claims prevent competing navigation workers. Comprehensive private/container/partitioned session isolation and worker-restart tests remain release work.
 - Deterministic media assembly, rendered/authenticated grabber, offline rewriting, advanced scheduling/synchronization and desktop completion integrations are unfinished.
 - Media tools are currently installed separately through the verified component script; the preview installer does not bundle them.

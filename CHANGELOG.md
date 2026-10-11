@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.5.4 — Integrate real-realm and filesystem acceptance
+
+- Preserve the merged FlareSolverr functionality and combine the qualification branch without regressing product versions.
+- Add real Docker AD NTLM/Kerberos job acceptance, repair the Windows filesystem fixture and publish sanitized PAC/filesystem/realm records.
+- Close ENG-06 for the documented filesystem image matrix; retain native SSO, managed proxy policy, installer and IDM comparison gates.
+
 ## 0.5.3 — Align solver resolution with the latest transfer base
 
 - Incorporate ordered PAC route/failover and disposable-filesystem fixtures from the updated transfer-engine branch without changing the solver's Direct-only boundary.
@@ -37,6 +43,25 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 
 - Add a bounded loopback FlareSolverr client, conservative GET page resolution, temporary cookie/User-Agent context, and deterministic response/policy regressions.
 - Browser navigation integration and live host qualification remain in progress.
+
+## 0.3.4 — Published qualification records (qualification branch)
+
+- Publish sanitized three-platform PAC/network and NTFS/HFS+/ext4 filesystem results with their exact source revisions and CI runs.
+- Publish the successful real-realm CI job and local Windows/Linux authentication records, distinguishing native clients, Docker clients and overlapping scenarios.
+- Synchronize README, roadmap and acceptance links; keep native SSO, managed proxy policies, installer provenance and the IDM comparison pending.
+
+## 0.3.3 — Real AD authentication acceptance (qualification branch)
+
+- Add a disposable Samba AD realm, Kerberos-only Apache service and domain-backed NTLM endpoint; exercise real authenticated jobs with a volatile fixture credential adapter.
+- Pass nine Linux NTLM/Kerberos checks and four native Windows NTLM checks, including wrong-password/missing-ticket recovery without published output.
+- Add opt-in realm CI, bounded compiler concurrency, generated-secret cleanup and reusable setup instructions.
+- Record passing three-platform PAC and filesystem acceptance; close ENG-06 for the documented NTFS/HFS+/ext4 image matrix. Native SSO/enterprise policy and installer provenance remain explicit.
+- Report the local-only omission of the CI hostname/direct-fallback case and reject invalid fixture selectors.
+
+## 0.3.2 — Windows fixture stack repair (qualification branch)
+
+- Move the filesystem filler buffer to the heap after real Windows CI exposed its default-stack overflow.
+- Record successful Linux/macOS disk-full, permission, collision and cross-volume recovery acceptance; Windows remains pending until the repaired fixture passes.
 
 ## 0.3.1 — Disposable filesystem qualification
 
