@@ -1,6 +1,7 @@
 export type Job = {
   id: string;
   request_id: string;
+  credential_id?: string | null;
   url: string;
   filename: string;
   destination: string;
@@ -13,6 +14,8 @@ export type Job = {
   resumable: boolean;
   etag: string | null;
   error: string | null;
+  failure?: { code: string; retryable: boolean; recovery: string[]; message: string } | null;
+  verified_sha256?: string | null;
   created: string;
   description: string;
   checksum: string | null;
@@ -26,7 +29,22 @@ export type Category = {
   extensions: string[];
   directory: string;
 };
+export type NetworkSettings = {
+  proxy_mode: 'system' | 'direct' | 'manual' | 'pac';
+  pac_url: string | null;
+  ca_file: string | null;
+  authentication: 'auto' | 'basic' | 'digest' | 'ntlm' | 'negotiate';
+  proxy_authentication: 'auto' | 'basic' | 'digest' | 'ntlm' | 'negotiate';
+  http_policy: 'auto' | 'http1' | 'http2_tls' | 'http2_prior_knowledge';
+  segmented: boolean;
+  ftp_tls: boolean;
+  retries: number;
+  connect_timeout_seconds: number;
+  stall_timeout_seconds: number;
+  checkpoint_milliseconds: number;
+};
 export type Settings = {
+  network: NetworkSettings;
   directory: string;
   max_jobs: number;
   connections: number;

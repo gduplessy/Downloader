@@ -1,5 +1,22 @@
 import { translations } from './translations';
 export const en = {
+  routing: 'Proxy routing',
+  route_system: 'System',
+  route_direct: 'Direct',
+  route_manual: 'Manual proxy',
+  route_pac: 'PAC script',
+  httpPolicy: 'HTTP version',
+  authentication: 'Source authentication',
+  proxyAuth: 'Proxy authentication',
+  pacURL: 'PAC URL',
+  caFile: 'Trusted CA file',
+  retries: 'Retry attempts',
+  connect_timeout_seconds: 'Connection timeout (seconds)',
+  stall_timeout_seconds: 'Stall timeout (seconds)',
+  checkpoint_milliseconds: 'Checkpoint interval (ms)',
+  segmented: 'Use segmented transfers',
+  refreshSession: 'Refresh browser session',
+
   waiting_schedule: 'Waiting for schedule',
   siteScope: 'Site URL to enable',
   allSites: 'Enable on all websites (optional)',

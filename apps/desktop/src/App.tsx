@@ -1,3 +1,4 @@
+import { applyEvents, type EventBatch } from '../../../packages/shared/src/events';
 import { useEffect, useMemo, useState, useRef, useId, type ReactNode } from 'react';
 import {
   ArrowDownToLine,
@@ -64,12 +65,30 @@ export default function App() {
     [sidebar, setSidebar] = useState(true);
   const locale = (snapshot?.settings.locale ?? localStorage.getItem('locale') ?? 'en') as Locale;
   const t = (k: Key) => translate(locale, k);
+  const engineSnapshot = useRef<Snapshot | null>(null);
+  const loadingEvents = useRef(false);
   async function load() {
+    if (loadingEvents.current) return;
+    loadingEvents.current = true;
     try {
-      setSnapshot(await api<Snapshot>('snapshot'));
+      if (!engineSnapshot.current) await api('negotiate', { minimum: 1, maximum: 1 });
+      let batch = await api<EventBatch<Snapshot>>('subscribe', {
+        after_sequence: engineSnapshot.current?.sequence ?? null,
+        limit: 100,
+      });
+      let next = applyEvents(engineSnapshot.current, batch);
+      if (!next) {
+        batch = await api<EventBatch<Snapshot>>('subscribe', { after_sequence: null, limit: 100 });
+        next = batch.snapshot;
+      }
+      engineSnapshot.current = next;
+      setSnapshot(next);
       setError('');
     } catch (e) {
+      engineSnapshot.current = null;
       setError(String(e));
+    } finally {
+      loadingEvents.current = false;
     }
   }
   async function run(command: string, args?: unknown) {
@@ -438,6 +457,7 @@ export default function App() {
                 {job.error && (
                   <div role="alert" className="inline-error">
                     {job.error}
+                    {job.failure && <p>{job.failure.recovery.join(', ').replaceAll('_', ' ')}</p>}
                   </div>
                 )}
                 <div className="actions">
@@ -457,7 +477,13 @@ export default function App() {
                           run('refresh', {
                             id: job.id,
                             url,
-                            context: { headers: {} },
+                            context: {
+                              headers: {},
+                              credential_id:
+                                job.state === 'waiting_authentication'
+                                  ? window.prompt(t('credential'), job.credential_id ?? '')
+                                  : (job.credential_id ?? null),
+                            },
                           }),
                         );
                     }}
@@ -539,6 +565,7 @@ function AddModal({
     [directory, setDirectory] = useState(''),
     [filename, setFilename] = useState(''),
     [checksum, setChecksum] = useState(''),
+    [credentialId, setCredentialId] = useState(''),
     [queue, setQueue] = useState('default'),
     [description, setDescription] = useState(''),
     [error, setError] = useState(''),
@@ -559,7 +586,7 @@ function AddModal({
           queue,
           description,
           paused,
-          context: { headers: {} },
+          context: { headers: {}, credential_id: credentialId || null },
         });
       onClose();
     } catch (e) {
@@ -598,6 +625,10 @@ function AddModal({
           {t('navigatePage')}
         </label>
         <small className="hint">{navigate && t('navigateHint')}</small>
+        <label>
+          {t('credential')}
+          <input value={credentialId} onChange={(e) => setCredentialId(e.target.value)} />
+        </label>
         <label>
           {t('filename')}
           <input value={filename} onChange={(e) => setFilename(e.target.value)} />
@@ -742,6 +773,126 @@ function SettingsPage({ settings, t, run }: { settings: Settings; t: T; run: Run
         </section>
         <section className="card">
           <h2>{t('networking')}</h2>
+          <div className="form-grid">
+            <label>
+              {t('routing')}
+              <select
+                value={value.network.proxy_mode}
+                onChange={(e) =>
+                  update('network', {
+                    ...value.network,
+                    proxy_mode: e.target.value as Settings['network']['proxy_mode'],
+                  })
+                }
+              >
+                {['system', 'direct', 'manual', 'pac'].map((mode) => (
+                  <option key={mode} value={mode}>
+                    {t(('route_' + mode) as Key)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              {t('httpPolicy')}
+              <select
+                value={value.network.http_policy}
+                onChange={(e) =>
+                  update('network', {
+                    ...value.network,
+                    http_policy: e.target.value as Settings['network']['http_policy'],
+                  })
+                }
+              >
+                {['auto', 'http1', 'http2_tls', 'http2_prior_knowledge'].map((mode) => (
+                  <option key={mode} value={mode}>
+                    {mode.replaceAll('_', ' ')}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              {t('authentication')}
+              <select
+                value={value.network.authentication}
+                onChange={(e) =>
+                  update('network', {
+                    ...value.network,
+                    authentication: e.target.value as Settings['network']['authentication'],
+                  })
+                }
+              >
+                {['auto', 'basic', 'digest', 'ntlm', 'negotiate'].map((mode) => (
+                  <option key={mode} value={mode}>
+                    {mode}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              {t('proxyAuth')}
+              <select
+                value={value.network.proxy_authentication}
+                onChange={(e) =>
+                  update('network', {
+                    ...value.network,
+                    proxy_authentication: e.target
+                      .value as Settings['network']['proxy_authentication'],
+                  })
+                }
+              >
+                {['auto', 'basic', 'digest', 'ntlm', 'negotiate'].map((mode) => (
+                  <option key={mode} value={mode}>
+                    {mode}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              {t('pacURL')}
+              <input
+                value={value.network.pac_url ?? ''}
+                onChange={(e) =>
+                  update('network', { ...value.network, pac_url: e.target.value || null })
+                }
+              />
+            </label>
+            <label>
+              {t('caFile')}
+              <input
+                value={value.network.ca_file ?? ''}
+                onChange={(e) =>
+                  update('network', { ...value.network, ca_file: e.target.value || null })
+                }
+              />
+            </label>
+            {(
+              [
+                'retries',
+                'connect_timeout_seconds',
+                'stall_timeout_seconds',
+                'checkpoint_milliseconds',
+              ] as const
+            ).map((key) => (
+              <label key={key}>
+                {t(key)}
+                <input
+                  type="number"
+                  value={value.network[key]}
+                  onChange={(e) =>
+                    update('network', { ...value.network, [key]: Number(e.target.value) })
+                  }
+                />
+              </label>
+            ))}
+          </div>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={value.network.segmented}
+              onChange={(e) => update('network', { ...value.network, segmented: e.target.checked })}
+            />
+            {t('segmented')}
+          </label>
           <div className="form-grid">
             {(
               [
