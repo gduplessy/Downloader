@@ -15,7 +15,9 @@ pub struct Checkpoint {
     pub terminal: bool,
 }
 fn decode(value: &str) -> Result<Vec<u8>> {
-    if value.is_empty() || value.len() > STREAM_CHUNK_BYTES.div_ceil(3) * 4 || value.len() % 4 != 0
+    if value.is_empty()
+        || value.len() > STREAM_CHUNK_BYTES.div_ceil(3) * 4
+        || !value.len().is_multiple_of(4)
     {
         bail!("Invalid browser stream chunk");
     }
@@ -166,6 +168,38 @@ pub fn operation(engine: &Arc<Engine>, operation: StreamOperation) -> Result<Str
     {
         bail!("Stale or foreign browser stream ownership");
     }
+    // Publication and stream terminal checkpoint are separate durable operations.
+    // If publication completed before a daemon crash, EOF replay acknowledges that exact
+    // already-verified artifact instead of trying to publish it a second time.
+    if let StreamOperation::End {
+        total,
+        expected_sha256,
+        ..
+    } = &operation
+    {
+        if job.state == JobState::Complete {
+            if let Some(mut checkpoint) = previous.clone() {
+                if checkpoint.offset == *total
+                    && job.bytes == *total
+                    && job.verified_sha256.is_some()
+                    && expected_sha256.as_ref().is_none_or(|hash| {
+                        job.verified_sha256
+                            .as_ref()
+                            .is_some_and(|verified| hash.eq_ignore_ascii_case(verified))
+                    })
+                    && std::fs::metadata(&job.destination).is_ok_and(|meta| meta.len() == *total)
+                {
+                    checkpoint.terminal = true;
+                    engine
+                        .store
+                        .lock()
+                        .unwrap()
+                        .put_browser_checkpoint(&checkpoint, &job)?;
+                    return Ok(ack(&checkpoint));
+                }
+            }
+        }
+    }
     if matches!(
         job.state,
         JobState::Cancelled | JobState::Complete | JobState::Paused
@@ -209,7 +243,26 @@ pub fn operation(engine: &Arc<Engine>, operation: StreamOperation) -> Result<Str
             if resumed {
                 return Ok(ack(&record));
             }
-            if job.partial_created {
+            if engine
+                .store
+                .lock()
+                .unwrap()
+                .all::<Checkpoint>("browser_stream")?
+                .iter()
+                .any(|active| {
+                    active.job_id == job.id
+                        && !active.terminal
+                        && active.identity.stream_id != record.identity.stream_id
+                })
+            {
+                bail!("Browser job already has an owned response stream");
+            }
+            if job.partial_created
+                && (job.bytes > 0
+                    || std::fs::metadata(transfer::part_path(&job))
+                        .map(|m| m.len() > 0)
+                        .unwrap_or(false))
+            {
                 bail!("Partial browser stream requires its original stream ID");
             }
             let settings = engine.settings.lock().unwrap().clone();
@@ -291,11 +344,11 @@ pub fn operation(engine: &Arc<Engine>, operation: StreamOperation) -> Result<Str
                 .context("storage_error: Browser stream write failed")?;
             file.sync_all()
                 .context("storage_error: Browser stream durable flush failed")?;
-            store.record_usage(bytes.len() as u64)?;
-            drop(store);
             record.offset = end;
             job.bytes = end;
             job.state = JobState::BrowserDownloading;
+            store.put_browser_checkpoint(&record, &job)?;
+            return Ok(ack(&record));
         }
         StreamOperation::End {
             total,

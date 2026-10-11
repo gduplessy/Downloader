@@ -384,9 +384,9 @@ fn hosted_page_is_never_downloaded_as_the_file() {
         .command(Command::ClaimNavigation {
             id: j.id.clone(),
             owner: second.clone(),
-            force: false
-                scope: None,
-                source_generation: None,
+            force: false,
+            scope: None,
+            source_generation: None,
         })
         .is_err());
     assert!(e
@@ -397,9 +397,9 @@ fn hosted_page_is_never_downloaded_as_the_file() {
             state: JobState::BrowserComplete,
             message: None,
             bytes: 1,
-            total: Some(1)
-                scope: None,
-                source_generation: None,
+            total: Some(1),
+            scope: None,
+            source_generation: None,
         })
         .is_err());
     assert_eq!(

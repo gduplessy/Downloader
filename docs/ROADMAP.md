@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.7.0<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.7.1<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -153,3 +153,5 @@ The README also states constraints that are product or correctness controls, rat
 - When a limitation is added to the README or status documents, add or reference its roadmap ID. Research items need a feasibility decision before becoming release promises.
 
 NAV-07/08/09/11 implementation increment (0.7.0): durable direct-response receiver, strict replay policy, generation fences, scoped projections and transient private records implemented. Real extension transport/browser matrix, private legacy-history review and live-provider acceptance remain pending.
+
+NAV-07/08/09/11 runtime increment (0.7.1): original response/Blob modules, persistent bounded bridge, atomic stream/job/quota checkpoints, scoped private projections and restart references implemented. Local installed stable Chrome/Edge hashes passed. Full integrated adapter preview cancellation, Firefox stable/ESR, private/container/partition browser matrix, large-file performance, explicit cross-session transfers, legacy-history cleanup and live-provider qualification remain pending. See [browser-stream evidence](NAV_BROWSER_STREAMS.md).

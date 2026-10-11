@@ -2,6 +2,13 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.7.1 — Direct browser stream runtime and recovery fences
+
+- Add default-off Chromium debugger capture, Firefox response metadata admission, isolated page Blob streaming and persistent bounded native transport with localized capture state/cancel controls.
+- Qualify original POST and Blob hashes on installed stable Chrome and Edge using isolated native fixtures; keep integrated preview cancellation, Firefox/browser-context matrices, live providers and large-file performance explicit pending gates.
+- Atomically commit durable stream progress, job metadata and quota; repair concurrent EOF and publication-checkpoint crash replay. Fence challenge/claim/source refresh, profile/private/container projections and browser-session restart.
+- Retain regular nonsecret task references while keeping private/session secrets ephemeral. Detect existing private history without deleting or claiming to sanitize it.
+
 ## 0.7.0 — Owner-fenced browser stream foundations
 
 - Add direct-response begin/chunk/end/abort storage with strict bounded framing, durable acknowledgements, quotas, EOF verification, scanning and no-overwrite publication.

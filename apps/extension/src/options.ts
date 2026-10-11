@@ -1,3 +1,4 @@
+import { streamTranslate, type StreamTextKey } from './navigation/streams/i18n';
 import browser from 'webextension-polyfill';
 declare const BROWSER: 'chromium' | 'firefox';
 import { translate, languages, type Key } from '../../../packages/shared/src/i18n';
@@ -9,6 +10,8 @@ async function main() {
     ...((await browser.storage.local.get('settings')) as Record<string, any>).settings,
   };
   function localize() {
+    for (const el of document.querySelectorAll<HTMLElement>('[data-stream-i18n]'))
+      el.textContent = streamTranslate(settings.locale, el.dataset.streamI18n as StreamTextKey);
     for (const el of document.querySelectorAll<HTMLElement>('[data-i18n]'))
       el.textContent = translate(settings.locale, el.dataset.i18n as Key);
     document.documentElement.dir = settings.locale === 'ar' ? 'rtl' : 'ltr';
@@ -23,6 +26,7 @@ async function main() {
   }
   select.value = settings.locale;
   input('automatic').checked = settings.automatic;
+  input('direct-capture').checked = settings.directCapture;
   input('overlay').checked = settings.overlay;
   input('extensions').value = settings.extensions.join(' ');
   input('excluded').value = settings.excluded.join('\n');
@@ -35,7 +39,11 @@ async function main() {
   document.getElementById('enable')!.onclick = async () => {
     const chromium = BROWSER === 'chromium';
     const granted = await browser.permissions.request({
-      permissions: ['cookies', 'webRequest', ...(chromium ? ['scripting' as const] : [])],
+      permissions: [
+        'cookies',
+        'webRequest',
+        ...(chromium ? ['scripting' as const] : ['webRequestBlocking' as const]),
+      ],
       origins: input('all-sites').checked
         ? ['http://*/*', 'https://*/*']
         : [sitePattern(input('site-scope').value)],
@@ -53,6 +61,7 @@ async function main() {
     settings = {
       ...settings,
       automatic: input('automatic').checked,
+      directCapture: input('direct-capture').checked,
       overlay: input('overlay').checked,
       extensions: input('extensions').value.toLowerCase().split(/\s+/).filter(Boolean),
       excluded: input('excluded')

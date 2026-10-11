@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.7.0<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.7.1<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -242,3 +242,5 @@ Copyright © 2026 Downloader contributors. Original project code, text, and asse
 Downloader is independent of Internet Download Manager and its owners. IDM code, branding, copy, and assets are not included.
 
 Browser stream foundations now support owner-fenced durable original-response writes, bounded acknowledgements, verification and no-overwrite publication. Direct-capture runtime qualification is recorded separately under docs/evidence/nav-browser-streams. Existing private database history is not sanitized by this release; new private task/stream metadata stays in memory and requires reauthorization after service loss.
+
+Direct browser streaming (0.7.1) is off by default. Original POST and page Blob bytes completed through the native receiver in local stable Chrome/Edge fixtures; integrated preview and Firefox/private/container/live-provider acceptance remain pending. See [stream evidence and contracts](docs/NAV_BROWSER_STREAMS.md).
