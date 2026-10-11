@@ -25,6 +25,8 @@ Run Rust fixtures, formatting, Clippy, desktop/extension type checks and tests f
 
 ## Increment status
 
+The 0.3.0 follow-up implements bounded ordered proxy failover in all three native adapters and all file-request paths. It adds live proxy-traversal assertions and refuses Windows implicit loopback bypass in explicit PAC mode. ENG-07 still requires the managed-policy/external-realm matrix; a feature implementation does not close those acceptance criteria.
+
 Batches 1–4 are implemented with deterministic regressions. Batch 5 publishes [reproducible evidence](TRANSFER_ENGINE.md), including actual large-file and real native-messaging/CLI runs on all three CI platforms. macOS socket permissions, browser response projection, sibling-error preservation, system proxy maps and weak-validator fallback have focused regression fixes. Remaining ENG-01/06/07/10 qualification criteria stay explicit in the roadmap.
 
 The installed IDM command-line workflow yielded no request/output in two attempts; the comparison remains pending. External authentication realms, managed proxy policies, native filesystem matrices and release/browser acceptance are not inferred from fixture success.

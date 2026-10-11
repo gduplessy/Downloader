@@ -9,7 +9,7 @@ use anyhow::Context;
 use anyhow::Result;
 
 #[cfg(target_os = "linux")]
-pub fn system(url: &str) -> Result<Option<String>> {
+pub fn system(url: &str) -> Result<Option<Vec<String>>> {
     use std::ffi::{CStr, CString};
     unsafe {
         let Ok(library) = libloading::Library::new("libproxy.so.1") else {
@@ -33,20 +33,30 @@ pub fn system(url: &str) -> Result<Option<String>> {
         let route = if list.is_null() || (*list).is_null() {
             None
         } else {
-            Some(CStr::from_ptr(*list).to_string_lossy().into_owned())
+            let mut routes = Vec::new();
+            let mut i = 0;
+            while !(*list.add(i)).is_null() && i < 17 {
+                let value = CStr::from_ptr(*list.add(i)).to_string_lossy().into_owned();
+                routes.push(if value == "direct://" {
+                    String::new()
+                } else {
+                    value
+                });
+                i += 1;
+            }
+            Some(routes)
         };
         if !list.is_null() {
             free_list(list);
         }
         free(factory);
         route
-            .map(|r| if r == "direct://" { String::new() } else { r })
             .map(Some)
             .context("System proxy lookup returned no route")
     }
 }
 #[cfg(target_os = "linux")]
-pub fn pac(url: &str, script_url: &str, settings: &NetworkSettings) -> Result<String> {
+pub fn pac(url: &str, script_url: &str, settings: &NetworkSettings) -> Result<Vec<String>> {
     use std::{
         ffi::{CStr, CString},
         sync::Mutex,
@@ -104,30 +114,13 @@ pub fn pac(url: &str, script_url: &str, settings: &NetworkSettings) -> Result<St
             if value.is_null() {
                 Err(anyhow::anyhow!("PAC returned no route"))
             } else {
-                pac_route(&CStr::from_ptr(value).to_string_lossy())
+                crate::network::pac_routes(&CStr::from_ptr(value).to_string_lossy())
             }
         };
         cleanup();
         result
     }
 }
-#[cfg(target_os = "linux")]
-fn pac_route(value: &str) -> Result<String> {
-    let first = value.split(';').next().unwrap_or("").trim();
-    if first.eq_ignore_ascii_case("DIRECT") {
-        return Ok(String::new());
-    }
-    let (kind, address) = first.split_once(' ').context("Invalid PAC route")?;
-    let scheme = match kind.to_ascii_uppercase().as_str() {
-        "PROXY" | "HTTP" => "http",
-        "HTTPS" => "https",
-        "SOCKS" | "SOCKS5" => "socks5h",
-        "SOCKS4" => "socks4",
-        _ => bail!("Unsupported PAC proxy type"),
-    };
-    Ok(format!("{scheme}://{}", address.trim()))
-}
-
 #[cfg(target_os = "macos")]
 #[path = "system_proxy_macos.rs"]
 mod macos;
@@ -135,10 +128,10 @@ mod macos;
 pub use macos::{pac, system};
 
 #[cfg(not(any(target_os = "macos", target_os = "linux")))]
-pub fn system(_url: &str) -> Result<Option<String>> {
+pub fn system(_url: &str) -> Result<Option<Vec<String>>> {
     Ok(None)
 }
 #[cfg(not(any(target_os = "macos", target_os = "linux")))]
-pub fn pac(_url: &str, _script: &str, _settings: &NetworkSettings) -> Result<String> {
+pub fn pac(_url: &str, _script: &str, _settings: &NetworkSettings) -> Result<Vec<String>> {
     bail!("protocol_unsupported: Native PAC adapter is unavailable on this platform")
 }

@@ -2,7 +2,7 @@
 
 ## Scope and environment
 
-Implemented on `codex/flaresolverr-integration`, initially based on fetched `origin/feat/transfer-engine-correctness` at `ee1442b`, with the response-validator fixes at `604a7d9` incorporated before delivery. The original checkout and its uncommitted evidence files were preserved. Delivery commits independently increment the product version. The PR targets `feat/transfer-engine-correctness`; this integration is not merged.
+Implemented on `codex/flaresolverr-integration`, initially based on fetched `origin/feat/transfer-engine-correctness` at `ee1442b`, with the latest committed transfer-engine tip `5bba63e` incorporated before delivery. The original checkout and its uncommitted evidence files were preserved. Delivery commits independently increment the product version. The PR targets `main` as selected by the owner; this integration is not merged. The committed PAC/failover and disposable-filesystem additions in `7951d6e` and `5bba63e` are inherited transfer-foundation work, with separate upstream qualification limits.
 
 Local target: Windows x64, Docker Desktop Linux amd64, Docker client/server **29.6.2**, Compose **5.3.1**, FlareSolverr **3.4.6**, reported Chromium **142**. The existing service on 9191 was reused without modification. The isolated deployment used the repository Compose file with port override 19191 and project `downloader-solver-qualification`.
 
@@ -20,7 +20,7 @@ Qualified image: `flaresolverr/flaresolverr@sha256:7962759d99d7e125e108e0f5e7f3c
 | Custom CAPTCHA / expiry            | Returned `solver_captcha` / `solver_expired`, zero bytes; no completed file.                                                           | Unsupported pages retain manual recovery.                           |
 | Fresh g4u links / downstream hosts | Not qualified.                                                                                                                         | Host selection and custom interaction remain separate gates.        |
 
-Three valid integration runs completed: one against the existing service and two against the isolated image (**3/3 controlled transfer successes**). Each run also correctly refused one CAPTCHA fixture and one expiry fixture (**3/3 zero-byte refusals for each**). These small fixture samples are not estimates of live-site success rates. The generated fixture contains ordinary JavaScript and an application cookie, not Cloudflare protection.
+Four valid integration runs completed: two against the existing service and two against the isolated image (**4/4 controlled transfer successes**). Each run also correctly refused one CAPTCHA fixture and one expiry fixture (**4/4 zero-byte refusals for each**). The fourth run verified integration with the upstream route-aware transfer configuration. These small fixture samples are not estimates of live-site success rates. The generated fixture contains ordinary JavaScript and an application cookie, not Cloudflare protection.
 
 Output SHA-256: `1e075c8d478ad21844e33e830a695ef03a4d2488b69ee275bd8947618bb1be1e`.
 
@@ -35,7 +35,7 @@ Final isolated run, measured end to end through CLI/service:
 
 The transfer fixture intentionally limits throughput and delays chunks to make pause/resume observable. Timings include process startup, polling and local machine load; they are not provider SLAs. Earlier script runs waited on inherited Windows daemon pipe handles, inflating startup measurement to 90 s. The final script waits for actual CLI process exit, and its final measurement is the applicable startup result.
 
-Sanitized JSON is in [existing-service evidence](evidence/flaresolverr-2026-10-11/existing-service.json), [isolated deployment evidence](evidence/flaresolverr-2026-10-11/isolated-initial.json) and [final isolated evidence](evidence/flaresolverr-2026-10-11/isolated-final.json). No signed URLs, job/profile identifiers, filesystem paths, HTML, cookies or User-Agent strings are published there.
+Sanitized JSON is in [existing-service evidence](evidence/flaresolverr-2026-10-11/existing-service.json), [isolated deployment evidence](evidence/flaresolverr-2026-10-11/isolated-initial.json), [final isolated evidence](evidence/flaresolverr-2026-10-11/isolated-final.json) and [route-aware engine evidence](evidence/flaresolverr-2026-10-11/existing-final.json). The fourth run took 12.387 s for source acknowledgement and 40.063 s for solve/transfer/pause/resume/verification under concurrent build/test load. No signed URLs, job/profile identifiers, filesystem paths, HTML, cookies or User-Agent strings are published there.
 
 ## Deterministic and regression checks
 
@@ -43,7 +43,7 @@ Sanitized JSON is in [existing-service evidence](evidence/flaresolverr-2026-10-1
 - Browser protection versus custom CAPTCHA, login, expiry and countdown; hidden/ambiguous/POST controls; bounded GET links/forms and traversal loops.
 - Cookie domain/path/expiry/security and matching User-Agent; separate connection-pool identity; cross-origin redirect header stripping.
 - Globally serialized solve jobs, wrong-profile rejection, automatic-attempt limit, cancellation, page changes, settings changes and late-result discard.
-- Session destruction on success/failure/cancellation; cleanup failure retained for retry; interrupted solving recovers to manual navigation with no persisted session material.
+- Session destruction on success/failure/cancellation; cleanup failure retained for retry; interrupted solving recovers to manual navigation with no persisted session material. A provider restart can remove sessions first: a failed destroy is accepted only after a valid session list confirms the owned ID is absent. Real 3.4.6 returns HTTP 500 for a missing session and supports the list confirmation; the deterministic regression covers absence and continued presence.
 - Range/cookie propagation, known SHA-256, and rejection of challenge/expiry HTML even when served as binary with no expected checksum.
 - Existing transfer/recovery tests retain ordinary resume/checksum, manual ownership, source refresh and browser fallback regressions.
 

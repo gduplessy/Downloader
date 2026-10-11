@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.5.3 — Align solver resolution with the latest transfer base
+
+- Incorporate ordered PAC route/failover and disposable-filesystem fixtures from the updated transfer-engine branch without changing the solver's Direct-only boundary.
+- Preserve scoped solver cookies, matching User-Agent and session isolation through the route-aware engine configuration.
+- Confirm session absence after a provider restart so an already-removed session cannot leave cleanup blocked; retain failures when the owned session still exists.
+
 ## 0.5.2 — Preserve final transfer-engine fixes
 
 - Incorporate the final transfer-engine branch tip, including weak-ETag/Last-Modified validation and published platform evidence, into the solver integration.
@@ -27,10 +33,23 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Preserve temporary cookies and the matching User-Agent in ranged transfers; reject hosted HTML before publication, including pages labeled as binary.
 - Desktop controls and live qualification remain in progress.
 
-## 0.3.0 — Local challenge adapter foundation
+## 0.3.0 — Local challenge adapter foundation (solver branch)
 
 - Add a bounded loopback FlareSolverr client, conservative GET page resolution, temporary cookie/User-Agent context, and deterministic response/policy regressions.
 - Browser navigation integration and live host qualification remain in progress.
+
+## 0.3.1 — Disposable filesystem qualification
+
+- Add bounded 128 MiB image fixtures for actual disk-full, readonly-file refusal, cross-volume publication, collisions and recovery after service restart.
+- Refuse to fill the workspace device or format an existing/system disk; qualification detaches only its own image.
+- Add an opt-in platform CI acceptance run. Actual platform results remain pending until that run succeeds.
+
+## 0.3.0 — Ordered proxy failover (transfer-engine branch)
+
+- Preserve bounded, ordered PAC/system route lists across Windows, macOS and Linux, including explicit direct fallback.
+- Advance metadata, range reads and download workers only after pre-response connection failures; keep TLS, authentication, source and partial-body failures on their original recovery path.
+- Isolate pooled handles by their selected route and use cancellable Windows PAC discovery. Explicit PAC refuses WinHTTP's implicit loopback bypass rather than silently selecting direct access.
+- Verify actual proxy traversal with named loopback fixtures, exhausted-route failures, TLS/authentication rejection and route-order regressions. Disposable CI runners receive a fixture-only hostname; developer host settings stay untouched.
 
 ## 0.2.7 — Clarify remaining proxy work
 

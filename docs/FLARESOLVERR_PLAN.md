@@ -6,7 +6,7 @@ Deliver in small verified commits: adapter and fixtures; engine/extension integr
 
 Research custom image-click CAPTCHA handling and 2Captcha CoordinatesTask separately. No paid requests, API credentials, external image uploads, or paid adapter are part of this increment. Record measured findings and remaining qualification gates without claiming universal CAPTCHA support.
 
-Validate deterministic failures, sessions, cancellation, restart, source expiry, redirects, and hash-verified transfer. Qualify the existing local service and an isolated Docker deployment. Publish supported behavior and setup instructions after qualification, then open a PR against `feat/transfer-engine-correctness`.
+Validate deterministic failures, sessions, cancellation, restart, source expiry, redirects, and hash-verified transfer. Qualify the existing local service and an isolated Docker deployment. Publish supported behavior and setup instructions after qualification. The original PR target was `feat/transfer-engine-correctness`; the owner selected `main` during execution with the latest committed transfer fixes incorporated.
 
 ## Approved implementation boundaries
 

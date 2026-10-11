@@ -451,11 +451,31 @@ pub(crate) fn destroy(settings: &SolverSettings, id: &str) -> Result<()> {
         timeout_seconds: 5,
         ..settings.clone()
     };
-    api(
+    let destroyed = api(
         &cleanup,
         Some(&json!({"cmd":"sessions.destroy","session":id})),
         &AtomicU8::new(0),
+    );
+    if destroyed.is_ok() {
+        return Ok(());
+    }
+    // A restarted provider has already removed its sessions. Confirm absence
+    // through the API instead of depending on provider error text or status.
+    let listed = api(
+        &cleanup,
+        Some(&json!({"cmd":"sessions.list"})),
+        &AtomicU8::new(0),
     )?;
+    let sessions = listed["sessions"]
+        .as_array()
+        .context("Invalid FlareSolverr session list")?
+        .iter()
+        .map(Value::as_str)
+        .collect::<Option<Vec<_>>>()
+        .context("Invalid FlareSolverr session list")?;
+    if sessions.contains(&id) {
+        destroyed?;
+    }
     Ok(())
 }
 pub fn outcome(error: &str) -> &'static str {
@@ -584,6 +604,65 @@ pub fn is_html(content_type: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn cleanup_confirms_absence_after_provider_restart() {
+        use std::io::{Read, Write};
+        for remains in [false, true] {
+            let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+            let settings = SolverSettings {
+                endpoint: format!("http://{}/", listener.local_addr().unwrap()),
+                ..Default::default()
+            };
+            let id = format!("downloader-{}", uuid::Uuid::new_v4());
+            let provider_id = id.clone();
+            let worker = std::thread::spawn(move || {
+                for command in ["sessions.destroy", "sessions.list"] {
+                    let (mut stream, _) = listener.accept().unwrap();
+                    stream
+                        .set_read_timeout(Some(Duration::from_secs(5)))
+                        .unwrap();
+                    let mut headers = Vec::new();
+                    while !headers.ends_with(b"\r\n\r\n") {
+                        let mut byte = [0];
+                        stream.read_exact(&mut byte).unwrap();
+                        headers.push(byte[0]);
+                    }
+                    let length = String::from_utf8(headers)
+                        .unwrap()
+                        .lines()
+                        .find_map(|line| {
+                            let (name, value) = line.split_once(':')?;
+                            name.eq_ignore_ascii_case("content-length")
+                                .then(|| value.trim().parse::<usize>().unwrap())
+                        })
+                        .unwrap();
+                    let mut body = vec![0; length];
+                    stream.read_exact(&mut body).unwrap();
+                    let request: Value = serde_json::from_slice(&body).unwrap();
+                    assert_eq!(request["cmd"], command);
+                    let (status, body) = if command == "sessions.destroy" {
+                        assert_eq!(request["session"], provider_id);
+                        (
+                            500,
+                            json!({"status":"error", "message":"untrusted provider message"}),
+                        )
+                    } else {
+                        (
+                            200,
+                            json!({"status":"ok", "sessions": if remains {vec![provider_id.clone()]} else {vec![]}}),
+                        )
+                    };
+                    let body = body.to_string();
+                    write!(stream, "HTTP/1.1 {status} Test\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len()).unwrap();
+                    stream.flush().unwrap();
+                    stream.shutdown(std::net::Shutdown::Write).unwrap();
+                    let _ = stream.read(&mut [0; 128]);
+                }
+            });
+            assert_eq!(destroy(&settings, &id).is_err(), remains);
+            worker.join().unwrap();
+        }
+    }
     #[test]
     fn stalled_api_times_out_and_pre_cancelled_api_is_rejected() {
         let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
