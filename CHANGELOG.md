@@ -2,6 +2,24 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.6.2 — Stage adapter and shared-contract integration
+
+- Integrate the verified adapter increments with the shared navigation contracts on the coordinator staging branch, preserving their individual commits and qualification boundaries.
+- Reconcile product-version surfaces and documentation; installed extension/native stream binding acceptance remains dependent on the browser-stream batch.
+
+## 0.6.1 — Qualify local adapter layouts and request outcomes
+
+- Add sanitized four-provider synthetic DOM/HTTP fixtures, one-use POST traps, intended filename/hash verification, evidence expiry/schema checks and observation-only opt-in gstack smoke tooling.
+- Adopt shared navigation scope contracts; integrate visible timer metadata, generation-bound explicit same-origin blob capability and actual submitter form semantics.
+- Qualify 80 Chromium 149 DOM/request/hash checks and keyboard selection/stale-preview recovery on Windows x64. Live providers and native transfer acceptance remain pending.
+
+## 0.6.0 — Versioned hosted-page adapters and explicit selection
+
+- Add exact-host bundled adapters, evidence-backed candidate selection, unsafe/ad/purchase/torrent rejection and conservative live-provider fallback.
+- Add generation/session/DOM-bound preview validation, one-authorization submission gates and accessible selection controls in all six locales.
+- Integrate the content resolver with an ownership-aware context hook; retain conservative behavior until worker integration is present. Provider layouts remain unqualified.
+- Verify 44 extension regressions and extension TypeScript checks.
+
 ## 0.5.7 — Shared navigation contracts
 
 - Define matching Rust/TypeScript session scope, fenced navigation task, wait metadata, replay policy and bounded browser-stream envelopes for the parallel implementation batches.
