@@ -113,7 +113,15 @@ export function showPreview(
   title.id = 'preview-title';
   title.textContent = words[0];
   const hint = document.createElement('p');
-  hint.textContent = words[1];
+  const emptyLabels: Record<string, string> = {
+    en: 'No supported control found. Continue manually in the browser, or try generic controls.',
+    fr: 'Aucun contrôle pris en charge. Continuez manuellement dans le navigateur ou essayez les contrôles génériques.',
+    es: 'No se encontró un control compatible. Continúe manualmente en el navegador o pruebe los controles genéricos.',
+    de: 'Kein unterstütztes Element gefunden. Im Browser manuell fortfahren oder allgemeine Steuerelemente versuchen.',
+    ar: 'لم يُعثر على عنصر تحكم مدعوم. تابع يدويًا في المتصفح أو جرّب عناصر التحكم العامة.',
+    'zh-CN': '未找到支持的控件。请在浏览器中手动继续，或尝试通用控件。',
+  };
+  hint.textContent = preview.candidates.length ? words[1] : (emptyLabels[locale] ?? emptyLabels.en);
   const status = document.createElement('p');
   status.setAttribute('role', 'status');
   panel.append(title, hint, status);

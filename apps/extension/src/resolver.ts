@@ -152,7 +152,11 @@ async function step() {
       await submit(ctx, observed, observed.inspection.selected);
       return;
     }
-    if (ctx && observed.inspection.kind === 'preview') {
+    if (
+      ctx &&
+      (observed.inspection.kind === 'preview' ||
+        (observed.inspection.kind === 'user' && !observed.signals.blocker))
+    ) {
       const preview = createPreview(
         binding(ctx, observed.inspection, observed.fingerprint),
         observed.inspection,

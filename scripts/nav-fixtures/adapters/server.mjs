@@ -16,6 +16,16 @@ export function fixtureHtml(provider, scenario) {
   const a = (label = 'Download', extra = '') =>
     `<a data-nav-fixture-control ${extra} href="${prefix}/file.bin">${label}</a>`;
   const scenarios = {
+    submitter: `<form method="POST" action="/trap/purchase"><input type="hidden" name="fixture" value="public"><button data-nav-fixture-control formmethod="GET" formaction="${prefix}/file.bin" name="step" value="actual">Download</button></form>`,
+    hidden: '<div style="display:none">' + a() + '</div>' + a('Download', 'id="visible"'),
+    script: `<form action="${prefix}/file.bin"><button type="button">Download</button></form>`,
+    token:
+      `<form method="GET" action="${prefix}/file.bin"><input id="token" type="hidden" name="token" value="public-one"><button>Download</button></form>` +
+      a(),
+    closed:
+      '<div id="closed"></div><script>document.querySelector("#closed").attachShadow({mode:"closed"}).innerHTML=' +
+      JSON.stringify(a()) +
+      '</script>',
     get: `<form method="GET" action="${prefix}/file.bin"><input type="hidden" name="fixture" value="public"><button data-nav-fixture-control>Download</button></form>`,
     post: `<form method="POST" action="${prefix}/one-use.bin"><input type="hidden" name="token" value="fixture-public-one-use"><button data-nav-fixture-control>Start Download</button></form>`,
     ambiguous: a() + a('Download', 'id="second"'),

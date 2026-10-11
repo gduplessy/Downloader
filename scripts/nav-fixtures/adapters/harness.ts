@@ -105,12 +105,17 @@ async function suite() {
       'wait',
       'chosen',
       'changed',
+      'submitter',
+      'hidden',
+      'script',
+      'token',
+      'closed',
     ]) {
       const iframe = await load(provider, scenario),
         doc = iframe.contentDocument!;
       try {
         const before = await inspected(doc);
-        if (['get', 'post', 'shadow', 'ads'].includes(scenario)) {
+        if (['get', 'post', 'shadow', 'ads', 'submitter', 'hidden'].includes(scenario)) {
           check(
             before.inspection.kind === 'click',
             `${provider}/${scenario} should select one control`,
@@ -123,8 +128,24 @@ async function suite() {
           );
           check(file.method === (scenario === 'post' ? 'POST' : 'GET'), 'wrong request method');
           checks += 3;
-        } else if (scenario === 'unsafe' || scenario === 'changed') {
+        } else if (scenario === 'unsafe' || scenario === 'changed' || scenario === 'closed') {
           check(before.inspection.kind === 'user', 'unsafe/changed layout must stop');
+          checks++;
+        } else if (scenario === 'script') {
+          check(before.inspection.kind === 'preview', 'script button must need explicit selection');
+          check(
+            requestFor(before.collected.elements.get(before.collected.controls[0].localId)!) ===
+              undefined,
+            'script button must not guess a form request',
+          );
+          checks += 2;
+        } else if (scenario === 'token') {
+          (doc.querySelector('#token') as HTMLInputElement).value = 'public-two';
+          const after = await inspected(doc);
+          check(
+            before.fingerprint !== after.fingerprint,
+            'changed hidden form value must invalidate fingerprint',
+          );
           checks++;
         } else if (scenario === 'replaced') {
           const preview = createPreview(

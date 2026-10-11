@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.6.1<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.6.3<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -247,4 +247,7 @@ Bundled versioned adapters inspect exact hosts, reject unsafe/advertising contro
 
 
 Adapter fixture checks: node scripts/nav-fixtures/adapters/qualify.mjs and node scripts/nav-fixtures/adapters/evidence.test.mjs. Build the browser harness with node scripts/nav-fixtures/adapters/build.mjs, then run node scripts/nav-fixtures/adapters/server.mjs on port 18765. Browser DOM/hash fixtures use gstack browse; they do not qualify live provider layouts or native transfer ownership. The read-only live-smoke command requires an explicit permitted URL and local gstack binary.
+
+
+Final local adapter evidence is recorded under [NAV adapter qualification](docs/evidence/nav-adapters/README.md): 120 Headless Chromium DOM/request/hash checks, with live providers and combined native handoff still separately pending.
 

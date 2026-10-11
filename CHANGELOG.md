@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.6.3 — Complete adapter recovery and local qualification evidence
+
+- Offer localized manual/generic recovery when layout changes leave no safe candidate; preserve independent adapter disable and session-bound refresh.
+- Expand synthetic browser request/hash checks to 120, covering submitter overrides, hidden controls, scripts, token replacement and closed shadow roots. Publish exact tested source hashes and explicit live/native acceptance limits.
+- Keep separate provider matrix rows unqualified and preserve all selected-host provenance/one-use fixtures.
+
 ## 0.6.1 — Qualify local adapter layouts and request outcomes
 
 - Add sanitized four-provider synthetic DOM/HTTP fixtures, one-use POST traps, intended filename/hash verification, evidence expiry/schema checks and observation-only opt-in gstack smoke tooling.
@@ -149,5 +155,6 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 ## 0.1.0 — Initial development preview
 
 - Original GPL-3.0 desktop, CLI and extension foundation, hosted-page navigation fixtures, media/grabber adapters and public roadmap.
+
 
 
