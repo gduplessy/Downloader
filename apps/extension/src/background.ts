@@ -80,7 +80,12 @@ const profile = browser.storage.local.get('profileId').then(async (stored) => {
   if (!stored.profileId) await browser.storage.local.set({ profileId: id });
   return id;
 });
-const discovery = new RenderedDiscovery(native, () => profile, privateWorker);
+const discovery = new RenderedDiscovery(
+  native,
+  () => profile,
+  privateWorker,
+  () => browserEpoch,
+);
 const requests = new Map<string, ScopedRequest>();
 function requestFor(url: string, privateSession?: boolean) {
   const values = [...requests.values()].filter(

@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.11.2<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.11.3<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -280,3 +280,5 @@ NAV-12 0.11.1 adds rendered extraction, session controls and safe staged resourc
 Direct browser streaming (0.7.1) is off by default. Original POST and page Blob bytes completed through the native receiver in local stable Chrome/Edge fixtures; integrated preview and Firefox/private/container/live-provider acceptance remain pending. See [stream evidence and contracts](docs/NAV_BROWSER_STREAMS.md).
 
 NAV-12 0.11.2 integrates production discovery commands and owned tabs. Selected one-use resources reopen their provenance page and authorize only the intended original control before any capture; installed browser hash acceptance is pending.
+
+NAV-12 0.11.3 binds explicitly permitted cross-origin pages and resources to their observed partition; browser epoch recovery is fenced. Installed rendered/authenticated acceptance remains pending.

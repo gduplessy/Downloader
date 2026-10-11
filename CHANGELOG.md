@@ -2,6 +2,11 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.11.3
+
+- Add explicitly permitted cross-origin partition renewal and per-resource observed session provenance.
+- Fence discovery worker recovery by the current browser session epoch; never reuse a stale browser instance as an owned discovery tab.
+
 ## 0.11.2
 
 - Integrate rendered discovery with the production native bridge, worker/tab lifecycle and shared scheduler recovery.

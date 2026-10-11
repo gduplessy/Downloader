@@ -10,6 +10,8 @@ pub struct Page {
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Resource {
+    #[serde(default)]
+    pub scope: Option<SessionScope>,
     pub url: String,
     pub page_url: String,
     pub name: String,
@@ -220,6 +222,7 @@ impl Discovery {
                     break;
                 }
                 self.resources.push(Resource {
+                    scope: self.scope.clone(),
                     url: text,
                     page_url: final_url.clone(),
                     name: crate::security::safe_filename(&link.name),
@@ -297,6 +300,10 @@ pub struct Claim {
     pub generation: u64,
     pub tab_id: Option<i64>,
     #[serde(default)]
+    pub observed_url: Option<String>,
+    #[serde(default)]
+    pub resume: bool,
+    #[serde(default)]
     pub permitted_origins: Vec<String>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -327,7 +334,7 @@ pub fn start(engine: &crate::Engine, project: GrabberProject) -> Result<()> {
 pub fn list(engine: &crate::Engine, scope: &SessionScope) -> Result<serde_json::Value> {
     scope.validate()?;
     let store = engine.store.lock().unwrap();
-    let states:Vec<_>=store.all::<Discovery>("rendered_discovery")?.into_iter().filter(|d|d.private == scope.private && d.scope.as_ref().is_none_or(|s|s==scope) && !["ready","cancelled"].contains(&d.status.as_str())).map(|d|serde_json::json!({"id":d.project.id,"url":d.project.url,"generation":d.generation,"status":d.status})).collect();
+    let states:Vec<_>=store.all::<Discovery>("rendered_discovery")?.into_iter().filter(|d|d.private == scope.private && d.scope.as_ref().is_none_or(|s|s==scope) && !["ready","cancelled"].contains(&d.status.as_str())).map(|d|serde_json::json!({"id":d.project.id,"url":d.project.url,"generation":d.generation,"status":d.status,"claim_generation":d.scope.as_ref().map(|s|s.claim_generation)})).collect();
     Ok(serde_json::to_value(states)?)
 }
 pub fn claim(engine: &crate::Engine, request: Claim) -> Result<serde_json::Value> {
@@ -339,6 +346,30 @@ pub fn claim(engine: &crate::Engine, request: Claim) -> Result<serde_json::Value
     let mut state = load(&store, &request.id)?;
     if state.generation != request.generation {
         bail!("Stale discovery generation");
+    }
+    if let Some(old) = &state.scope {
+        if old != &request.scope {
+            let observed = request
+                .observed_url
+                .as_ref()
+                .context("Partition renewal needs observed owned page")?;
+            let observed = canonical(observed)?;
+            let origin = url::Url::parse(&observed)?.origin().ascii_serialization();
+            if state.lease.is_none()
+                || request.tab_id.is_none_or(|id| id < 0)
+                || !state.permitted(&observed)
+                || !same_session(old, &request.scope)
+                || old.claim_generation.checked_add(1) != Some(request.scope.claim_generation)
+                || request
+                    .scope
+                    .partition_key
+                    .as_ref()
+                    .is_none_or(|key| key.top_level_site.trim_end_matches('/') != origin)
+            {
+                bail!("Unauthorized discovery partition transition");
+            }
+            state.scope = Some(request.scope.clone());
+        }
     }
     state.claim(request.scope.clone(), now)?;
     for origin in &request.permitted_origins {
@@ -366,6 +397,15 @@ pub fn claim(engine: &crate::Engine, request: Claim) -> Result<serde_json::Value
     let task = scheduler.tasks.iter_mut().find(|t| t.id == id).unwrap();
     task.scope = Some(request.scope.clone());
     task.private = request.scope.private;
+    if let Some(page) = state.lease.as_ref().or(state.pending.first()) {
+        let host = url::Url::parse(&page.url)?
+            .host_str()
+            .context("Missing frontier host")?
+            .to_string();
+        if !task.host_keys.contains(&host) {
+            task.host_keys.push(host);
+        }
+    }
     let result = scheduler.apply(
         &request.scope.profile,
         crate::navigation_scheduler::SchedulerRequest::Admit {
@@ -589,6 +629,13 @@ pub fn select(
             .iter()
             .find(|r| r.url == url)
             .context("Resource is not in discovery results")?;
+        if !file
+            .scope
+            .as_ref()
+            .is_some_and(|scope| same_session(scope, &request.scope))
+        {
+            bail!("Resource session requires fresh discovery");
+        }
         use sha2::{Digest, Sha256};
         let request_id = format!(
             "discovery-{:x}",
@@ -622,7 +669,11 @@ pub fn select(
         {
             let mut job = job.lock().unwrap();
             if job.navigation_scope.is_none() {
-                job.navigation_scope = Some(request.scope.clone());
+                job.navigation_scope = Some(
+                    file.scope
+                        .clone()
+                        .context("Resource requires a fresh discovery observation")?,
+                );
                 job.navigation_owner = Some(request.scope.profile.clone());
                 job.page_url = Some(file.page_url.clone());
                 job.navigation_url = Some(file.page_url.clone());
@@ -709,4 +760,12 @@ pub fn stage_selection(
     state.selected = urls.to_vec();
     store.put("rendered_discovery", id, &state)?;
     Ok(serde_json::json!({"status":"waiting_browser","selected":urls.len()}))
+}
+
+fn same_session(a: &SessionScope, b: &SessionScope) -> bool {
+    a.browser == b.browser
+        && a.profile == b.profile
+        && a.private == b.private
+        && a.cookie_store_id == b.cookie_store_id
+        && a.container_id == b.container_id
 }

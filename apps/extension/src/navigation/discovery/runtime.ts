@@ -11,6 +11,7 @@ interface RecordState {
   page_url: string;
   windowId: number;
   permitted_origins: string[];
+  sessionEpoch: string;
 }
 export class RenderedDiscovery {
   private busy = new Set<string>();
@@ -19,6 +20,7 @@ export class RenderedDiscovery {
     private native: Native,
     private profile: () => Promise<string>,
     private privateWorker: boolean,
+    private epoch: () => Promise<string>,
   ) {}
   async projects(tabId: number) {
     const scope = await scopeForTab(browser, BROWSER, await this.profile(), tabId, 1);
@@ -71,6 +73,7 @@ export class RenderedDiscovery {
       page_url: '',
       windowId: tab.windowId!,
       permitted_origins: permittedOrigins,
+      sessionEpoch: await this.epoch(),
     };
     this.records.set(id, record);
     await this.save(record);
@@ -117,7 +120,20 @@ export class RenderedDiscovery {
       tabId,
       record.scope.claim_generation,
     );
-    if (!sameScope(scope, record.scope)) throw Error('Discovery session changed');
+    if (!sameScope(scope, record.scope)) {
+      const tab = await browser.tabs.get(tabId);
+      const proposed = { ...scope, claim_generation: record.scope.claim_generation + 1 };
+      await this.native('discovery_claim', {
+        id: record.id,
+        scope: proposed,
+        generation: record.generation,
+        tab_id: tabId,
+        observed_url: tab.url,
+        permitted_origins: record.permitted_origins,
+      });
+      record.scope = proposed;
+      await this.save(record);
+    }
     if (BROWSER === 'chromium')
       await browser.scripting.executeScript({ target: { tabId }, files: ['discovery.js'] });
     else await browser.tabs.executeScript(tabId, { file: 'discovery.js', runAt: 'document_idle' });
@@ -206,6 +222,7 @@ export class RenderedDiscovery {
     for (const [key, value] of Object.entries(storage))
       if (
         key.startsWith('discovery-') &&
+        (value as RecordState).sessionEpoch === (await this.epoch()) &&
         (value as RecordState).scope.private === this.privateWorker &&
         (value as RecordState).scope.profile === (await this.profile()) &&
         !this.records.has(key.slice(10))
