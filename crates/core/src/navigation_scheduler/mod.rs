@@ -63,6 +63,8 @@ pub struct QueueTask {
     pub generation: u64,
     #[serde(default)]
     pub private: bool,
+    #[serde(default)]
+    pub scope: Option<crate::navigation::SessionScope>,
     pub owner: String,
     pub host_keys: Vec<String>,
     pub priority: i32,
@@ -123,6 +125,14 @@ pub enum SchedulerRequest {
         max_active: usize,
         notifications: bool,
     },
+    Manual {
+        id: String,
+        generation: u64,
+    },
+    Validate {
+        id: String,
+        generation: u64,
+    },
     Notify {
         id: String,
         generation: u64,
@@ -182,6 +192,7 @@ impl Scheduler {
             generation,
             owner,
             private: false,
+            scope: None,
             host_keys,
             priority: 0,
             order: self.sequence,
@@ -460,10 +471,14 @@ impl Scheduler {
                             t.reason = "task_paused".into();
                         } else if !p
                             && matches!(t.status, QueueStatus::Paused | QueueStatus::Manual)
-                            && t.lease.is_none()
                         {
-                            t.status = QueueStatus::Queued;
+                            t.status = if t.lease.is_some() {
+                                QueueStatus::Active
+                            } else {
+                                QueueStatus::Queued
+                            };
                             t.wait = None;
+                            t.reason = "queued".into();
                         }
                     }
                 } else if let Some(p) = paused {
@@ -479,6 +494,38 @@ impl Scheduler {
                 }
                 self.settings.max_active = max_active;
                 self.settings.notifications = notifications;
+            }
+            SchedulerRequest::Manual { id, generation } => {
+                let task = self.task_mut(owner, &id, generation)?;
+                task.status = QueueStatus::Manual;
+                task.reason = "browser_input_required".into();
+            }
+            SchedulerRequest::Validate { id, generation } => {
+                let task = self
+                    .tasks
+                    .iter()
+                    .find(|t| t.id == id)
+                    .ok_or_else(|| anyhow::anyhow!("Unknown navigation task"))?;
+                if task.owner != owner
+                    || task.generation != generation
+                    || task.lease.is_none()
+                    || task.status == QueueStatus::Recovering
+                {
+                    bail!("Navigation admission is stale");
+                }
+                let collision = self.tasks.iter().any(|other| {
+                    other.id != id
+                        && other.lease.is_some()
+                        && other
+                            .host_keys
+                            .iter()
+                            .any(|key| task.host_keys.contains(key))
+                });
+                if collision {
+                    let task = self.task_mut(owner, &id, generation)?;
+                    task.status = QueueStatus::Manual;
+                    task.reason = "host_session_busy".into();
+                }
             }
             SchedulerRequest::Notify {
                 id,

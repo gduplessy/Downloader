@@ -52,7 +52,7 @@ for (const target of ['chromium', 'firefox']) {
           key,
           background: { service_worker: 'background.js' },
           action: { default_popup: 'popup.html' },
-          optional_permissions: ['cookies', 'webRequest', 'scripting', 'tabs'],
+          optional_permissions: ['cookies', 'webRequest', 'scripting', 'tabs', 'notifications'],
           optional_host_permissions: ['http://*/*', 'https://*/*'],
         }
       : {
@@ -63,7 +63,7 @@ for (const target of ['chromium', 'firefox']) {
           },
           background: { scripts: ['background.js'], persistent: false },
           browser_action: { default_popup: 'popup.html' },
-          optional_permissions: ['cookies', 'webRequest', 'tabs', 'http://*/*', 'https://*/*'],
+          optional_permissions: ['cookies', 'webRequest', 'tabs', 'notifications', 'http://*/*', 'https://*/*'],
         };
   await copyFile('../desktop/src-tauri/icons/32x32.png', dir + '/icon32.png');
   await copyFile('../desktop/src-tauri/icons/128x128.png', dir + '/icon128.png');

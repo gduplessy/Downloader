@@ -354,6 +354,7 @@ pub fn native(args: &[String]) -> Result<()> {
                     add.context.browser = Some("extension".into());
                     call(downloader_core::Command::Navigate(add)).map(|job| browser_job(&job))
                 }
+                c @ downloader_core::Command::NavigationScheduler { .. } => call(c),
                 c @ downloader_core::Command::Negotiate { .. } => call(c),
                 downloader_core::Command::Subscribe {
                     after_sequence,

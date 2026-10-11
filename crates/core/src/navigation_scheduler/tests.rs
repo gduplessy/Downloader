@@ -322,3 +322,105 @@ fn redirect_site_locks_and_pause_priority() {
     );
     assert!(s.settings.paused);
 }
+#[test]
+fn notification_generation_is_claimed_only_once_and_cancelled_wait_has_no_lease() {
+    let mut s = queue(1);
+    admit(&mut s, 0, 0);
+    call(
+        &mut s,
+        SchedulerRequest::Wait {
+            id: "j0".into(),
+            generation: 1,
+            wait: wait(),
+        },
+        0,
+    );
+    call(
+        &mut s,
+        SchedulerRequest::Ready {
+            id: "j0".into(),
+            generation: 1,
+            wait_generation: 1,
+            ready: true,
+        },
+        1,
+    );
+    let first = call(
+        &mut s,
+        SchedulerRequest::Notify {
+            id: "j0".into(),
+            generation: 1,
+            wait_generation: 1,
+        },
+        1,
+    );
+    assert_eq!(first.tasks[0].reason, "ready_notification_claimed");
+    let second = call(
+        &mut s,
+        SchedulerRequest::Notify {
+            id: "j0".into(),
+            generation: 1,
+            wait_generation: 1,
+        },
+        2,
+    );
+    assert_eq!(second.tasks[0].reason, "ready_confirmed");
+    call(
+        &mut s,
+        SchedulerRequest::Release {
+            id: "j0".into(),
+            generation: 1,
+        },
+        3,
+    );
+    assert!(s.tasks[0].wait.is_none());
+    assert!(s.tasks[0].lease.is_none());
+}
+#[test]
+fn redirected_active_task_is_stopped_before_site_collision_submission() {
+    let mut s = queue(2);
+    admit(&mut s, 0, 0);
+    admit(&mut s, 1, 0);
+    s.tasks[0].host_keys.push("host1".into());
+    call(
+        &mut s,
+        SchedulerRequest::Validate {
+            id: "j0".into(),
+            generation: 1,
+        },
+        1,
+    );
+    assert_eq!(s.tasks[0].status, QueueStatus::Manual);
+    assert_eq!(s.tasks[0].reason, "host_session_busy");
+}
+#[test]
+fn twenty_distinct_hosts_never_exceed_global_limit() {
+    let mut s = queue(50);
+    for (i, t) in s.tasks.iter_mut().enumerate() {
+        t.host_keys = vec![format!("unique{i}")];
+    }
+    call(
+        &mut s,
+        SchedulerRequest::Settings {
+            max_active: 20,
+            notifications: false,
+        },
+        0,
+    );
+    for i in 0..50 {
+        admit(&mut s, i, 0);
+        assert!(s.snapshot().active <= 20);
+    }
+    assert_eq!(s.snapshot().active, 20);
+    call(
+        &mut s,
+        SchedulerRequest::Settings {
+            max_active: 1,
+            notifications: false,
+        },
+        1,
+    );
+    assert_eq!(s.snapshot().active, 20);
+    admit(&mut s, 20, 1);
+    assert!(s.tasks[20].lease.is_none());
+}

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.1
+
+- Integrate service-owned navigation admission and extension queue controls, durable alarms with fresh readiness observations, opt-in notifications, session-aware recovery, and cancellation.
+- Add profile/restart/private-state service fixtures and browser alarm/clock/timer regressions.
+
+
 ## 0.8.0
 
 - Add durable navigation queue admission, conservative host locks, fenced tab leases and restart-safe wait metadata with deterministic regression fixtures.

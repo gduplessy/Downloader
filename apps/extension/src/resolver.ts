@@ -1,3 +1,4 @@
+import { countdownDuration } from './navigation/scheduler/timers';
 import browser from 'webextension-polyfill';
 import { decide, classifyBlocker, type Candidate } from './resolver-policy';
 // Runs only in the top-level tab assigned to an explicit navigation job.
@@ -28,11 +29,13 @@ async function step() {
       'iframe[src*="captcha"],[class*="captcha"],[id*="captcha"],iframe[src*="turnstile"]',
     ),
   ].some(visible);
-  const countdown = [
+  const countdownElements = [
     ...document.querySelectorAll(
       '[class*="countdown"],[id*="countdown"],[data-countdown],[role=timer]',
     ),
-  ].some((el) => visible(el) && /\b[1-9]\d*\b/.test(el.textContent ?? ''));
+  ].filter(el => visible(el));
+  const duration = countdownDuration(countdownElements.map(el => ({ text: el.textContent ?? '', visible: true })));
+  const countdown = duration !== null;
   const blocker = classifyBlocker({
     text: document.body.innerText,
     password: [...document.querySelectorAll('input[type=password]')].some(visible),
@@ -51,6 +54,7 @@ async function step() {
   const decision = {
     ...decide(candidates, !!blocker && blocker !== 'countdown', countdown),
     blocker,
+    wait: countdown ? { duration_ms: duration } : undefined,
   };
   let request: { method: string; url: string } | undefined;
   if (decision.kind === 'click') {

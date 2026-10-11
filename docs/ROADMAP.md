@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.8.0<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.8.1<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -153,3 +153,5 @@ The README also states constraints that are product or correctness controls, rat
 - When a limitation is added to the README or status documents, add or reference its roadmap ID. Research items need a feasibility decision before becoming release promises.
 
 NAV-04 / NAV-10 implementation increment: durable scheduler policy and wait clock regression fixtures added; browser integration and qualification remain in progress.
+
+NAV-04 / NAV-10 browser increment: service admission and extension queue controls integrated; 25 extension checks plus service restart/profile/private-state regressions pass. Live host, stable browser and resource acceptance remain pending.
