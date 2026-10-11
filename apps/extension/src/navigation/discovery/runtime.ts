@@ -8,6 +8,7 @@ interface RecordState {
   scope: SessionScope;
   generation: number;
   tabId: number;
+  sourceTabId: number;
   page_url: string;
   windowId: number;
   permitted_origins: string[];
@@ -21,6 +22,7 @@ export class RenderedDiscovery {
     private profile: () => Promise<string>,
     private privateWorker: boolean,
     private epoch: () => Promise<string>,
+    private startSelected: (id: string, sourceTabId: number) => Promise<void>,
   ) {}
   async projects(tabId: number) {
     const scope = await scopeForTab(browser, BROWSER, await this.profile(), tabId, 1);
@@ -70,6 +72,7 @@ export class RenderedDiscovery {
       scope,
       generation: project.generation,
       tabId: -1,
+      sourceTabId: tabId,
       page_url: '',
       windowId: tab.windowId!,
       permitted_origins: permittedOrigins,
@@ -186,6 +189,21 @@ export class RenderedDiscovery {
     });
     if (next.page) await this.open(record, next.page.url);
   }
+  async liveScopes() {
+    const scopes: SessionScope[] = [];
+    for (const record of this.records.values()) {
+      if (record.sessionEpoch !== (await this.epoch())) continue;
+      const actual = await scopeForTab(
+        browser,
+        BROWSER,
+        record.scope.profile,
+        record.sourceTabId,
+        record.scope.claim_generation,
+      ).catch(() => null);
+      if (actual && sameScope(actual, record.scope)) scopes.push(record.scope);
+    }
+    return scopes;
+  }
   async liveRecords() {
     const live = [];
     for (const record of this.records.values()) {
@@ -256,13 +274,15 @@ export class RenderedDiscovery {
           else await browser.storage.local.remove('discovery-' + record.id);
           continue;
         }
-        if (state.selected?.length)
-          await this.native('discovery_select', {
+        if (state.selected?.length) {
+          const selected = await this.native('discovery_select', {
             id: record.id,
             scope: record.scope,
             generation: record.generation,
             urls: state.selected,
           });
+          for (const id of selected.jobs) await this.startSelected(id, record.sourceTabId);
+        }
         if (state.status !== 'exploring') continue;
         const tab =
           record.tabId >= 0 ? await browser.tabs.get(record.tabId).catch(() => null) : null;

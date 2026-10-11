@@ -53,7 +53,7 @@ const browserEpoch = ephemeralStore.get('navigation-session-epoch').then(async (
 async function projectionScope() {
   const owner = await profile;
   const records = await navigationStore.get(null);
-  const scopes: SessionScope[] = [];
+  const scopes: SessionScope[] = await discovery.liveScopes();
   for (const [key, value] of Object.entries(records)) {
     const record = value as ResolverRecord;
     if (!key.startsWith('resolver-') || !record.scope || record.scope.private !== privateWorker)
@@ -85,6 +85,11 @@ const discovery = new RenderedDiscovery(
   () => profile,
   privateWorker,
   () => browserEpoch,
+  async (id, sourceTabId) => {
+    const snapshot = await browserSnapshot();
+    const job = snapshot.jobs.find((job: any) => job.id === id);
+    if (job) await startResolver(job, false, sourceTabId);
+  },
 );
 const requests = new Map<string, ScopedRequest>();
 function requestFor(url: string, privateSession?: boolean) {
