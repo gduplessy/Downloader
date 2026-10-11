@@ -8,6 +8,10 @@ on:
         description: Run actual downloads above 4 GiB on every platform
         type: boolean
         default: false
+      filesystem:
+        description: Qualify disk-full, permission and cross-volume recovery on disposable images
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -38,7 +42,7 @@ jobs:
       - run: cargo test -p downloader-core -p downloader-service -p downloader-cli --features downloader-core/fault-injection
       - run: cargo clippy -p downloader-core -p downloader-service -p downloader-cli --all-targets --features downloader-core/fault-injection -- -D warnings
       - name: Qualification binary
-        run: cargo build --release -p downloader-core --example qualify
+        run: cargo build --release -p downloader-core --example qualify --example qualify_filesystem
         env:
           CARGO_TARGET_DIR: .local/engine-target
       - name: Disposable CI fixture hostname
@@ -48,6 +52,9 @@ jobs:
       - name: Actual large-file recovery
         if: github.event_name == 'workflow_dispatch' && inputs.large
         run: node scripts/qualify-network.mjs .local/large-qualification --only large_over_4gib --large
+      - name: Actual filesystem recovery
+        if: github.event_name == 'workflow_dispatch' && inputs.filesystem
+        run: node scripts/qualify-filesystem.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -55,6 +62,7 @@ jobs:
           path: |
             .local/network-qualification/results.json
             .local/large-qualification/results.json
+            .local/filesystem-results.json
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build

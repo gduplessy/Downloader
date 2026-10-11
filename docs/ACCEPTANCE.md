@@ -32,6 +32,8 @@ Ignored local evidence is under .local/evidence. Fixture URLs and request/sessio
 
 ## Limits and remaining qualification
 
+- The 0.3.1 disposable filesystem harness compiles and has an opt-in three-platform CI workflow. Local Windows image formatting was not attempted without administrator rights; actual platform results are pending.
+
 - The screenshot's specific host and changing live websites have not been qualified.
 - Ordinary automatic interception needs further real-browser coverage. Hosted GET forms can provide explicit replay context when request observation is unavailable.
 - Chrome stable, Edge, Firefox/ESR and macOS/Linux native GUI/browser/installer acceptance remain pending. Deterministic engine CI and Chrome for Testing evidence do not establish those matrix rows. Intel macOS is not the Apple Silicon CI runner.

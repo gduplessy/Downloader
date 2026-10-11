@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.3.1 — Disposable filesystem qualification
+
+- Add bounded 128 MiB image fixtures for actual disk-full, readonly-file refusal, cross-volume publication, collisions and recovery after service restart.
+- Refuse to fill the workspace device or format an existing/system disk; qualification detaches only its own image.
+- Add an opt-in platform CI acceptance run. Actual platform results remain pending until that run succeeds.
+
 ## 0.3.0 — Ordered proxy failover
 
 - Preserve bounded, ordered PAC/system route lists across Windows, macOS and Linux, including explicit direct fallback.
