@@ -2,6 +2,11 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.8.6 — Integrate adapter preview cancellation and qualification
+
+- Preserve preview lifetime cancellation across asynchronous worker authorization, keyboard recovery and control highlight restoration alongside durable scheduler waits.
+- Include final synthetic adapter evidence and its explicit pending installed-worker/live-provider acceptance boundaries.
+
 ## 0.8.5 — Integrate final scheduler lifecycle checks
 
 - Preserve generation-qualified alarms, explicit current-wait observations, opaque fingerprints and unresolved-task readmission alongside exact recovered session scopes.
@@ -29,11 +34,9 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Integrate service-owned navigation admission and extension queue controls, durable alarms with fresh readiness observations, opt-in notifications, session-aware recovery, and cancellation.
 - Add profile/restart/private-state service fixtures and browser alarm/clock/timer regressions.
 
-
 ## 0.8.0
 
 - Add durable navigation queue admission, conservative host locks, fenced tab leases and restart-safe wait metadata with deterministic regression fixtures.
-
 
 ## 0.7.0 — Owner-fenced browser stream foundations
 
@@ -112,11 +115,6 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Preserve temporary cookies and the matching User-Agent in ranged transfers; reject hosted HTML before publication, including pages labeled as binary.
 - Desktop controls and live qualification remain in progress.
 
-## 0.3.0 — Local challenge adapter foundation (solver branch)
-
-- Add a bounded loopback FlareSolverr client, conservative GET page resolution, temporary cookie/User-Agent context, and deterministic response/policy regressions.
-- Browser navigation integration and live host qualification remain in progress.
-
 ## 0.3.4 — Published qualification records (qualification branch)
 
 - Publish sanitized three-platform PAC/network and NTFS/HFS+/ext4 filesystem results with their exact source revisions and CI runs.
@@ -141,6 +139,11 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Add bounded 128 MiB image fixtures for actual disk-full, readonly-file refusal, cross-volume publication, collisions and recovery after service restart.
 - Refuse to fill the workspace device or format an existing/system disk; qualification detaches only its own image.
 - Add an opt-in platform CI acceptance run. Actual platform results remain pending until that run succeeds.
+
+## 0.3.0 — Local challenge adapter foundation (solver branch)
+
+- Add a bounded loopback FlareSolverr client, conservative GET page resolution, temporary cookie/User-Agent context, and deterministic response/policy regressions.
+- Browser navigation integration and live host qualification remain in progress.
 
 ## 0.3.0 — Ordered proxy failover (transfer-engine branch)
 

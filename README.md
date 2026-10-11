@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.8.5<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.8.6<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -42,8 +42,8 @@ Latest [qualification records](docs/evidence/transfer-engine-2026-10-11/README.m
 
 | Capability                     | In the preview                                                                                                                                              |
 | :----------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Reliable transfers**         | HTTP/HTTPS, HTTP/2, FTP/FTPS, isolated connection reuse, validated segmentation/fallback, bounded retries, and verified SHA-256.                           |
-| **Recover interrupted work**   | Durable SQLite checkpoints, verified resume above 4 GiB, typed recovery actions, and crash-safe no-overwrite publication.                                            |
+| **Reliable transfers**         | HTTP/HTTPS, HTTP/2, FTP/FTPS, isolated connection reuse, validated segmentation/fallback, bounded retries, and verified SHA-256.                            |
+| **Recover interrupted work**   | Durable SQLite checkpoints, verified resume above 4 GiB, typed recovery actions, and crash-safe no-overwrite publication.                                   |
 | **Organize downloads**         | Searchable table, categories, queues, bulk URLs and numbered templates, source refresh, and import/export.                                                  |
 | **Connect your browser**       | Chrome/Edge and Firefox extension sources, context menus, opt-in capture, per-site access, exclusions, and browser fallback.                                |
 | **Navigate hosted pages**      | Dedicated browser tabs, recognizable free-download controls, countdowns, GET form/session capture, and explicit manual steps.                               |
@@ -253,7 +253,6 @@ Downloader is independent of Internet Download Manager and its owners. IDM code,
 
 Bundled versioned adapters inspect exact hosts, reject unsafe/advertising controls and offer a generation-bound, keyboard-accessible selection preview when the browser ownership hook is available. Live g4u, ddownload, Rapidgator and Gofile layouts remain unqualified; provider-specific automation is restricted to local synthetic fixtures. Generic navigation remains conservative. See [adapter maintenance](docs/ADAPTERS.md) and [host matrix](docs/HOST-COMPATIBILITY.md).
 
-
 Adapter fixture checks: node scripts/nav-fixtures/adapters/qualify.mjs and node scripts/nav-fixtures/adapters/evidence.test.mjs. Build the browser harness with node scripts/nav-fixtures/adapters/build.mjs, then run node scripts/nav-fixtures/adapters/server.mjs on port 18765. Browser DOM/hash fixtures use gstack browse; they do not qualify live provider layouts or native transfer ownership. The read-only live-smoke command requires an explicit permitted URL and local gstack binary.
 
 ### Navigation scheduling foundation
@@ -265,3 +264,7 @@ Navigation queue controls are available in extension options: change the one-thr
 Browser stream foundations now support owner-fenced durable original-response writes, bounded acknowledgements, verification and no-overwrite publication. Direct-capture runtime qualification is recorded separately under docs/evidence/nav-browser-streams. Existing private database history is not sanitized by this release; new private task/stream metadata stays in memory and requires reauthorization after service loss.
 
 NAV-04 / NAV-10 local scheduler implementation and fixture evidence are available in [scheduler qualification](docs/evidence/nav-scheduling/README.md). Navigation defaults to three active tabs, supports limits of one through twenty, retains serial host locks and revalidates page readiness after durable waits. Persisted ownership reconciliation with NAV-11 and stable-browser/live-host qualification remain pending.
+
+Final local adapter evidence is recorded under [NAV adapter qualification](docs/evidence/nav-adapters/README.md): 120 Headless Chromium DOM/request/hash checks, with live providers and combined native handoff still separately pending.
+
+Preview cancellation is now lifetime-bound across async authorization. Real-resolver mock-worker fixtures verify intended-file success and no submission after Cancel/claim takeover; combined installed-extension worker qualification is owned by the integration coordinator.

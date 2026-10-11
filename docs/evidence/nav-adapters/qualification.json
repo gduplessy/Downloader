@@ -1,0 +1,38 @@
+{
+  "tested_at": "2026-10-11T12:18:09.296Z",
+  "base_revision": "386a213bec4c805c1503c3dd1ce7f039dcbe32d6",
+  "source_state": "final 0.6.3 qualification increment; exact source hashes below",
+  "adapter_id": "local-fixture",
+  "adapter_version": "1.0.0",
+  "evidence_class": "synthetic",
+  "layout_known": false,
+  "browser": "HeadlessChromium",
+  "browser_version": "149.0.7827.55",
+  "os": "Windows 11 Pro 10.0.26100",
+  "architecture": "x64",
+  "fixture_id": "synthetic-adapter-dom-request-v1",
+  "dom_request_checks": 120,
+  "fixture_pages": 72,
+  "verified_http_file_requests": 8,
+  "expected_sha256": "75737f26e923cdcb29cf17e4b02c5a3697b15b91b3c9d6c6cdf6ff73982ce483",
+  "actual_sha256": "75737f26e923cdcb29cf17e4b02c5a3697b15b91b3c9d6c6cdf6ff73982ce483",
+  "transport_host": "127.0.0.1",
+  "selected_host_fixture": "ddownload.com",
+  "outcome": "passed",
+  "current_live_support": false,
+  "limitations": [
+    "Synthetic in-page request bridge, not installed extension/native transfer acceptance",
+    "All live provider/account layouts remain pending",
+    "Stable Chrome/Edge/Firefox/ESR and other native platforms remain pending"
+  ],
+  "source_sha256": {
+    "apps/extension/src/resolver.ts": "dd27b240ccae26e905939c43efe932c7df8082212c419e0e7d2573810169da35",
+    "apps/extension/src/navigation/adapters/context.ts": "f6156e4a54d9096a437b0f92eb9e38526570179c324031438d08d99231041cdb",
+    "apps/extension/src/navigation/adapters/dom.ts": "2abdbf9f40a84a21c574fa3a535a4039cdce7da8405540fafad5459f52e716f8",
+    "apps/extension/src/navigation/adapters/policy.ts": "1e6963e9ce9014169ff860203f0a9a23ac8cafa9e98c16f7235589e4d89fd70a",
+    "apps/extension/src/navigation/adapters/preview.ts": "49f61aaebb7f4e2987df56ce83b367559a627f1fc3a95f981a0199953f05bfd3",
+    "apps/extension/src/navigation/adapters/selection-ui.ts": "d9543d7da6017111d61dad673073601b6cc55d9a822832b8a3f0657b3c21e469",
+    "scripts/nav-fixtures/adapters/harness.ts": "3ae6b4d3545e6ac39d90eb9dce1d2dc519c4581cd66d0b1232c9d15953626002",
+    "scripts/nav-fixtures/adapters/server.mjs": "9d413c224bc95ce12838eb29d6884beb334040bcdbdfb7a1d65eb983b4154cab"
+  }
+}

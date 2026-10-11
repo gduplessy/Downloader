@@ -91,29 +91,33 @@ async function submit(
   ctx: ResolverContext,
   observed: Awaited<ReturnType<typeof observe>>,
   chosen: EvidenceCandidate,
+  signal?: AbortSignal,
 ) {
+  if (signal?.aborted) throw Error('adapter_selection_cancelled');
   const bound = binding(ctx, observed.inspection, observed.fingerprint);
   const element = observed.collected.elements.get(chosen.localId);
   if (!element) throw Error('adapter_preview_stale');
   element.scrollIntoView({ block: 'center' });
   const originalOutline = element.style.outline;
   element.style.outline = '3px solid #185ac5';
-  const reply: any = await browser.runtime.sendMessage({
-    type: 'resolver_step',
-    url: location.href,
-    decision: {
-      kind: 'click',
-      reason: 'Following the selected download control.',
-      blocker: observed.signals.blocker,
-    },
-    request: requestFor(element),
-    fingerprint: observed.fingerprint,
-    binding: bound,
-    selected_host: chosen.panelHost ?? ctx.selectedHost ?? null,
-    adapter_id: observed.inspection.adapter.id,
-    adapter_version: observed.inspection.adapter.version,
-  });
+  let reply: any;
   try {
+    reply = await browser.runtime.sendMessage({
+      type: 'resolver_step',
+      url: location.href,
+      decision: {
+        kind: 'click',
+        reason: 'Following the selected download control.',
+        blocker: observed.signals.blocker,
+      },
+      request: requestFor(element),
+      fingerprint: observed.fingerprint,
+      binding: bound,
+      selected_host: chosen.panelHost ?? ctx.selectedHost ?? null,
+      adapter_id: observed.inspection.adapter.id,
+      adapter_version: observed.inspection.adapter.version,
+    });
+    if (signal?.aborted) throw Error('adapter_selection_cancelled');
     if (reply?.direct === true) {
       submissions.consume(bound, chosen.localId);
       return;
@@ -128,6 +132,7 @@ async function submit(
       fresh.inspection,
       chosen.localId,
     );
+    if (signal?.aborted) throw Error('adapter_selection_cancelled');
     submissions.consume(bound, chosen.localId);
     element.click();
   } finally {
@@ -147,7 +152,11 @@ async function step() {
       await submit(ctx, observed, observed.inspection.selected);
       return;
     }
-    if (ctx && observed.inspection.kind === 'preview') {
+    if (
+      ctx &&
+      (observed.inspection.kind === 'preview' ||
+        (observed.inspection.kind === 'user' && !observed.signals.blocker))
+    ) {
       const preview = createPreview(
         binding(ctx, observed.inspection, observed.fingerprint),
         observed.inspection,
@@ -167,7 +176,8 @@ async function step() {
         document,
         preview,
         ctx.locale,
-        async (id) => {
+        async (id, signal) => {
+          if (signal.aborted) throw Error('adapter_selection_cancelled');
           const freshContext = await context();
           if (!freshContext) throw Error('adapter_preview_stale');
           const fresh = await observe(freshContext);
@@ -177,7 +187,7 @@ async function step() {
             fresh.inspection,
             id,
           );
-          await submit(freshContext, fresh, selected);
+          await submit(freshContext, fresh, selected, signal);
         },
         () => {
           documentGeneration++;

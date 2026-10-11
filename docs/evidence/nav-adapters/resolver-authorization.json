@@ -1,0 +1,49 @@
+{
+  "tested_at": "2026-10-11T12:37:02.8618045Z",
+  "base_revision": "c2eaa25178b24d6b8f638a942a2c790c13b3f5bc",
+  "source_state": "final 0.6.4 cancellation fix",
+  "evidence_class": "synthetic",
+  "browser": "HeadlessChromium",
+  "browser_version": "149.0.7827.55",
+  "os": "Windows 11 Pro 10.0.26100",
+  "architecture": "x64",
+  "worker": "explicit scoped mock; actual resolver entry",
+  "dom_request_checks": 120,
+  "expected_sha256": "75737f26e923cdcb29cf17e4b02c5a3697b15b91b3c9d6c6cdf6ff73982ce483",
+  "scenarios": [
+    {
+      "case": "cancel delayed authorization",
+      "selected_authorizations": 1,
+      "control_clicks": 0,
+      "file_hash": null
+    },
+    {
+      "case": "normal keyboard selection",
+      "selected_authorizations": 1,
+      "control_clicks": 1,
+      "file_hash": "75737f26e923cdcb29cf17e4b02c5a3697b15b91b3c9d6c6cdf6ff73982ce483"
+    },
+    {
+      "case": "changed claim generation before authorization release",
+      "selected_authorizations": 1,
+      "control_clicks": 0,
+      "file_hash": null
+    },
+    {
+      "case": "empty layout keyboard generic recovery",
+      "selected_authorizations": 0,
+      "control_clicks": 0,
+      "disabled_adapter": "local-fixture"
+    }
+  ],
+  "outcome": "passed",
+  "installed_extension_acceptance": "pending integration coordinator",
+  "live_provider_layouts": "unqualified",
+  "source_sha256": {
+    "apps/extension/src/resolver.ts": "acf2265b2645c2d9ce96488150625e6587f3f7f6cdc532da072cafe4ca654279",
+    "apps/extension/src/navigation/adapters/selection-ui.ts": "ed75a26240e7978d421836980b205693693b17b1f4ac99874ca259b259065d6d",
+    "scripts/nav-fixtures/adapters/harness.ts": "c5c0adf259300c71be78f521710632c19f80d756f2b7c2daf5bee60e418d7605",
+    "scripts/nav-fixtures/adapters/build.mjs": "63806b7394886a1e63886158a6a03929d507ab87473f785dcdd0d8684105c7c7",
+    "scripts/nav-fixtures/adapters/server.mjs": "295b1f5d4d5ff4781a6a153dee99d8ad4ed688586ee4a3e947633b27b4e4a4db"
+  }
+}

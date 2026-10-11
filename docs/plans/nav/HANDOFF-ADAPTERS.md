@@ -21,3 +21,9 @@
 - Chromium DOM tests use an in-page synthetic request bridge to keep response bytes for hashing. They are separate from installed extension/native messaging/desktop-storage acceptance; combined ownership/stream acceptance belongs to the integration coordinator.
 - English stale-preview recovery and Arabic RTL are visibly captured. Keyboard ArrowDown/Tab/Enter selects the intended control and produces the expected response hash.
 - g4u, ddownload, Rapidgator and Gofile live layouts/accounts remain unqualified. Stable Chrome/Edge/Firefox/ESR and macOS/Linux native acceptance remain pending. All browser activity used local fixtures only.
+
+## Pending integration acceptance transferred to coordinator
+
+Branch implementation and local qualification are complete. Remaining installed-extension/native `resolver_context`, actual session/claim binding, selected-host persistence and independently disabled-adapter dispatch acceptance is transferred to the integration coordinator, combining browser-stream and scheduling prerequisites. The batch goal remains active until that acceptance is recorded; this branch does not claim it passed.
+
+The additional real-resolver browser fixture uses `window.navAdapterFixture.prepareRuntime()` on an ambiguous page. It loads the actual resolver entry bundle against an explicit scoped mock worker and delays click authorization. Keyboard Continue followed by Cancel, then `navResolverUnderTest.release()`, must leave `control_clicks=0`; takeover before release must also leave zero. Normal release produces one click and the expected file hash. On the changed-layout fixture, Shift+Tab/Enter chooses generic recovery without activating page traps.
