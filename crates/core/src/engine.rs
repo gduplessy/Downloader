@@ -552,6 +552,27 @@ impl Engine {
     }
     pub fn command(self: &Arc<Self>, command: Command) -> Result<serde_json::Value> {
         match command {
+            Command::NavigationAuthority { id, owner, scope } => {
+                scope.validate()?;
+                let shared = self.job(&id)?;
+                let job = shared.lock().unwrap();
+                let current = job
+                    .navigation_scope
+                    .as_ref()
+                    .ok_or_else(|| anyhow::anyhow!("Navigation task is not scoped"))?;
+                let mut comparable = scope.clone();
+                comparable.claim_generation = current.claim_generation;
+                if job.navigation_owner.as_ref() != Some(&owner)
+                    || owner != scope.profile
+                    || comparable != *current
+                    || scope.claim_generation > current.claim_generation
+                {
+                    bail!("Navigation authority context mismatch");
+                }
+                // Read-only renewal metadata contains no URL, credential or task mutation.
+                Ok(serde_json::json!({ "scope": current,
+                    "source_generation": job.source_generation, "state": job.state }))
+            }
             Command::NavigationSelection(request) => {
                 crate::navigation_selection::record(self, request)
             }
@@ -884,6 +905,22 @@ impl Engine {
                 if job.state == JobState::Complete {
                     bail!("Download is already complete");
                 }
+                if job.navigation_scope.is_some()
+                    && !job.replay_decision.as_ref().is_some_and(|decision| {
+                        decision.source_generation == job.source_generation
+                            && matches!(
+                                decision.disposition,
+                                crate::navigation::ReplayDisposition::Replayable
+                            )
+                    })
+                {
+                    job.state = JobState::WaitingBrowser;
+                    job.error =
+                        Some("Fresh browser action required before replay qualification".into());
+                    drop(job);
+                    self.persist(&j)?;
+                    return Ok(serde_json::json!({"id": id}));
+                }
                 if job.page_url.as_ref() == Some(&job.url) {
                     job.state = JobState::WaitingBrowser;
                     job.error = Some("Continue page navigation from the browser extension".into());
@@ -927,7 +964,26 @@ impl Engine {
                 }
                 context.browser = Some("extension".into());
                 context.profile = Some(owner);
-                self.command(Command::Refresh { id, url, context })
+                let scoped = scope.is_some();
+                let result = self.command(Command::Refresh {
+                    id: id.clone(),
+                    url: url.clone(),
+                    context,
+                })?;
+                if scoped {
+                    let shared = self.job(&id)?;
+                    {
+                        let mut job = shared.lock().unwrap();
+                        job.navigation_url = Some(url);
+                        job.state = JobState::WaitingBrowser;
+                        job.error = Some(
+                            "Fresh browser action required before replay qualification".into(),
+                        );
+                    }
+                    self.persist(&shared)?;
+                    return Ok(serde_json::to_value(shared.lock().unwrap().clone())?);
+                }
+                Ok(result)
             }
             Command::Refresh { id, url, context } => {
                 security::validate_url(&url)?;

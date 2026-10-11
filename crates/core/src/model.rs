@@ -360,6 +360,11 @@ pub enum Command {
         request: crate::navigation_scheduler::SchedulerRequest,
     },
     NavigationSelection(crate::navigation_selection::SelectionRequest),
+    NavigationAuthority {
+        id: String,
+        owner: String,
+        scope: crate::navigation::SessionScope,
+    },
     ClaimNavigation {
         id: String,
         owner: String,

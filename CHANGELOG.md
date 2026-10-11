@@ -2,6 +2,13 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.8.11
+
+- Add narrowly scoped read-only claim/source renewal without exposing URLs or weakening stale-write fences.
+- Require current browser epoch and actual original tab context for recovery, heartbeat and closure; invalidate old authorization/capture when source authority changes.
+- Keep scoped refreshed sources awaiting browser qualification and prevent unknown-source resume from starting native probes.
+- Five native selection/renewal/refresh regressions cover generation replacement, unrelated sessions, durable metadata, private persistence and unqualified replay.
+
 ## 0.8.10
 
 - Wire one-use prepare/commit/abort for adapter actions; fence source generation, document, bundled adapter and actual top-level sender before capture.
