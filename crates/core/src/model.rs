@@ -144,6 +144,10 @@ pub struct Job {
     pub navigation_owner: Option<String>,
     #[serde(default)]
     pub navigation_scope: Option<crate::navigation::SessionScope>,
+    #[serde(default)]
+    pub selected_host: Option<String>,
+    #[serde(default)]
+    pub navigation_adapter: Option<crate::navigation_selection::AdapterIdentity>,
     #[serde(default = "source_generation_default")]
     pub source_generation: u64,
     #[serde(default)]
@@ -325,9 +329,17 @@ pub enum Command {
     Snapshot,
     BrowserSnapshot {
         owner: String,
+        #[serde(default)]
+        private: bool,
+        #[serde(default)]
+        scopes: Vec<crate::navigation::SessionScope>,
     },
     BrowserSubscribe {
         owner: String,
+        #[serde(default)]
+        private: bool,
+        #[serde(default)]
+        scopes: Vec<crate::navigation::SessionScope>,
         after_sequence: Option<u64>,
         #[serde(default = "event_limit")]
         limit: usize,
@@ -349,6 +361,7 @@ pub enum Command {
         scope: Option<crate::navigation::SessionScope>,
         request: crate::navigation_scheduler::SchedulerRequest,
     },
+    NavigationSelection(crate::navigation_selection::SelectionRequest),
     ClaimNavigation {
         id: String,
         owner: String,
@@ -394,6 +407,10 @@ pub enum Command {
         url: Option<String>,
         #[serde(default)]
         automatic: bool,
+        #[serde(default)]
+        scope: Option<crate::navigation::SessionScope>,
+        #[serde(default)]
+        source_generation: Option<u64>,
     },
     TestSolver {
         settings: crate::solver::SolverSettings,

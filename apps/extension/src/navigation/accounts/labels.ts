@@ -1,4 +1,5 @@
 const en = {
+  edit: 'Edit saved account',
   mismatch: 'This account belongs to another site or browser session. Choose its matching job.',
   failure: 'Account operation failed. Check the selected session and saved credentials.',
   title: 'Browser accounts',
@@ -32,6 +33,13 @@ const en = {
 };
 export type AccountLabel = keyof typeof en;
 const rows: Record<AccountLabel, readonly string[]> = {
+  edit: [
+    'Modifier le compte enregistré',
+    'Editar cuenta guardada',
+    'Gespeichertes Konto bearbeiten',
+    'تعديل الحساب المحفوظ',
+    '编辑已保存账户',
+  ],
   mismatch: [
     'Ce compte appartient à un autre site ou une autre session. Choisir la tâche correspondante.',
     'Esta cuenta pertenece a otro sitio o sesión. Elija su tarea correspondiente.',

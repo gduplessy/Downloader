@@ -1,4 +1,5 @@
 import browser from 'webextension-polyfill';
+import { streamTranslate, type StreamTextKey } from './navigation/streams/i18n';
 import { translate, type Key } from '../../../packages/shared/src/i18n';
 const element = (id: string) => document.getElementById(id)!;
 let pendingURL = '';
@@ -45,6 +46,24 @@ async function main() {
     const snapshot: any = await browser.runtime.sendMessage({
       type: 'snapshot',
     });
+    const captures: any[] = await browser.runtime.sendMessage({ type: 'capture_status' });
+    const capture =
+      captures.find((c) => ['armed', 'taking_original_response', 'streaming'].includes(c.state)) ??
+      captures.at(-1);
+    if (capture) {
+      element('capture-state').textContent = streamTranslate(
+        locale,
+        capture.state as StreamTextKey,
+      );
+      const cancel = element('cancel-capture') as HTMLButtonElement;
+      cancel.textContent = streamTranslate(locale, 'cancel');
+      cancel.hidden = !['armed', 'taking_original_response', 'streaming'].includes(capture.state);
+      cancel.onclick = () =>
+        void browser.runtime
+          .sendMessage({ type: 'cancel_capture', id: capture.id })
+          .then(() => window.close())
+          .catch((e) => (element('error').textContent = String(e)));
+    }
     refreshJob = snapshot.jobs.find((j: any) =>
       ['waiting_authentication', 'waiting_source'].includes(j.state),
     );

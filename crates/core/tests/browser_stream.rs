@@ -301,3 +301,295 @@ fn terminal_verification_preserves_existing_destination() {
     );
     assert_ne!(engine.snapshot().jobs[0].state, JobState::Complete);
 }
+#[test]
+fn forced_claim_advances_fence_and_rejects_old_status() {
+    let (_, engine, id, identity) = setup(false);
+    let claim = engine
+        .command(Command::ClaimNavigation {
+            id: id.clone(),
+            owner: identity.scope.profile.clone(),
+            force: true,
+            scope: Some(identity.scope.clone()),
+            source_generation: Some(1),
+        })
+        .unwrap();
+    assert_eq!(claim["scope"]["claim_generation"], 2);
+    let result = engine.command(Command::BrowserStatus {
+        id: id.clone(),
+        owner: identity.scope.profile.clone(),
+        state: JobState::WaitingUser,
+        message: None,
+        bytes: 0,
+        total: None,
+        url: None,
+        scope: Some(identity.scope.clone()),
+        source_generation: Some(1),
+    });
+    assert!(result.unwrap_err().to_string().contains("fence"));
+    let mut invalid = identity.scope;
+    invalid.private = true;
+    assert!(engine
+        .command(Command::ClaimNavigation {
+            id,
+            owner: invalid.profile.clone(),
+            force: true,
+            scope: Some(invalid),
+            source_generation: Some(1)
+        })
+        .is_err());
+}
+
+#[test]
+fn browser_snapshots_and_events_exclude_other_profiles() {
+    let (_, engine, _id, identity) = setup(true);
+    let foreign = uuid::Uuid::new_v4().to_string();
+    let snap = engine
+        .command(Command::BrowserSnapshot {
+            owner: foreign.clone(),
+            private: true,
+            scopes: vec![],
+        })
+        .unwrap();
+    assert!(snap["jobs"].as_array().unwrap().is_empty());
+    let events = engine
+        .command(Command::BrowserSubscribe {
+            owner: foreign,
+            private: true,
+            scopes: vec![],
+            after_sequence: None,
+            limit: 100,
+        })
+        .unwrap();
+    assert!(events["snapshot"]["jobs"].as_array().unwrap().is_empty());
+    let own = engine
+        .command(Command::BrowserSnapshot {
+            owner: identity.scope.profile.clone(),
+            private: true,
+            scopes: vec![identity.scope.clone()],
+        })
+        .unwrap();
+    assert_eq!(own["jobs"].as_array().unwrap().len(), 1);
+}
+
+#[test]
+fn private_lane_and_container_projection_require_exact_owned_scope() {
+    let (_, engine, _, identity) = setup(true);
+    for scopes in [vec![], {
+        let mut foreign = identity.scope.clone();
+        foreign.container_id = Some("firefox-container-9".into());
+        vec![foreign]
+    }] {
+        let snap = engine
+            .command(Command::BrowserSnapshot {
+                owner: identity.scope.profile.clone(),
+                private: true,
+                scopes,
+            })
+            .unwrap();
+        assert!(snap["jobs"].as_array().unwrap().is_empty());
+    }
+    let regular = engine
+        .command(Command::BrowserSubscribe {
+            owner: identity.scope.profile.clone(),
+            private: false,
+            scopes: vec![],
+            after_sequence: None,
+            limit: 100,
+        })
+        .unwrap();
+    assert!(regular["snapshot"]["jobs"].as_array().unwrap().is_empty());
+    assert!(regular["events"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|e| e["job"].is_null()));
+    assert!(engine
+        .command(Command::BrowserSnapshot {
+            owner: identity.scope.profile.clone(),
+            private: false,
+            scopes: vec![identity.scope]
+        })
+        .is_err());
+}
+#[test]
+fn stale_claim_challenge_and_source_refresh_are_fenced_before_network() {
+    let (_, engine, id, identity) = setup(false);
+    assert!(engine
+        .command(Command::ClaimNavigation {
+            id: id.clone(),
+            owner: identity.scope.profile.clone(),
+            force: true,
+            scope: Some(identity.scope.clone()),
+            source_generation: Some(0)
+        })
+        .is_err());
+    assert!(engine
+        .command(Command::SolveChallenge {
+            id: id.clone(),
+            owner: Some(identity.scope.profile.clone()),
+            url: None,
+            automatic: false,
+            scope: None,
+            source_generation: None
+        })
+        .unwrap_err()
+        .to_string()
+        .contains("fence"));
+    let mut foreign = identity.scope.clone();
+    foreign.cookie_store_id = Some("1".into());
+    assert!(engine
+        .command(Command::ClaimNavigation {
+            id: id.clone(),
+            owner: foreign.profile.clone(),
+            force: true,
+            scope: Some(foreign),
+            source_generation: Some(1)
+        })
+        .is_err());
+    engine
+        .command(Command::RefreshBrowser {
+            id: id.clone(),
+            owner: identity.scope.profile.clone(),
+            url: "http://127.0.0.1:9/fresh".into(),
+            context: RequestContext::default(),
+            scope: Some(identity.scope.clone()),
+            source_generation: Some(1),
+        })
+        .unwrap();
+    let job = engine
+        .snapshot()
+        .jobs
+        .into_iter()
+        .find(|j| j.id == id)
+        .unwrap();
+    assert_eq!(job.source_generation, 2);
+    assert_eq!(job.navigation_scope.unwrap().claim_generation, 2);
+    assert!(engine
+        .command(Command::ClaimNavigation {
+            id,
+            owner: identity.scope.profile.clone(),
+            force: false,
+            scope: Some(identity.scope),
+            source_generation: Some(1)
+        })
+        .is_err());
+}
+#[test]
+fn acknowledged_checkpoint_and_quota_survive_restart_and_trailing_bytes_refuse_eof() {
+    let (dir, engine, id, identity) = setup(false);
+    frame(
+        &engine,
+        StreamOperation::Begin {
+            identity: identity.clone(),
+            target: NavigationTarget::Job { id: id.clone() },
+            filename: "atomic.bin".into(),
+            total: Some(3),
+        },
+    )
+    .unwrap();
+    frame(
+        &engine,
+        StreamOperation::Chunk {
+            identity: identity.clone(),
+            offset: 0,
+            data_base64: "AQID".into(),
+        },
+    )
+    .unwrap();
+    drop(engine);
+    let engine = Engine::open(dir.path()).unwrap();
+    let job = engine
+        .snapshot()
+        .jobs
+        .into_iter()
+        .find(|j| j.id == id)
+        .unwrap();
+    assert_eq!(job.bytes, 3);
+    assert!(job.partial_created);
+    frame(
+        &engine,
+        StreamOperation::Chunk {
+            identity: identity.clone(),
+            offset: 0,
+            data_base64: "AQID".into(),
+        },
+    )
+    .unwrap();
+    let connection = rusqlite::Connection::open(dir.path().join("downloader.db")).unwrap();
+    let usage: i64 = connection
+        .query_row("SELECT SUM(bytes) FROM usage", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(usage, 3);
+    let partial = downloader_core::transfer::part_path(&job);
+    std::fs::OpenOptions::new()
+        .write(true)
+        .open(&partial)
+        .unwrap()
+        .set_len(4)
+        .unwrap();
+    assert!(frame(
+        &engine,
+        StreamOperation::End {
+            identity,
+            total: 3,
+            expected_sha256: None
+        }
+    )
+    .unwrap_err()
+    .to_string()
+    .contains("trailing"));
+    assert!(!dir.path().join("output/atomic.bin").exists());
+}
+
+#[test]
+fn concurrent_eof_and_publication_checkpoint_gap_acknowledge_one_artifact() {
+    let (dir, engine, id, identity) = setup(false);
+    frame(
+        &engine,
+        StreamOperation::Begin {
+            identity: identity.clone(),
+            target: NavigationTarget::Job { id },
+            filename: "once.bin".into(),
+            total: Some(3),
+        },
+    )
+    .unwrap();
+    frame(
+        &engine,
+        StreamOperation::Chunk {
+            identity: identity.clone(),
+            offset: 0,
+            data_base64: "AQID".into(),
+        },
+    )
+    .unwrap();
+    let end = StreamOperation::End {
+        identity: identity.clone(),
+        total: 3,
+        expected_sha256: None,
+    };
+    let other = engine.clone();
+    let other_end = end.clone();
+    let thread = std::thread::spawn(move || frame(&other, other_end).unwrap());
+    let first = frame(&engine, end.clone()).unwrap();
+    let second = thread.join().unwrap();
+    assert_eq!(first, second);
+    assert_eq!(first["terminal"], true);
+    drop(engine);
+    let connection = rusqlite::Connection::open(dir.path().join("downloader.db")).unwrap();
+    connection.execute("UPDATE records SET data=json_set(data,'$.terminal',json('false')) WHERE kind='browser_stream' AND id=?1",[&identity.stream_id]).unwrap();
+    drop(connection);
+    let engine = Engine::open(dir.path()).unwrap();
+    let ack = frame(&engine, end).unwrap();
+    assert_eq!(ack["terminal"], true);
+    assert_eq!(
+        std::fs::read(dir.path().join("output/once.bin")).unwrap(),
+        [1, 2, 3]
+    );
+    assert_eq!(
+        std::fs::read_dir(dir.path().join("output"))
+            .unwrap()
+            .count(),
+        1
+    );
+}

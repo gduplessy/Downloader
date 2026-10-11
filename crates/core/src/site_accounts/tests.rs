@@ -32,6 +32,7 @@ fn scope() -> SessionScope {
 }
 fn account(scope: SessionScope) -> Account {
     Account {
+        revision: 0,
         id: uuid::Uuid::new_v4().to_string(),
         label: "Fixture Alice".into(),
         origin: "http://127.0.0.1:18783".into(),
@@ -441,4 +442,45 @@ fn removing_accounts_does_not_revive_cancelled_jobs_and_diagnostics_redact_passw
         password: Some("do-not-debug-password".into()),
     };
     assert!(!format!("{request:?}").contains("do-not-debug-password"));
+}
+
+#[test]
+fn credential_revision_change_fences_consume_and_allows_only_a_fresh_attempt() {
+    let (_d, e, id, _) = setup();
+    let store = e.store.lock().unwrap();
+    let mut selection = store
+        .get::<Selection>("site_account_selection", &id)
+        .unwrap();
+    selection.account.saved_fill = true;
+    selection.account.credential_ref = Some("not-created".into());
+    store
+        .put("site_account", &selection.account.id, &selection.account)
+        .unwrap();
+    drop(store);
+    let grant = browser(&e, request(&e, &id, BrowserAction::Grant { proof: form() })).unwrap();
+    let gid = grant["grant_id"].as_str().unwrap().to_string();
+    // Simulate the save checkpoint before its runtime grant invalidation acquires the lock.
+    selection.account.revision += 1;
+    e.store
+        .lock()
+        .unwrap()
+        .put("site_account", &selection.account.id, &selection.account)
+        .unwrap();
+    assert!(browser(
+        &e,
+        request(
+            &e,
+            &id,
+            BrowserAction::Consume {
+                grant_id: gid,
+                proof: form()
+            }
+        )
+    )
+    .unwrap_err()
+    .to_string()
+    .contains("binding_stale"));
+    let new = browser(&e, request(&e, &id, BrowserAction::Grant { proof: form() })).unwrap();
+    assert!(new["grant_id"].is_string());
+    assert!(browser(&e, request(&e, &id, BrowserAction::Grant { proof: form() })).is_err());
 }

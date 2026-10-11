@@ -4,6 +4,7 @@ import type { Job } from '../types';
 import type { Account } from '../../../extension/src/navigation/accounts/types';
 import { accountLabel, accountError } from '../../../extension/src/navigation/accounts/labels';
 export function Accounts({ jobs, locale }: { jobs: Job[]; locale: string }) {
+  const [editId, setEditId] = useState<string | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]),
     [jobId, setJobId] = useState(''),
     [label, setLabel] = useState(''),
@@ -83,7 +84,7 @@ export function Accounts({ jobs, locale }: { jobs: Job[]; locale: string }) {
           void perform({
             action: 'save',
             account: {
-              id: crypto.randomUUID(),
+              id: editId ?? crypto.randomUUID(),
               label,
               origin,
               provider: provider(origin),
@@ -136,6 +137,17 @@ export function Accounts({ jobs, locale }: { jobs: Job[]; locale: string }) {
         </label>
         <button disabled={busy || !selected?.navigation_scope}>{t('save')}</button>
       </form>
+      {editId && (
+        <button
+          type="button"
+          onClick={() => {
+            setEditId(null);
+            setPassword('');
+          }}
+        >
+          {t('cancel')}
+        </button>
+      )}
       <label>
         {t('mode')}
         <select value={mode} onChange={(e) => setMode(e.target.value as typeof mode)}>
@@ -147,7 +159,22 @@ export function Accounts({ jobs, locale }: { jobs: Job[]; locale: string }) {
       <ul>
         {accounts.map((a) => (
           <li key={a.id}>
-            <strong>{a.label}</strong> — {a.origin} ({a.scope.browser}
+            <strong>{a.label}</strong>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                setEditId(a.id);
+                setLabel(a.label);
+                setUsername(a.account_id);
+                setOrigin(a.origin);
+                setFill(a.saved_fill);
+                setPassword('');
+              }}
+            >
+              {t('edit')}
+            </button>{' '}
+            — {a.origin} ({a.scope.browser}
             {a.scope.private ? ' / private' : ''}){' '}
             <button
               disabled={busy || !selected}

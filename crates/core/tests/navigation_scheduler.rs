@@ -257,3 +257,40 @@ fn persisted_source_and_claim_changes_fence_scheduler_recovery() {
     )
     .unwrap();
 }
+
+#[test]
+fn released_unresolved_navigation_can_be_admitted_again_without_reviving_cancelled_jobs() {
+    let dir = tempfile::tempdir().unwrap();
+    let engine = Engine::open(dir.path()).unwrap();
+    let owner = uuid::Uuid::new_v4().to_string();
+    let id = navigate(&engine, &owner, "localhost", false);
+    schedule(
+        &engine,
+        &owner,
+        SchedulerRequest::Admit {
+            id: id.clone(),
+            generation: 1,
+        },
+    );
+    schedule(
+        &engine,
+        &owner,
+        SchedulerRequest::Release {
+            id: id.clone(),
+            generation: 1,
+        },
+    );
+    let again = schedule(
+        &engine,
+        &owner,
+        SchedulerRequest::Admit {
+            id: id.clone(),
+            generation: 1,
+        },
+    );
+    assert_eq!(again["tasks"][0]["status"], "active");
+    engine.command(Command::Cancel { id: id.clone() }).unwrap();
+    let snapshot = schedule(&engine, &owner, SchedulerRequest::Snapshot);
+    assert_eq!(snapshot["tasks"][0]["status"], "finished");
+    assert_eq!(snapshot["active"], 0);
+}

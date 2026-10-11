@@ -18,6 +18,11 @@ try {
       'expired',
       'changed',
       'chosen',
+      'submitter',
+      'hidden',
+      'script',
+      'token',
+      'closed',
     ])
       assert.match(fixtureHtml(provider, scenario), /Synthetic adapter fixture/);
     const file = await fetch(`${fixture.base}/nav-adapters/${provider}/file.bin?fixture=public`);
@@ -53,7 +58,7 @@ try {
   console.log(
     JSON.stringify({
       fixture: 'synthetic-adapter-http-v1',
-      cases: 4 * 19,
+      fixture_pages: 4 * 18,
       outcome: 'passed',
       expected_sha256: expectedHash,
       verified_file_requests: fixture.requests.length,

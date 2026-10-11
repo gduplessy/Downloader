@@ -50,3 +50,8 @@ export function retryAfter(value: string | null, now: number): number | null {
   const deadline = Number.isFinite(seconds) ? now + seconds * 1000 : Date.parse(value);
   return Number.isSafeInteger(deadline) && deadline >= now && deadline - now <= 604800000 ? deadline : null;
 }
+
+export async function waitFingerprint(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value.slice(0, 4096)));
+  return 'wait:' + [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('');
+}

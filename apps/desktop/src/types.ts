@@ -27,6 +27,8 @@ export type Job = {
   viable: boolean;
   page_url?: string | null;
   navigation_url?: string | null;
+  selected_host?: string | null;
+  navigation_adapter?: { id: string; version: string } | null;
   solver_outcome?: string | null;
 };
 export type Category = {

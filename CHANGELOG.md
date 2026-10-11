@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.9.2 — Integrate accounts with scoped browser streams and adapters
+
+- Merge verified coordinator prerequisite `1da6fa6` and retain adapter cancellation, scoped native streams, scheduler qualification and selected downstream provenance.
+- Wire account observations, explicit credential-fill controls and typed authentication/entitlement recovery into the actual owned resolver and worker. Premium actions receive a fresh native selected-account check before authorization.
+- Installed worker publication and coordinator two-phase/authority adoption qualification remain in progress; local/native evidence keeps each transport boundary explicit.
+
 ## 0.9.1 — Harden account grants and qualify Windows credential lifecycle
 
 - Reject submitter request overrides and revalidate context/form identity after input events; cancellation immediately clears transient fields and returned credentials.
@@ -14,11 +20,43 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Add six-language desktop account controls and browser form/cancellation modules. Qualified premium controls require the explicitly selected active session; purchase, advertisements and unqualified live layouts remain excluded.
 - Browser worker integration and native keyring/file acceptance remain in progress; local fixtures do not qualify live accounts or provider APIs.
 
+## 0.8.9 — Integrate original-response capture and scoped recovery
+
+- Combine Chromium/Firefox response capture, page-owned blob reads and persistent native byte transport with scheduler admission, wait recovery and adapter previews.
+- Preserve nonsecret regular resolver references and normalized waits, fence reused browser-session tab IDs, prevent regular views from reading private overlays and keep private recovery/errors transient.
+- Include stable Chrome/Edge local original-response hash evidence; installed full-worker preview/session acceptance and actual Firefox capture remain separate qualification gates.
+
+## 0.8.8 — Persist scoped downstream-host selection
+
+- Record bundled adapter identity and explicit downstream host under exact owner/session/source fences while retaining the original hosted page.
+- Preserve normal selections across service reopen, reject stale/foreign authority and unsupported host/adapter metadata, and keep private selections transient. Worker dispatch wiring remains an integration check.
+
+## 0.8.7 — Define one-use navigation authorization lifecycle
+
+- Add bounded, expiring grants tied to the exact session, source, claim, document, adapter and inspected fingerprint; preparation has no capture or request side effects.
+- Verify replay, cancellation, tab replacement, changed authority and unsafe destinations. Worker prepare/commit/cancel wiring remains the next integration increment.
+
+## 0.8.6 — Integrate adapter preview cancellation and qualification
+
+- Preserve preview lifetime cancellation across asynchronous worker authorization, keyboard recovery and control highlight restoration alongside durable scheduler waits.
+- Include final synthetic adapter evidence and its explicit pending installed-worker/live-provider acceptance boundaries.
+
+## 0.8.5 — Integrate final scheduler lifecycle checks
+
+- Preserve generation-qualified alarms, explicit current-wait observations, opaque fingerprints and unresolved-task readmission alongside exact recovered session scopes.
+- Include real-engine renderer resource/lifecycle fixtures and retain their explicit installed-extension and live-host evidence boundaries.
+
 ## 0.8.4 — Fence combined stream and scheduler recovery
 
 - Integrate the durable browser stream receiver with adapter/scheduler work and reconcile native dispatch/module registrations.
 - Derive queue ownership and generation from persisted jobs, carry each recovered tab's exact scope, reject stale/container-mismatched reports and revalidate source fences after inspection.
 - Keep the installed transport, preview cancellation and final browser lifecycle qualification dependencies open; retain ephemeral new private records and separately approved legacy cleanup.
+
+## 0.8.3
+
+- Fence browser alarms by source and wait generation so replaced countdowns cannot wake previous actions.
+- Re-admit unresolved released navigation without reviving cancelled jobs; hash durable wait fingerprints into opaque bounded values.
+- Add isolated real Engine/browser queue and lifecycle fixtures, resource observations and explicit ownership/browser/live-host qualification boundaries.
 
 ## 0.8.2 — Integrate adapters with durable waits
 
@@ -30,11 +68,16 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Integrate service-owned navigation admission and extension queue controls, durable alarms with fresh readiness observations, opt-in notifications, session-aware recovery, and cancellation.
 - Add profile/restart/private-state service fixtures and browser alarm/clock/timer regressions.
 
-
 ## 0.8.0
 
 - Add durable navigation queue admission, conservative host locks, fenced tab leases and restart-safe wait metadata with deterministic regression fixtures.
 
+## 0.7.1 — Direct browser stream runtime and recovery fences
+
+- Add default-off Chromium debugger capture, Firefox response metadata admission, isolated page Blob streaming and persistent bounded native transport with localized capture state/cancel controls.
+- Qualify original POST and Blob hashes on installed stable Chrome and Edge using isolated native fixtures; keep integrated preview cancellation, Firefox/browser-context matrices, live providers and large-file performance explicit pending gates.
+- Atomically commit durable stream progress, job metadata and quota; repair concurrent EOF and publication-checkpoint crash replay. Fence challenge/claim/source refresh, profile/private/container projections and browser-session restart.
+- Retain regular nonsecret task references while keeping private/session secrets ephemeral. Detect existing private history without deleting or claiming to sanitize it.
 
 ## 0.7.0 — Owner-fenced browser stream foundations
 
@@ -113,11 +156,6 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Preserve temporary cookies and the matching User-Agent in ranged transfers; reject hosted HTML before publication, including pages labeled as binary.
 - Desktop controls and live qualification remain in progress.
 
-## 0.3.0 — Local challenge adapter foundation (solver branch)
-
-- Add a bounded loopback FlareSolverr client, conservative GET page resolution, temporary cookie/User-Agent context, and deterministic response/policy regressions.
-- Browser navigation integration and live host qualification remain in progress.
-
 ## 0.3.4 — Published qualification records (qualification branch)
 
 - Publish sanitized three-platform PAC/network and NTFS/HFS+/ext4 filesystem results with their exact source revisions and CI runs.
@@ -149,6 +187,11 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Advance metadata, range reads and download workers only after pre-response connection failures; keep TLS, authentication, source and partial-body failures on their original recovery path.
 - Isolate pooled handles by their selected route and use cancellable Windows PAC discovery. Explicit PAC refuses WinHTTP's implicit loopback bypass rather than silently selecting direct access.
 - Verify actual proxy traversal with named loopback fixtures, exhausted-route failures, TLS/authentication rejection and route-order regressions. Disposable CI runners receive a fixture-only hostname; developer host settings stay untouched.
+
+## 0.3.0 — Local challenge adapter foundation (solver branch)
+
+- Add a bounded loopback FlareSolverr client, conservative GET page resolution, temporary cookie/User-Agent context, and deterministic response/policy regressions.
+- Browser navigation integration and live host qualification remain in progress.
 
 ## 0.2.7 — Clarify remaining proxy work
 

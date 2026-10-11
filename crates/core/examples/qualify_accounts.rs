@@ -6,6 +6,7 @@ fn main() -> Result<()> {
     let dir = tempfile::tempdir()?;
     let engine = downloader_core::Engine::open(&dir.path().join("engine"))?;
     let account = Account {
+        revision: 0,
         id: uuid::Uuid::new_v4().to_string(),
         label: "Qualification fixture".into(),
         origin: "http://127.0.0.1:18783".into(),

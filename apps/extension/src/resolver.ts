@@ -1,3 +1,9 @@
+import { observeAccount } from './navigation/accounts/observe';
+import { accountDecision } from './navigation/accounts/policy';
+import { showAccountPanel } from './navigation/accounts/panel';
+import { accountLabel } from './navigation/accounts/labels';
+import type { AccountAction, AccountBinding, Selection } from './navigation/accounts/types';
+import { matchAdapter } from './navigation/adapters/policy';
 import browser from 'webextension-polyfill';
 import { decide, classifyBlocker } from './resolver-policy';
 import {
@@ -26,11 +32,33 @@ import { scopeKey, type ResolverContext } from './navigation/adapters/context';
 let documentGeneration = 1;
 let previewHandle: PreviewHandle | undefined;
 let running = false;
+let accountPanel: { close: () => void } | undefined;
 const submissions = new SubmissionGate();
 async function context(): Promise<ResolverContext | null> {
   return (await browser.runtime
     .sendMessage({ type: 'resolver_context' })
     .catch(() => null)) as ResolverContext | null;
+}
+function accountBinding(ctx: ResolverContext): AccountBinding {
+  const adapter = matchAdapter(location.href, ctx.disabledAdapters);
+  return {
+    tabId: ctx.tabId,
+    frameId: ctx.frameId,
+    scope: ctx.scope,
+    sourceGeneration: ctx.sourceGeneration,
+    documentGeneration,
+    documentId: ctx.documentId ?? null,
+    page: location.href,
+    adapterId: adapter.id,
+    adapterVersion: adapter.version,
+  };
+}
+async function accountAction(request: AccountAction, bound: AccountBinding): Promise<any> {
+  return browser.runtime.sendMessage({ type: 'resolver_account', request, binding: bound });
+}
+async function currentAccountBinding(): Promise<AccountBinding | null> {
+  const ctx = await context();
+  return ctx ? accountBinding(ctx) : null;
 }
 function blockers(elements: Element[]) {
   const captcha = elements.some(
@@ -76,44 +104,82 @@ function binding(
   };
 }
 async function observe(ctx: ResolverContext | null) {
+  let account: Selection | null = null;
+  if (ctx && ctx.sourceGeneration) {
+    const selected = (await accountAction({ action: 'selection' }, accountBinding(ctx)).catch(
+      () => null,
+    )) as Selection | null;
+    if (selected)
+      account = await observeAccount(
+        document,
+        accountBinding(ctx),
+        { ...selected, selected_host: ctx.selectedHost ?? selected.selected_host },
+        accountAction,
+      ).catch(() => ({
+        ...selected,
+        auth: 'unknown' as const,
+        entitlement: 'unknown' as const,
+        observed_at: null,
+      }));
+  }
+  const accountState = accountDecision(account);
   const collected = collectControls(document),
     signals = blockers(allElements(document));
   const inspection = inspectCandidates(location.href, collected.controls, {
     disabledAdapters: ctx?.disabledAdapters,
     selectedHost: ctx?.selectedHost,
     allowPageBlob: ctx?.capabilities?.pageBlob === true,
-    blocked: !!signals.blocker && signals.blocker !== 'countdown',
+    allowPremium: accountState.premium,
+    blocked:
+      (!!signals.blocker && signals.blocker !== 'countdown') ||
+      (account?.mode === 'premium' && !accountState.premium),
     countdown: signals.countdown,
   });
-  return { collected, signals, inspection, fingerprint: await domFingerprint(collected) };
+  if (account?.mode === 'premium' && !accountState.premium) {
+    signals.blocker = 'authentication';
+    inspection.reason = accountLabel(
+      ctx?.locale ?? 'en',
+      accountState.reason === 'free'
+        ? 'existing'
+        : accountState.reason === 'premium'
+          ? 'premium'
+          : accountState.reason,
+    );
+  }
+  return { collected, signals, inspection, account, fingerprint: await domFingerprint(collected) };
 }
 async function submit(
   ctx: ResolverContext,
   observed: Awaited<ReturnType<typeof observe>>,
   chosen: EvidenceCandidate,
+  signal?: AbortSignal,
 ) {
+  if (signal?.aborted) throw Error('adapter_selection_cancelled');
   const bound = binding(ctx, observed.inspection, observed.fingerprint);
   const element = observed.collected.elements.get(chosen.localId);
   if (!element) throw Error('adapter_preview_stale');
   element.scrollIntoView({ block: 'center' });
   const originalOutline = element.style.outline;
   element.style.outline = '3px solid #185ac5';
-  const reply: any = await browser.runtime.sendMessage({
-    type: 'resolver_step',
-    url: location.href,
-    decision: {
-      kind: 'click',
-      reason: 'Following the selected download control.',
-      blocker: observed.signals.blocker,
-    },
-    request: requestFor(element),
-    fingerprint: observed.fingerprint,
-    binding: bound,
-    selected_host: chosen.panelHost ?? ctx.selectedHost ?? null,
-    adapter_id: observed.inspection.adapter.id,
-    adapter_version: observed.inspection.adapter.version,
-  });
+  let reply: any;
   try {
+    reply = await browser.runtime.sendMessage({
+      type: 'resolver_step',
+      url: location.href,
+      decision: {
+        kind: 'click',
+        reason: 'Following the selected download control.',
+        blocker: observed.signals.blocker,
+      },
+      request: requestFor(element),
+      fingerprint: observed.fingerprint,
+      binding: bound,
+      selected_host: chosen.panelHost ?? ctx.selectedHost ?? null,
+      adapter_id: observed.inspection.adapter.id,
+      adapter_version: observed.inspection.adapter.version,
+      premium: chosen.premium === true,
+    });
+    if (signal?.aborted) throw Error('adapter_selection_cancelled');
     if (reply?.direct === true) {
       submissions.consume(bound, chosen.localId);
       return;
@@ -128,6 +194,7 @@ async function submit(
       fresh.inspection,
       chosen.localId,
     );
+    if (signal?.aborted) throw Error('adapter_selection_cancelled');
     submissions.consume(bound, chosen.localId);
     element.click();
   } finally {
@@ -139,15 +206,30 @@ async function step() {
   if (running) return;
   running = true;
   try {
+    accountPanel?.close();
+    accountPanel = undefined;
     previewHandle?.close();
     previewHandle = undefined;
     const ctx = await context();
     const observed = await observe(ctx);
+    if (ctx && observed.account)
+      accountPanel = await showAccountPanel(
+        document,
+        observed.account,
+        accountBinding(ctx),
+        ctx.locale,
+        currentAccountBinding,
+        accountAction,
+      );
     if (ctx && observed.inspection.kind === 'click' && observed.inspection.selected) {
       await submit(ctx, observed, observed.inspection.selected);
       return;
     }
-    if (ctx && observed.inspection.kind === 'preview') {
+    if (
+      ctx &&
+      (observed.inspection.kind === 'preview' ||
+        (observed.inspection.kind === 'user' && !observed.signals.blocker))
+    ) {
       const preview = createPreview(
         binding(ctx, observed.inspection, observed.fingerprint),
         observed.inspection,
@@ -167,7 +249,8 @@ async function step() {
         document,
         preview,
         ctx.locale,
-        async (id) => {
+        async (id, signal) => {
+          if (signal.aborted) throw Error('adapter_selection_cancelled');
           const freshContext = await context();
           if (!freshContext) throw Error('adapter_preview_stale');
           const fresh = await observe(freshContext);
@@ -177,7 +260,7 @@ async function step() {
             fresh.inspection,
             id,
           );
-          await submit(freshContext, fresh, selected);
+          await submit(freshContext, fresh, selected, signal);
         },
         () => {
           documentGeneration++;

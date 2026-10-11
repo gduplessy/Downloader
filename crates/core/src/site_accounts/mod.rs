@@ -6,6 +6,8 @@ use std::{collections::HashMap, sync::Arc};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Account {
+    #[serde(default)]
+    pub revision: u64,
     pub id: String,
     pub label: String,
     pub origin: String,
@@ -133,12 +135,13 @@ pub struct Grant {
     scope: SessionScope,
     source_generation: u64,
     account_id: String,
+    account_revision: u64,
     expires: i64,
 }
 #[derive(Default)]
 pub struct Runtime {
     grants: HashMap<String, Grant>,
-    attempts: HashMap<(String, u64), usize>,
+    attempts: HashMap<(String, u64, u64), usize>,
 }
 pub trait Vault {
     fn write(&self, id: &str, username: &str, password: &str) -> Result<()>;
@@ -235,6 +238,7 @@ pub fn save(
         vault.write(&reference, &account.account_id, &password)?;
         account.credential_ref = Some(reference);
     }
+    account.revision = old.as_ref().map_or(1, |a| a.revision.saturating_add(1));
     if account.saved_fill && account.credential_ref.is_none() {
         bail!("account_credentials_missing");
     }
@@ -493,7 +497,7 @@ pub fn browser(engine: &Arc<Engine>, request: BrowserRequest) -> Result<serde_js
             }
             let attempts = runtime
                 .attempts
-                .entry((job.id.clone(), request.source_generation))
+                .entry((job.id.clone(), request.source_generation, account.revision))
                 .or_default();
             if *attempts >= 1 {
                 bail!("account_login_attempt_exhausted");
@@ -507,6 +511,7 @@ pub fn browser(engine: &Arc<Engine>, request: BrowserRequest) -> Result<serde_js
                     job_id: job.id.clone(),
                     scope: request.scope,
                     source_generation: request.source_generation,
+                    account_revision: account.revision,
                     account_id: account.id,
                     expires: now + 15_000,
                 },
@@ -523,6 +528,7 @@ pub fn browser(engine: &Arc<Engine>, request: BrowserRequest) -> Result<serde_js
                 || grant.source_generation != request.source_generation
                 || grant.proof != p
                 || grant.account_id != account.id
+                || grant.account_revision != account.revision
                 || grant.expires <= now
             {
                 bail!("account_grant_binding_stale");

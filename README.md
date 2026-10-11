@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.9.1<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.9.2<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -30,6 +30,8 @@ The NAV staging branch combines these contracts with versioned adapters and loca
 
 Native stream storage is now staged with scheduler recovery. Queue tasks follow persisted source/claim generations, and recovered tabs report their exact session scope. Installed capture and cross-browser lifecycle acceptance remain in progress.
 
+Wait alarms carry source and wait generations; replaced alarms cannot wake earlier actions. Local scheduler resource and restart evidence is recorded in the [qualification report](docs/evidence/nav-scheduling/README.md).
+
 Latest [qualification records](docs/evidence/transfer-engine-2026-10-11/README.md) include three-platform PAC failover and actual filesystem recovery, plus a disposable Docker AD realm. Nine Linux NTLM/Kerberos checks passed locally and in CI; four additional native Windows NTLM checks passed locally. Native SSO and managed enterprise proxy policies still need acceptance.
 
 ![Downloader desktop showing completed transfers, browser-owned downloads, and a page waiting for user input](docs/assets/desktop.png)
@@ -40,8 +42,8 @@ Latest [qualification records](docs/evidence/transfer-engine-2026-10-11/README.m
 
 | Capability                     | In the preview                                                                                                                                              |
 | :----------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Reliable transfers**         | HTTP/HTTPS, HTTP/2, FTP/FTPS, isolated connection reuse, validated segmentation/fallback, bounded retries, and verified SHA-256.                           |
-| **Recover interrupted work**   | Durable SQLite checkpoints, verified resume above 4 GiB, typed recovery actions, and crash-safe no-overwrite publication.                                            |
+| **Reliable transfers**         | HTTP/HTTPS, HTTP/2, FTP/FTPS, isolated connection reuse, validated segmentation/fallback, bounded retries, and verified SHA-256.                            |
+| **Recover interrupted work**   | Durable SQLite checkpoints, verified resume above 4 GiB, typed recovery actions, and crash-safe no-overwrite publication.                                   |
 | **Organize downloads**         | Searchable table, categories, queues, bulk URLs and numbered templates, source refresh, and import/export.                                                  |
 | **Connect your browser**       | Chrome/Edge and Firefox extension sources, context menus, opt-in capture, per-site access, exclusions, and browser fallback.                                |
 | **Navigate hosted pages**      | Dedicated browser tabs, recognizable free-download controls, countdowns, GET form/session capture, and explicit manual steps.                               |
@@ -251,7 +253,6 @@ Downloader is independent of Internet Download Manager and its owners. IDM code,
 
 Bundled versioned adapters inspect exact hosts, reject unsafe/advertising controls and offer a generation-bound, keyboard-accessible selection preview when the browser ownership hook is available. Live g4u, ddownload, Rapidgator and Gofile layouts remain unqualified; provider-specific automation is restricted to local synthetic fixtures. Generic navigation remains conservative. See [adapter maintenance](docs/ADAPTERS.md) and [host matrix](docs/HOST-COMPATIBILITY.md).
 
-
 Adapter fixture checks: node scripts/nav-fixtures/adapters/qualify.mjs and node scripts/nav-fixtures/adapters/evidence.test.mjs. Build the browser harness with node scripts/nav-fixtures/adapters/build.mjs, then run node scripts/nav-fixtures/adapters/server.mjs on port 18765. Browser DOM/hash fixtures use gstack browse; they do not qualify live provider layouts or native transfer ownership. The read-only live-smoke command requires an explicit permitted URL and local gstack binary.
 
 ### Navigation scheduling foundation
@@ -260,8 +261,22 @@ The service scheduler persists host reservations, tab leases, queue ordering, an
 
 Navigation queue controls are available in extension options: change the one-through-twenty tab limit, pause/resume admission, adjust priority, continue manual work, and cancel owned tasks. Readiness notifications are opt-in and require notification permission. All unqualified hosts retain their owning tab and a serial host lock during waits; missing tabs require Continue rather than automatic session replacement. Private queue tasks are not persisted by the service.
 
-Browser stream foundations now support owner-fenced durable original-response writes, bounded acknowledgements, verification and no-overwrite publication. Direct-capture runtime qualification is recorded separately under docs/evidence/nav-browser-streams. Existing private database history is not sanitized by this release; new private task/stream metadata stays in memory and requires reauthorization after service loss.
+Browser streams support owner-fenced durable original-response writes, bounded acknowledgements, verification and no-overwrite publication. Stable Chrome and Edge local capture-module/native transport checks completed POST and blob files with matching hashes; the full installed worker/preview route and actual Firefox capture remain pending. See [stream qualification and handoff](docs/NAV_BROWSER_STREAMS.md). Existing private database history is not sanitized by this release; new private task/stream metadata stays in memory and requires reauthorization after service loss.
+
+NAV-04 / NAV-10 local scheduler implementation and fixture evidence are available in [scheduler qualification](docs/evidence/nav-scheduling/README.md). Navigation defaults to three active tabs, supports limits of one through twenty, retains serial host locks and revalidates page readiness after durable waits. Persisted ownership reconciliation with NAV-11 and stable-browser/live-host qualification remain pending.
+
+Final local adapter evidence is recorded under [NAV adapter qualification](docs/evidence/nav-adapters/README.md): 120 Headless Chromium DOM/request/hash checks, with live providers and combined native handoff still separately pending.
+
+Preview cancellation is now lifetime-bound across async authorization. Real-resolver mock-worker fixtures verify intended-file success and no submission after Cancel/claim takeover; combined installed-extension worker qualification is owned by the integration coordinator.
+
+A bounded one-use authorization registry now separates inspection from capture side effects and rejects stale session/document grants. Production worker prepare/commit/cancel wiring remains an integration check.
+
+The native selection command now retains an explicitly chosen downstream host and bundled adapter identity within the current session/source. Private selections stay transient; production worker selection dispatch remains part of combined acceptance.
+
+Direct browser streaming (0.7.1) is off by default. Original POST and page Blob bytes completed through the native receiver in local stable Chrome/Edge fixtures; integrated preview and Firefox/private/container/live-provider acceptance remain pending. See [stream evidence and contracts](docs/NAV_BROWSER_STREAMS.md).
 
 Scoped browser-account controls are available under Settings. Select an owned browser job and exact session before saving or selecting account metadata. Passwords use the OS credential store; private sessions use existing browser accounts only. Browser login/premium fixture qualification is being integrated; live provider layouts and APIs remain pending.
 
 Account grant and credential lifecycle qualification (0.9.1): Windows OS-keyring save/read/remove and the production Engine one-use grant path pass with deleted test-only credentials. Form cancellation, request overrides and stale documents are covered by real Headless Chromium DOM checks with mocked grant transport. Installed-extension/native downstream acceptance and live/provider account qualification remain pending.
+
+Account browser wiring (0.9.2) uses the owned resolver context for observations and one-use login fills, native selected-session entitlement checks, visible recovery, exact document/source/claim fencing, and cancellation. Combined installed-worker/file-publication qualification is in progress; no live provider or API qualification is claimed.

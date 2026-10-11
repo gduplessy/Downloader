@@ -17,6 +17,7 @@ const scope = {
 const page = 'http://127.0.0.1:18783/nav-adapters/ddownload/account';
 const selected: Selection = {
   account: {
+    revision: 1,
     id: 'id',
     label: 'Alice',
     origin: new URL(page).origin,

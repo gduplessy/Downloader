@@ -9,6 +9,7 @@ export type AuthState =
   | 'unknown';
 export type Entitlement = 'active' | 'expired' | 'quota_exhausted' | 'unknown';
 export type Account = {
+  revision: number;
   id: string;
   label: string;
   origin: string;
