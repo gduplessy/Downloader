@@ -56,6 +56,8 @@ impl Segment {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct RequestContext {
     #[serde(default)]
+    pub profile: Option<String>,
+    #[serde(default)]
     pub headers: BTreeMap<String, String>,
     pub credential_id: Option<String>,
     pub browser: Option<String>,
@@ -93,6 +95,12 @@ pub struct AddJob {
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Job {
+    #[serde(default)]
+    pub request_fingerprint: Option<String>,
+    #[serde(default)]
+    pub credential_id: Option<String>,
+    #[serde(default)]
+    pub private: bool,
     pub id: String,
     pub request_id: String,
     pub url: String,
@@ -287,6 +295,15 @@ pub struct ComponentStatus {
 #[serde(tag = "command", content = "args", rename_all = "snake_case")]
 pub enum Command {
     Snapshot,
+    Negotiate {
+        minimum: u32,
+        maximum: u32,
+    },
+    Subscribe {
+        after_sequence: Option<u64>,
+        #[serde(default = "event_limit")]
+        limit: usize,
+    },
     Add(AddJob),
     Navigate(AddJob),
     ClaimNavigation {
@@ -311,6 +328,13 @@ pub enum Command {
         #[serde(default)]
         bytes: u64,
         total: Option<u64>,
+    },
+    RefreshBrowser {
+        id: String,
+        owner: String,
+        url: String,
+        #[serde(default)]
+        context: RequestContext,
     },
     Pause {
         id: String,
@@ -450,4 +474,39 @@ pub struct GrabberFile {
     pub name: String,
     pub size: Option<u64>,
     pub content_type: String,
+}
+
+fn event_limit() -> usize {
+    100
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum EventPayload {
+    JobLifecycle {
+        job: Box<Job>,
+    },
+    JobProgress {
+        job: Box<Job>,
+    },
+    JobRemoved {
+        id: String,
+        browser_source: bool,
+        page_url: Option<String>,
+    },
+    SettingsChanged,
+    QueuesChanged,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EngineEvent {
+    pub sequence: u64,
+    pub at: DateTime<Utc>,
+    #[serde(flatten)]
+    pub payload: EventPayload,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EventBatch {
+    pub snapshot: Option<Snapshot>,
+    pub events: Vec<EngineEvent>,
+    pub sequence: u64,
+    pub has_more: bool,
 }

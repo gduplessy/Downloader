@@ -53,6 +53,13 @@ pub fn safe_filename(input: &str) -> String {
     name
 }
 pub fn validate_context(context: &RequestContext) -> Result<()> {
+    if context
+        .profile
+        .as_ref()
+        .is_some_and(|s| uuid::Uuid::parse_str(s).is_err())
+    {
+        bail!("Invalid browser profile ID");
+    }
     if context.headers.len() > 64 {
         bail!("Too many request headers");
     }
@@ -73,6 +80,8 @@ pub fn validate_context(context: &RequestContext) -> Result<()> {
             "proxy-authorization",
             "range",
             "if-range",
+            "if-match",
+            "accept-encoding",
         ]
         .contains(&k.to_ascii_lowercase().as_str())
         {

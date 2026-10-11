@@ -317,6 +317,14 @@ pub fn native(args: &[String]) -> Result<()> {
                     add.context.browser = Some("extension".into());
                     call(downloader_core::Command::Navigate(add))
                 }
+                c @ downloader_core::Command::Negotiate { .. } => call(c),
+                downloader_core::Command::Subscribe {
+                    after_sequence,
+                    limit,
+                } => browser_events(call(downloader_core::Command::Subscribe {
+                    after_sequence,
+                    limit: limit.min(50),
+                })?),
                 downloader_core::Command::Snapshot => {
                     browser_snapshot(call(downloader_core::Command::Snapshot)?)
                 }
@@ -325,14 +333,16 @@ pub fn native(args: &[String]) -> Result<()> {
                 | downloader_core::Command::Cancel { .. }
                 | downloader_core::Command::Resolve { .. }
                 | downloader_core::Command::ClaimNavigation { .. }
-                | downloader_core::Command::BrowserStatus { .. }) => {
+                | downloader_core::Command::BrowserStatus { .. }
+                | downloader_core::Command::RefreshBrowser { .. }) => {
                     let id = match &c {
                         downloader_core::Command::Pause { id }
                         | downloader_core::Command::Resume { id, .. }
                         | downloader_core::Command::Cancel { id }
                         | downloader_core::Command::Resolve { id, .. }
                         | downloader_core::Command::ClaimNavigation { id, .. }
-                        | downloader_core::Command::BrowserStatus { id, .. } => id,
+                        | downloader_core::Command::BrowserStatus { id, .. }
+                        | downloader_core::Command::RefreshBrowser { id, .. } => id,
                         _ => unreachable!(),
                     };
                     let snapshot = call(downloader_core::Command::Snapshot)?;
@@ -379,13 +389,32 @@ pub fn native(args: &[String]) -> Result<()> {
 fn browser_visible(job: &serde_json::Value) -> bool {
     job["browser_source"] == true || job["page_url"].is_string()
 }
+fn browser_job(j: &serde_json::Value) -> serde_json::Value {
+    serde_json::json!({"id":j["id"],"request_id":j["request_id"],"url":j["url"],"page_url":j["page_url"],"navigation_owner":j["navigation_owner"],"filename":j["filename"],"state":j["state"],"bytes":j["bytes"],"total":j["total"],"viable":j["viable"],"private":j["private"],"error":j["failure"]["code"],"failure":{"code":j["failure"]["code"],"retryable":j["failure"]["retryable"],"recovery":j["failure"]["recovery"]}})
+}
 fn browser_snapshot(data: serde_json::Value) -> Result<serde_json::Value> {
-    // No local paths, configuration, credentials, or unrelated desktop jobs.
-    let jobs=data["jobs"].as_array().context("Invalid engine snapshot")?.iter().filter(|j|browser_visible(j)).map(|j|serde_json::json!({
-        "id":j["id"],"request_id":j["request_id"],"url":j["url"],"page_url":j["page_url"],"navigation_owner":j["navigation_owner"],"filename":j["filename"],
-        "state":j["state"],"bytes":j["bytes"],"total":j["total"],"viable":j["viable"],"error":j["error"]
-    })).collect::<Vec<_>>();
+    let jobs = data["jobs"]
+        .as_array()
+        .context("Invalid engine snapshot")?
+        .iter()
+        .filter(|j| browser_visible(j))
+        .map(browser_job)
+        .collect::<Vec<_>>();
     Ok(serde_json::json!({"version":data["version"],"sequence":data["sequence"],"jobs":jobs}))
+}
+fn browser_events(mut data: serde_json::Value) -> Result<serde_json::Value> {
+    if data["snapshot"].is_object() {
+        data["snapshot"] = browser_snapshot(data["snapshot"].take())?;
+    }
+    let events=data["events"].as_array().context("Invalid engine event batch")?.iter().filter_map(|e| {
+        match e["type"].as_str() {
+            Some("job_lifecycle"|"job_progress") if browser_visible(&e["job"])=>{let mut e=e.clone();e["job"]=browser_job(&e["job"]);Some(e)},
+            Some("job_removed") if e["browser_source"]==true || e["page_url"].is_string()=>Some(serde_json::json!({"type":"job_removed","sequence":e["sequence"],"at":e["at"],"id":e["id"]})),
+            _=>None
+        }
+    }).collect::<Vec<_>>();
+    data["events"] = serde_json::to_value(events)?;
+    Ok(data)
 }
 
 #[cfg(test)]
@@ -400,5 +429,16 @@ mod tests {
             "العربية".as_bytes()
         );
         assert!(read_frame(&mut (2048u32.to_ne_bytes().as_slice()), 1024).is_err());
+    }
+    #[test]
+    fn browser_events_exclude_paths_settings_and_desktop_jobs() {
+        let job = serde_json::json!({"id":"browser","browser_source":true,"destination":"/secret/file","url":"https://example.com/file","failure":{"code":"storage_failure","message":"/secret/file denied","recovery":["check_storage"]}});
+        let result=browser_events(serde_json::json!({"snapshot":null,"sequence":4,"events":[{"type":"job_lifecycle","sequence":1,"job":job},{"type":"settings_changed","sequence":2},{"type":"job_progress","sequence":3,"job":{"id":"desktop","browser_source":false}},{"type":"job_removed","sequence":4,"id":"browser","browser_source":true}]})).unwrap();
+        assert_eq!(result["events"].as_array().unwrap().len(), 2);
+        assert_eq!(result["sequence"], 4);
+        let text = result.to_string();
+        assert!(!text.contains("/secret"));
+        assert!(!text.contains("desktop"));
+        assert!(!text.contains("settings_changed"));
     }
 }
