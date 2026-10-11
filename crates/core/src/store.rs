@@ -30,7 +30,8 @@ impl Store {
     pub fn put<T: Serialize>(&self, kind: &str, id: &str, value: &T) -> Result<()> {
         let data = serde_json::to_string(value)?;
         let json: serde_json::Value = serde_json::from_str(&data)?;
-        let private = (kind == "job" && json["private"] == true)
+        let private = (["job", "grabber", "rendered_discovery"].contains(&kind)
+            && json["private"] == true)
             || json["scope"]["private"] == true
             || json["identity"]["scope"]["private"] == true;
         if private {

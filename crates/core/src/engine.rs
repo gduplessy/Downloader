@@ -14,7 +14,7 @@ pub struct Engine {
     pub store: Arc<Mutex<Store>>,
     pub jobs: Mutex<HashMap<String, transfer::SharedJob>>,
     pub settings: Mutex<Settings>,
-    navigation_scheduler: Mutex<crate::navigation_scheduler::Scheduler>,
+    pub(crate) navigation_scheduler: Mutex<crate::navigation_scheduler::Scheduler>,
     pub queues: Mutex<Vec<Queue>>,
     contexts: Mutex<HashMap<String, RequestContext>>,
     pub(crate) controls: Mutex<HashMap<String, Arc<AtomicU8>>>,
@@ -380,9 +380,9 @@ impl Engine {
             .collect();
         jobs.sort_by_key(|job| job.created);
         let mut scheduler = self.navigation_scheduler.lock().unwrap();
-        scheduler
-            .tasks
-            .retain(|task| jobs.iter().any(|job| job.id == task.id));
+        scheduler.tasks.retain(|task| {
+            task.id.starts_with("discovery:") || jobs.iter().any(|job| job.id == task.id)
+        });
         for job in &jobs {
             if job.page_url.is_none() {
                 continue;
@@ -1035,6 +1035,10 @@ impl Engine {
             Command::ZipPreview { url, context } => {
                 archive::preview(&url, &context, &self.settings.lock().unwrap().clone())
             }
+            Command::DiscoveryList { scope } => crate::rendered_grabber::list(self, &scope),
+            Command::DiscoveryClaim(request) => crate::rendered_grabber::claim(self, request),
+            Command::DiscoveryPageResult(request) => crate::rendered_grabber::report(self, request),
+            Command::DiscoveryStatus(request) => crate::rendered_grabber::status(self, request),
             Command::Grabber(project) => {
                 security::validate_url(&project.url)?;
                 if project.depth > 20

@@ -8,13 +8,7 @@ use std::{
 
 pub fn run(mut project: GrabberProject, engine: &Arc<Engine>) -> Result<()> {
     if project.rendered {
-        project.status = "waiting_browser".into();
-        engine
-            .store
-            .lock()
-            .unwrap()
-            .put("grabber", &project.id, &project)?;
-        return Ok(());
+        return crate::rendered_grabber::start(engine, project);
     }
     project.status = "exploring".into();
     engine

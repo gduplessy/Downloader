@@ -2,6 +2,11 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.11.0
+
+- Add atomically persisted rendered discovery frontiers, provenance, bounded results, scoped command fences, duplicate-report fingerprints, and shared navigation admission.
+- Keep new private projects and frontier metadata ephemeral. Local backend qualification is in progress; browser/native rendered fixture qualification is pending.
+
 ## 0.8.8 — Persist scoped downstream-host selection
 
 - Record bundled adapter identity and explicit downstream host under exact owner/session/source fences while retaining the original hosted page.
