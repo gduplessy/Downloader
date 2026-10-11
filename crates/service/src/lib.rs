@@ -346,13 +346,13 @@ pub fn native(args: &[String]) -> Result<()> {
                     add.directory = None;
                     add.checksum = None;
                     add.context.browser = Some("extension".into());
-                    call(downloader_core::Command::Add(add))
+                    call(downloader_core::Command::Add(add)).map(|job| browser_job(&job))
                 }
                 downloader_core::Command::Navigate(mut add) => {
                     add.directory = None;
                     add.checksum = None;
                     add.context.browser = Some("extension".into());
-                    call(downloader_core::Command::Navigate(add))
+                    call(downloader_core::Command::Navigate(add)).map(|job| browser_job(&job))
                 }
                 c @ downloader_core::Command::Negotiate { .. } => call(c),
                 downloader_core::Command::Subscribe {
@@ -389,7 +389,17 @@ pub fn native(args: &[String]) -> Result<()> {
                     }) {
                         bail!("Browser cannot control this job");
                     }
-                    call(c)
+                    let returns_job = matches!(
+                        c,
+                        downloader_core::Command::Resolve { .. }
+                            | downloader_core::Command::RefreshBrowser { .. }
+                    );
+                    let data = call(c)?;
+                    Ok(if returns_job {
+                        browser_job(&data)
+                    } else {
+                        data
+                    })
                 }
                 c @ (downloader_core::Command::Inspect { .. }
                 | downloader_core::Command::InspectMedia { .. }) => call(c),

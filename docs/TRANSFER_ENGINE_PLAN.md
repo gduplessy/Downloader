@@ -25,7 +25,7 @@ Run Rust fixtures, formatting, Clippy, desktop/extension type checks and tests f
 
 ## Increment status
 
-Batches 1–4 are implemented with deterministic regressions. Batch 5 publishes [reproducible evidence](TRANSFER_ENGINE.md), including actual large-file runs on all three CI platforms. A macOS native socket permission failure found by the real CLI fixture is repaired and awaiting confirming CI. Source completion and remaining ENG-01/06/07/09/10 qualification criteria stay explicit in the roadmap.
+Batches 1–4 are implemented with deterministic regressions. Batch 5 publishes [reproducible evidence](TRANSFER_ENGINE.md), including actual large-file runs on all three CI platforms. A macOS native socket permission failure found by the real CLI fixture is repaired; endpoint permissions/rebind and CLI restart now pass CI. The latest native creation/privacy fixture awaits cross-platform confirmation. Source completion and remaining ENG-01/06/07/09/10 qualification criteria stay explicit in the roadmap.
 
 The installed IDM command-line workflow yielded no request/output in two attempts; the comparison remains pending. External authentication realms, managed proxy policies, native filesystem matrices and release/browser acceptance are not inferred from fixture success.
 

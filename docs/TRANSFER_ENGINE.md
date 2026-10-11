@@ -48,9 +48,9 @@ Wire version **1** is independent of product versions. Restricted per-user named
 
 Tests are deterministic local fixtures, not proof of universal server/browser support. The [acceptance record](ACCEPTANCE.md) and [compatibility matrix](COMPATIBILITY.md) distinguish source builds from native GUI, browser and installer acceptance.
 
-- Windows local: **35 Rust functional tests**, four ignored helpers invoked by parent tests, **18 TypeScript tests**, strict Clippy/formatting, both client builds and native desktop compilation.
+- Windows local: **37 Rust functional tests**, four ignored helpers invoked by parent tests, **18 TypeScript tests**, strict Clippy/formatting, both client builds and native desktop compilation.
 - The [corrected three-platform run](https://github.com/gduplessy/Downloader/actions/runs/38102100627) passed all jobs. An earlier benchmark fixture leaked response counters; its failure was fixed rather than accepted as a server-limit result.
-- The [large-file run](https://github.com/gduplessy/Downloader/actions/runs/38102452983) passed all **38 network/performance cases** and the actual >4 GiB transfer on Windows, macOS and Linux. Its macOS CLI IPC step failed; pathname permission handling is repaired in this increment and awaits a confirming run.
+- The [initial large-file run](https://github.com/gduplessy/Downloader/actions/runs/38102452983) passed all **38 network/performance cases** and the actual >4 GiB transfer on Windows, macOS and Linux. Its macOS CLI IPC step failed. The [repair run](https://github.com/gduplessy/Downloader/actions/runs/38103251279) has passed macOS endpoint permissions/rebind and the real CLI restart workflow; final job status and the newer native creation/privacy fixture still need confirmation.
 - Sanitized JSON is published under [evidence/transfer-engine-2026-10-10](evidence/transfer-engine-2026-10-10/). It contains fixture observations and metrics, not credentials, private data directories or session tokens. CI evidence identifies source revision and run; earlier local records identify environment and date.
 
 | CI platform | libcurl / TLS | HTTP/2, FTP/FTPS, gzip, large files, NTLM/Negotiate capability flags |
@@ -120,7 +120,7 @@ CI `workflow_dispatch` with `large=true` runs the large fixture on every matrix 
 
 - Actual disk-full/permission/cross-volume failure matrices beyond injected I/O, locked-file, symlink/hardlink, collision and staged-copy regressions.
 - External NTLM/Negotiate/Kerberos realms; platform system proxy/WPAD/PAC failure policies, ordered proxy failover, shipped installer/AppImage library provenance.
-- Confirm macOS IPC permission repair in CI; Intel macOS is a separate launch target from the Apple Silicon CI runner.
+- Confirm the latest native-messaging creation/privacy fixture across CI platforms. Intel macOS is a separate launch target from the Apple Silicon CI runner.
 - Successful identical-fixture IDM comparison. Stable-browser source refresh and desktop GUI acceptance remain in WEB/UI/REL gates.
 
 Keep unresolved criteria in [the roadmap](ROADMAP.md#2-transfer-engine-correctness-and-networking), even when the corresponding source workflow is implemented.

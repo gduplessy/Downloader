@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.2.1<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.2.2<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks the limitations stated in the README, implementation status, compatibility matrix, acceptance evidence, and component notices. It explicitly includes currently unsupported capabilities, including **CAPTCHA automation / bypass**.
 
@@ -35,10 +35,10 @@ The initial release still targets Windows 11 x64, macOS 14+ Intel and Apple Sili
 - [ ] **ENG-06 — Filesystem failures (implemented; partial qualification):** durable ownership/offsets, filename/path validation, collision and overwrite protection, write/flush injection, Windows locked files, Unix path aliases and recoverable staged copies are covered. Remaining: real disk-full/permission-denial/cross-volume acceptance matrices.
 - [ ] **ENG-07 — Networking controls (implemented; partial qualification):** HTTP/HTTPS CONNECT, SOCKS4/5/5h, local platform PAC, Basic/Digest and redirect isolation fixtures pass. Desktop system/direct/manual/PAC/TLS/authentication settings and browser-routing guidance exist. Remaining: enterprise system/PAC/WPAD/bypass policies, ordered proxy failover and external NTLM/Negotiate realm acceptance.
 - [x] **ENG-08 — Expired-source recovery:** typed authentication/expired/changed/resume failures with recovery actions, profile-owned browser refresh and explicit restart decisions; fixtures prevent incompatible byte merging. Stable-browser acceptance remains WEB work.
-- [ ] **ENG-09 — Public control protocol (implemented; confirming qualification):** transactional typed/sequence events, snapshot-first reconnect/replay, negotiation, durable idempotency/tombstones, CLI watch and browser-safe projection are covered. Real CLI lifecycle passes locally and on Linux; macOS IPC permissions are repaired and await confirming CI. Native GUI/browser matrix remains separate WEB/REL work.
+- [ ] **ENG-09 — Public control protocol (implemented; confirming qualification):** transactional typed/sequence events, snapshot-first reconnect/replay, negotiation, durable idempotency/tombstones, CLI watch and browser-safe projection are covered. macOS endpoint permissions/rebind and CLI restart now pass CI. The newer real native creation/privacy fixture awaits cross-platform CI confirmation. Native GUI/browser matrix remains separate WEB/REL work.
 - [ ] **ENG-10 — Performance evidence (partial):** throughput, engine CPU/RSS, checkpoint, verification and finalization measurements and reproducible fixtures are published. Remaining: successful IDM comparison. Installed IDM produced zero fixture requests/output in two 180-second attempts; no comparative result is claimed.
 
-Patch 0.2.1 adds Windows bypass wildcard/boundary regressions, real malformed-range fallback and encoded Unicode filename tests. See [implementation, measurements and sanitized evidence](TRANSFER_ENGINE.md). Checked engine items establish their deterministic acceptance criteria, not full native/browser/install acceptance or universal website support.
+Patches 0.2.1–0.2.2 add Windows bypass wildcard/boundary regressions, real malformed-range fallback, encoded Unicode filenames and browser-safe native creation/refresh responses. See [implementation, measurements and sanitized evidence](TRANSFER_ENGINE.md). Checked engine items establish their deterministic acceptance criteria, not full native/browser/install acceptance or universal website support.
 
 ## 3. Download management, queues, and scheduling
 

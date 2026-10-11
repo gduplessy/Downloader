@@ -2,6 +2,11 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.2.2 — Browser response privacy
+
+- Project native creation, navigation and refresh responses through the same browser-safe field allowlist as snapshots/events.
+- Exercise a real native-messaging process in the isolated CLI fixture, including repeated creation, response correlation and absence of desktop paths/credential metadata.
+
 ## 0.2.1 — Routing and hostile-response regressions
 
 - Match Windows manual proxy bypass host wildcards and `<local>` consistently, including case-insensitive matching and whole-host boundaries.
