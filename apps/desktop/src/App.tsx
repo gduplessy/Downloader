@@ -809,6 +809,20 @@ function SettingsPage({ settings, t, run }: { settings: Settings; t: T; run: Run
         </section>
         <section className="card">
           <h2>{t('networking')}</h2>
+          <CaptchaSettings
+            value={value.captcha}
+            locale={value.locale}
+            onChange={(v) => update('captcha', v)}
+            saveKey={(id, key) => run('credential', { id, username: '2captcha', password: key })}
+            loadBudget={async () =>
+              (await run('captcha_budget')) as {
+                spent_microusd: number;
+                reserved_microusd: number;
+                pending: number;
+              }
+            }
+          />
+
           <fieldset>
             <legend>FlareSolverr</legend>
             <label className="check">

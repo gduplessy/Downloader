@@ -59,6 +59,10 @@ impl ImageTask {
         {
             bail!("captcha_invalid_image");
         }
+        let dimensions = image_dimensions(&bytes).context("captcha_invalid_image")?;
+        if dimensions != (self.width, self.height) {
+            bail!("captcha_invalid_dimensions");
+        }
         Ok(())
     }
 }
@@ -83,6 +87,8 @@ struct Reservation {
     height: u32,
     polls: u32,
     next_poll: i64,
+    #[serde(default)]
+    point: Option<[u32; 2]>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 struct Ledger {
@@ -123,7 +129,7 @@ impl Transport for HttpTransport {
         if easy.response_code()? != 200 {
             bail!("captcha_provider_http");
         }
-        Ok(serde_json::from_slice(&bytes).context("captcha_provider_response")?)
+        serde_json::from_slice(&bytes).context("captcha_provider_response")
     }
 }
 fn summary(ledger: &Ledger) -> Value {
@@ -175,10 +181,16 @@ pub fn handle(
         job,
         request,
         now,
-        transport,
-        &key,
+        ProviderCall {
+            transport,
+            key: &key,
+        },
         &mut ledger,
     )
+}
+struct ProviderCall<'a> {
+    transport: &'a dyn Transport,
+    key: &'a str,
 }
 fn execute(
     store: &Store,
@@ -186,10 +198,10 @@ fn execute(
     job: &str,
     request: ProviderRequest,
     now: i64,
-    transport: &dyn Transport,
-    key: &str,
+    provider: ProviderCall<'_>,
     ledger: &mut Ledger,
 ) -> Result<Value> {
+    let ProviderCall { transport, key } = provider;
     match request {
         ProviderRequest::Snapshot => Ok(summary(ledger)),
         ProviderRequest::Start { image } => {
@@ -225,6 +237,7 @@ fn execute(
                 height: image.height,
                 polls: 0,
                 next_poll: now + 5000,
+                point: None,
             });
             store.put("captcha_ledger", "main", ledger)?;
             // An ambiguous network failure leaves the reservation intact across restart.
@@ -262,7 +275,15 @@ fn execute(
                 .find(|t| t.binding == binding && t.job == job)
                 .context("captcha_task_unavailable")?;
             if t.terminal {
-                return Ok(json!({"status":"terminal","budget":summary(ledger)}));
+                let point = t.point;
+                let cancelled = t.cancelled;
+                return Ok(if cancelled {
+                    json!({"status":"cancelled","budget":summary(ledger)})
+                } else if let Some([x, y]) = point {
+                    json!({"status":"ready","point":{"x":x,"y":y},"budget":summary(ledger)})
+                } else {
+                    json!({"status":"terminal","budget":summary(ledger)})
+                });
             }
             if now < t.next_poll || t.polls >= 120 {
                 bail!("captcha_poll_deadline");
@@ -301,6 +322,16 @@ fn execute(
                         .then_some(json!({"x":x,"y":y}))
                 });
             let cancelled = t.cancelled;
+            t.point = if cancelled {
+                None
+            } else {
+                coordinates.as_ref().map(|p| {
+                    [
+                        p["x"].as_u64().unwrap() as u32,
+                        p["y"].as_u64().unwrap() as u32,
+                    ]
+                })
+            };
             store.put("captcha_ledger", "main", ledger)?;
             if cancelled {
                 return Ok(json!({"status":"cancelled","budget":summary(ledger)}));
@@ -313,6 +344,195 @@ fn execute(
 }
 pub fn binding_digest(value: &str) -> String {
     format!("{:x}", Sha256::digest(value.as_bytes()))
+}
+fn decode(value: &str) -> Result<Vec<u8>> {
+    if value.is_empty()
+        || value.len() > 600_000usize.div_ceil(3) * 4
+        || !value.len().is_multiple_of(4)
+    {
+        bail!("Invalid captcha image chunk");
+    }
+    let alphabet = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = Vec::with_capacity(value.len() / 4 * 3);
+    for (index, chunk) in value.as_bytes().chunks_exact(4).enumerate() {
+        let mut n = 0u32;
+        let mut padding = 0;
+        for (i, b) in chunk.iter().enumerate() {
+            let digit = if *b == b'=' {
+                padding += 1;
+                if i < 2 || index != value.len() / 4 - 1 {
+                    bail!("Invalid base64 padding");
+                }
+                0
+            } else {
+                if padding > 0 {
+                    bail!("Invalid base64 padding");
+                }
+                alphabet
+                    .iter()
+                    .position(|a| a == b)
+                    .context("Invalid base64 byte")? as u32
+            };
+            n = (n << 6) | digit;
+        }
+        if padding > 2 || (padding == 1 && n & 0xff != 0) || (padding == 2 && n & 0xffff != 0) {
+            bail!("Noncanonical base64 padding");
+        }
+        out.push((n >> 16) as u8);
+        if padding < 2 {
+            out.push((n >> 8) as u8);
+        }
+        if padding < 1 {
+            out.push(n as u8);
+        }
+    }
+    if out.len() > 600_000usize {
+        bail!("captcha image chunk exceeds negotiated limit");
+    }
+    Ok(out)
+}
+
+fn image_dimensions(bytes: &[u8]) -> Option<(u32, u32)> {
+    if bytes.starts_with(b"\x89PNG\r\n\x1a\n") && bytes.get(12..16)? == b"IHDR" {
+        return Some((
+            u32::from_be_bytes(bytes.get(16..20)?.try_into().ok()?),
+            u32::from_be_bytes(bytes.get(20..24)?.try_into().ok()?),
+        ));
+    }
+    if bytes.starts_with(b"GIF87a") || bytes.starts_with(b"GIF89a") {
+        return Some((
+            u32::from(u16::from_le_bytes(bytes.get(6..8)?.try_into().ok()?)),
+            u32::from(u16::from_le_bytes(bytes.get(8..10)?.try_into().ok()?)),
+        ));
+    }
+    if !bytes.starts_with(b"\xff\xd8\xff") {
+        return None;
+    }
+    let mut offset = 2;
+    while offset + 4 <= bytes.len() {
+        if bytes[offset] != 255 {
+            return None;
+        }
+        let marker = bytes[offset + 1];
+        offset += 2;
+        if matches!(marker, 0xd8 | 0x01 | 0xd0..=0xd7) {
+            continue;
+        }
+        if matches!(marker, 0xd9 | 0xda) {
+            return None;
+        }
+        let length = usize::from(u16::from_be_bytes(
+            bytes.get(offset..offset + 2)?.try_into().ok()?,
+        ));
+        if length < 2 {
+            return None;
+        }
+        if matches!(marker,0xc0..=0xc3|0xc5..=0xc7|0xc9..=0xcb|0xcd..=0xcf) {
+            return Some((
+                u32::from(u16::from_be_bytes(
+                    bytes.get(offset + 5..offset + 7)?.try_into().ok()?,
+                )),
+                u32::from(u16::from_be_bytes(
+                    bytes.get(offset + 3..offset + 5)?.try_into().ok()?,
+                )),
+            ));
+        }
+        offset = offset.checked_add(length)?;
+    }
+    None
+}
+pub fn budget(store: &Store) -> Result<Value> {
+    let ledger = store
+        .all::<Ledger>("captcha_ledger")?
+        .into_iter()
+        .next()
+        .unwrap_or_default();
+    Ok(summary(&ledger))
+}
+
+/// Reconcile bounded outstanding charges after worker or daemon restart.
+/// Numeric coordinates are bound metadata; image/instruction/key never persist.
+pub fn reconcile(
+    store: &Store,
+    settings: &ProviderSettings,
+    now: i64,
+    transport: &dyn Transport,
+) -> Result<()> {
+    if !settings.enabled
+        || !settings.external_opt_in
+        || settings.total_budget_microusd == 0
+        || settings.key_ref.is_empty()
+    {
+        return Ok(());
+    }
+    settings.validate()?;
+    let mut ledger = store
+        .all::<Ledger>("captcha_ledger")?
+        .into_iter()
+        .next()
+        .unwrap_or_default();
+    let pending = ledger
+        .tasks
+        .iter()
+        .filter(|t| !t.terminal && t.task_id.is_some() && t.polls < 120 && t.next_poll <= now)
+        .take(4)
+        .map(|t| (t.job.clone(), t.binding.clone()))
+        .collect::<Vec<_>>();
+    if pending.is_empty() {
+        return Ok(());
+    }
+    let (_, key) = security::credential(&settings.key_ref).context("captcha_key_unavailable")?;
+    for (job, binding) in pending {
+        // Errors retain reservation; each next-poll deadline was persisted before IO.
+        let _ = execute(
+            store,
+            settings,
+            &job,
+            ProviderRequest::Poll { binding },
+            now,
+            ProviderCall {
+                transport,
+                key: &key,
+            },
+            &mut ledger,
+        );
+    }
+    Ok(())
+}
+
+pub fn ownership(job: &crate::Job) -> Option<String> {
+    let scope = job.navigation_scope.as_ref()?;
+    if job.private
+        || !matches!(
+            job.state,
+            crate::JobState::WaitingBrowser | crate::JobState::WaitingUser
+        )
+    {
+        return None;
+    }
+    Some(format!(
+        "{}:{}:{}:{}",
+        job.id, scope.profile, scope.claim_generation, job.source_generation
+    ))
+}
+pub fn cancel_unavailable(store: &Store, available: &[String]) -> Result<()> {
+    let mut ledger = store
+        .all::<Ledger>("captcha_ledger")?
+        .into_iter()
+        .next()
+        .unwrap_or_default();
+    let mut changed = false;
+    for task in &mut ledger.tasks {
+        if !available.contains(&task.job) && (!task.cancelled || task.point.is_some()) {
+            task.cancelled = true;
+            task.point = None;
+            changed = true;
+        }
+    }
+    if changed {
+        store.put("captcha_ledger", "main", &ledger)?;
+    }
+    Ok(())
 }
 #[cfg(test)]
 mod tests {
@@ -334,7 +554,7 @@ mod tests {
     }
     fn image() -> ImageTask {
         ImageTask {
-            image_base64: "iVBORw0KGgo=".into(),
+            image_base64: "iVBORw0KGgoAAAANSUhEUgAAAGQAAABk".into(),
             instruction: "click open circle".into(),
             width: 100,
             height: 100,
@@ -386,8 +606,10 @@ mod tests {
             "job",
             ProviderRequest::Start { image: image() },
             0,
-            &mock,
-            "test",
+            ProviderCall {
+                transport: &mock,
+                key: "test"
+            },
             &mut ledger
         )
         .is_err());
@@ -399,8 +621,10 @@ mod tests {
             "job",
             ProviderRequest::Start { image: image() },
             0,
-            &mock,
-            "test",
+            ProviderCall {
+                transport: &mock,
+                key: "test"
+            },
             &mut restored
         )
         .is_err());
@@ -425,8 +649,10 @@ mod tests {
             "job",
             ProviderRequest::Start { image: image() },
             0,
-            &mock,
-            "test",
+            ProviderCall {
+                transport: &mock,
+                key: "test",
+            },
             &mut ledger,
         )
         .unwrap();
@@ -438,8 +664,10 @@ mod tests {
                 binding: "a".repeat(64),
             },
             1,
-            &mock,
-            "test",
+            ProviderCall {
+                transport: &mock,
+                key: "test",
+            },
             &mut ledger,
         )
         .unwrap();
@@ -451,8 +679,10 @@ mod tests {
                 binding: "a".repeat(64),
             },
             5000,
-            &mock,
-            "test",
+            ProviderCall {
+                transport: &mock,
+                key: "test",
+            },
             &mut ledger,
         )
         .unwrap();
@@ -468,51 +698,148 @@ mod tests {
         i.width = 1001;
         assert!(i.validate().is_err());
     }
-}
 
-fn decode(value: &str) -> Result<Vec<u8>> {
-    if value.is_empty()
-        || value.len() > 600_000usize.div_ceil(3) * 4
-        || !value.len().is_multiple_of(4)
-    {
-        bail!("Invalid captcha image chunk");
+    #[test]
+    fn ready_answer_survives_restart_but_stale_owner_cannot_poll() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = Store::open(&dir.path().join("db")).unwrap();
+        let mock = Mock {
+            calls: Mutex::new(vec![]),
+            responses: Mutex::new(vec![
+                json!({"errorId":0,"taskId":8}),
+                json!({"status":"ready","cost":"0.0008","solution":{"coordinates":[{"x":30,"y":40}]}}),
+            ]),
+            fail: false,
+        };
+        let mut ledger = Ledger::default();
+        execute(
+            &store,
+            &settings(),
+            "job:claim1",
+            ProviderRequest::Start { image: image() },
+            0,
+            ProviderCall {
+                transport: &mock,
+                key: "test",
+            },
+            &mut ledger,
+        )
+        .unwrap();
+        let ready = execute(
+            &store,
+            &settings(),
+            "job:claim1",
+            ProviderRequest::Poll {
+                binding: "a".repeat(64),
+            },
+            5000,
+            ProviderCall {
+                transport: &mock,
+                key: "test",
+            },
+            &mut ledger,
+        )
+        .unwrap();
+        assert_eq!(ready["point"]["x"], 30);
+        let mut restored = store.get::<Ledger>("captcha_ledger", "main").unwrap();
+        assert!(execute(
+            &store,
+            &settings(),
+            "job:claim2",
+            ProviderRequest::Poll {
+                binding: "a".repeat(64)
+            },
+            6000,
+            ProviderCall {
+                transport: &mock,
+                key: "test"
+            },
+            &mut restored
+        )
+        .is_err());
+        let cached = execute(
+            &store,
+            &settings(),
+            "job:claim1",
+            ProviderRequest::Poll {
+                binding: "a".repeat(64),
+            },
+            6000,
+            ProviderCall {
+                transport: &mock,
+                key: "test",
+            },
+            &mut restored,
+        )
+        .unwrap();
+        assert_eq!(cached["point"]["x"], 30);
+        assert_eq!(mock.calls.lock().unwrap().len(), 2);
+        cancel_unavailable(&store, &[]).unwrap();
+        let mut cancelled = store.get::<Ledger>("captcha_ledger", "main").unwrap();
+        let cached = execute(
+            &store,
+            &settings(),
+            "job:claim1",
+            ProviderRequest::Poll {
+                binding: "a".repeat(64),
+            },
+            7000,
+            ProviderCall {
+                transport: &mock,
+                key: "test",
+            },
+            &mut cancelled,
+        )
+        .unwrap();
+        assert!(cached.get("point").is_none());
     }
-    let alphabet = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    let mut out = Vec::with_capacity(value.len() / 4 * 3);
-    for (index, chunk) in value.as_bytes().chunks_exact(4).enumerate() {
-        let mut n = 0u32;
-        let mut padding = 0;
-        for (i, b) in chunk.iter().enumerate() {
-            let digit = if *b == b'=' {
-                padding += 1;
-                if i < 2 || index != value.len() / 4 - 1 {
-                    bail!("Invalid base64 padding");
-                }
-                0
-            } else {
-                if padding > 0 {
-                    bail!("Invalid base64 padding");
-                }
-                alphabet
-                    .iter()
-                    .position(|a| a == b)
-                    .context("Invalid base64 byte")? as u32
-            };
-            n = (n << 6) | digit;
-        }
-        if padding > 2 || (padding == 1 && n & 0xff != 0) || (padding == 2 && n & 0xffff != 0) {
-            bail!("Noncanonical base64 padding");
-        }
-        out.push((n >> 16) as u8);
-        if padding < 2 {
-            out.push((n >> 8) as u8);
-        }
-        if padding < 1 {
-            out.push(n as u8);
-        }
+    #[test]
+    fn provider_refusal_releases_reservation_and_budget_ceiling_blocks_new_task() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = Store::open(&dir.path().join("db")).unwrap();
+        let mock = Mock {
+            calls: Mutex::new(vec![]),
+            responses: Mutex::new(vec![json!({"errorId":12})]),
+            fail: false,
+        };
+        let mut ledger = Ledger::default();
+        assert!(execute(
+            &store,
+            &settings(),
+            "job",
+            ProviderRequest::Start { image: image() },
+            0,
+            ProviderCall {
+                transport: &mock,
+                key: "test"
+            },
+            &mut ledger
+        )
+        .is_err());
+        assert_eq!(summary(&ledger)["reserved_microusd"], 0);
+        ledger.tasks[0].terminal = false;
+        let mut limited = settings();
+        limited.total_budget_microusd = 1000;
+        let mut second = image();
+        second.binding = "b".repeat(64);
+        assert!(execute(
+            &store,
+            &limited,
+            "job",
+            ProviderRequest::Start { image: second },
+            0,
+            ProviderCall {
+                transport: &mock,
+                key: "test"
+            },
+            &mut ledger
+        )
+        .unwrap_err()
+        .to_string()
+        .contains("budget_exhausted"));
+        assert_eq!(mock.calls.lock().unwrap().len(), 1);
+        let mut oversized = image();
+        oversized.width = 101;
+        assert!(oversized.validate().is_err());
     }
-    if out.len() > 600_000usize {
-        bail!("captcha image chunk exceeds negotiated limit");
-    }
-    Ok(out)
 }

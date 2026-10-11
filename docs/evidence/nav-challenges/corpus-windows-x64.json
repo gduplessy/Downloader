@@ -1,0 +1,26 @@
+{
+  "fixture": "unique-open-circle-heldout-v2",
+  "development_seeds": "0..19",
+  "heldout_seeds": "1000..1119",
+  "heldout_images": 120,
+  "unique_pixel_hashes": 120,
+  "accepted": 120,
+  "correct": 120,
+  "abstained": 0,
+  "accepted_accuracy": 1,
+  "non_abstention": 1,
+  "negative_images": 80,
+  "negative_accepted": 0,
+  "latency_ms": {
+    "p50": 0.4048999999999978,
+    "p95": 7.3230000000000075
+  },
+  "machine": {
+    "os": "win32",
+    "release": "10.0.26100",
+    "arch": "x64",
+    "cpu": "Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz",
+    "node": "v22.18.0"
+  },
+  "coverage": "Open dark circle, closed-circle decoy, variable subpixel centers/radii; separate scale/DPR/clipping and stale lifecycle tests. Unknown live variants and real-image occlusion remain unqualified."
+}

@@ -331,6 +331,7 @@ pub enum Command {
         request: crate::captcha::ProviderRequest,
     },
     Snapshot,
+    CaptchaBudget,
     BrowserSnapshot {
         owner: String,
     },

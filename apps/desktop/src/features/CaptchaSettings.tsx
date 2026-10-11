@@ -73,15 +73,26 @@ export function CaptchaSettings({
   locale,
   onChange,
   saveKey,
+  loadBudget,
 }: {
   value: Settings['captcha'];
   locale: string;
   onChange: (v: Settings['captcha']) => void;
   saveKey: (id: string, key: string) => Promise<unknown>;
+  loadBudget: () => Promise<{ spent_microusd: number; reserved_microusd: number; pending: number }>;
 }) {
   const text = labels[locale] ?? labels.en;
   const [key, setKey] = useState(''),
     [status, setStatus] = useState('');
+  const budgetLabels: Record<string, string[]> = {
+    en: ['Refresh budget', 'Spent', 'Reserved'],
+    fr: ['Actualiser le budget', 'Dépensé', 'Réservé'],
+    es: ['Actualizar presupuesto', 'Gastado', 'Reservado'],
+    de: ['Budget aktualisieren', 'Ausgegeben', 'Reserviert'],
+    ar: ['تحديث الميزانية', 'المصروف', 'المحجوز'],
+    'zh-CN': ['刷新预算', '已花费', '预留'],
+  };
+  const budgetText = budgetLabels[locale] ?? budgetLabels.en;
   const patch = (p: Partial<typeof value>) => onChange({ ...value, ...p });
   return (
     <fieldset>
@@ -156,6 +167,25 @@ export function CaptchaSettings({
         />
       </label>
       <p>{text[8]}</p>
+      <button
+        type="button"
+        onClick={() => {
+          void loadBudget().then((b) =>
+            setStatus(
+              budgetText[1] +
+                ': ' +
+                b.spent_microusd +
+                '; ' +
+                budgetText[2] +
+                ': ' +
+                b.reserved_microusd +
+                ' micro USD',
+            ),
+          );
+        }}
+      >
+        {budgetText[0]}
+      </button>
       <p role="status">{status}</p>
     </fieldset>
   );

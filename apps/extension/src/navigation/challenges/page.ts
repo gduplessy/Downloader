@@ -167,7 +167,8 @@ export async function showChallenge(
         bottom: Math.min(bounds.bottom, doc.defaultView!.innerHeight),
       },
     );
-    void css; // Coordinates submitted in intrinsic image space, as the qualified form specifies.
+    if (doc.elementFromPoint(css.x, css.y) !== found.image) throw Error('occluded_target');
+    // Coordinates submitted in intrinsic image space, as the qualified form specifies.
     if (controller.signal.aborted) throw Error('challenge_stale');
     submitted = true;
     found.x.value = String(Math.round(point.x));
@@ -205,7 +206,7 @@ export async function showChallenge(
     paidBinding = await digest(JSON.stringify(initial));
     let response = await bridge.paid('start', initial, {
       image_base64: dataUrl.split(',')[1],
-      instruction: found.instruction,
+      instruction: 'Click the open circle',
       width: found.width,
       height: found.height,
     });

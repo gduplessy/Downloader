@@ -1,26 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { solveOpenCircle, toCss, type Raster } from './geometry';
+import { solveOpenCircle, toCss } from './geometry';
 import { ChallengeGate, type ChallengeBinding } from './lifecycle';
-export function raster(seed: number, ambiguous = false): Raster {
-  const width = 240,
-    height = 120,
-    data = new Uint8ClampedArray(width * height * 4);
-  data.fill(255);
-  function ring(cx: number, cy: number, r: number, gap: boolean) {
-    for (let y = 0; y < height; y++)
-      for (let x = 0; x < width; x++) {
-        const angle = Math.atan2(y - cy, x - cx),
-          distance = Math.hypot(x - cx, y - cy);
-        if (Math.abs(distance - r) < 2.1 && (!gap || angle < 0.2 || angle > 0.9)) {
-          const i = (y * width + x) * 4;
-          data[i] = data[i + 1] = data[i + 2] = 35;
-        }
-      }
-  }
-  ring(45 + (seed % 20), 55, 20 + (seed % 5), true);
-  ring(150, 58, 22, ambiguous);
-  return { width, height, data };
-}
+import { raster } from '../../../../../scripts/nav-fixtures/challenges/raster-corpus';
 describe('held-out open-circle geometry', () => {
   it('qualifies 120 deterministic held-out images with closed-circle decoys', () => {
     let accepted = 0,
@@ -33,7 +14,13 @@ describe('held-out open-circle geometry', () => {
       times.push(performance.now() - start);
       if ('point' in answer) {
         accepted++;
-        if (Math.hypot(answer.point.x - (45 + (seed % 20)), answer.point.y - 55) < 4) correct++;
+        if (
+          Math.hypot(
+            answer.point.x - (45 + (seed % 37) * 0.3),
+            answer.point.y - (52 + (seed % 11) * 0.4),
+          ) < 4
+        )
+          correct++;
       }
     }
     expect(accepted / 120).toBeGreaterThanOrEqual(0.8);
@@ -118,3 +105,4 @@ describe('submission lifecycle', () => {
     expect(() => other.authorize(binding, binding, 1)).toThrow('already');
   });
 });
+

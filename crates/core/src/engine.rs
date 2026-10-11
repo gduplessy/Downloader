@@ -117,6 +117,33 @@ impl Engine {
         Ok(engine)
     }
     pub fn start(self: &Arc<Self>) {
+        let provider_engine = self.clone();
+        std::thread::spawn(move || {
+            while !provider_engine.stopping.load(Ordering::Relaxed) {
+                {
+                    let _lock = provider_engine.captcha_lock.lock().unwrap();
+                    let settings = provider_engine.settings.lock().unwrap().captcha.clone();
+                    let available = provider_engine
+                        .jobs
+                        .lock()
+                        .unwrap()
+                        .values()
+                        .filter_map(|job| crate::captcha::ownership(&job.lock().unwrap()))
+                        .collect::<Vec<_>>();
+                    let _ = crate::captcha::cancel_unavailable(
+                        &provider_engine.store.lock().unwrap(),
+                        &available,
+                    );
+                    let _ = crate::captcha::reconcile(
+                        &provider_engine.store.lock().unwrap(),
+                        &settings,
+                        chrono::Utc::now().timestamp_millis(),
+                        &crate::captcha::HttpTransport,
+                    );
+                }
+                std::thread::sleep(Duration::from_secs(5));
+            }
+        });
         let engine = self.clone();
         std::thread::spawn(move || {
             while !engine.stopping.load(Ordering::Relaxed) {
@@ -569,11 +596,13 @@ impl Engine {
                         bail!("captcha_session_rejected");
                     }
                 }
+                let ownership = crate::captcha::ownership(&job.lock().unwrap())
+                    .context("captcha_session_rejected")?;
                 let settings = self.settings.lock().unwrap().captcha.clone();
                 crate::captcha::handle(
                     &self.store.lock().unwrap(),
                     &settings,
-                    &id,
+                    &ownership,
                     request,
                     chrono::Utc::now().timestamp_millis(),
                     &crate::captcha::HttpTransport,
@@ -855,6 +884,7 @@ impl Engine {
                 }
                 Ok(value)
             }
+            Command::CaptchaBudget => crate::captcha::budget(&self.store.lock().unwrap()),
             Command::Snapshot => Ok(serde_json::to_value(self.snapshot())?),
             Command::Add(add) => Ok(serde_json::to_value(self.add(add)?)?),
             Command::Pause { id } => {

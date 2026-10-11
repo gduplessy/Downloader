@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.1
+
+- Add service restart/late-result reconciliation with source/claim-bound paid tasks, actual image dimension checks, translated budget controls and strict worker authorization.
+- Qualify 120 unique held-out images plus 80 negative images and four synthetic fresh-link desktop hashes. Installed worker/live host acceptance remains pending.
+
+
 ## 0.10.0
 
 - Add qualified local open-circle geometry, stale-answer fencing, six-locale challenge controls, and service-owned optional CoordinatesTask reservations tested entirely against mocks.
