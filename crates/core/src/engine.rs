@@ -17,6 +17,7 @@ pub struct Engine {
     pub queues: Mutex<Vec<Queue>>,
     contexts: Mutex<HashMap<String, RequestContext>>,
     controls: Mutex<HashMap<String, Arc<AtomicU8>>>,
+    solver_tasks: Mutex<HashMap<String, Arc<AtomicU8>>>,
     pub stopping: AtomicBool,
 }
 impl Engine {
@@ -30,6 +31,18 @@ impl Engine {
         store.put("settings", "main", &settings)?;
         let mut jobs = HashMap::new();
         for mut job in store.all::<Job>("job")? {
+            if job.state == JobState::SolvingChallenge {
+                if let Some(session) = job.solver_session.take() {
+                    let config = settings.solver.clone();
+                    std::thread::spawn(move || {
+                        let _ = crate::solver::destroy(&config, &session);
+                    });
+                }
+                job.state = JobState::WaitingUser;
+                job.solver_outcome = Some("solver_interrupted".into());
+                job.error = Some("Solver interrupted; continue in the browser or try again".into());
+                store.put("job", &job.id, &job)?;
+            }
             if matches!(
                 job.state,
                 JobState::Verifying
@@ -96,6 +109,7 @@ impl Engine {
             queues: Mutex::new(queues),
             contexts: Mutex::new(contexts),
             controls: Mutex::new(HashMap::new()),
+            solver_tasks: Mutex::new(HashMap::new()),
             stopping: AtomicBool::new(false),
         }))
     }
@@ -281,6 +295,10 @@ impl Engine {
             viable: false,
             page_url: None,
             navigation_owner: request.context.profile.clone(),
+            navigation_url: None,
+            solver_attempted: false,
+            solver_outcome: None,
+            solver_session: None,
         };
         self.store.lock().unwrap().put("job", &job.id, &job)?;
         self.contexts
@@ -292,6 +310,13 @@ impl Engine {
     }
     pub fn command(self: &Arc<Self>, command: Command) -> Result<serde_json::Value> {
         match command {
+            Command::TestSolver { settings } => crate::solver::test(&settings),
+            Command::SolveChallenge {
+                id,
+                owner,
+                url,
+                automatic,
+            } => self.solve_challenge(id, owner, url, automatic),
             Command::Negotiate { minimum, maximum } => {
                 if minimum > PROTOCOL_VERSION || maximum < PROTOCOL_VERSION || minimum > maximum {
                     bail!("protocol_mismatch: Supported protocol is 1");
@@ -412,7 +437,14 @@ impl Engine {
                 message,
                 bytes,
                 total,
+                url,
             } => {
+                if let Some(ref url) = url {
+                    let parsed = security::validate_url(url)?;
+                    if !["http", "https"].contains(&parsed.scheme()) {
+                        bail!("Navigation requires HTTP or HTTPS");
+                    }
+                }
                 if !matches!(
                     state,
                     JobState::WaitingBrowser
@@ -424,10 +456,28 @@ impl Engine {
                     bail!("Invalid browser navigation state");
                 }
                 let job = self.job(&id)?;
+                let solver_control = self.solver_tasks.lock().unwrap().get(&id).cloned();
                 {
                     let mut j = job.lock().unwrap();
                     if j.navigation_owner.as_ref() != Some(&owner) {
                         bail!("Navigation belongs to another browser profile");
+                    }
+                    if j.state == JobState::SolvingChallenge {
+                        if url
+                            .as_ref()
+                            .is_some_and(|u| j.navigation_url.as_ref() != Some(u))
+                        {
+                            j.navigation_url = url;
+                            j.state = JobState::WaitingUser;
+                            j.solver_outcome = Some("solver_stale".into());
+                            if let Some(control) = solver_control {
+                                control.store(1, Ordering::Relaxed);
+                            }
+                            drop(j);
+                            self.persist(&job)?;
+                            return Ok(serde_json::json!({"id":id}));
+                        }
+                        bail!("Wait for challenge resolution");
                     }
                     if j.page_url.is_none()
                         || j.state.active()
@@ -437,6 +487,9 @@ impl Engine {
                         bail!("Job is not controlled by browser navigation");
                     }
                     j.state = state;
+                    if let Some(url) = url {
+                        j.navigation_url = Some(url);
+                    }
                     j.error = message
                         .map(|s| security::redact(&s.chars().take(1024).collect::<String>()));
                     j.bytes = bytes;
@@ -563,6 +616,7 @@ impl Engine {
             }
             Command::Settings(settings) => {
                 settings.network.validate()?;
+                settings.solver.validate()?;
                 if settings.max_jobs == 0
                     || settings.max_jobs > 32
                     || settings.connections == 0
@@ -704,6 +758,147 @@ impl Engine {
                 Ok(serde_json::Value::Null)
             }
         }
+    }
+    fn solve_challenge(
+        self: &Arc<Self>,
+        id: String,
+        owner: Option<String>,
+        url: Option<String>,
+        automatic: bool,
+    ) -> Result<serde_json::Value> {
+        let settings = self.settings.lock().unwrap().clone();
+        if !settings.solver.enabled {
+            bail!("solver_disabled");
+        }
+        settings.solver.validate()?;
+        if settings.network.proxy_mode != crate::network::ProxyMode::Direct {
+            bail!("solver_routing");
+        }
+        let job = self.job(&id)?;
+        let control = Arc::new(AtomicU8::new(0));
+        let mut controls = self.controls.lock().unwrap();
+        let mut tasks = self.solver_tasks.lock().unwrap();
+        if !tasks.is_empty() {
+            bail!("solver_busy");
+        }
+        if controls.contains_key(&id) {
+            bail!("Wait for active work to stop");
+        }
+        let (page, profile, session) = {
+            let mut j = job.lock().unwrap();
+            if !matches!(j.state, JobState::WaitingBrowser | JobState::WaitingUser)
+                || j.page_url.is_none()
+                || j.private
+                || j.credential_id.is_some()
+            {
+                bail!("Solver requires an ordinary anonymous hosted-page job");
+            }
+            if owner
+                .as_ref()
+                .is_some_and(|o| j.navigation_owner.as_ref() != Some(o))
+                || automatic && owner.is_none()
+            {
+                bail!("Navigation belongs to another browser profile");
+            }
+            if automatic && j.solver_attempted {
+                bail!("solver_already_attempted");
+            }
+            let page = j
+                .navigation_url
+                .clone()
+                .or_else(|| j.page_url.clone())
+                .unwrap();
+            if url.as_ref().is_some_and(|u| u != &page) {
+                bail!("solver_stale");
+            }
+            let parsed = security::validate_url(&page)?;
+            if !["http", "https"].contains(&parsed.scheme()) {
+                bail!("solver_source");
+            }
+            let session = format!("downloader-{}", uuid::Uuid::new_v4());
+            j.navigation_url = Some(page.clone());
+            j.state = JobState::SolvingChallenge;
+            j.solver_attempted = true;
+            j.solver_outcome = None;
+            j.solver_session = Some(session.clone());
+            j.error = None;
+            (page, j.navigation_owner.clone(), session)
+        };
+        controls.insert(id.clone(), control.clone());
+        tasks.insert(id.clone(), control.clone());
+        drop(tasks);
+        drop(controls);
+        if let Err(error) = self.persist(&job) {
+            self.controls.lock().unwrap().remove(&id);
+            self.solver_tasks.lock().unwrap().remove(&id);
+            let mut j = job.lock().unwrap();
+            j.state = JobState::WaitingUser;
+            j.solver_session = None;
+            return Err(error);
+        }
+        let engine = self.clone();
+        let accepted = serde_json::json!({"id":id,"accepted":true});
+        std::thread::spawn(move || {
+            let result =
+                crate::solver::resolve(&page, profile.clone(), &settings, &control, &session);
+            let mut controls = engine.controls.lock().unwrap();
+            let mut tasks = engine.solver_tasks.lock().unwrap();
+            let mut j = job.lock().unwrap();
+            if j.state == JobState::SolvingChallenge
+                && j.navigation_owner == profile
+                && j.navigation_url.as_ref() == Some(&page)
+            {
+                match control.load(Ordering::Relaxed) {
+                    2 => {
+                        j.state = JobState::Cancelled;
+                        j.solver_outcome = Some("solver_cancelled".into());
+                    }
+                    1 | 4 => {
+                        j.state = JobState::Paused;
+                        j.solver_outcome = Some("solver_interrupted".into());
+                    }
+                    _ => match result {
+                        Ok(resolved) => {
+                            if let Some(filename) = resolved.filename {
+                                let name = security::safe_filename(&filename);
+                                if let Some(directory) = j.destination.parent() {
+                                    let destination =
+                                        security::unique_destination(directory, &name);
+                                    j.filename = destination
+                                        .file_name()
+                                        .unwrap_or_default()
+                                        .to_string_lossy()
+                                        .into();
+                                    j.destination = destination;
+                                }
+                            }
+                            j.url = resolved.url;
+                            j.state = JobState::Queued;
+                            j.browser_source = true;
+                            j.viable = false;
+                            j.solver_outcome = Some("solver_resolved".into());
+                            engine
+                                .contexts
+                                .lock()
+                                .unwrap()
+                                .insert(id.clone(), resolved.context);
+                        }
+                        Err(error) => {
+                            j.state = JobState::WaitingUser;
+                            j.solver_outcome =
+                                Some(crate::solver::outcome(&error.to_string()).into());
+                            j.error = Some("Challenge resolution stopped; continue in the browser or try again".into());
+                        }
+                    },
+                }
+            }
+            j.solver_session = None;
+            drop(j);
+            let _ = engine.persist(&job);
+            tasks.remove(&id);
+            controls.remove(&id);
+        });
+        Ok(accepted)
     }
     fn tick(self: &Arc<Self>) -> Result<()> {
         let settings = self.settings.lock().unwrap().clone();
@@ -923,6 +1118,12 @@ impl Engine {
                         let _ = engine.persist(&j);
                     }
                     let id = j.lock().unwrap().id.clone();
+                    if matches!(
+                        j.lock().unwrap().state,
+                        JobState::Complete | JobState::Cancelled | JobState::Failed
+                    ) {
+                        engine.contexts.lock().unwrap().remove(&id);
+                    }
                     controls.remove(&id);
                 });
             }
@@ -933,7 +1134,7 @@ impl Engine {
     pub fn shutdown(&self) {
         self.stopping.store(true, Ordering::Relaxed);
         for c in self.controls.lock().unwrap().values() {
-            c.store(1, Ordering::Relaxed);
+            let _ = c.compare_exchange(0, 1, Ordering::Relaxed, Ordering::Relaxed);
         }
         for _ in 0..100 {
             if self.controls.lock().unwrap().is_empty() {

@@ -17,6 +17,7 @@ pub enum JobState {
     WaitingSchedule,
     WaitingBrowser,
     WaitingUser,
+    SolvingChallenge,
     BrowserDownloading,
     BrowserComplete,
     Verifying,
@@ -31,6 +32,7 @@ impl JobState {
         matches!(
             self,
             Self::Connecting
+                | Self::SolvingChallenge
                 | Self::Downloading
                 | Self::Verifying
                 | Self::Assembling
@@ -140,6 +142,14 @@ pub struct Job {
     pub page_url: Option<String>,
     #[serde(default)]
     pub navigation_owner: Option<String>,
+    #[serde(default)]
+    pub navigation_url: Option<String>,
+    #[serde(default)]
+    pub solver_attempted: bool,
+    #[serde(default)]
+    pub solver_outcome: Option<String>,
+    #[serde(default)]
+    pub solver_session: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -337,6 +347,20 @@ pub enum Command {
         #[serde(default)]
         bytes: u64,
         total: Option<u64>,
+        #[serde(default)]
+        url: Option<String>,
+    },
+    SolveChallenge {
+        id: String,
+        #[serde(default)]
+        owner: Option<String>,
+        #[serde(default)]
+        url: Option<String>,
+        #[serde(default)]
+        automatic: bool,
+    },
+    TestSolver {
+        settings: crate::solver::SolverSettings,
     },
     RefreshBrowser {
         id: String,

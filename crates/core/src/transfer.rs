@@ -696,6 +696,13 @@ fn worker(
                     for (k, v) in &metadata.context.headers {
                         list.append(&format!("{k}: {v}"))?;
                     }
+                    if let Some(cookie) = metadata.context.solver.as_ref().and_then(|s| {
+                        url::Url::parse(&metadata.url)
+                            .ok()
+                            .and_then(|u| s.cookie_header(&u))
+                    }) {
+                        list.append(&format!("Cookie: {cookie}"))?;
+                    }
                     if let Some(v) = metadata.etag.as_ref().filter(|v| !v.starts_with("W/")) {
                         list.append(&format!("If-Range: {v}"))?;
                         list.append(&format!("If-Match: {v}"))?;
@@ -725,6 +732,9 @@ fn worker(
                                 if control.load(Ordering::Relaxed)!=0 {return Ok(0);}
                                 let h=headers.borrow();
                                 if http {
+                                    if metadata.context.solver.is_some() && crate::solver::is_html(&h.content_type) {
+                                        invalid=Some("source_expired: Hosted source returned HTML; refresh it in the browser".into());return Ok(0);
+                                    }
                                     if matches!(h.status,301|302|303|307|308){return Ok(0);}
                                     if h.status>=400 {invalid=Some(crate::failure::http_error(h.status));return Ok(0);}
                                     if h.invalid || ranged && (h.status!=206 || h.range!=Some((offset,segment.end,metadata.total.unwrap())) || h.encoding.as_deref().is_some_and(|v|!v.eq_ignore_ascii_case("identity"))) {

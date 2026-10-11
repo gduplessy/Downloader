@@ -183,6 +183,18 @@ fn scan(job: &Job, settings: &Settings, control: &AtomicU8) -> Result<()> {
 }
 fn verified(job: &mut Job, control: &AtomicU8) -> Result<()> {
     let part = transfer::part_path(job);
+    if job.solver_outcome.as_deref() == Some("solver_resolved") {
+        let mut prefix = [0u8; 4096];
+        let n = File::open(&part)?.read(&mut prefix)?;
+        let text = String::from_utf8_lossy(&prefix[..n]).to_ascii_lowercase();
+        let text = text.trim_start_matches('\u{feff}').trim_start();
+        if text.starts_with("<!doctype html")
+            || text.starts_with("<html")
+            || crate::solver::blocked_reason(text).is_some()
+        {
+            bail!("source_expired: Hosted source returned a page instead of a file; refresh it in the browser");
+        }
+    }
     if job.total != Some(job.bytes)
         || std::fs::metadata(&part)
             .context("storage_error: Recovery input is missing")?

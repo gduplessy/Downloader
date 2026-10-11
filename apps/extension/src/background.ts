@@ -1,6 +1,6 @@
 import { applyEvents } from '../../../packages/shared/src/events';
 import browser from 'webextension-polyfill';
-import { navigationAvailable } from './resolver-policy';
+import { navigationAvailable, shouldSolve } from './resolver-policy';
 import {
   defaults,
   eligible,
@@ -44,7 +44,15 @@ async function load() {
   await pollResolvers();
 }
 async function native(command: string, args?: unknown): Promise<any> {
-  if (['claim_navigation', 'resolve', 'browser_status', 'refresh_browser'].includes(command))
+  if (
+    [
+      'claim_navigation',
+      'resolve',
+      'browser_status',
+      'refresh_browser',
+      'solve_challenge',
+    ].includes(command)
+  )
     args = { ...(args as object), owner: await profile };
   if (['add', 'navigate'].includes(command))
     args = { ...(args as any), context: { ...(args as any)?.context, profile: await profile } };
@@ -446,7 +454,7 @@ browser.contextMenus.onClicked.addListener((info, tab) => {
           url,
           paused: true,
           description: '',
-          context: { headers: {} },
+          context: { headers: {}, private: tab?.incognito ?? false },
           media: null,
           filename: null,
           directory: null,
@@ -669,12 +677,39 @@ async function resolverStep(message: any, tabId: number, currentUrl: string) {
   if (!entry || message.url !== currentUrl) return { click: false, repeat: false };
   const id = entry[0].slice(9),
     record = entry[1] as ResolverRecord,
-    job = (await browserSnapshot()).jobs.find((j: any) => j.id === id);
+    snapshot = await browserSnapshot(),
+    job = snapshot.jobs.find((j: any) => j.id === id);
   if (!job || !['waiting_browser', 'waiting_user'].includes(job.state) || record.downloadId)
     return { click: false, repeat: false };
   const decision = message.decision;
   if (!['wait', 'user', 'click'].includes(decision?.kind))
     throw Error('Invalid navigation decision');
+  if (
+    shouldSolve(
+      decision.blocker,
+      snapshot.solver_enabled === true,
+      snapshot.solver_direct === true,
+      job.solver_attempted === true,
+      job.private === true,
+    )
+  ) {
+    await native('browser_status', {
+      id,
+      state: 'waiting_user',
+      url: currentUrl,
+      message: 'Browser challenge detected.',
+      bytes: 0,
+      total: null,
+    });
+    try {
+      await native('solve_challenge', { id, url: currentUrl, automatic: true });
+      return { click: false, repeat: false };
+    } catch (error) {
+      if (String(error).includes('solver_busy')) return { click: false, repeat: true };
+      await browser.storage.local.set({ lastError: String(error) });
+      return { click: false, repeat: false };
+    }
+  }
   const repeated =
     record.fingerprint === message.fingerprint && Date.now() - (record.clickedAt ?? 0) < 15000;
   if (
@@ -684,6 +719,7 @@ async function resolverStep(message: any, tabId: number, currentUrl: string) {
   ) {
     await native('browser_status', {
       id,
+      url: currentUrl,
       state: 'waiting_user',
       message: String(
         decision.reason || 'Automatic navigation limit reached. Continue in the browser.',
@@ -707,6 +743,7 @@ async function resolverStep(message: any, tabId: number, currentUrl: string) {
   }
   await native('browser_status', {
     id,
+    url: currentUrl,
     state: 'waiting_browser',
     message: String(decision.reason).slice(0, 1024),
     bytes: 0,
@@ -715,6 +752,25 @@ async function resolverStep(message: any, tabId: number, currentUrl: string) {
   return { click: decision.kind === 'click' && !repeated, repeat: true };
 }
 browser.tabs.onUpdated.addListener((tabId, change) => {
+  if (change.url)
+    void (async () => {
+      const storage = await browser.storage.local.get(null);
+      const entry = Object.entries(storage).find(
+        ([key, r]) => key.startsWith('resolver-') && (r as ResolverRecord).tabId === tabId,
+      );
+      if (!entry) return;
+      const id = entry[0].slice(9);
+      const job = (await browserSnapshot()).jobs.find((j: any) => j.id === id);
+      if (job?.state === 'solving_challenge')
+        await native('browser_status', {
+          id,
+          url: change.url,
+          state: 'waiting_user',
+          message: 'Page changed during challenge resolution.',
+          bytes: 0,
+          total: null,
+        });
+    })().catch(() => {});
   if (change.status === 'complete')
     void (async () => {
       if (BROWSER === 'firefox') {

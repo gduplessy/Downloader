@@ -253,12 +253,16 @@ pub fn blocked_reason(html: &str) -> Option<&'static str> {
     if !elements(&doc, "input[type=password]").is_empty() {
         return Some("solver_authentication");
     }
-    if !elements(
+    if elements(
         &doc,
         "[role=timer],[data-countdown],[id*=countdown],[class*=countdown]",
     )
-    .is_empty()
-    {
+    .iter()
+    .any(|e| {
+        regex::Regex::new(r"\b[1-9]\d*\b")
+            .unwrap()
+            .is_match(&e.text().collect::<String>())
+    }) {
         return Some("solver_countdown");
     }
     if !elements(
@@ -406,10 +410,15 @@ pub fn resolve(
     profile: Option<String>,
     settings: &Settings,
     control: &AtomicU8,
+    id: &str,
 ) -> Result<Resolved> {
     if !settings.solver.enabled {
         bail!("solver_disabled");
     }
+    uuid::Uuid::parse_str(
+        id.strip_prefix("downloader-")
+            .context("Invalid owned solver session")?,
+    )?;
     // The local container cannot transparently inherit OS/PAC/browser routing.
     if settings.network.proxy_mode != crate::network::ProxyMode::Direct {
         bail!("solver_routing");
@@ -418,24 +427,59 @@ pub fn resolve(
     if !["http", "https"].contains(&u.scheme()) {
         bail!("solver_source");
     }
-    let id = format!("downloader-{}", uuid::Uuid::new_v4());
-    api(
-        &settings.solver,
-        Some(&json!({"cmd":"sessions.create","session":id})),
-        control,
-    )?;
-    let result = resolve_session(page, profile, settings, control, &id);
+    let result = (|| {
+        api(
+            &settings.solver,
+            Some(&json!({"cmd":"sessions.create","session":id})),
+            control,
+        )?;
+        resolve_session(page, profile, settings, control, id)
+    })();
     // Cleanup must proceed even when the job has been cancelled.
+    let cleanup = destroy(&settings.solver, id);
+    if result.is_ok() && cleanup.is_err() {
+        bail!("solver_cleanup");
+    }
+    result
+}
+pub(crate) fn destroy(settings: &SolverSettings, id: &str) -> Result<()> {
+    uuid::Uuid::parse_str(
+        id.strip_prefix("downloader-")
+            .context("Invalid owned solver session")?,
+    )?;
     let cleanup = SolverSettings {
         timeout_seconds: 5,
-        ..settings.solver.clone()
+        ..settings.clone()
     };
-    let _ = api(
+    api(
         &cleanup,
         Some(&json!({"cmd":"sessions.destroy","session":id})),
         &AtomicU8::new(0),
-    );
-    result
+    )?;
+    Ok(())
+}
+pub fn outcome(error: &str) -> &'static str {
+    for key in [
+        "solver_expired",
+        "solver_authentication",
+        "solver_countdown",
+        "solver_browser_challenge",
+        "solver_captcha",
+        "solver_ambiguous",
+        "solver_loop",
+        "solver_step_limit",
+        "solver_routing",
+        "solver_cleanup",
+    ] {
+        if error == key {
+            return key;
+        }
+    }
+    if error.contains("timed out") || error == "solver_timeout" {
+        "solver_timeout"
+    } else {
+        "solver_unavailable"
+    }
 }
 fn resolve_session(
     page: &str,

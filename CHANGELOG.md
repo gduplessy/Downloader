@@ -2,6 +2,13 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.4.0 — Owned challenge navigation
+
+- Run asynchronous, globally serialized solver jobs through the service; preserve profile ownership, cancellation and restart recovery, and reject stale page results.
+- Automatically attempt recognized browser challenges once after opt-in. Keep custom CAPTCHA, authentication, expiry, countdowns and ambiguous controls in browser navigation.
+- Preserve temporary cookies and the matching User-Agent in ranged transfers; reject hosted HTML before publication, including pages labeled as binary.
+- Desktop controls and live qualification remain in progress.
+
 ## 0.3.0 — Local challenge adapter foundation
 
 - Add a bounded loopback FlareSolverr client, conservative GET page resolution, temporary cookie/User-Agent context, and deterministic response/policy regressions.
