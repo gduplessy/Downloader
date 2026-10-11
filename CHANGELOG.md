@@ -2,6 +2,11 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.8.7 — Define one-use navigation authorization lifecycle
+
+- Add bounded, expiring grants tied to the exact session, source, claim, document, adapter and inspected fingerprint; preparation has no capture or request side effects.
+- Verify replay, cancellation, tab replacement, changed authority and unsafe destinations. Worker prepare/commit/cancel wiring remains the next integration increment.
+
 ## 0.8.6 — Integrate adapter preview cancellation and qualification
 
 - Preserve preview lifetime cancellation across asynchronous worker authorization, keyboard recovery and control highlight restoration alongside durable scheduler waits.

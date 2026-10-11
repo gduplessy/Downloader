@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.8.6<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.8.7<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -19,6 +19,8 @@ Coordinator staging combines versioned adapters, validated countdowns, the durab
 Generation-qualified wait alarms and unresolved-task readmission are integrated. The scheduler report distinguishes real renderer/engine fixtures from installed-extension and live-host acceptance.
 
 Final adapter preview cancellation, keyboard recovery and local qualification evidence are integrated; installed worker/session binding and downstream transfer acceptance remain coordinator checks.
+
+One-use authorization lifecycle tests cover source/claim/document changes, expiry, cancellation and tab replacement. Production prepare/commit/cancel dispatch and installed-extension acceptance remain pending integration.
 
 | ID     | Capability and remaining scope                                      | Next work and completion criteria                                                                                                                                                                                                                                                                                                                                                   | Status                  |
 | :----- | :------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------- |
