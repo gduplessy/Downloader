@@ -4,7 +4,7 @@ use std::{
     collections::HashMap,
     path::Path,
     sync::{
-        atomic::{AtomicBool, AtomicU64, AtomicU8, Ordering},
+        atomic::{AtomicBool, AtomicU8, Ordering},
         Arc, Mutex,
     },
     time::Duration,
@@ -17,7 +17,6 @@ pub struct Engine {
     pub queues: Mutex<Vec<Queue>>,
     contexts: Mutex<HashMap<String, RequestContext>>,
     controls: Mutex<HashMap<String, Arc<AtomicU8>>>,
-    sequence: AtomicU64,
     pub stopping: AtomicBool,
 }
 impl Engine {
@@ -28,22 +27,29 @@ impl Engine {
             .into_iter()
             .next()
             .unwrap_or_default();
+        store.put("settings", "main", &settings)?;
         let mut jobs = HashMap::new();
         for mut job in store.all::<Job>("job")? {
             if matches!(
                 job.state,
-                JobState::Assembling | JobState::Scanning | JobState::Complete
+                JobState::Verifying
+                    | JobState::Assembling
+                    | JobState::Scanning
+                    | JobState::Complete
             ) {
                 match crate::finalize::recover(&mut job, &settings) {
                     Ok(()) => {
                         store.put("job", &job.id, &job)?;
                         if job.state == JobState::Complete && transfer::part_path(&job).is_file() {
-                            std::fs::remove_file(transfer::part_path(&job))?;
+                            let _ = std::fs::remove_file(transfer::part_path(&job));
                         }
                     }
                     Err(e) => {
                         job.state = JobState::Failed;
                         job.error = Some(security::redact(&e.to_string()));
+                        job.failure = Some(crate::failure::TransferFailure::classify(
+                            job.error.as_deref().unwrap(),
+                        ));
                         store.put("job", &job.id, &job)?;
                     }
                 }
@@ -66,14 +72,30 @@ impl Engine {
             queues.push(Queue::default());
             store.put("queue", "default", &queues[0])?;
         }
+        let contexts = jobs
+            .iter()
+            .filter_map(|(id, job)| {
+                let j = job.lock().unwrap();
+                if !j.browser_source {
+                    Some((
+                        id.clone(),
+                        RequestContext {
+                            credential_id: j.credential_id.clone(),
+                            ..Default::default()
+                        },
+                    ))
+                } else {
+                    None
+                }
+            })
+            .collect();
         Ok(Arc::new(Self {
             store: Arc::new(Mutex::new(store)),
             jobs: Mutex::new(jobs),
             settings: Mutex::new(settings),
             queues: Mutex::new(queues),
-            contexts: Mutex::new(HashMap::new()),
+            contexts: Mutex::new(contexts),
             controls: Mutex::new(HashMap::new()),
-            sequence: AtomicU64::new(1),
             stopping: AtomicBool::new(false),
         }))
     }
@@ -89,28 +111,59 @@ impl Engine {
         });
     }
     pub fn snapshot(&self) -> Snapshot {
-        let mut jobs: Vec<_> = self
-            .jobs
-            .lock()
-            .unwrap()
-            .values()
-            .map(|j| j.lock().unwrap().clone())
-            .collect();
+        // Job changes and their events commit in the same SQLite transaction.
+        // Reading all records under this lock makes the reconnect cursor coherent.
+        let store = self.store.lock().unwrap();
+        Self::stored_snapshot(&store)
+    }
+    fn stored_snapshot(store: &Store) -> Snapshot {
+        let mut jobs = store.all::<Job>("job").expect("Read durable jobs");
         jobs.sort_by_key(|j| j.created);
-        let settings = self.settings.lock().unwrap().clone();
+        let settings = store
+            .all::<Settings>("settings")
+            .expect("Read settings")
+            .into_iter()
+            .next()
+            .unwrap_or_default();
         Snapshot {
             version: PROTOCOL_VERSION,
-            sequence: self.sequence.load(Ordering::Relaxed),
+            sequence: store.sequence().expect("Read event cursor"),
             jobs,
-            queues: self.queues.lock().unwrap().clone(),
+            queues: store.all("queue").expect("Read queues"),
             components: media::components(&settings),
             settings,
         }
     }
+    pub fn subscribe(&self, after: Option<u64>, limit: usize) -> Result<EventBatch> {
+        if !(1..=1000).contains(&limit) {
+            bail!("Event limit must be between 1 and 1000");
+        }
+        let store = self.store.lock().unwrap();
+        if let Some((events, has_more)) =
+            after.map(|s| store.replay(s, limit)).transpose()?.flatten()
+        {
+            let sequence = events
+                .last()
+                .map(|e| e.sequence)
+                .unwrap_or(store.sequence()?);
+            return Ok(EventBatch {
+                snapshot: None,
+                events,
+                sequence,
+                has_more,
+            });
+        }
+        let snapshot = Self::stored_snapshot(&store);
+        Ok(EventBatch {
+            sequence: snapshot.sequence,
+            snapshot: Some(snapshot),
+            events: vec![],
+            has_more: false,
+        })
+    }
     fn persist(&self, job: &transfer::SharedJob) -> Result<()> {
         let job = job.lock().unwrap().clone();
         self.store.lock().unwrap().put("job", &job.id, &job)?;
-        self.sequence.fetch_add(1, Ordering::Relaxed);
         Ok(())
     }
     pub fn job(&self, id: &str) -> Result<transfer::SharedJob> {
@@ -132,7 +185,18 @@ impl Engine {
                 bail!("Expected checksum must be a SHA-256 hex digest");
             }
         }
+        use sha2::{Digest, Sha256};
+        let fingerprint = format!("{:x}", Sha256::digest(serde_json::to_vec(&request)?));
         let mut jobs = self.jobs.lock().unwrap();
+        if let Some((id, hash)) = self.store.lock().unwrap().request(&request.request_id)? {
+            if hash.is_some_and(|h| h != fingerprint) {
+                bail!("request_conflict: Request ID was already used with a different payload");
+            }
+            return jobs
+                .get(&id)
+                .map(|j| j.lock().unwrap().clone())
+                .context("request_removed: Original job was removed; use a new request ID");
+        }
         if let Some(existing) = jobs
             .values()
             .map(|j| j.lock().unwrap().clone())
@@ -179,6 +243,10 @@ impl Engine {
             bail!("Unknown queue");
         }
         let job = Job {
+            metrics: Default::default(),
+            request_fingerprint: Some(fingerprint),
+            credential_id: request.context.credential_id.clone(),
+            private: request.context.private,
             id: uuid::Uuid::new_v4().to_string(),
             request_id: request.request_id,
             url: request.url,
@@ -202,6 +270,9 @@ impl Engine {
             segments: vec![],
             checksum: request.checksum,
             error: None,
+            failure: None,
+            verified_sha256: None,
+            partial_created: false,
             created: chrono::Utc::now(),
             updated: chrono::Utc::now(),
             media: request.media,
@@ -209,7 +280,7 @@ impl Engine {
             browser_source: request.context.browser.is_some(),
             viable: false,
             page_url: None,
-            navigation_owner: None,
+            navigation_owner: request.context.profile.clone(),
         };
         self.store.lock().unwrap().put("job", &job.id, &job)?;
         self.contexts
@@ -217,11 +288,24 @@ impl Engine {
             .unwrap()
             .insert(job.id.clone(), request.context);
         jobs.insert(job.id.clone(), Arc::new(Mutex::new(job.clone())));
-        self.sequence.fetch_add(1, Ordering::Relaxed);
         Ok(job)
     }
     pub fn command(self: &Arc<Self>, command: Command) -> Result<serde_json::Value> {
         match command {
+            Command::Negotiate { minimum, maximum } => {
+                if minimum > PROTOCOL_VERSION || maximum < PROTOCOL_VERSION || minimum > maximum {
+                    bail!("protocol_mismatch: Supported protocol is 1");
+                }
+                Ok(
+                    serde_json::json!({"selected":PROTOCOL_VERSION,"minimum":1,"maximum":1,"features":["durable_idempotency","sequenced_events","snapshot_first"]}),
+                )
+            }
+            Command::Subscribe {
+                after_sequence,
+                limit,
+            } => Ok(serde_json::to_value(
+                self.subscribe(after_sequence, limit)?,
+            )?),
             Command::Navigate(mut add) => {
                 if add.media.is_some() {
                     bail!("Page navigation and media extraction are separate source types");
@@ -367,6 +451,8 @@ impl Engine {
                 let j = self.job(&id)?;
                 if let Some(c) = self.controls.lock().unwrap().get(&id) {
                     c.store(1, Ordering::Relaxed);
+                    // The transfer owns flushing/checkpointing active offsets.
+                    return Ok(serde_json::json!({"id":id}));
                 } else {
                     let mut job = j.lock().unwrap();
                     if job.state != JobState::Complete && job.state != JobState::Cancelled {
@@ -380,6 +466,7 @@ impl Engine {
                 let j = self.job(&id)?;
                 if let Some(c) = self.controls.lock().unwrap().get(&id) {
                     c.store(2, Ordering::Relaxed);
+                    return Ok(serde_json::json!({"id":id}));
                 } else {
                     j.lock().unwrap().state = JobState::Cancelled;
                 }
@@ -411,13 +498,31 @@ impl Engine {
                     job.segments.clear();
                     job.etag = None;
                     job.modified = None;
+                    job.verified_sha256 = None;
+                    job.partial_created = false;
+                    job.metrics = Default::default();
                 }
                 job.state = JobState::Queued;
                 job.error = None;
+                job.failure = None;
                 job.viable = false;
                 drop(job);
                 self.persist(&j)?;
                 Ok(serde_json::json!({"id":id}))
+            }
+            Command::RefreshBrowser {
+                id,
+                owner,
+                url,
+                mut context,
+            } => {
+                let job = self.job(&id)?.lock().unwrap().clone();
+                if !job.browser_source || job.navigation_owner.as_deref() != Some(&owner) {
+                    bail!("Browser profile cannot refresh this job");
+                }
+                context.browser = Some("extension".into());
+                context.profile = Some(owner);
+                self.command(Command::Refresh { id, url, context })
             }
             Command::Refresh { id, url, context } => {
                 security::validate_url(&url)?;
@@ -426,7 +531,14 @@ impl Engine {
                     bail!("Pause the download before refreshing its source");
                 }
                 let j = self.job(&id)?;
-                j.lock().unwrap().url = url;
+                {
+                    let mut job = j.lock().unwrap();
+                    if matches!(job.state, JobState::Complete | JobState::Cancelled) {
+                        bail!("Finished jobs cannot refresh their source");
+                    }
+                    job.url = url;
+                    job.credential_id = context.credential_id.clone();
+                }
                 self.contexts.lock().unwrap().insert(id, context);
                 self.persist(&j)?;
                 let result = serde_json::to_value(j.lock().unwrap().clone())?;
@@ -450,6 +562,7 @@ impl Engine {
                 Ok(serde_json::json!({"id":id}))
             }
             Command::Settings(settings) => {
+                settings.network.validate()?;
                 if settings.max_jobs == 0
                     || settings.max_jobs > 32
                     || settings.connections == 0
@@ -583,7 +696,7 @@ impl Engine {
             Command::Diagnostics => {
                 let s = self.snapshot();
                 Ok(
-                    serde_json::json!({"version":env!("CARGO_PKG_VERSION"),"protocol":PROTOCOL_VERSION,"platform":std::env::consts::OS,"curl":curl::Version::get().version(),"http2":curl::Version::get().feature_http2(),"components":s.components,"jobs":s.jobs.iter().map(|j|serde_json::json!({"id":j.id,"state":j.state,"bytes":j.bytes,"error":j.error.as_ref().map(|e|security::redact(e))})).collect::<Vec<_>>()}),
+                    serde_json::json!({"version":env!("CARGO_PKG_VERSION"),"protocol":PROTOCOL_VERSION,"platform":std::env::consts::OS,"curl":curl::Version::get().version(),"http2":curl::Version::get().feature_http2(),"capabilities":crate::network::capabilities(),"connections":crate::pool::diagnostics(),"components":s.components,"jobs":s.jobs.iter().map(|j|serde_json::json!({"id":j.id,"state":j.state,"bytes":j.bytes,"error":j.error.as_ref().map(|e|security::redact(e))})).collect::<Vec<_>>()}),
                 )
             }
             Command::Quit => {
@@ -712,25 +825,6 @@ impl Engine {
                 {
                     break;
                 }
-                let host = url::Url::parse(&candidate.url)?
-                    .host_str()
-                    .unwrap_or("")
-                    .to_string();
-                let host_active = self
-                    .snapshot()
-                    .jobs
-                    .iter()
-                    .filter(|j| {
-                        j.state.active()
-                            && url::Url::parse(&j.url)
-                                .ok()
-                                .and_then(|u| u.host_str().map(str::to_owned))
-                                == Some(host.clone())
-                    })
-                    .count();
-                if host_active * settings.connections >= settings.host_connections {
-                    continue;
-                }
                 let j = self.job(&candidate.id)?;
                 let control = Arc::new(AtomicU8::new(0));
                 self.controls
@@ -747,15 +841,7 @@ impl Engine {
                     .cloned()
                     .unwrap_or_default();
                 let engine = self.clone();
-                let mut limits = settings.clone();
-                limits.connections = limits
-                    .connections
-                    .min(
-                        limits
-                            .host_connections
-                            .saturating_sub(host_active * limits.connections),
-                    )
-                    .max(1);
+                let limits = settings.clone();
                 let rate = if settings.speed_limit > 0 {
                     settings.speed_limit / settings.max_jobs as u64
                 } else {
@@ -783,23 +869,46 @@ impl Engine {
                             rate,
                         )
                     };
+                    // Failure must not publish in-memory offsets whose fsync or commit failed.
+                    let durable = if !is_media && result.is_err() {
+                        let id = j.lock().unwrap().id.clone();
+                        Some(engine.store.lock().unwrap().get::<Job>("job", &id))
+                    } else {
+                        None
+                    };
+                    let allow_persist = durable.as_ref().is_none_or(|r| r.is_ok());
                     let mut controls = engine.controls.lock().unwrap();
                     {
                         let mut job = j.lock().unwrap();
+                        if let Some(Ok(durable)) = durable {
+                            *job = durable;
+                        }
                         job.speed = 0;
+                        let result = if control.load(Ordering::Relaxed) != 0
+                            && result
+                                .as_ref()
+                                .is_err_and(|e| e.to_string().contains("operation_cancelled"))
+                        {
+                            Ok(())
+                        } else {
+                            result
+                        };
                         if let Err(e) = result {
                             let message = security::redact(&e.to_string());
-                            job.state = if message.contains("authentication_required")
-                                || message.contains("HTTP 401")
-                            {
-                                JobState::WaitingAuthentication
-                            } else if message.contains("source_changed")
-                                || message.contains("HTTP 403")
-                            {
-                                JobState::WaitingSource
-                            } else {
-                                JobState::Failed
+                            let failure = crate::failure::TransferFailure::classify(&message);
+                            job.state = match failure.code {
+                                crate::failure::FailureCode::AuthenticationRequired => {
+                                    JobState::WaitingAuthentication
+                                }
+                                crate::failure::FailureCode::SourceExpired
+                                | crate::failure::FailureCode::SourceChanged
+                                | crate::failure::FailureCode::ResumeUnsupported
+                                | crate::failure::FailureCode::RangeInvalid => {
+                                    JobState::WaitingSource
+                                }
+                                _ => JobState::Failed,
                             };
+                            job.failure = Some(failure);
                             job.error = Some(message);
                         } else if control.load(Ordering::Relaxed) != 0 {
                             job.state = match control.load(Ordering::Relaxed) {
@@ -810,14 +919,15 @@ impl Engine {
                             };
                         }
                     }
-                    let _ = engine.persist(&j);
+                    if allow_persist {
+                        let _ = engine.persist(&j);
+                    }
                     let id = j.lock().unwrap().id.clone();
                     controls.remove(&id);
                 });
             }
         }
         let _ = active;
-        self.sequence.fetch_add(1, Ordering::Relaxed);
         Ok(())
     }
     pub fn shutdown(&self) {
@@ -871,5 +981,101 @@ mod tests {
         r.request_id = "other".into();
         let b = e.add(r).unwrap();
         assert_ne!(a.destination, b.destination);
+    }
+    #[test]
+    fn durable_event_reconnect_and_request_tombstones() {
+        let dir = tempfile::tempdir().unwrap();
+        let e = Engine::open(dir.path()).unwrap();
+        let first = e.subscribe(None, 10).unwrap();
+        assert!(first.snapshot.is_some());
+        let j = e.add(request(dir.path())).unwrap();
+        let batch = e.subscribe(Some(first.sequence), 10).unwrap();
+        assert!(batch
+            .events
+            .iter()
+            .any(|v| matches!(&v.payload,EventPayload::JobLifecycle{job} if job.id==j.id)));
+        assert!(batch.snapshot.is_none());
+        let mut different = request(dir.path());
+        different.url = "https://example.com/other.zip".into();
+        assert!(e
+            .add(different)
+            .unwrap_err()
+            .to_string()
+            .contains("request_conflict"));
+        e.command(Command::Remove {
+            id: j.id,
+            delete_file: false,
+        })
+        .unwrap();
+        assert!(e
+            .add(request(dir.path()))
+            .unwrap_err()
+            .to_string()
+            .contains("request_removed"));
+        let last = e.subscribe(Some(batch.sequence), 10).unwrap().sequence;
+        drop(e);
+        let e = Engine::open(dir.path()).unwrap();
+        assert!(e.snapshot().sequence >= last);
+        assert!(e.add(request(dir.path())).is_err());
+        assert!(e.subscribe(Some(u64::MAX), 10).unwrap().snapshot.is_some());
+        assert!(e
+            .command(Command::Negotiate {
+                minimum: 2,
+                maximum: 3
+            })
+            .is_err());
+    }
+    #[test]
+    fn active_controls_do_not_publish_unflushed_progress() {
+        let directory = tempfile::tempdir().unwrap();
+        let e = Engine::open(directory.path()).unwrap();
+        let j = e.add(request(directory.path())).unwrap();
+        e.controls
+            .lock()
+            .unwrap()
+            .insert(j.id.clone(), Arc::new(AtomicU8::new(0)));
+        {
+            let shared = e.job(&j.id).unwrap();
+            let mut job = shared.lock().unwrap();
+            job.state = JobState::Downloading;
+            job.bytes = 123;
+        }
+        for command in [
+            Command::Pause { id: j.id.clone() },
+            Command::Cancel { id: j.id.clone() },
+        ] {
+            e.command(command).unwrap();
+            let durable: Job = e.store.lock().unwrap().get("job", &j.id).unwrap();
+            assert_eq!(durable.bytes, 0);
+        }
+    }
+    #[test]
+    fn browser_refresh_requires_the_owning_profile() {
+        let directory = tempfile::tempdir().unwrap();
+        let e = Engine::open(directory.path()).unwrap();
+        let owner = uuid::Uuid::new_v4().to_string();
+        let mut request = request(directory.path());
+        request.context.browser = Some("extension".into());
+        request.context.profile = Some(owner.clone());
+        let j = e.add(request).unwrap();
+        assert!(e
+            .command(Command::RefreshBrowser {
+                id: j.id.clone(),
+                owner: uuid::Uuid::new_v4().to_string(),
+                url: "https://example.com/refreshed".into(),
+                context: RequestContext::default()
+            })
+            .is_err());
+        e.command(Command::RefreshBrowser {
+            id: j.id.clone(),
+            owner,
+            url: "https://example.com/refreshed".into(),
+            context: RequestContext::default(),
+        })
+        .unwrap();
+        let refreshed = e.job(&j.id).unwrap().lock().unwrap().clone();
+        assert_eq!(refreshed.url, "https://example.com/refreshed");
+        assert_eq!(refreshed.bytes, j.bytes);
+        assert_eq!(refreshed.segments.len(), j.segments.len());
     }
 }

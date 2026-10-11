@@ -1,6 +1,7 @@
 import { build } from 'esbuild';
 import { mkdir, writeFile, readFile, copyFile } from 'node:fs/promises';
 import { generateKeyPairSync, createHash } from 'node:crypto';
+const { version } = JSON.parse(await readFile(new URL('./package.json', import.meta.url), 'utf8'));
 let key;
 try {
   key = JSON.parse(await readFile('identity.json', 'utf8')).key;
@@ -33,7 +34,7 @@ for (const target of ['chromium', 'firefox']) {
   });
   const common = {
     name: 'Downloader',
-    version: '0.1.0',
+    version,
     description: 'Local, open-source download manager with reliable browser handoff.',
     permissions: ['downloads', 'nativeMessaging', 'storage', 'contextMenus', 'activeTab', 'alarms'],
     icons: { 32: 'icon32.png', 128: 'icon128.png' },

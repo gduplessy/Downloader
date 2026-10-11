@@ -10,6 +10,7 @@ struct RemoteReader<'a> {
     length: u64,
     position: u64,
     budget: usize,
+    etag: Option<String>,
 }
 impl Read for RemoteReader<'_> {
     fn read(&mut self, buffer: &mut [u8]) -> std::io::Result<usize> {
@@ -20,13 +21,13 @@ impl Read for RemoteReader<'_> {
             .len()
             .min(256 * 1024)
             .min(self.budget)
-            .min((self.length - self.position) as usize);
+            .min((self.length - self.position).min(usize::MAX as u64) as usize);
         if size == 0 {
             return Err(std::io::Error::other(
                 "ZIP preview exceeds 16 MiB metadata budget",
             ));
         }
-        let (_, bytes) = transfer::fetch_bytes(
+        let (headers, bytes) = transfer::fetch_bytes(
             self.url,
             self.context,
             self.settings,
@@ -34,6 +35,13 @@ impl Read for RemoteReader<'_> {
             Some((self.position, self.position + size as u64 - 1)),
         )
         .map_err(|e| std::io::Error::other(e.to_string()))?;
+        if self
+            .etag
+            .as_ref()
+            .is_some_and(|e| headers.etag.as_ref() != Some(e))
+        {
+            return Err(std::io::Error::other("Source changed during ZIP preview"));
+        }
         buffer[..bytes.len()].copy_from_slice(&bytes);
         self.position += bytes.len() as u64;
         self.budget -= bytes.len();
@@ -83,6 +91,7 @@ pub fn preview(
             length,
             position: 0,
             budget: 16 * 1024 * 1024,
+            etag: meta.etag.clone().filter(|v| !v.starts_with("W/")),
         })
     } else if length <= 16 * 1024 * 1024 {
         let (_, bytes) = transfer::fetch_bytes(url, context, settings, 16 * 1024 * 1024, None)?;

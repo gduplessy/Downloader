@@ -1,3 +1,4 @@
+import { applyEvents } from '../../../packages/shared/src/events';
 import browser from 'webextension-polyfill';
 import { navigationAvailable } from './resolver-policy';
 import {
@@ -29,6 +30,8 @@ const requests = new Map<
 const ongoing = new Set<number>();
 let settings: CaptureSettings = { ...defaults };
 let observerInstalled = false;
+let eventSnapshot: any = null;
+let eventPoll: Promise<any> | null = null;
 async function load() {
   settings = {
     ...defaults,
@@ -41,14 +44,19 @@ async function load() {
   await pollResolvers();
 }
 async function native(command: string, args?: unknown): Promise<any> {
-  if (['claim_navigation', 'resolve', 'browser_status'].includes(command))
+  if (['claim_navigation', 'resolve', 'browser_status', 'refresh_browser'].includes(command))
     args = { ...(args as object), owner: await profile };
+  if (['add', 'navigate'].includes(command))
+    args = { ...(args as any), context: { ...(args as any)?.context, profile: await profile } };
+  const requestId = crypto.randomUUID();
   const response: any = await browser.runtime.sendNativeMessage(HOST, {
     version: 1,
-    id: crypto.randomUUID(),
+    id: requestId,
     command,
     ...(args === undefined ? {} : { args }),
   });
+  if (response?.id !== requestId || response?.version !== 1)
+    throw Error('Invalid native response envelope');
   if (!response?.ok) throw Error(response?.error?.message ?? 'Native host unavailable');
   return response.data;
 }
@@ -293,12 +301,12 @@ async function capture(item: browser.Downloads.DownloadItem, resolverId?: string
             context: await context((item as Download).finalUrl || item.url, item.incognito),
           })
         : add((item as Download).finalUrl || item.url, id, item.filename, item.incognito),
-    job: async (id) => (await native('snapshot')).jobs.find((j: any) => j.id === id),
+    job: async (id) => (await browserSnapshot()).jobs.find((j: any) => j.id === id),
     cancelNative: async (id) => {
       if (resolverId) {
         await native('pause', { id });
         for (let attempt = 0; attempt < 50; attempt++) {
-          const job = (await native('snapshot')).jobs.find((job: any) => job.id === id);
+          const job = (await browserSnapshot()).jobs.find((job: any) => job.id === id);
           if (
             !job ||
             !['connecting', 'downloading', 'verifying', 'assembling', 'scanning'].includes(
@@ -411,7 +419,7 @@ async function recover() {
     if (!key.startsWith('pending-') || !value) continue;
     const p = value as any;
     try {
-      const snap = await native('snapshot');
+      const snap = await browserSnapshot();
       const job = snap.jobs.find((j: any) => j.id === p.jobId || j.request_id === p.requestId);
       if (job && (job.viable || job.state === 'complete'))
         await browser.downloads.cancel(p.downloadId);
@@ -489,7 +497,20 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
         ...(await browser.storage.local.get(['lastCapture', 'lastError'])),
       },
     }));
-  if (message.type === 'snapshot') return native('snapshot');
+  if (message.type === 'refresh_session')
+    return (async () => {
+      const job = (await browserSnapshot()).jobs.find((j: any) => j.id === message.id);
+      if (!job || !['waiting_authentication', 'waiting_source'].includes(job.state))
+        throw Error('Job is not waiting for a session');
+      const url = new URL(message.url).href;
+      await native('refresh_browser', {
+        id: job.id,
+        url,
+        context: await context(url, job.private ?? false),
+      });
+      return native('resume', { id: job.id, restart: false });
+    })();
+  if (message.type === 'snapshot') return browserSnapshot();
   if (message.type === 'bypass') {
     settings.bypassUntil = Date.now() + 300000;
     return browser.storage.local.set({ settings });
@@ -595,7 +616,7 @@ async function pollResolvers(userGesture = false) {
   if (polling) return;
   polling = true;
   try {
-    const snapshot = await native('snapshot');
+    const snapshot = await browserSnapshot();
     const storage: Record<string, any> = await browser.storage.local.get(null);
     const active: any[] = [];
     for (const [key, record] of Object.entries(storage)) {
@@ -648,7 +669,7 @@ async function resolverStep(message: any, tabId: number, currentUrl: string) {
   if (!entry || message.url !== currentUrl) return { click: false, repeat: false };
   const id = entry[0].slice(9),
     record = entry[1] as ResolverRecord,
-    job = (await native('snapshot')).jobs.find((j: any) => j.id === id);
+    job = (await browserSnapshot()).jobs.find((j: any) => j.id === id);
   if (!job || !['waiting_browser', 'waiting_user'].includes(job.state) || record.downloadId)
     return { click: false, repeat: false };
   const decision = message.decision;
@@ -739,3 +760,26 @@ browser.tabs.onRemoved.addListener(
 browser.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'resolver-poll') void pollResolvers();
 });
+
+async function browserSnapshot(): Promise<any> {
+  if (eventPoll) return eventPoll;
+  eventPoll = (async () => {
+    if (!eventSnapshot) await native('negotiate', { minimum: 1, maximum: 1 });
+    const batch = await native('subscribe', {
+      after_sequence: eventSnapshot?.sequence ?? null,
+      limit: 50,
+    });
+    eventSnapshot = applyEvents(eventSnapshot, batch);
+    if (!eventSnapshot)
+      eventSnapshot = (await native('subscribe', { after_sequence: null, limit: 50 })).snapshot;
+    return eventSnapshot;
+  })();
+  try {
+    return await eventPoll;
+  } catch (e) {
+    eventSnapshot = null;
+    throw e;
+  } finally {
+    eventPoll = null;
+  }
+}

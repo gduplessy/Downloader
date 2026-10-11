@@ -1,0 +1,3001 @@
+{
+  "platform": "win32",
+  "results": [
+    {
+      "name": "http",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.15625,
+      "metrics": {
+        "checkpoint_seconds": 0.0135591,
+        "checkpoints": 1,
+        "publication_seconds": 0.0001547,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0263472
+      },
+      "peak_rss_bytes": 14696448,
+      "phases_seconds": {
+        "Connecting": 0.0220892,
+        "Downloading": 0.112534,
+        "Queued": 0.2587221,
+        "Verifying": 0.0202961
+      },
+      "resumed": false,
+      "seconds": 0.4238454,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "https",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.15625,
+      "metrics": {
+        "checkpoint_seconds": 0.0127848,
+        "checkpoints": 1,
+        "publication_seconds": 0.000193,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0263077
+      },
+      "peak_rss_bytes": 17162240,
+      "phases_seconds": {
+        "Connecting": 0.0317613,
+        "Downloading": 0.1102471,
+        "Queued": 0.0106436,
+        "Verifying": 0.0202437
+      },
+      "resumed": false,
+      "seconds": 0.1812142,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "tls_untrusted",
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "destination_exists": false,
+      "expected_failure": "network_failure",
+      "recovery": [
+        "check_network",
+        "resume"
+      ]
+    },
+    {
+      "name": "proxy_unavailable",
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "destination_exists": false,
+      "expected_failure": "network_failure",
+      "recovery": [
+        "check_network",
+        "resume"
+      ]
+    },
+    {
+      "name": "http2_tls",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.3125,
+      "metrics": {
+        "checkpoint_seconds": 0.0114377,
+        "checkpoints": 1,
+        "publication_seconds": 0.000174,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0261198
+      },
+      "peak_rss_bytes": 17694720,
+      "phases_seconds": {
+        "Connecting": 0.0318967,
+        "Downloading": 0.1494091,
+        "Queued": 0.258109,
+        "Verifying": 0.0203075
+      },
+      "resumed": false,
+      "seconds": 0.468404,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "ftp",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 4
+      },
+      "cpu_seconds": 0.09375,
+      "metrics": {
+        "checkpoint_seconds": 0.0147738,
+        "checkpoints": 2,
+        "publication_seconds": 0.0001536,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0264745
+      },
+      "peak_rss_bytes": 14000128,
+      "phases_seconds": {
+        "Connecting": 0.0101444,
+        "Downloading": 1.0854187,
+        "Queued": 0.2545505,
+        "Verifying": 0.0202957
+      },
+      "resumed": true,
+      "seconds": 1.3801925,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "ftp_explicit_tls",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 2
+      },
+      "cpu_seconds": 0.125,
+      "metrics": {
+        "checkpoint_seconds": 0.0143977,
+        "checkpoints": 1,
+        "publication_seconds": 0.0001529,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0270757
+      },
+      "peak_rss_bytes": 16936960,
+      "phases_seconds": {
+        "Assembling": 0.0101116,
+        "Connecting": 0.0306372,
+        "Downloading": 0.0819922,
+        "Queued": 0.255924,
+        "Verifying": 0.0207784
+      },
+      "resumed": false,
+      "seconds": 0.4078354,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "ftps_implicit",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 2
+      },
+      "cpu_seconds": 0.09375,
+      "metrics": {
+        "checkpoint_seconds": 0.0143389,
+        "checkpoints": 1,
+        "publication_seconds": 0.0001694,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0264674
+      },
+      "peak_rss_bytes": 17043456,
+      "phases_seconds": {
+        "Connecting": 0.0307873,
+        "Downloading": 0.0849244,
+        "Queued": 0.2560798,
+        "Verifying": 0.0204384
+      },
+      "resumed": false,
+      "seconds": 0.4013882,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "http_proxy",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.046875,
+      "metrics": {
+        "checkpoint_seconds": 0.013457,
+        "checkpoints": 1,
+        "publication_seconds": 0.0001476,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0265086
+      },
+      "peak_rss_bytes": 13824000,
+      "phases_seconds": {
+        "Connecting": 0.0104146,
+        "Downloading": 0.1782249,
+        "Queued": 0.0101834,
+        "Verifying": 0.0202886
+      },
+      "resumed": false,
+      "seconds": 0.2302583,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "http_connect",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.15625,
+      "metrics": {
+        "checkpoint_seconds": 0.0133515,
+        "checkpoints": 1,
+        "publication_seconds": 0.000141,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0263101
+      },
+      "peak_rss_bytes": 17465344,
+      "phases_seconds": {
+        "Connecting": 0.02058,
+        "Downloading": 0.1421403,
+        "Queued": 0.0101924,
+        "Verifying": 0.0203105
+      },
+      "resumed": false,
+      "seconds": 0.2020272,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "https_proxy",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.328125,
+      "metrics": {
+        "checkpoint_seconds": 0.0123471,
+        "checkpoints": 1,
+        "publication_seconds": 0.0001525,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0266289
+      },
+      "peak_rss_bytes": 17629184,
+      "phases_seconds": {
+        "Connecting": 0.0313753,
+        "Downloading": 0.198142,
+        "Queued": 0.0101281,
+        "Verifying": 0.0203073
+      },
+      "resumed": false,
+      "seconds": 0.268642,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "socks4",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.109375,
+      "metrics": {
+        "checkpoint_seconds": 0.0046036,
+        "checkpoints": 1,
+        "publication_seconds": 0.0001226,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0263061
+      },
+      "peak_rss_bytes": 13860864,
+      "phases_seconds": {
+        "Downloading": 0.0823111,
+        "Queued": 0.2583192,
+        "Verifying": 0.0311536
+      },
+      "resumed": false,
+      "seconds": 0.3803966,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "socks5",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.0625,
+      "metrics": {
+        "checkpoint_seconds": 0.0114434,
+        "checkpoints": 1,
+        "publication_seconds": 0.0001267,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0261994
+      },
+      "peak_rss_bytes": 14028800,
+      "phases_seconds": {
+        "Downloading": 0.0875901,
+        "Queued": 0.2576123,
+        "Verifying": 0.0202852
+      },
+      "resumed": false,
+      "seconds": 0.3744841,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "socks5h",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.046875,
+      "metrics": {
+        "checkpoint_seconds": 0.0127764,
+        "checkpoints": 1,
+        "publication_seconds": 0.000137,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0264392
+      },
+      "peak_rss_bytes": 13955072,
+      "phases_seconds": {
+        "Downloading": 0.0820305,
+        "Queued": 0.0116703,
+        "Verifying": 0.0208251
+      },
+      "resumed": false,
+      "seconds": 0.1226731,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "basic",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "seconds": 0.0337086,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "digest",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "seconds": 0.0353614,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "compressed",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 1
+      },
+      "cpu_seconds": 0.109375,
+      "metrics": {
+        "checkpoint_seconds": 0.0033705,
+        "checkpoints": 1,
+        "publication_seconds": 0.0001578,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0267949
+      },
+      "peak_rss_bytes": 13746176,
+      "phases_seconds": {
+        "Connecting": 0.1542956,
+        "Downloading": 0.2151696,
+        "Queued": 0.2566428,
+        "Verifying": 0.0208068
+      },
+      "resumed": false,
+      "seconds": 0.6554138,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "zip64_offset",
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "entries": [
+        {
+          "compressed": 5,
+          "directory": false,
+          "name": "large-offset.txt",
+          "safe_path": true,
+          "size": 5
+        }
+      ]
+    },
+    {
+      "name": "retry_after",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 4
+      },
+      "cpu_seconds": 0.09375,
+      "metrics": {
+        "checkpoint_seconds": 0.0128633,
+        "checkpoints": 1,
+        "publication_seconds": 0.0001557,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0264069
+      },
+      "peak_rss_bytes": 14184448,
+      "phases_seconds": {
+        "Downloading": 1.035988,
+        "Queued": 0.0103993,
+        "Verifying": 0.0210297
+      },
+      "resumed": false,
+      "seconds": 1.0760356,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "pac",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.109375,
+      "metrics": {
+        "checkpoint_seconds": 0.0112813,
+        "checkpoints": 1,
+        "publication_seconds": 0.0001574,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0270266
+      },
+      "peak_rss_bytes": 15290368,
+      "phases_seconds": {
+        "Connecting": 0.3583234,
+        "Downloading": 0.0970242,
+        "Queued": 0.0101727,
+        "Verifying": 0.0208194
+      },
+      "resumed": false,
+      "seconds": 0.4952539,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_0ms_cap0_1connections_run1",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 3
+      },
+      "cpu_seconds": 0.09375,
+      "metrics": {
+        "checkpoint_seconds": 0.0145706,
+        "checkpoints": 1,
+        "publication_seconds": 0.0001574,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0271152
+      },
+      "peak_rss_bytes": 13721600,
+      "phases_seconds": {
+        "Downloading": 0.0513626,
+        "Queued": 0.010217,
+        "Verifying": 0.0210302
+      },
+      "resumed": false,
+      "seconds": 0.0906784,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_0ms_cap0_1connections_run2",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 3
+      },
+      "cpu_seconds": 0.078125,
+      "metrics": {
+        "checkpoint_seconds": 0.0148786,
+        "checkpoints": 1,
+        "publication_seconds": 0.0001517,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0285083
+      },
+      "peak_rss_bytes": 13742080,
+      "phases_seconds": {
+        "Assembling": 0.0103516,
+        "Downloading": 0.0532292,
+        "Queued": 0.2566913,
+        "Verifying": 0.0208977
+      },
+      "resumed": false,
+      "seconds": 0.3493456,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_0ms_cap0_1connections_run3",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 3
+      },
+      "cpu_seconds": 0.078125,
+      "metrics": {
+        "checkpoint_seconds": 0.0151524,
+        "checkpoints": 1,
+        "publication_seconds": 0.0001513,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0272832
+      },
+      "peak_rss_bytes": 13697024,
+      "phases_seconds": {
+        "Downloading": 0.053082,
+        "Queued": 0.2565529,
+        "Verifying": 0.0202901
+      },
+      "resumed": false,
+      "seconds": 0.3396337,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_0ms_cap0_4connections_run1",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.09375,
+      "metrics": {
+        "checkpoint_seconds": 0.0108045,
+        "checkpoints": 1,
+        "publication_seconds": 0.0001525,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0260833
+      },
+      "peak_rss_bytes": 13856768,
+      "phases_seconds": {
+        "Downloading": 0.1238881,
+        "Queued": 0.2550862,
+        "Verifying": 0.0205046
+      },
+      "resumed": false,
+      "seconds": 0.408752,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_0ms_cap0_4connections_run2",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.09375,
+      "metrics": {
+        "checkpoint_seconds": 0.014023,
+        "checkpoints": 1,
+        "publication_seconds": 0.0001527,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0265941
+      },
+      "peak_rss_bytes": 13946880,
+      "phases_seconds": {
+        "Downloading": 0.1108495,
+        "Queued": 0.2552854,
+        "Verifying": 0.0202424
+      },
+      "resumed": false,
+      "seconds": 0.395737,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_0ms_cap0_4connections_run3",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.109375,
+      "metrics": {
+        "checkpoint_seconds": 0.0107429,
+        "checkpoints": 1,
+        "publication_seconds": 0.0001629,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0266232
+      },
+      "peak_rss_bytes": 13885440,
+      "phases_seconds": {
+        "Downloading": 0.1010162,
+        "Queued": 0.2567922,
+        "Verifying": 0.0205467
+      },
+      "resumed": false,
+      "seconds": 0.3869207,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap0_1connections_run1",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 3
+      },
+      "cpu_seconds": 0.1875,
+      "metrics": {
+        "checkpoint_seconds": 0.0174232,
+        "checkpoints": 7,
+        "publication_seconds": 0.0001637,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0272129
+      },
+      "peak_rss_bytes": 13762560,
+      "phases_seconds": {
+        "Downloading": 6.5998281,
+        "Queued": 0.2570736,
+        "Verifying": 0.0305632
+      },
+      "resumed": false,
+      "seconds": 6.8968619,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap0_1connections_run2",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 3
+      },
+      "cpu_seconds": 0.09375,
+      "metrics": {
+        "checkpoint_seconds": 0.0198387,
+        "checkpoints": 7,
+        "publication_seconds": 0.0001547,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0271667
+      },
+      "peak_rss_bytes": 13856768,
+      "phases_seconds": {
+        "Downloading": 6.6108553,
+        "Queued": 0.256343,
+        "Verifying": 0.0311282
+      },
+      "resumed": false,
+      "seconds": 6.9065103,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap0_1connections_run3",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 3
+      },
+      "cpu_seconds": 0.09375,
+      "metrics": {
+        "checkpoint_seconds": 0.0199503,
+        "checkpoints": 6,
+        "publication_seconds": 0.0001453,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0275059
+      },
+      "peak_rss_bytes": 13746176,
+      "phases_seconds": {
+        "Downloading": 5.7441768,
+        "Queued": 0.2563655,
+        "Verifying": 0.0306956
+      },
+      "resumed": false,
+      "seconds": 6.0396585,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap0_4connections_run1",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.1875,
+      "metrics": {
+        "checkpoint_seconds": 0.017124999999999998,
+        "checkpoints": 5,
+        "publication_seconds": 0.0001435,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0268204
+      },
+      "peak_rss_bytes": 13983744,
+      "phases_seconds": {
+        "Assembling": 0.0100989,
+        "Downloading": 1.6685294000000002,
+        "Queued": 0.259563,
+        "Verifying": 0.0203026
+      },
+      "resumed": false,
+      "seconds": 1.9673273999999998,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap0_4connections_run2",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.09375,
+      "metrics": {
+        "checkpoint_seconds": 0.017532700000000002,
+        "checkpoints": 5,
+        "publication_seconds": 0.0001662,
+        "scan_seconds": 0,
+        "verification_seconds": 0.026636
+      },
+      "peak_rss_bytes": 13930496,
+      "phases_seconds": {
+        "Downloading": 1.5433131,
+        "Queued": 0.2572074,
+        "Verifying": 0.0202667
+      },
+      "resumed": false,
+      "seconds": 1.8291149,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap0_4connections_run3",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 3
+      },
+      "cpu_seconds": 0.078125,
+      "metrics": {
+        "checkpoint_seconds": 0.013002799999999998,
+        "checkpoints": 5,
+        "publication_seconds": 0.0001291,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0266482
+      },
+      "peak_rss_bytes": 13983744,
+      "phases_seconds": {
+        "Downloading": 1.5849008,
+        "Queued": 0.2583497,
+        "Verifying": 0.0305156
+      },
+      "resumed": false,
+      "seconds": 1.8820259,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap2_1connections_run1",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 3
+      },
+      "cpu_seconds": 0.09375,
+      "metrics": {
+        "checkpoint_seconds": 0.0171688,
+        "checkpoints": 6,
+        "publication_seconds": 0.0001371,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0267623
+      },
+      "peak_rss_bytes": 13893632,
+      "phases_seconds": {
+        "Downloading": 5.7938978,
+        "Queued": 0.2559911,
+        "Verifying": 0.0203573
+      },
+      "resumed": false,
+      "seconds": 6.079395,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap2_1connections_run2",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 3
+      },
+      "cpu_seconds": 0.109375,
+      "metrics": {
+        "checkpoint_seconds": 0.0165707,
+        "checkpoints": 6,
+        "publication_seconds": 0.000127,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0260384
+      },
+      "peak_rss_bytes": 13873152,
+      "phases_seconds": {
+        "Downloading": 5.7321946,
+        "Queued": 0.255991,
+        "Verifying": 0.0210119
+      },
+      "resumed": false,
+      "seconds": 6.0183072,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap2_1connections_run3",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 3
+      },
+      "cpu_seconds": 0.1875,
+      "metrics": {
+        "checkpoint_seconds": 0.0170282,
+        "checkpoints": 7,
+        "publication_seconds": 0.000165,
+        "scan_seconds": 0,
+        "verification_seconds": 0.026144
+      },
+      "peak_rss_bytes": 13758464,
+      "phases_seconds": {
+        "Downloading": 6.4686542,
+        "Queued": 0.2553986,
+        "Verifying": 0.0311207
+      },
+      "resumed": false,
+      "seconds": 6.7638435999999995,
+      "segments": 1,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap2_4connections_run1",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 5
+      },
+      "cpu_seconds": 0.15625,
+      "metrics": {
+        "checkpoint_seconds": 0.012666100000000001,
+        "checkpoints": 5,
+        "publication_seconds": 0.0001482,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0262036
+      },
+      "peak_rss_bytes": 14372864,
+      "phases_seconds": {
+        "Assembling": 0.0100957,
+        "Downloading": 4.6424709,
+        "Queued": 0.2568097,
+        "Verifying": 0.0210299
+      },
+      "resumed": false,
+      "seconds": 4.9407253,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap2_4connections_run2",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 5
+      },
+      "cpu_seconds": 0.09375,
+      "metrics": {
+        "checkpoint_seconds": 0.018797300000000003,
+        "checkpoints": 5,
+        "publication_seconds": 0.0001694,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0260588
+      },
+      "peak_rss_bytes": 14319616,
+      "phases_seconds": {
+        "Connecting": 0.0101174,
+        "Downloading": 4.6291564,
+        "Queued": 0.2548792,
+        "Verifying": 0.0207315
+      },
+      "resumed": false,
+      "seconds": 4.9242242,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    },
+    {
+      "name": "benchmark_2ms_cap2_4connections_run3",
+      "bytes": 33554432,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 4,
+        "idle": 4,
+        "reused": 5
+      },
+      "cpu_seconds": 0.09375,
+      "metrics": {
+        "checkpoint_seconds": 0.0137443,
+        "checkpoints": 5,
+        "publication_seconds": 0.0001419,
+        "scan_seconds": 0,
+        "verification_seconds": 0.0257556
+      },
+      "peak_rss_bytes": 14258176,
+      "phases_seconds": {
+        "Connecting": 0.0101291,
+        "Downloading": 4.8320364,
+        "Queued": 0.2546197,
+        "Verifying": 0.0202847
+      },
+      "resumed": false,
+      "seconds": 5.1255949,
+      "segments": 4,
+      "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292"
+    }
+  ],
+  "observations": {
+    "requests": [
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "2.0",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "2.0",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "2.0",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "2.0",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "2.0",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "2.0",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "2.0",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/basic",
+        "version": "1.1",
+        "method": "GET"
+      },
+      {
+        "path": "/digest",
+        "version": "1.1",
+        "method": "GET"
+      },
+      {
+        "path": "/digest",
+        "version": "1.1",
+        "method": "GET"
+      },
+      {
+        "path": "/compressed",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/compressed",
+        "version": "1.1",
+        "method": "GET"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294969504-4294971551"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294971530-4294971551"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294971510-4294971529"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294971454-4294971457"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294971454-4294971509"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294971392-4294971437"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294971438-4294971453"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-29"
+      },
+      {
+        "path": "/retry",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/retry",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/retry",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/retry",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/retry",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/retry",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/retry",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/retry",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-8388607"
+      },
+      {
+        "path": "/proxy.pac",
+        "version": "1.1",
+        "method": "GET"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8413018-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8413018-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-25165823"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-25165823"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=8388608-16777215"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=25165824-33554431"
+      },
+      {
+        "path": "/file",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=16777216-25165823"
+      }
+    ],
+    "proxy": 15,
+    "socks": 12,
+    "ftpRest": 8,
+    "ftpTls": 1,
+    "maxActive": 6,
+    "active": 2
+  },
+  "source_revision": "83cdd8fb157ff4b368ccaa90957cb49e8d3029a3",
+  "product_version": "0.2.0",
+  "ci_run": "https://github.com/gduplessy/Downloader/actions/runs/38103251279",
+  "scope": "All jobs in this post-IPC-repair run passed. Native GUI/install/browser acceptance and newer patch fixtures remain separate."
+}

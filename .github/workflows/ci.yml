@@ -1,5 +1,13 @@
 name: Build and test
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      large:
+        description: Run actual downloads above 4 GiB on every platform
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -23,14 +31,40 @@ jobs:
           cache: pnpm
       - name: Linux prerequisites
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev libxdo-dev librsvg2-dev patchelf libcurl4-openssl-dev libssl-dev
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev libxdo-dev librsvg2-dev patchelf libcurl4-openssl-dev libssl-dev libnghttp2-dev libkrb5-dev libproxy1v5 libpacparser1
       - run: pnpm install --frozen-lockfile
+      - run: pnpm version:check
       - run: cargo fmt --all -- --check
-      - run: cargo test -p downloader-core -p downloader-service -p downloader-cli
+      - run: cargo test -p downloader-core -p downloader-service -p downloader-cli --features downloader-core/fault-injection
+      - run: cargo clippy -p downloader-core -p downloader-service -p downloader-cli --all-targets --features downloader-core/fault-injection -- -D warnings
+      - name: Qualification binary
+        run: cargo build --release -p downloader-core --example qualify
+        env:
+          CARGO_TARGET_DIR: .local/engine-target
+      - name: Protocol, proxy, authentication and performance fixtures
+        run: node scripts/qualify-network.mjs .local/network-qualification --benchmark
+      - name: Actual large-file recovery
+        if: github.event_name == 'workflow_dispatch' && inputs.large
+        run: node scripts/qualify-network.mjs .local/large-qualification --only large_over_4gib --large
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: transfer-evidence-${{ runner.os }}
+          path: |
+            .local/network-qualification/results.json
+            .local/large-qualification/results.json
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      - run: node scripts/version.mjs --artifacts
       - run: cargo build -p downloader-service -p downloader-cli
+      - name: CLI and native IPC lifecycle acceptance
+        run: node scripts/qualify-control.mjs .local/control-qualification
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: control-evidence-${{ runner.os }}
+          path: .local/control-qualification/results.json
       - run: node scripts/prepare-sidecar.mjs --debug
       - run: cargo check -p downloader-desktop
       - uses: actions/upload-artifact@v4

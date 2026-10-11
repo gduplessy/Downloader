@@ -1,5 +1,7 @@
 # Downloader roadmap
 
+Current product version: <!-- product-version -->0.2.7<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+
 This roadmap tracks the limitations stated in the README, implementation status, compatibility matrix, acceptance evidence, and component notices. It explicitly includes currently unsupported capabilities, including **CAPTCHA automation / bypass**.
 
 An unchecked item is unfinished. **Planned** means implementation work; **qualification** means evidence is missing even where code exists; **research** means feasibility and a supported approach must be established; **later** means outside the initial release matrix. Listing an item does not claim that it works today or promise universal website support.
@@ -25,16 +27,18 @@ The initial release still targets Windows 11 x64, macOS 14+ Intel and Apple Sili
 
 ## 2. Transfer engine, correctness, and networking
 
-- [ ] **ENG-01 — Protocol qualification:** complete HTTP/HTTPS, HTTP/2, FTP/FTPS, redirect, proxy, and authentication coverage. Explicitly qualify FTP resume and the capabilities of each shipped libcurl build.
-- [ ] **ENG-02 — Hostile response fixtures:** malformed/ignored ranges, missing HEAD, unknown and empty streams, compression, truncation, unexpected full responses, throttling, `Retry-After`, changed/missing validators, expired links, and Unicode filenames.
-- [ ] **ENG-03 — Large-file evidence:** transfer, resume, checkpoint, checksum, and finalization fixtures above 4 GiB; ensure offsets and ZIP64 metadata stay correct.
-- [ ] **ENG-04 — Connection pooling:** reuse connections across jobs, enforce host/global limits, adapt segmentation to server limits, and benchmark single versus segmented transfers.
-- [ ] **ENG-05 — Recovery fault injection:** terminate during checkpointing, verification, assembly, scanning, and rename/copy finalization; recover with matching hashes and no false completion.
-- [ ] **ENG-06 — Filesystem failures:** disk full, permission denial, path traversal, hostile/reserved filenames, collisions, locked files, cross-filesystem finalization, and overwrite protection.
-- [ ] **ENG-07 — Networking controls:** qualify HTTP/HTTPS and SOCKS proxies, system/PAC settings, Basic/Digest/NTLM/Negotiate authentication, and redirect credential isolation. Explain when desktop routing differs from browser-only VPN/proxy routing.
-- [ ] **ENG-08 — Expired-source recovery:** explicit authentication-required, expired-link, changed-content, and unsupported-resume states; support browser-assisted source refresh without merging incompatible bytes.
-- [ ] **ENG-09 — Public control protocol:** complete typed events, sequence numbers, reconnect snapshots, version negotiation, and idempotency acceptance across desktop, CLI, and bridge clients.
-- [ ] **ENG-10 — Performance evidence:** publish throughput, CPU, memory, checkpoint, and finalization measurements; compare with IDM on Windows using identical fixtures rather than a universal speed claim.
+- [ ] **ENG-01 — Protocol qualification (implemented; partial qualification):** HTTP/HTTPS, HTTP/2, FTP REST resume, explicit/implicit FTPS, redirects and capability diagnostics pass deterministic fixtures on Windows/macOS/Linux. Remaining: external NTLM/Kerberos realms and final shipped libcurl/installer provenance.
+- [x] **ENG-02 — Hostile response fixtures:** strict malformed/ignored range and header validation, HEAD fallback, unknown/empty/compressed streams, truncated bodies, unexpected full responses, Retry-After/throttling, changed/missing validators, expired/authenticated sources and portable Unicode filename coverage.
+- [x] **ENG-03 — Large-file evidence:** actual 4,311,744,529-byte pause/reopen/resume/checkpoint/hash/publication passes on all three CI platforms; remote ZIP64 central-directory offsets above 4 GiB are verified.
+- [x] **ENG-04 — Connection pooling:** bounded session/routing-isolated reuse, host/global admission and concurrency backoff; repeated single/segmented measurements include server caps and hashes.
+- [x] **ENG-05 — Recovery fault injection:** ten actual subprocess termination boundaries cover partial creation, checkpoints, verification, assembly/publication, scanning and staged copies. Recovered output hashes match; no falsely completed jobs.
+- [ ] **ENG-06 — Filesystem failures (implemented; partial qualification):** durable ownership/offsets, filename/path validation, collision and overwrite protection, write/flush injection, Windows locked files, Unix path aliases and recoverable staged copies are covered. Remaining: real disk-full/permission-denial/cross-volume acceptance matrices.
+- [ ] **ENG-07 — Networking controls (routing implemented; policy work and qualification remain):** HTTP/HTTPS CONNECT, SOCKS4/5/5h, local platform PAC, Basic/Digest and redirect isolation fixtures pass. Desktop system/direct/manual/PAC/TLS/authentication settings and browser-routing guidance exist. Remaining: implement ordered PAC proxy failover; qualify enterprise system/PAC/WPAD/bypass policies and external NTLM/Negotiate realms.
+- [x] **ENG-08 — Expired-source recovery:** typed authentication/expired/changed/resume failures with recovery actions, profile-owned browser refresh and explicit restart decisions; fixtures prevent incompatible byte merging. Stable-browser acceptance remains WEB work.
+- [x] **ENG-09 — Public control protocol:** transactional typed/sequence events, snapshot-first reconnect/replay, negotiation, durable idempotency/tombstones, CLI watch and browser-safe creation/refresh/event projection. Real native-messaging and CLI/service fixtures pass on Windows/macOS/Linux, including repeated creation, privacy, pause/resume and service restart. Native GUI/browser matrix remains separate WEB/REL work.
+- [ ] **ENG-10 — Performance evidence (partial):** throughput, engine CPU/RSS, checkpoint, verification and finalization measurements and reproducible fixtures are published. Remaining: successful IDM comparison. Installed IDM produced zero fixture requests/output in two 180-second attempts; no comparative result is claimed.
+
+Patches 0.2.1–0.2.5 add Windows bypass wildcard/boundary and case-insensitive protocol-map regressions, real malformed-range fallback, encoded Unicode filenames, browser-safe native creation/refresh responses, primary-failure preservation across cancelled sibling connections and actual Last-Modified validation when ETags are weak. See [implementation, measurements and sanitized evidence](TRANSFER_ENGINE.md). Checked engine items establish their deterministic acceptance criteria, not full native/browser/install acceptance or universal website support.
 
 ## 3. Download management, queues, and scheduling
 

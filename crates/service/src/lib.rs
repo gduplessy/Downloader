@@ -18,18 +18,21 @@ pub const HOST_NAME: &str = "org.downloader.native";
 const MAX_MESSAGE: usize = 1024 * 1024;
 
 fn socket_name() -> Result<interprocess::local_socket::Name<'static>> {
+    socket_for_directory(&data_dir())
+}
+fn socket_for_directory(directory: &Path) -> Result<interprocess::local_socket::Name<'static>> {
     #[cfg(windows)]
     {
         use std::hash::{Hash, Hasher};
         let mut hash = std::collections::hash_map::DefaultHasher::new();
-        data_dir().hash(&mut hash);
+        directory.hash(&mut hash);
         Ok(format!("downloader-{:x}", hash.finish())
             .to_ns_name::<GenericNamespaced>()?
             .into_owned())
     }
     #[cfg(unix)]
     {
-        Ok(data_dir()
+        Ok(directory
             .join("engine.sock")
             .to_fs_name::<GenericFilePath>()?
             .into_owned())
@@ -75,6 +78,10 @@ pub fn call(command: downloader_core::Command) -> Result<serde_json::Value> {
     let bytes =
         read_frame(&mut stream, 8 * MAX_MESSAGE)?.context("Engine closed the connection")?;
     let response: Response = serde_json::from_slice(&bytes)?;
+    if response.version != PROTOCOL_VERSION || response.id != request.id {
+        bail!("protocol_mismatch: Engine response does not match this request");
+    }
+
     if !response.ok {
         bail!(
             "{}",
@@ -128,21 +135,7 @@ pub fn serve() -> Result<()> {
         use std::os::unix::fs::PermissionsExt;
         std::fs::set_permissions(&directory, std::fs::Permissions::from_mode(0o700))?;
     }
-    let options = ListenerOptions::new().name(socket_name()?);
-    #[cfg(windows)]
-    let options = {
-        use interprocess::os::windows::{
-            local_socket::ListenerOptionsExt, security_descriptor::SecurityDescriptor,
-        };
-        let sddl = widestring::U16CString::from_str("D:P(A;;GA;;;OW)")?;
-        options.security_descriptor(SecurityDescriptor::deserialize(&sddl)?)
-    };
-    #[cfg(unix)]
-    let options = {
-        use interprocess::os::unix::local_socket::ListenerOptionsExt;
-        options.mode(0o600)
-    };
-    let listener = options.create_sync()?;
+    let listener = restricted_listener(&directory)?;
     let engine = Engine::open(&directory)?;
     engine.start();
     for stream in listener.incoming() {
@@ -158,6 +151,54 @@ pub fn serve() -> Result<()> {
     engine.shutdown();
     Ok(())
 }
+fn restricted_listener(directory: &Path) -> Result<interprocess::local_socket::Listener> {
+    let options = ListenerOptions::new().name(socket_for_directory(directory)?);
+    #[cfg(windows)]
+    let options = {
+        use interprocess::os::windows::{
+            local_socket::ListenerOptionsExt, security_descriptor::SecurityDescriptor,
+        };
+        let sddl = widestring::U16CString::from_str("D:P(A;;GA;;;OW)")?;
+        options.security_descriptor(SecurityDescriptor::deserialize(&sddl)?)
+    };
+    #[cfg(all(unix, not(target_os = "macos")))]
+    let options = {
+        use interprocess::os::unix::local_socket::ListenerOptionsExt;
+        options.mode(0o600)
+    };
+    let listener = options.create_sync()?;
+    #[cfg(target_os = "macos")]
+    {
+        // Darwin rejects fchmod on socket descriptors. The private 0700 parent
+        // protects the endpoint while we chmod the bound path, before accepting.
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(
+            directory.join("engine.sock"),
+            std::fs::Permissions::from_mode(0o600),
+        )?;
+    }
+    Ok(listener)
+}
+fn command_failure(id: String, error: &anyhow::Error) -> Response {
+    let message = downloader_core::security::redact(&error.to_string());
+    let prefix = message.split(':').next().unwrap_or("");
+    let code = match prefix {
+        "request_conflict"
+        | "request_removed"
+        | "protocol_mismatch"
+        | "authentication_required"
+        | "source_expired"
+        | "source_changed"
+        | "resume_unsupported"
+        | "range_invalid"
+        | "checksum_mismatch"
+        | "protocol_unsupported"
+        | "scan_failed" => prefix,
+        "storage_error" => "storage_failure",
+        _ => "command_failed",
+    };
+    Response::failure(id, code, message.clone())
+}
 fn handle(stream: &mut impl ReadWrite, engine: &Arc<Engine>) -> Result<()> {
     let data = read_frame(stream, MAX_MESSAGE)?.context("No request")?;
     let request: Request = serde_json::from_slice(&data)?;
@@ -170,11 +211,7 @@ fn handle(stream: &mut impl ReadWrite, engine: &Arc<Engine>) -> Result<()> {
     } else {
         match engine.command(request.command) {
             Ok(data) => Response::success(request.id, data),
-            Err(e) => Response::failure(
-                request.id,
-                "command_failed",
-                downloader_core::security::redact(&e.to_string()),
-            ),
+            Err(e) => command_failure(request.id, &e),
         }
     };
     write_frame(stream, &serde_json::to_vec(&response)?, 8 * MAX_MESSAGE)?;
@@ -309,14 +346,22 @@ pub fn native(args: &[String]) -> Result<()> {
                     add.directory = None;
                     add.checksum = None;
                     add.context.browser = Some("extension".into());
-                    call(downloader_core::Command::Add(add))
+                    call(downloader_core::Command::Add(add)).map(|job| browser_job(&job))
                 }
                 downloader_core::Command::Navigate(mut add) => {
                     add.directory = None;
                     add.checksum = None;
                     add.context.browser = Some("extension".into());
-                    call(downloader_core::Command::Navigate(add))
+                    call(downloader_core::Command::Navigate(add)).map(|job| browser_job(&job))
                 }
+                c @ downloader_core::Command::Negotiate { .. } => call(c),
+                downloader_core::Command::Subscribe {
+                    after_sequence,
+                    limit,
+                } => browser_events(call(downloader_core::Command::Subscribe {
+                    after_sequence,
+                    limit: limit.min(50),
+                })?),
                 downloader_core::Command::Snapshot => {
                     browser_snapshot(call(downloader_core::Command::Snapshot)?)
                 }
@@ -325,14 +370,16 @@ pub fn native(args: &[String]) -> Result<()> {
                 | downloader_core::Command::Cancel { .. }
                 | downloader_core::Command::Resolve { .. }
                 | downloader_core::Command::ClaimNavigation { .. }
-                | downloader_core::Command::BrowserStatus { .. }) => {
+                | downloader_core::Command::BrowserStatus { .. }
+                | downloader_core::Command::RefreshBrowser { .. }) => {
                     let id = match &c {
                         downloader_core::Command::Pause { id }
                         | downloader_core::Command::Resume { id, .. }
                         | downloader_core::Command::Cancel { id }
                         | downloader_core::Command::Resolve { id, .. }
                         | downloader_core::Command::ClaimNavigation { id, .. }
-                        | downloader_core::Command::BrowserStatus { id, .. } => id,
+                        | downloader_core::Command::BrowserStatus { id, .. }
+                        | downloader_core::Command::RefreshBrowser { id, .. } => id,
                         _ => unreachable!(),
                     };
                     let snapshot = call(downloader_core::Command::Snapshot)?;
@@ -342,7 +389,17 @@ pub fn native(args: &[String]) -> Result<()> {
                     }) {
                         bail!("Browser cannot control this job");
                     }
-                    call(c)
+                    let returns_job = matches!(
+                        c,
+                        downloader_core::Command::Resolve { .. }
+                            | downloader_core::Command::RefreshBrowser { .. }
+                    );
+                    let data = call(c)?;
+                    Ok(if returns_job {
+                        browser_job(&data)
+                    } else {
+                        data
+                    })
                 }
                 c @ (downloader_core::Command::Inspect { .. }
                 | downloader_core::Command::InspectMedia { .. }) => call(c),
@@ -379,18 +436,79 @@ pub fn native(args: &[String]) -> Result<()> {
 fn browser_visible(job: &serde_json::Value) -> bool {
     job["browser_source"] == true || job["page_url"].is_string()
 }
+fn browser_job(j: &serde_json::Value) -> serde_json::Value {
+    serde_json::json!({"id":j["id"],"request_id":j["request_id"],"url":j["url"],"page_url":j["page_url"],"navigation_owner":j["navigation_owner"],"filename":j["filename"],"state":j["state"],"bytes":j["bytes"],"total":j["total"],"viable":j["viable"],"private":j["private"],"error":j["failure"]["code"],"failure":{"code":j["failure"]["code"],"retryable":j["failure"]["retryable"],"recovery":j["failure"]["recovery"]}})
+}
 fn browser_snapshot(data: serde_json::Value) -> Result<serde_json::Value> {
-    // No local paths, configuration, credentials, or unrelated desktop jobs.
-    let jobs=data["jobs"].as_array().context("Invalid engine snapshot")?.iter().filter(|j|browser_visible(j)).map(|j|serde_json::json!({
-        "id":j["id"],"request_id":j["request_id"],"url":j["url"],"page_url":j["page_url"],"navigation_owner":j["navigation_owner"],"filename":j["filename"],
-        "state":j["state"],"bytes":j["bytes"],"total":j["total"],"viable":j["viable"],"error":j["error"]
-    })).collect::<Vec<_>>();
+    let jobs = data["jobs"]
+        .as_array()
+        .context("Invalid engine snapshot")?
+        .iter()
+        .filter(|j| browser_visible(j))
+        .map(browser_job)
+        .collect::<Vec<_>>();
     Ok(serde_json::json!({"version":data["version"],"sequence":data["sequence"],"jobs":jobs}))
+}
+fn browser_events(mut data: serde_json::Value) -> Result<serde_json::Value> {
+    if data["snapshot"].is_object() {
+        data["snapshot"] = browser_snapshot(data["snapshot"].take())?;
+    }
+    let events=data["events"].as_array().context("Invalid engine event batch")?.iter().filter_map(|e| {
+        match e["type"].as_str() {
+            Some("job_lifecycle"|"job_progress") if browser_visible(&e["job"])=>{let mut e=e.clone();e["job"]=browser_job(&e["job"]);Some(e)},
+            Some("job_removed") if e["browser_source"]==true || e["page_url"].is_string()=>Some(serde_json::json!({"type":"job_removed","sequence":e["sequence"],"at":e["at"],"id":e["id"]})),
+            _=>None
+        }
+    }).collect::<Vec<_>>();
+    data["events"] = serde_json::to_value(events)?;
+    Ok(data)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(unix)]
+    #[test]
+    fn unix_endpoint_is_private_and_rebinds_after_shutdown() {
+        use std::os::unix::fs::PermissionsExt;
+        let directory = std::env::temp_dir().join(format!(
+            "dl-{:x}-{:x}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir(&directory).unwrap();
+        std::fs::set_permissions(&directory, std::fs::Permissions::from_mode(0o700)).unwrap();
+        for _ in 0..2 {
+            let listener = restricted_listener(&directory).unwrap();
+            assert_eq!(
+                std::fs::metadata(directory.join("engine.sock"))
+                    .unwrap()
+                    .permissions()
+                    .mode()
+                    & 0o777,
+                0o600
+            );
+            let stream = Stream::connect(socket_for_directory(&directory).unwrap()).unwrap();
+            drop(stream);
+            drop(listener);
+            assert!(!directory.join("engine.sock").exists());
+        }
+        std::fs::remove_dir(&directory).unwrap();
+    }
+    #[test]
+    fn request_conflicts_preserve_machine_readable_codes() {
+        let response = command_failure(
+            "request-1".into(),
+            &anyhow::anyhow!(
+                "request_conflict: Source https://example.com/file?secret=value differs"
+            ),
+        );
+        assert_eq!(response.error.as_ref().unwrap().code, "request_conflict");
+        assert!(!response.error.unwrap().message.contains("secret"));
+    }
     #[test]
     fn bounded_binary_framing() {
         let mut out = Vec::new();
@@ -400,5 +518,16 @@ mod tests {
             "العربية".as_bytes()
         );
         assert!(read_frame(&mut (2048u32.to_ne_bytes().as_slice()), 1024).is_err());
+    }
+    #[test]
+    fn browser_events_exclude_paths_settings_and_desktop_jobs() {
+        let job = serde_json::json!({"id":"browser","browser_source":true,"destination":"/secret/file","url":"https://example.com/file","failure":{"code":"storage_failure","message":"/secret/file denied","recovery":["check_storage"]}});
+        let result=browser_events(serde_json::json!({"snapshot":null,"sequence":4,"events":[{"type":"job_lifecycle","sequence":1,"job":job},{"type":"settings_changed","sequence":2},{"type":"job_progress","sequence":3,"job":{"id":"desktop","browser_source":false}},{"type":"job_removed","sequence":4,"id":"browser","browser_source":true}]})).unwrap();
+        assert_eq!(result["events"].as_array().unwrap().len(), 2);
+        assert_eq!(result["sequence"], 4);
+        let text = result.to_string();
+        assert!(!text.contains("/secret"));
+        assert!(!text.contains("desktop"));
+        assert!(!text.contains("settings_changed"));
     }
 }

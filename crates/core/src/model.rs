@@ -56,6 +56,8 @@ impl Segment {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct RequestContext {
     #[serde(default)]
+    pub profile: Option<String>,
+    #[serde(default)]
     pub headers: BTreeMap<String, String>,
     pub credential_id: Option<String>,
     pub browser: Option<String>,
@@ -93,6 +95,14 @@ pub struct AddJob {
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Job {
+    #[serde(default)]
+    pub metrics: TransferMetrics,
+    #[serde(default)]
+    pub request_fingerprint: Option<String>,
+    #[serde(default)]
+    pub credential_id: Option<String>,
+    #[serde(default)]
+    pub private: bool,
     pub id: String,
     pub request_id: String,
     pub url: String,
@@ -110,6 +120,12 @@ pub struct Job {
     pub segments: Vec<Segment>,
     pub checksum: Option<String>,
     pub error: Option<String>,
+    #[serde(default)]
+    pub failure: Option<crate::failure::TransferFailure>,
+    #[serde(default)]
+    pub verified_sha256: Option<String>,
+    #[serde(default)]
+    pub partial_created: bool,
     pub created: DateTime<Utc>,
     pub updated: DateTime<Utc>,
     pub media: Option<MediaOptions>,
@@ -168,6 +184,8 @@ pub struct Scanner {
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
+    #[serde(default)]
+    pub network: crate::network::NetworkSettings,
     pub directory: PathBuf,
     pub max_jobs: usize,
     pub connections: usize,
@@ -191,7 +209,11 @@ pub struct Settings {
 }
 impl Default for Settings {
     fn default() -> Self {
-        let directory = dirs::download_dir().unwrap_or_else(|| PathBuf::from("Downloads"));
+        let directory = dirs::download_dir().unwrap_or_else(|| {
+            dirs::home_dir()
+                .unwrap_or_else(|| std::env::temp_dir().join("Downloader"))
+                .join("Downloads")
+        });
         let categories = [
             (
                 "documents",
@@ -220,6 +242,7 @@ impl Default for Settings {
         })
         .collect();
         Self {
+            network: Default::default(),
             directory,
             max_jobs: 3,
             connections: 4,
@@ -241,13 +264,20 @@ impl Default for Settings {
     }
 }
 pub fn data_dir() -> PathBuf {
-    std::env::var_os("DOWNLOADER_DATA_DIR")
+    let path = std::env::var_os("DOWNLOADER_DATA_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|| {
             dirs::data_local_dir()
                 .unwrap_or_else(|| PathBuf::from("."))
                 .join("Downloader")
-        })
+        });
+    if path.is_absolute() {
+        path
+    } else {
+        std::env::current_dir()
+            .unwrap_or_else(|_| std::env::temp_dir())
+            .join(path)
+    }
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Snapshot {
@@ -269,6 +299,15 @@ pub struct ComponentStatus {
 #[serde(tag = "command", content = "args", rename_all = "snake_case")]
 pub enum Command {
     Snapshot,
+    Negotiate {
+        minimum: u32,
+        maximum: u32,
+    },
+    Subscribe {
+        after_sequence: Option<u64>,
+        #[serde(default = "event_limit")]
+        limit: usize,
+    },
     Add(AddJob),
     Navigate(AddJob),
     ClaimNavigation {
@@ -293,6 +332,13 @@ pub enum Command {
         #[serde(default)]
         bytes: u64,
         total: Option<u64>,
+    },
+    RefreshBrowser {
+        id: String,
+        owner: String,
+        url: String,
+        #[serde(default)]
+        context: RequestContext,
     },
     Pause {
         id: String,
@@ -432,4 +478,48 @@ pub struct GrabberFile {
     pub name: String,
     pub size: Option<u64>,
     pub content_type: String,
+}
+
+fn event_limit() -> usize {
+    100
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum EventPayload {
+    JobLifecycle {
+        job: Box<Job>,
+    },
+    JobProgress {
+        job: Box<Job>,
+    },
+    JobRemoved {
+        id: String,
+        browser_source: bool,
+        page_url: Option<String>,
+    },
+    SettingsChanged,
+    QueuesChanged,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EngineEvent {
+    pub sequence: u64,
+    pub at: DateTime<Utc>,
+    #[serde(flatten)]
+    pub payload: EventPayload,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EventBatch {
+    pub snapshot: Option<Snapshot>,
+    pub events: Vec<EngineEvent>,
+    pub sequence: u64,
+    pub has_more: bool,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct TransferMetrics {
+    pub checkpoints: u64,
+    pub checkpoint_seconds: f64,
+    pub verification_seconds: f64,
+    pub publication_seconds: f64,
+    pub scan_seconds: f64,
 }

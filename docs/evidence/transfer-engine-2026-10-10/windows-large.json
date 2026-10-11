@@ -1,0 +1,244 @@
+{
+  "platform": "win32",
+  "results": [
+    {
+      "name": "zip64_offset",
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "entries": [
+        {
+          "compressed": 5,
+          "directory": false,
+          "name": "large-offset.txt",
+          "safe_path": true,
+          "size": 5
+        }
+      ]
+    },
+    {
+      "name": "large_over_4gib",
+      "bytes": 4311744529,
+      "capabilities": {
+        "gzip": true,
+        "http2": true,
+        "https_proxy": true,
+        "large_files": true,
+        "negotiate": true,
+        "ntlm": true,
+        "protocols": [
+          "file",
+          "ftp",
+          "ftps",
+          "http",
+          "https",
+          "mqtt",
+          "mqtts",
+          "ws",
+          "wss"
+        ],
+        "system_pac": true,
+        "tls": "Schannel",
+        "version": "8.22.0-DEV"
+      },
+      "connections": {
+        "active": 0,
+        "created": 1,
+        "idle": 1,
+        "reused": 7
+      },
+      "cpu_seconds": 55.671875,
+      "metrics": {
+        "checkpoint_seconds": 30.43668090000003,
+        "checkpoints": 487,
+        "publication_seconds": 0.0018103,
+        "scan_seconds": 0,
+        "verification_seconds": 34.7243175
+      },
+      "peak_rss_bytes": 15798272,
+      "phases_seconds": {
+        "Assembling": 0.0308938,
+        "Connecting": 0.010509,
+        "Downloading": 79.5884821,
+        "Queued": 0.2605866,
+        "Verifying": 34.7262499
+      },
+      "resumed": true,
+      "seconds": 114.680186,
+      "segments": 1,
+      "sha256": "2583e615a4e14f529b88110b69aa85e6118d1ccf1e5c12fc7afdde4773efd399"
+    }
+  ],
+  "observations": {
+    "requests": [
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294969504-4294971551"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294971530-4294971551"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294971510-4294971529"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294971454-4294971457"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294971454-4294971509"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294971392-4294971437"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4294971438-4294971453"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/zip64",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-29"
+      },
+      {
+        "path": "/large",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/large",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/large",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/large",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-4311744528"
+      },
+      {
+        "path": "/large",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/large",
+        "version": "1.1",
+        "method": "HEAD"
+      },
+      {
+        "path": "/large",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=0-0"
+      },
+      {
+        "path": "/large",
+        "version": "1.1",
+        "method": "GET",
+        "range": "bytes=4295032832-4311744528"
+      }
+    ],
+    "proxy": 0,
+    "socks": 0,
+    "ftpRest": 0,
+    "ftpTls": 0,
+    "maxActive": 1
+  },
+  "recorded_at": "2026-10-10 America/New_York",
+  "environment": {
+    "os": "Windows 11 Pro 10.0.26100 x64",
+    "cpu": "Intel Core i7-5820K 3.30GHz, 12 logical processors",
+    "toolchain": "Rust 1.93.1 / Node 22"
+  },
+  "scope": "Local deterministic fixtures; native GUI and external realm qualification remain separate"
+}

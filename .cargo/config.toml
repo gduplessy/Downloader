@@ -1,0 +1,6 @@
+# curl 8.22 makes NTLM an explicit opt-in; curl-sys 0.4.91 compiles the
+# sources behind its ntlm feature but does not define the new enable macro.
+# cc applies this harmless define to workspace C dependencies. An externally
+# supplied CFLAGS remains authoritative; diagnostics report the actual result.
+[env]
+CFLAGS = { value = "-DCURL_ENABLE_NTLM", force = false }

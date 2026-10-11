@@ -2,6 +2,7 @@ import browser from 'webextension-polyfill';
 import { translate, type Key } from '../../../packages/shared/src/i18n';
 const element = (id: string) => document.getElementById(id)!;
 let pendingURL = '';
+let refreshJob: any = null;
 async function main() {
   const { settings, lastError } = (await browser.storage.local.get(['settings', 'lastError'])) as {
     settings?: { locale?: string };
@@ -12,6 +13,16 @@ async function main() {
     el.textContent = translate(locale, el.dataset.i18n as Key);
   document.documentElement.lang = locale;
   document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
+  element('refresh-session').onclick = () => {
+    const url = window.prompt(translate(locale, 'url'), refreshJob?.url ?? '');
+    if (url)
+      void browser.runtime
+        .sendMessage({ type: 'refresh_session', id: refreshJob.id, url })
+        .then(() => window.close())
+        .catch((e) => {
+          element('error').textContent = String(e);
+        });
+  };
   element('options').onclick = () => void browser.runtime.openOptionsPage();
   element('bypass').onclick = () =>
     void browser.runtime.sendMessage({ type: 'bypass' }).then(() => window.close());
@@ -26,6 +37,10 @@ async function main() {
     const snapshot: any = await browser.runtime.sendMessage({
       type: 'snapshot',
     });
+    refreshJob = snapshot.jobs.find((j: any) =>
+      ['waiting_authentication', 'waiting_source'].includes(j.state),
+    );
+    (element('refresh-session') as HTMLButtonElement).disabled = !refreshJob;
     pendingURL =
       snapshot.jobs.find(
         (j: any) => j.page_url && ['waiting_browser', 'waiting_user'].includes(j.state),

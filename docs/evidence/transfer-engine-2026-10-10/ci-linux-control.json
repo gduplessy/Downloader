@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "native_creation_projection": true,
+  "native_idempotency": true,
+  "snapshot_first": true,
+  "sequenced_events": 21,
+  "pause_resume": true,
+  "restart_complete": true,
+  "sha256": "1cbd22e11bc209926b1e050d644779ba4105d7a023109c3b78bb35edf5c7c292",
+  "source_revision": "d778b08d88d34f64e40fe78e6d991dccded567ad",
+  "product_version": "0.2.3",
+  "ci_run": "https://github.com/gduplessy/Downloader/actions/runs/38104025817",
+  "platform": "linux"
+}

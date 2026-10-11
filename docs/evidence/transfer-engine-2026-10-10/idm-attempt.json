@@ -1,0 +1,24 @@
+{
+  "platform": "win32",
+  "results": [
+    {
+      "name": "idm",
+      "error": "No completed fixture output within 180 seconds; check IDM dialogs/license status"
+    }
+  ],
+  "observations": {
+    "requests": [],
+    "proxy": 0,
+    "socks": 0,
+    "ftpRest": 0,
+    "ftpTls": 0,
+    "maxActive": 0
+  },
+  "recorded_at": "2026-10-10 America/New_York",
+  "environment": {
+    "os": "Windows 11 Pro 10.0.26100 x64",
+    "cpu": "Intel Core i7-5820K 3.30GHz, 12 logical processors",
+    "toolchain": "Rust 1.93.1 / Node 22"
+  },
+  "scope": "Local deterministic fixtures; native GUI and external realm qualification remain separate"
+}

@@ -120,9 +120,28 @@ fn run() -> Result<()> {
     }
     downloader_service::ensure_service()?;
     if matches!(cli.command, Action::Watch) {
+        downloader_service::call(Command::Negotiate {
+            minimum: 1,
+            maximum: 1,
+        })?;
+        let mut sequence = None;
         loop {
-            let value = downloader_service::call(Command::Snapshot)?;
-            print_result(&value, cli.json)?;
+            let value = downloader_service::call(Command::Subscribe {
+                after_sequence: sequence,
+                limit: 100,
+            })?;
+            sequence = value["sequence"].as_u64();
+            if cli.json {
+                println!("{}", serde_json::to_string(&value)?);
+            } else if value["snapshot"].is_object() {
+                print_result(&value["snapshot"], false)?;
+            } else {
+                for event in value["events"].as_array().into_iter().flatten() {
+                    if event["job"].is_object() {
+                        print_result(&serde_json::json!({"jobs":[event["job"]]}), false)?;
+                    }
+                }
+            }
             std::thread::sleep(std::time::Duration::from_secs(1));
         }
     }

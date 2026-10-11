@@ -1,14 +1,19 @@
 # Development acceptance evidence
 
-Recorded locally on Windows x64, 2026-10-10. This records a working preview, not the public release gate.
+Recorded locally on Windows x64 and in platform CI, 2026-10-10/11. This records a working preview, not the public release gate. Product versions and README/roadmap state are synchronized by the version check.
 
 ## Automated checks
 
-- Rust: 6 unit tests, 8 network/recovery integration tests and 1 native framing test pass.
-- Transfer fixtures cover segmented output hashes, ignored ranges, unknown length, redirects, pause/restart, changed validators, checksum refusal, interrupted finalization, rolling quotas, navigation claims and server filename recovery.
-- Browser policy/handoff tests: 12 pass. Desktop utility/translation-key tests: 4 pass. TypeScript checks pass.
+- Rust: 38 functional regressions on Windows (20 core, 15 transfer/recovery, 3 service); 39 on Unix with the additional native endpoint permission/rebind check. Four ignored subprocess helpers are invoked by their parent tests. Unix uses a path-alias regression instead of the Windows locked-file regression. Full-suite evidence and source revisions are linked below; targeted local checks also cover proxy maps, weak validators and repeated write/flush failures.
+- Transfer fixtures cover segmented hashes, strict headers/ranges, HEAD fallback, unknown/empty/compressed/truncated output, redirects, Retry-After, pause/restart, changed/missing validators, source expiry/authentication, checksum refusal, rolling quotas and server filenames. Ten actual subprocess abort boundaries and write/flush failures verify durable recovery without false completion.
+- Extension policy/handoff tests: 12 pass. Desktop event/utility/translation-key tests: 6 pass (18 total). TypeScript checks and both client builds pass.
 - Rust formatting and Clippy with warnings denied pass for core, service and CLI.
-- Windows Tauri executable and NSIS installer build. Cross-platform CI is configured; remote CI has not run.
+- Windows Tauri executable and NSIS installer were built for the initial preview. Current native desktop source compilation passes; installer execution is a separate pending gate.
+- [Final source CI](https://github.com/gduplessy/Downloader/actions/runs/38104393525) records the final response-validator patch; it runs Rust fixtures, strict Clippy/formatting, 38 protocol/performance cases, real native/CLI fixtures, clients and desktop compilation on Windows, macOS Apple Silicon and Ubuntu. Check the linked job status independently of native release acceptance.
+- [Large-file CI](https://github.com/gduplessy/Downloader/actions/runs/38103251279) passed every job and verified actual 4,311,744,529-byte pause/reopen/resume/hash/publication on all three platforms, plus ZIP64 offsets and macOS endpoint permissions/rebind.
+- [Native/control CI](https://github.com/gduplessy/Downloader/actions/runs/38104025817) passed its real native-messaging/CLI steps on all three platforms: browser-safe repeated creation, request correlation, snapshot-first sequenced events, pause/resume, output SHA-256 and completed-state persistence after service restart. Sanitized per-platform records are published with exact source revisions.
+- A prior Windows storage fixture exposed sibling cancellation overwriting the primary failure. The cause was fixed; five consecutive local write/flush fixture repetitions passed. Earlier benchmark fixture accounting and macOS socket-descriptor permissions were also repaired; failed attempts are not counted as passing evidence.
+- [Published transfer evidence](TRANSFER_ENGINE.md) includes platform curl capabilities, raw JSON, CPU/RSS/checkpoint/finalization timings and the unsuccessful IDM attempt. No IDM comparison result is claimed.
 
 ## Actual browser and native evidence
 
@@ -27,7 +32,8 @@ Ignored local evidence is under .local/evidence. Fixture URLs and request/sessio
 
 - The screenshot's specific host and changing live websites have not been qualified.
 - Ordinary automatic interception needs further real-browser coverage. Hosted GET forms can provide explicit replay context when request observation is unavailable.
-- Chrome stable, Edge, Firefox/ESR, macOS and Linux acceptance remain pending. Chrome for Testing evidence does not establish those matrix rows.
+- Chrome stable, Edge, Firefox/ESR and macOS/Linux native GUI/browser/installer acceptance remain pending. Deterministic engine CI and Chrome for Testing evidence do not establish those matrix rows. Intel macOS is not the Apple Silicon CI runner.
+- External NTLM/Kerberos realms, managed system/PAC/WPAD routing and actual disk-full/permission/cross-volume matrices remain qualification work. Capability flags and injected I/O failures do not establish them.
 - Profile claims prevent competing navigation workers. Comprehensive private/container/partitioned session isolation and worker-restart tests remain release work.
 - Deterministic media assembly, rendered/authenticated grabber, offline rewriting, advanced scheduling/synchronization and desktop completion integrations are unfinished.
 - Media tools are currently installed separately through the verified component script; the preview installer does not bundle them.
