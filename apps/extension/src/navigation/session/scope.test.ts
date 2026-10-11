@@ -58,6 +58,23 @@ describe('explicit browser sessions', () => {
     records.removeTab(5);
     expect(records.find(request.url, scope)?.tabId).toBe(6);
   });
+  it('preserves scope identity across native JSON property ordering', () => {
+    const chromium = {
+      ...scope,
+      partition_key: { top_level_site: 'https://example.test', has_cross_site_ancestor: false },
+    };
+    const native = {
+      ...scope,
+      partition_key: { has_cross_site_ancestor: false, top_level_site: 'https://example.test' },
+    };
+    expect(sameScope(chromium, native)).toBe(true);
+    expect(
+      sameScope(chromium, {
+        ...native,
+        partition_key: { ...native.partition_key, has_cross_site_ancestor: true },
+      }),
+    ).toBe(false);
+  });
   it('fences profile, private, cookie store, partition and claim changes', () => {
     for (const change of [
       { profile: crypto.randomUUID() },

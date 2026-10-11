@@ -38,3 +38,7 @@ Firefox stable `157.0.1` is installed at `C:/Program Files/Mozilla Firefox/firef
 - New private service records/events and browser task context are ephemeral. Partial file bytes needed for interrupted writes can remain on disk and require explicit reauthorization. Diagnostics count pre-upgrade private DB records and explain that separate approved cleanup is required. This change does not sanitize or delete existing private history or WAL data.
 
 API design sources are recorded in [SOURCES.md](plans/nav/SOURCES.md). Header/redirect/backpressure and session API mocks are regression evidence only; actual gzip/unknown-length/redirect/private/container browser matrices remain pending.
+
+## Shared production worker qualification
+
+`node scripts/nav-fixtures/streams/production-worker.mjs` builds the production background/resolver and replaces only the isolated native host name plus diagnostic error logging. The fixture uses a unique browser profile, host registration and service data directory; its minimal trusted options driver grants local fixture permissions. Initial Windows Chrome runs created and scoped the desktop navigation job but remained waiting before any POST. Canonical partition serialization and scoped browser-source admission now have regressions; the complete production-worker POST hash gate remains pending. This does not invalidate the separately qualified production stream-module Chrome/Edge hashes, whose harness bypasses background/resolver routing.

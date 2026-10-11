@@ -359,6 +359,7 @@ impl Engine {
     fn schedule_navigation(
         &self,
         owner: &str,
+        private_lane: bool,
         scope: Option<crate::navigation::SessionScope>,
         request: crate::navigation_scheduler::SchedulerRequest,
     ) -> Result<serde_json::Value> {
@@ -366,7 +367,7 @@ impl Engine {
         uuid::Uuid::parse_str(owner).context("Invalid browser profile identifier")?;
         if let Some(scope) = &scope {
             scope.validate()?;
-            if scope.profile != owner {
+            if scope.profile != owner || scope.private != private_lane {
                 bail!("Scheduler scope owner mismatch");
             }
         }
@@ -498,7 +499,8 @@ impl Engine {
                     .iter()
                     .find(|job| job.id == lease.id)
                     .context("Unknown reconciled navigation job")?;
-                if job.navigation_owner.as_deref() != Some(owner)
+                if job.private != private_lane
+                    || job.navigation_owner.as_deref() != Some(owner)
                     || job.source_generation != lease.generation
                     || job.navigation_scope != lease.scope
                 {
@@ -512,8 +514,8 @@ impl Engine {
                 .iter_mut()
                 .find(|t| &t.id == id)
                 .context("Unknown navigation task")?;
-            if task.owner != owner {
-                bail!("Scheduler task owner mismatch");
+            if task.owner != owner || task.private != private_lane {
+                bail!("Scheduler task owner or private lane mismatch");
             }
             if let Some(existing) = &task.scope {
                 if scope.as_ref() != Some(existing) {
@@ -527,10 +529,12 @@ impl Engine {
             }
         }
         let now = chrono::Utc::now().timestamp_millis();
-        let result = scheduler.apply(owner, request, now)?;
+        let result = scheduler.apply_for_lane(owner, request, now, Some(private_lane))?;
         scheduler.persist(&self.store.lock().unwrap())?;
         let mut result = result;
-        result.tasks.retain(|t| t.owner == owner);
+        result
+            .tasks
+            .retain(|t| t.owner == owner && t.private == private_lane);
         // Host lock identities are service internal. Browser UI needs only the typed reason.
         for task in &mut result.tasks {
             task.host_keys.clear();
@@ -581,9 +585,10 @@ impl Engine {
             )?),
             Command::NavigationScheduler {
                 owner,
+                private_lane,
                 scope,
                 request,
-            } => self.schedule_navigation(&owner, scope, request),
+            } => self.schedule_navigation(&owner, private_lane, scope, request),
             Command::TestSolver { settings } => {
                 let result = crate::solver::test(&settings)?;
                 self.cleanup_solver_sessions();
@@ -688,6 +693,7 @@ impl Engine {
                                 .map_or(1, |old| old.claim_generation.saturating_add(1));
                         }
                         j.navigation_scope = Some(scope);
+                        j.browser_source = true;
                     } else if j.navigation_scope.is_some() {
                         bail!("Scoped navigation requires a fenced claim");
                     }

@@ -262,6 +262,15 @@ impl Scheduler {
         request: SchedulerRequest,
         now: i64,
     ) -> Result<SchedulerSnapshot> {
+        self.apply_for_lane(owner, request, now, None)
+    }
+    pub fn apply_for_lane(
+        &mut self,
+        owner: &str,
+        request: SchedulerRequest,
+        now: i64,
+        private_lane: Option<bool>,
+    ) -> Result<SchedulerSnapshot> {
         for t in &mut self.tasks {
             if t.lease.as_ref().is_some_and(|l| l.expires_at_ms <= now)
                 && t.status != QueueStatus::Finished
@@ -426,11 +435,11 @@ impl Scheduler {
                 t.reason = "released".into();
             }
             SchedulerRequest::Reconcile { live } => {
-                for t in self
-                    .tasks
-                    .iter_mut()
-                    .filter(|t| t.owner == owner && t.lease.is_some())
-                {
+                for t in self.tasks.iter_mut().filter(|t| {
+                    t.owner == owner
+                        && t.lease.is_some()
+                        && private_lane.is_none_or(|private| t.private == private)
+                }) {
                     let lease = t.lease.as_mut().unwrap();
                     if let Some(found) = live.iter().find(|l| {
                         l.id == t.id
