@@ -39,12 +39,7 @@ function blockers(elements: Element[]) {
         'iframe[src*="captcha"],[class*="captcha"],[id*="captcha"],iframe[src*="turnstile"]',
       ) && isVisible(el),
   );
-  const countdown = elements.some(
-    (el) =>
-      el.matches('[class*="countdown"],[id*="countdown"],[data-countdown],[role=timer]') &&
-      isVisible(el) &&
-      /\b[1-9]\d*\b/.test(el.textContent ?? ''),
-  );
+  const countdown = collectWait(document).duration_ms !== undefined;
   const text = document.body.innerText;
   const blocker = classifyBlocker({
     text,

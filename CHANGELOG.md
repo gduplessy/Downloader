@@ -2,6 +2,22 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.8.2 — Integrate adapters with durable waits
+
+- Combine service-owned scheduling with versioned adapter previews and use one validated visible countdown parser for observations and blockers.
+- Preserve both batch histories and queue controls. Installed browser acceptance and stream-batch source/session generation reconciliation remain pending.
+
+## 0.8.1
+
+- Integrate service-owned navigation admission and extension queue controls, durable alarms with fresh readiness observations, opt-in notifications, session-aware recovery, and cancellation.
+- Add profile/restart/private-state service fixtures and browser alarm/clock/timer regressions.
+
+
+## 0.8.0
+
+- Add durable navigation queue admission, conservative host locks, fenced tab leases and restart-safe wait metadata with deterministic regression fixtures.
+
+
 ## 0.6.2 — Stage adapter and shared-contract integration
 
 - Integrate the verified adapter increments with the shared navigation contracts on the coordinator staging branch, preserving their individual commits and qualification boundaries.

@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.6.2<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.8.2<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -15,6 +15,8 @@ Detailed [NAV plans and execution batches](plans/nav/README.md) cover the remain
 Shared navigation contracts are defined for the feature batches; all unfinished NAV implementation and qualification statuses remain open until their stated acceptance criteria pass.
 
 Coordinator staging now includes the adapter increments and shared contracts. This local integration preserves separate batch PRs; the installed extension/native ownership and stream acceptance dependency remains open.
+
+The staging resolver now shares validated countdown observations with the durable scheduler. Queue enrollment still awaits the stream batch's persisted session/source generations before combined acceptance.
 
 | ID     | Capability and remaining scope                                      | Next work and completion criteria                                                                                                                                                                                                                                                                                                                                                   | Status                  |
 | :----- | :------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------- |
@@ -155,3 +157,7 @@ The README also states constraints that are product or correctness controls, rat
 - Update [COMPATIBILITY.md](COMPATIBILITY.md) only after that target is qualified.
 - Keep [IMPLEMENTATION.md](IMPLEMENTATION.md) as the concise current-state summary; this document is the full unfinished-work inventory.
 - When a limitation is added to the README or status documents, add or reference its roadmap ID. Research items need a feasibility decision before becoming release promises.
+
+NAV-04 / NAV-10 implementation increment: durable scheduler policy and wait clock regression fixtures added; browser integration and qualification remain in progress.
+
+NAV-04 / NAV-10 browser increment: service admission and extension queue controls integrated; 25 extension checks plus service restart/profile/private-state regressions pass. Live host, stable browser and resource acceptance remain pending.

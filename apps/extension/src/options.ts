@@ -1,3 +1,4 @@
+import { mountSchedulerControls } from './navigation/scheduler/ui';
 import browser from 'webextension-polyfill';
 declare const BROWSER: 'chromium' | 'firefox';
 import { translate, languages, type Key } from '../../../packages/shared/src/i18n';
@@ -28,6 +29,8 @@ async function main() {
   input('excluded').value = settings.excluded.join('\n');
   document.getElementById('extension-id')!.textContent = browser.runtime.id;
   localize();
+  const navigation = document.createElement('section'); document.body.append(navigation);
+  await mountSchedulerControls(navigation, settings.locale).catch(error => { navigation.textContent = String(error); });
   select.onchange = () => {
     settings.locale = select.value;
     localize();

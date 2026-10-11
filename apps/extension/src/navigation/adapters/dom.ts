@@ -1,4 +1,5 @@
 import type { Control } from './policy';
+import { countdownDuration } from '../scheduler/timers';
 const identities = new WeakMap<Element, string>();
 let nextId = 0;
 function identity(element: Element): string {
@@ -144,24 +145,17 @@ export function collectWait(document: Document): {
         (el.matches('button:disabled,input:disabled,[aria-disabled="true"]') &&
           /download|télécharger|descargar|下载|تنزيل/i.test(el.textContent ?? ''))),
   );
-  const seconds = timers
-    .flatMap((el) => {
-      const text = (el.getAttribute('data-countdown') ?? el.textContent ?? '').trim();
-      const clock = text.match(/\b(\d{1,3}):(\d{2})(?::(\d{2}))?\b/);
-      if (clock)
-        return [
-          clock[3]
-            ? Number(clock[1]) * 3600 + Number(clock[2]) * 60 + Number(clock[3])
-            : Number(clock[1]) * 60 + Number(clock[2]),
-        ];
-      return [...text.matchAll(/\b\d{1,6}\b/g)].map((m) => Number(m[0]));
-    })
-    .filter((seconds) => seconds > 0 && seconds <= 7 * 86400);
+  const duration = countdownDuration(
+    timers.map((el) => ({
+      text: (el.getAttribute('data-countdown') ?? el.textContent ?? '').trim(),
+      visible: true,
+    })),
+  );
   const expiry = timers
     .map((el) => Date.parse(el.getAttribute('data-expires-at') ?? ''))
     .filter(Number.isFinite);
   return {
-    ...(seconds.length ? { duration_ms: Math.max(...seconds) * 1000 } : {}),
+    ...(duration !== null ? { duration_ms: duration } : {}),
     fingerprint: 'countdown:' + timers.map(identity).join(','),
     ...(expiry.length ? { expires_at_ms: Math.min(...expiry) } : {}),
   };
