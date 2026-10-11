@@ -5,7 +5,7 @@ use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::{
     collections::HashSet,
-    fs::{File, OpenOptions},
+    fs::File,
     io::{Read, Seek, SeekFrom, Write},
     path::PathBuf,
     sync::{
@@ -388,24 +388,9 @@ pub fn run(
         std::fs::create_dir_all(parent)?;
     }
     let path = part_path(&snapshot);
-    let file = Arc::new(Mutex::new(
-        OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .truncate(!resumed)
-            .open(&path)?,
-    ));
-    if resumed
-        && file.lock().unwrap().metadata()?.len()
-            < snapshot
-                .segments
-                .iter()
-                .map(|s| s.start + s.downloaded)
-                .max()
-                .unwrap_or(0)
-    {
-        bail!("storage_error: Partial file is missing or truncated; explicitly restart");
+    let file = Arc::new(Mutex::new(crate::storage::open_partial(&path, !resumed)?));
+    if resumed {
+        crate::storage::validate_checkpoint(&snapshot, file.lock().unwrap().metadata()?.len())?;
     }
     let ranged = http && metadata.ranges && total.is_some_and(|n| n > 0);
     {

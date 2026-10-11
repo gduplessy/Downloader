@@ -26,16 +26,25 @@ pub fn safe_filename(input: &str) -> String {
                 c
             }
         })
-        .take(180)
         .collect();
+    // Bound UTF-8 bytes as well as Windows UTF-16 units; retain room for suffixes.
+    while name.len() > 180 {
+        name.pop();
+    }
     name = name.trim().trim_end_matches(['.', ' ']).to_string();
     if name.is_empty() || name == "." || name == ".." {
         name = "download".into();
     }
-    let stem = name.split('.').next().unwrap_or("").to_ascii_uppercase();
+    let stem = name
+        .split('.')
+        .next()
+        .unwrap_or("")
+        .trim_end()
+        .to_ascii_uppercase();
     if [
         "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8",
-        "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+        "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "COM¹",
+        "COM²", "COM³", "LPT¹", "LPT²", "LPT³",
     ]
     .contains(&stem.as_str())
     {
@@ -159,6 +168,9 @@ mod tests {
         assert_eq!(safe_filename("../../CON.exe"), "_CON.exe");
         assert_eq!(safe_filename("a:b?.zip"), "a_b_.zip");
         assert_eq!(safe_filename(".."), "download");
+        assert!(safe_filename(&"界".repeat(180)).len() <= 180);
+        assert_eq!(safe_filename("CON .txt"), "_CON .txt");
+        assert_eq!(safe_filename("COM¹.log"), "_COM¹.log");
     }
     #[test]
     fn reject_header_injection_and_credentials() {

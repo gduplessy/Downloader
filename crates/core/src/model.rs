@@ -191,7 +191,11 @@ pub struct Settings {
 }
 impl Default for Settings {
     fn default() -> Self {
-        let directory = dirs::download_dir().unwrap_or_else(|| PathBuf::from("Downloads"));
+        let directory = dirs::download_dir().unwrap_or_else(|| {
+            dirs::home_dir()
+                .unwrap_or_else(|| std::env::temp_dir().join("Downloader"))
+                .join("Downloads")
+        });
         let categories = [
             (
                 "documents",
@@ -241,13 +245,20 @@ impl Default for Settings {
     }
 }
 pub fn data_dir() -> PathBuf {
-    std::env::var_os("DOWNLOADER_DATA_DIR")
+    let path = std::env::var_os("DOWNLOADER_DATA_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|| {
             dirs::data_local_dir()
                 .unwrap_or_else(|| PathBuf::from("."))
                 .join("Downloader")
-        })
+        });
+    if path.is_absolute() {
+        path
+    } else {
+        std::env::current_dir()
+            .unwrap_or_else(|_| std::env::temp_dir())
+            .join(path)
+    }
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Snapshot {
