@@ -160,12 +160,23 @@ pub fn configure(
     easy.ssl_verify_peer(true)?;
     easy.ssl_verify_host(true)?;
     easy.useragent(concat!("Downloader/", env!("CARGO_PKG_VERSION")))?;
+    if let Some(solver) = &context.solver {
+        solver.validate()?;
+        easy.useragent(&solver.user_agent)?;
+    }
     easy.accept_encoding("identity")?;
     crate::network::apply(easy, url, settings)?;
     let mut headers = List::new();
     headers.append("Accept-Encoding: identity")?;
     for (k, v) in &context.headers {
         headers.append(&format!("{k}: {v}"))?;
+    }
+    if let Some(cookie) = context
+        .solver
+        .as_ref()
+        .and_then(|s| s.cookie_header(&parsed))
+    {
+        headers.append(&format!("Cookie: {cookie}"))?;
     }
     easy.http_headers(headers)?;
     if let Some(id) = &context.credential_id {
@@ -187,7 +198,7 @@ pub fn configure(
 pub fn inspect(url: &str, context: &RequestContext, settings: &Settings) -> Result<Metadata> {
     inspect_controlled(url, context, settings, &AtomicU8::new(0))
 }
-fn inspect_controlled(
+pub(crate) fn inspect_controlled(
     url: &str,
     context: &RequestContext,
     settings: &Settings,
@@ -249,6 +260,7 @@ fn inspect_controlled(
             if next.origin() != url.origin() {
                 context.headers.clear();
                 context.credential_id = None;
+                context.solver = None;
             }
             url = next;
             continue;
@@ -308,6 +320,7 @@ fn redirected(
     if next.origin() != current.origin() {
         context.headers.clear();
         context.credential_id = None;
+        context.solver = None;
     }
     Ok((next.into(), context))
 }
@@ -463,6 +476,9 @@ pub fn run(
         return crate::finalize::finish(job, store, &settings, &control);
     }
     let mut metadata = inspect_controlled(&snapshot.url, &context, &settings, &control)?;
+    if context.solver.is_some() && crate::solver::is_html(&metadata.content_type) {
+        bail!("source_expired: Hosted source returned HTML; refresh it in the browser");
+    }
     // Advertised range support is only a hint. An actual 206 response is required.
     if metadata.url.starts_with("http") && metadata.ranges && metadata.total.is_some_and(|n| n > 0)
     {

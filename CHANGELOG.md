@@ -2,6 +2,11 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.3.0 — Local challenge adapter foundation
+
+- Add a bounded loopback FlareSolverr client, conservative GET page resolution, temporary cookie/User-Agent context, and deterministic response/policy regressions.
+- Browser navigation integration and live host qualification remain in progress.
+
 ## 0.2.4 — Windows system proxy protocol maps
 
 - Parse system proxy protocol labels case-insensitively and trim map entries, so an uppercase HTTPS mapping does not silently select direct routing.

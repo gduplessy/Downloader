@@ -6,6 +6,7 @@ pub mod grabber;
 pub mod media;
 pub mod model;
 pub mod security;
+pub mod solver;
 pub mod storage;
 pub mod store;
 pub mod transfer;

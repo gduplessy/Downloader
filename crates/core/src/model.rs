@@ -55,6 +55,8 @@ impl Segment {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct RequestContext {
+    #[serde(skip)]
+    pub solver: Option<crate::solver::SolverContext>,
     #[serde(default)]
     pub profile: Option<String>,
     #[serde(default)]
@@ -185,6 +187,8 @@ pub struct Scanner {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
     #[serde(default)]
+    pub solver: crate::solver::SolverSettings,
+    #[serde(default)]
     pub network: crate::network::NetworkSettings,
     pub directory: PathBuf,
     pub max_jobs: usize,
@@ -242,6 +246,7 @@ impl Default for Settings {
         })
         .collect();
         Self {
+            solver: Default::default(),
             network: Default::default(),
             directory,
             max_jobs: 3,

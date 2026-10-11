@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.2.4<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.3.0<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks the limitations stated in the README, implementation status, compatibility matrix, acceptance evidence, and component notices. It explicitly includes currently unsupported capabilities, including **CAPTCHA automation / bypass**.
 
@@ -24,6 +24,8 @@ The initial release still targets Windows 11 x64, macOS 14+ Intel and Apple Sili
 | NAV-10 | Navigation is capped at three pages and one page per host            | Add configurable, host-aware navigation queues and transparent wait reasons. Preserve cookie/session integrity; qualify higher limits before allowing concurrent steps on the same host.                                                                                                                                                                                            | Planned                 |
 | NAV-11 | Profile claims lack comprehensive privacy/container qualification    | Test private browsing, separate profiles, Firefox containers, partitioned cookies, competing workers, claim transfer, and extension-worker restart. Navigation context must never cross an unintended session boundary.                                                                                                                                                             | Qualification           |
 | NAV-12 | Browser-driven rendered discovery is unfinished                      | Add extension-controlled discovery tabs, user-visible navigation state, and resume when a browser becomes available. Keep rendered discovery and final download handoff under the same session ownership rules.                                                                                                                                                                     | Planned                 |
+
+FlareSolverr adapter implementation has started; navigation integration and live qualification remain open. See [the implementation plan](FLARESOLVERR_PLAN.md).
 
 ## 2. Transfer engine, correctness, and networking
 
