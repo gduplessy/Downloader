@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.9.3 — Preserve account checks through two-phase capture authorization
+
+- Merge coordinator `dc63865`, bind adapter actions to source generation, and retain credential grants as a separate scoped authorization purpose.
+- Keep account observations and premium checks in the production resolver while fresh prepare/commit/cancel controls fence browser capture.
+- Readonly authority adoption and full installed-worker qualification remain the next integration gate.
+
 ## 0.9.2 — Integrate accounts with scoped browser streams and adapters
 
 - Merge verified coordinator prerequisite `1da6fa6` and retain adapter cancellation, scoped native streams, scheduler qualification and selected downstream provenance.
@@ -19,6 +25,12 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Add desktop-selected site accounts keyed by exact origin and browser session, OS-keyring credential references, ephemeral private session metadata, typed authentication/entitlement observations and expiring one-use form grants.
 - Add six-language desktop account controls and browser form/cancellation modules. Qualified premium controls require the explicitly selected active session; purchase, advertisements and unqualified live layouts remain excluded.
 - Browser worker integration and native keyring/file acceptance remain in progress; local fixtures do not qualify live accounts or provider APIs.
+
+## 0.8.10
+
+- Wire one-use prepare/commit/abort for adapter actions; fence source generation, document, bundled adapter and actual top-level sender before capture.
+- Persist prepared provider selection through scoped native metadata; support owned adapter disable and selected-resource navigation with original provenance retained.
+- Full installed-worker acceptance remains pending; local module checks do not establish complete browser flows.
 
 ## 0.8.9 — Integrate original-response capture and scoped recovery
 
