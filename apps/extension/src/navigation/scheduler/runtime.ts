@@ -38,7 +38,16 @@ export class NavigationScheduler {
       const expectedPrivate = record.scope?.private ?? record.private;
       const expectedStore = record.scope?.cookie_store_id ?? record.cookieStoreId;
       if (tab && expectedPrivate !== undefined && !!tab.incognito !== expectedPrivate) matches = false;
-      if (tab && expectedStore && (tab as { cookieStoreId?: string }).cookieStoreId !== expectedStore) matches = false;
+      if (tab && expectedStore) {
+        const tabStore = (tab as { cookieStoreId?: string }).cookieStoreId;
+        if (tabStore) matches &&= tabStore === expectedStore;
+        else {
+          // Chromium omits cookieStoreId on Tab. Resolve the actual membership;
+          // missing permission/API evidence cannot authorize a default store.
+          const stores = await browser.cookies.getAllCookieStores().catch(() => []);
+          matches &&= stores.some(store => store.id === expectedStore && store.tabIds.includes(record.tabId));
+        }
+      }
       if (task && tab && matches) live.push({ id: task.id, generation: task.generation, tab_id: record.tabId, scope: record.scope ?? null });
     }
     const restored = await this.request({ action: 'reconcile', live });

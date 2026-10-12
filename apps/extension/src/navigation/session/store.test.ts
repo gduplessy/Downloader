@@ -10,6 +10,34 @@ const scope = {
   claim_generation: 1,
 };
 describe('browser restart references and private overlay', () => {
+  it.each([false, true])('rejects delayed stale writes and recovers the write queue (private=%s)', async (privateWorker: boolean) => {
+    const local = memoryStorage(), session = memoryStorage();
+    const store = navigationStorage(local, session, privateWorker);
+    const first = {scope: {...scope, private: privateWorker}, sourceGeneration: 1, tabId: 7};
+    await store.set({'resolver-job': first});
+    const stale = (await store.get('resolver-job'))['resolver-job'];
+    const current = {...first, sourceGeneration: 2, scope: {...first.scope, claim_generation: 2}};
+    const renewed = store.set({'resolver-job': current});
+    const delayed = store.set({'resolver-job': {...stale, steps: 1}});
+    await renewed;
+    await expect(delayed).rejects.toThrow('Navigation record is stale');
+    expect((await store.get('resolver-job'))['resolver-job']).toEqual(current);
+    await expect(store.set({'resolver-job': {...current, sourceGeneration: 1}})).rejects.toThrow('stale');
+    await expect(store.set({'resolver-job': {...current, scope: undefined}})).rejects.toThrow('stale');
+    await store.set({'resolver-job': {...current, steps: 2}});
+    expect((await store.get('resolver-job'))['resolver-job'].steps).toBe(2);
+    if (privateWorker) expect(await local.get()).toEqual({});
+  });
+  it('memory storage snapshots cannot mutate stored authority by alias', async () => {
+    const store = memoryStorage();
+    const record = {scope: {...scope}, sourceGeneration: 1};
+    await store.set({'resolver-job': record});
+    record.scope.claim_generation = 9;
+    const read = (await store.get())['resolver-job'];
+    expect(read.scope.claim_generation).toBe(1);
+    read.scope.claim_generation = 10;
+    expect((await store.get('resolver-job'))['resolver-job'].scope.claim_generation).toBe(1);
+  });
   it('persists regular job refs but never signed request URLs, cookies or preview text', async () => {
     const local = memoryStorage(),
       session = memoryStorage();

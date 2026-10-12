@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.12.0
+
+- Integrate live document nonce authorization with shared navigation recovery.
+- Serialize navigation metadata writes and reject delayed records with older native source or claim counters; private records remain ephemeral.
+- Reconcile Chromium tab ownership against actual cookie-store membership when the Tab API omits cookieStoreId.
+- Verify 106 extension regressions, extension types and both browser builds. Installed Firefox and broader integrated acceptance remain pending.
+
 ## 0.10.5
 
 - Adopt canonical scope ordering and validated CLI navigation ownership from coordinator integration.
@@ -292,3 +299,7 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Integrated native scoped incremental projection and cursor fixes from coordinator 0.8.13 for actual challenge qualification.
 
 - Bind all adapter actions to the verified live document nonce, burn stale tokens, and read resolver ownership after native projection renewal.
+
+### 0.10.7
+- Align initial/revalidated image pixels, preserve cancelled host choices, and add wrong-session/occlusion/cancel fixtures.
+- Adopt serialized navigation storage and repair the inherited mock predicate typing; retain installed GET handoff as pending.
