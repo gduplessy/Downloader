@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.11.8<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.11.9<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -213,3 +213,8 @@ NAV-12 0.11.7: installed Chrome155 delayed/authenticated discovery and one origi
 Shared integration 0.12.0: serialized metadata writes prevent stale source/claim replacement in regular and private lanes. Chromium restart reconciliation resolves actual cookie-store membership. 106 extension regressions, types and both browser builds pass; broader installed acceptance remains pending.
 
 NAV-12 0.11.8 adopts checked common base9dc9986. Installed Chrome/Edge qualification is being refreshed; live hosts/accounts and remaining platform/browser matrix stay pending.
+Shared integration 0.12.1: removal event projection preserves owner/private/exact claim and rejects unqualified historical tombstones. Real engine coverage confirms isolation in both browser lanes and after claim replacement.
+
+Shared integration 0.12.2: direct stream ownership prevents competing legacy download handoffs. 13 stream tests, extension types/builds and actual Chrome original POST hash verification pass. Installed Firefox and broader acceptance remain pending.
+
+NAV-12 0.11.9 integrates direct-stream observer ownership and current session startup fences from basebd6cf35; final installed fixture evidence is being refreshed.

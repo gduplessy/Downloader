@@ -87,6 +87,7 @@ export class DurableStreamSink {
     readonly identity: StreamIdentity,
     private port: NativeStreamPort,
     private verifyOwner: () => Promise<void>,
+    private onTerminal: () => void = () => {},
   ) {}
   private validate(ack: StreamAck, expected: number) {
     if (
@@ -146,6 +147,7 @@ export class DurableStreamSink {
     if (!ack.terminal) throw Error('Stream verification did not complete');
     this.terminal = true;
     this.port.close();
+    this.onTerminal();
   }
   async abort(reason = 'interrupted') {
     try {
@@ -154,6 +156,7 @@ export class DurableStreamSink {
     } finally {
       this.terminal = true;
       this.port.close();
+      this.onTerminal();
     }
   }
 }

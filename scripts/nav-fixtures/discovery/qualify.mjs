@@ -482,6 +482,7 @@ try {
     browser: version.product,
     productVersion: JSON.parse(await readFile('package.json','utf8')).version,
     sourceCommit: execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8',windowsHide:true}).trim(),
+    sourceDirty: !!execFileSync('git',['status','--porcelain','--untracked-files=no'],{encoding:'utf8',windowsHide:true}).trim(),
     serviceSha256: digest(await readFile(nativeBinary)),
     resolverSha256: digest(await readFile(resolve(ext,'resolver.js'))),
     diagnosticBundleChanges: false,

@@ -1,5 +1,5 @@
 import browser from 'webextension-polyfill';
-import { translate } from '../../../../../packages/shared/src/i18n';
+import { translate, type Key } from '../../../../../packages/shared/src/i18n';
 export async function mountDiscovery(container: HTMLElement, locale: string) {
   const section = document.createElement('section');
   const title = document.createElement('h2');

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.12.2
+
+- Prevent legacy browser-download observers from pausing, replaying or changing the status of jobs owned by an active original-response stream.
+- Bind direct ownership to tab, job, exact scope/source and stream identity; terminal and failed admissions release only their own stream.
+- Verify 13 stream regressions, extension types/builds and an installed production Chrome POST with one submission and a matching 262,161-byte native hash. Firefox remains under qualification.
+
+## 0.12.1
+
+- Preserve owner, private lane and exact navigation claim on removal events; scoped subscriptions reject foreign or historical unqualified tombstones.
+- Add a real engine regression for regular/private removal isolation and stale claims.
+- Make the scheduler assertion compatible with both installed Vitest mock type variants.
+
 ## 0.12.0
 
 - Integrate live document nonce authorization with shared navigation recovery.
@@ -44,6 +56,11 @@
 
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
+
+## 0.11.9
+
+- Preserve production direct-stream ownership across legacy download observers and integrate latest session startup fences.
+- Keep scoped rendered selection and paged resource controls intact; refresh installed Chrome/Edge evidence on the final combined base.
 
 ## 0.11.8
 

@@ -1576,6 +1576,7 @@ function GrabberPage({ t, run, directory }: { t: T; run: Run; directory: string 
       {current && !newProject && (
         <section className="card">
           <h2>{current.name}</h2>
+          {!current.rendered && (
           <label className="check">
             <input
               type="checkbox"
@@ -1586,6 +1587,7 @@ function GrabberPage({ t, run, directory }: { t: T; run: Run; directory: string 
             />
             {t('selectAll')}
           </label>
+          )}
           {current.rendered && (
             <RenderedResources id={current.id} count={current.found_count ?? 0} chosen={chosen} onChosen={setChosen} t={t} />
           )}
