@@ -56,7 +56,7 @@ describe('durable browser alarm recovery', () => {
  it('late/repeated alarms only request fresh observation and arm bounded retry', async () => {
    const wake = vi.fn().mockResolvedValue(undefined); const native = vi.fn().mockResolvedValue(snapshot());
    const scheduler = new NavigationScheduler(native, wake); await scheduler.onAlarm('navigation-wait-job:1:1'); await scheduler.onAlarm('navigation-wait-job:1:1');
-   expect(wake).toHaveBeenCalledTimes(2); expect(native.mock.calls.every(([r]: [Record<string, unknown>]) => r.action === 'snapshot')).toBe(true);
+   expect(wake).toHaveBeenCalledTimes(2); expect(native.mock.calls.every((call: unknown[]) => (call[0] as Record<string, unknown>).action === 'snapshot')).toBe(true);
    expect(browser.alarms.create).toHaveBeenCalledTimes(2);
  });
  it('stale source and replaced wait alarms cannot wake current actions', async () => {

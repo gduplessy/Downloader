@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.12.0<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.12.1<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -298,3 +298,5 @@ Shared integration 0.8.13: scoped incremental subscriptions preserve null snapsh
 Challenge integration 0.10.6: adapter actions and grants now require the verified live document nonce; same-URL Firefox replacement consumes stale authority. Installed challenge acceptance remains pending.
 
 Shared integration 0.12.0: queued metadata writes reject older native source/claim counters, including private ephemeral records. Chromium restart reconciliation verifies actual cookie-store membership. Extension regressions, types and browser builds pass; the broader installed acceptance matrix remains pending.
+
+Shared integration 0.12.1: removal events carry the original owner, private lane and exact claim. Scoped subscriptions exclude foreign and historical unqualified tombstones; a real engine regression covers regular/private and replaced-claim cases.

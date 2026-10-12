@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.1
+
+- Preserve owner, private lane and exact navigation claim on removal events; scoped subscriptions reject foreign or historical unqualified tombstones.
+- Add a real engine regression for regular/private removal isolation and stale claims.
+- Make the scheduler assertion compatible with both installed Vitest mock type variants.
+
 ## 0.12.0
 
 - Integrate live document nonce authorization with shared navigation recovery.
