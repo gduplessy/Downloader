@@ -1,8 +1,10 @@
+import { NavigationStarts } from './navigation/session/start';
 import { PremiumAuthorizations } from './navigation/accounts/premium';
 import { accountRequest, validateAccountRequest } from './navigation/accounts/worker';
 import { validateAccountDocument } from './navigation/accounts/document';
 import { accountDecision } from './navigation/accounts/policy';
 import type { AccountAction, AccountBinding, Selection } from './navigation/accounts/types';
+import { ProjectionCursor, type ProjectionTicket } from './navigation/session/projection';
 import {
   NavigationAuthorizations,
   type NavigationAuthorizationBinding,
@@ -49,6 +51,7 @@ let schedulerRecovered = false;
 const resolverSteps = new Map<number, Promise<unknown>>();
 const navigationAuthorizations = new NavigationAuthorizations();
 const premiumAuthorizations = new PremiumAuthorizations();
+const subscriptionCursor = new ProjectionCursor();
 const committedAuthorizations = new Map<string, number>();
 
 const privateWorker = Boolean(browser.extension.inIncognitoContext);
@@ -387,6 +390,7 @@ async function load() {
   await pollResolvers();
 }
 async function native(command: string, args?: unknown): Promise<any> {
+  let projectionTicket: ProjectionTicket | undefined;
   if (
     [
       'navigation_scheduler',
@@ -402,7 +406,13 @@ async function native(command: string, args?: unknown): Promise<any> {
     const record = (await navigationStore.get('resolver-' + (args as any).request.id))[
       'resolver-' + (args as any).request.id
     ] as ResolverRecord | undefined;
-    if (record?.scope) args = { ...(args as object), scope: record.scope };
+    if (record?.scope) {
+      const cleanup = (args as any).request.action === 'release';
+      if (cleanup ? record.sessionEpoch !== (await browserEpoch) : !(await ownsCurrentTab(record)))
+        throw Error('Scheduler tab authority changed');
+      await renewAuthority('resolver-' + (args as any).request.id, record);
+      args = { ...(args as object), scope: record.scope };
+    }
   }
   if (['add', 'navigate'].includes(command))
     args = { ...(args as any), context: { ...(args as any)?.context, profile: await profile } };
@@ -420,6 +430,13 @@ async function native(command: string, args?: unknown): Promise<any> {
   }
   if (command === 'snapshot' || command === 'subscribe') {
     const projection = await projectionScope();
+    if (command === 'subscribe') {
+      projectionTicket = subscriptionCursor.prepare(
+        projection,
+        (args as any)?.after_sequence ?? null,
+      );
+      args = { ...(args as any), after_sequence: projectionTicket.after_sequence };
+    }
     command = command === 'snapshot' ? 'browser_snapshot' : 'browser_subscribe';
     args = { ...(args as any), ...projection };
   }
@@ -433,6 +450,7 @@ async function native(command: string, args?: unknown): Promise<any> {
   if (response?.id !== requestId || response?.version !== 1)
     throw Error('Invalid native response envelope');
   if (!response?.ok) throw Error(response?.error?.message ?? 'Native host unavailable');
+  if (projectionTicket) subscriptionCursor.accept(projectionTicket);
   return response.data;
 }
 async function menus() {
@@ -1086,7 +1104,11 @@ async function injectResolver(tabId: number) {
       runAt: 'document_idle',
     });
 }
+const resolverStarts = new NavigationStarts();
 async function startResolver(job: any, force = false, sourceTabId?: number) {
+  return resolverStarts.run(job.id, () => startOwnedResolver(job, force, sourceTabId));
+}
+async function startOwnedResolver(job: any, force = false, sourceTabId?: number) {
   const startUrl = job.navigation_url ?? job.page_url;
   if (!/^https?:\/\//.test(startUrl)) throw Error('Page navigation requires HTTP or HTTPS');
   if (force)
@@ -1116,6 +1138,17 @@ async function startResolver(job: any, force = false, sourceTabId?: number) {
       );
       if (record.scope && !sameScope(record.scope, proposed))
         throw Error('Task session changed; explicit transfer required');
+      if (force) {
+        navigationAuthorizations.invalidateTab(record.tabId);
+        premiumAuthorizations.invalidateTab(record.tabId);
+        await captureCancels.get(record.tabId)?.();
+        captureCancels.delete(record.tabId);
+        for (const [readerKey, reader] of blobReaders)
+          if (reader.jobId === job.id) {
+            await reader.sink.abort('navigation_scope_replaced');
+            blobReaders.delete(readerKey);
+          }
+      }
       const claim = await native('claim_navigation', {
         id: job.id,
         force,
@@ -1125,10 +1158,11 @@ async function startResolver(job: any, force = false, sourceTabId?: number) {
       record.scope = claim.scope;
       record.sourceGeneration = claim.source_generation;
       record.generation = claim.source_generation;
-      await scheduler.heartbeat(job.id, record.tabId);
       record.started = Date.now();
       record.steps = 0;
+      // Scheduler native requests read their exact scope from the stored record.
       await navigationStore.set({ [key]: record });
+      await scheduler.heartbeat(job.id, record.tabId);
       await injectResolver(record.tabId);
       await browser.tabs.sendMessage(record.tabId, {
         type: 'resolver_continue',
@@ -1735,6 +1769,7 @@ async function resolverAccount(
 }
 async function resolverContext(tabId: number, frameId: number, documentId?: string) {
   if (frameId !== 0 || (await browser.tabs.get(tabId)).status !== 'complete') return null;
+  const snapshot = await browserSnapshot();
   const records = await navigationStore.get(null);
   const entry = Object.entries(records).find(
     ([key, value]: any) => key.startsWith('resolver-') && value.tabId === tabId,
@@ -1742,7 +1777,7 @@ async function resolverContext(tabId: number, frameId: number, documentId?: stri
   if (!entry) return null;
   const record = entry[1] as ResolverRecord;
   if (record.sessionEpoch !== (await browserEpoch)) return null;
-  const job = (await browserSnapshot()).jobs.find((job: any) => job.id === entry[0].slice(9));
+  const job = snapshot.jobs.find((job: any) => job.id === entry[0].slice(9));
   if (
     !job ||
     !record.scope ||

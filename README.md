@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.9.6<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.9.7<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -281,6 +281,7 @@ Shared integration 0.8.11: same-context read-only authority renewal adopts claim
 
 Shared integration 0.8.12: private and regular scheduler responses and reconciliation are isolated by explicit worker lane, while capacity and host locks remain service-global. Six native scheduler regressions cover lane isolation, retained peer leases, durable private exclusion, authority replacement and queue recovery.
 
+Shared integration 0.8.13: scoped incremental subscriptions preserve null snapshots; cached subscription cursors recover on scope/claim changes. First production installed Chrome 155 POST gate passes one original submission, 262,161 bytes and native SHA-256. Broader installed blob/cancel/replacement/private/container/Firefox and integrated account/challenge/discovery acceptance remains pending.
 Scoped browser-account controls are available under Settings. Select an owned browser job and exact session before saving or selecting account metadata. Passwords use the OS credential store; private sessions use existing browser accounts only. Browser login/premium fixture qualification is being integrated; live provider layouts and APIs remain pending.
 
 Account grant and credential lifecycle qualification (0.9.1): Windows OS-keyring save/read/remove and the production Engine one-use grant path pass with deleted test-only credentials. Form cancellation, request overrides and stale documents are covered by real Headless Chromium DOM checks with mocked grant transport. Installed-extension/native downstream acceptance and live/provider account qualification remain pending.
@@ -292,3 +293,4 @@ Account authority integration (0.9.4) adopts intentional source/claim changes on
 Account integration (0.9.5) uses canonical native/browser partition comparison and the exact scheduler private lane. Installed production worker authentication/premium acceptance is being qualified with local permitted files.
 
 Selected account recovery (0.9.6) preserves an explicit account only through same-session owner continuation/refresh, renews nonsecret association fences, invalidates earlier grants and observations, and retains bounded sign-in attempts. Installed worker authentication/premium acceptance remains in progress.
+Account integration (0.9.7) includes authority-qualified incremental browser snapshots and the checked production Chrome capture prerequisite. Installed Chrome 155 local fixtures pass both explicit saved-fill sign-in and existing-session premium download through actual extension/native transports, publishing 311,296 hash-verified bytes with one login and one file request. Edge qualification remains pending after a recorded zero-byte continuation failure; live hosts, provider APIs, Firefox and other OS rows remain pending.

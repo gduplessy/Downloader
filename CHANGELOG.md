@@ -2,6 +2,13 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.9.7 — Integrate checked production browser projection
+
+- Include authority-qualified incremental snapshot cursor and null projection fixes from the checked staging base.
+- Add isolated production Chrome account/premium qualification using actual extension/native transports, both saved-fill and existing-session paths, verified desktop bytes and test-account cleanup.
+- Serialize startup per native job, persist fresh claimed scope before heartbeat, and renew live scheduler authority without relaxing request generations.
+- Record the failed Edge continuation row separately; live accounts, Firefox and other OS targets remain pending.
+
 ## 0.9.6 — Keep selected accounts through explicit same-session recovery
 
 - Successful same-session claim continuation and scoped source refresh retain the selected nonsecret account association at the new source/claim fence.
@@ -42,6 +49,13 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Add desktop-selected site accounts keyed by exact origin and browser session, OS-keyring credential references, ephemeral private session metadata, typed authentication/entitlement observations and expiring one-use form grants.
 - Add six-language desktop account controls and browser form/cancellation modules. Qualified premium controls require the explicitly selected active session; purchase, advertisements and unqualified live layouts remain excluded.
 - Browser worker integration and native keyring/file acceptance remain in progress; local fixtures do not qualify live accounts or provider APIs.
+
+## 0.8.13
+
+- Preserve null snapshots in scoped incremental subscriptions; prevent cached event cursors from surviving visible authority changes.
+- Add six native selection/subscription regressions and three authority-cursor tests; 90 extension tests and type checks pass.
+- Qualify the production Chrome 155 worker/resolver POST flow: one original submission, 262,161 bytes and matching native SHA-256, with diagnostic source changes disabled.
+- Broader installed-flow acceptance remains pending; preserve prior failures and qualification boundaries in evidence.
 
 ## 0.8.12
 

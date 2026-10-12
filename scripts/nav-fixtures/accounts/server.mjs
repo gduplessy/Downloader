@@ -150,7 +150,11 @@ export async function startAccountFixtureServer({
   return {
     base: 'http://127.0.0.1:' + server.address().port,
     counts,
-    close: () => new Promise((resolve) => server.close(resolve)),
+    close: () =>
+      new Promise((resolve) => {
+        server.closeAllConnections();
+        server.close(resolve);
+      }),
   };
 }
 if (process.argv[1]?.endsWith('server.mjs')) {
