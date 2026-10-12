@@ -50,7 +50,21 @@ export async function showAccountPanel(
       fill.disabled = true;
       try {
         await fillOnce(doc, binding, form, abort.signal, context, request);
-      } catch {
+      } catch (error) {
+        const codes = [
+          'account_binding_stale',
+          'account_document_stale',
+          'account_form_stale',
+          'account_grant_expired',
+          'account_grant_expired_or_consumed',
+          'account_grant_binding_stale',
+          'account_login_attempt_exhausted',
+          'account_credentials_removed',
+          'account_cancelled',
+        ];
+        // Only fixed failure categories enter the DOM; never exception text or credentials.
+        box.dataset.downloaderAccountFailure =
+          codes.find((code) => String(error).includes(code)) ?? 'account_request_failed';
         if (!abort.signal.aborted) state.textContent = accountLabel(locale, 'stale');
       }
     };

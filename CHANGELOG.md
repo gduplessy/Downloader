@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.9.8 — Bind account and capture authority to the actual document
+
+- Verify the live isolated document nonce before account observation, credential grant/consume and adapter authorization; native credential proof includes the exact nonce.
+- Preserve Chromium document IDs when supported and provide explicit nonce proof for Firefox same-URL replacement.
+- Record corrected installed Edge 155 saved-fill/premium acceptance separately from the earlier failed row; unavailable targets and live accounts remain pending.
+
 ## 0.9.7 — Integrate checked production browser projection
 
 - Include authority-qualified incremental snapshot cursor and null projection fixes from the checked staging base.

@@ -5,6 +5,8 @@ export type ResolverContext = {
   scope: SessionScope;
   sourceGeneration: number;
   documentId?: string;
+  documentNonce: string;
+  documentGeneration: number;
   selectedHost?: string;
   disabledAdapters?: string[];
   capabilities?: { pageBlob?: boolean };

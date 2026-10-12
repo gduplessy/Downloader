@@ -55,6 +55,7 @@ fn form() -> FormProof {
         adapter_version: "1.0.0".into(),
         fingerprint: "a".repeat(64),
         document_generation: 1,
+        document_nonce: "c3b45e0f-227f-41fc-b9c5-af170af9a65d".into(),
         document_id: Some("fixture-document".into()),
         username_name: "username".into(),
         password_name: "password".into(),
@@ -406,6 +407,7 @@ fn competing_accounts_and_document_replacements_never_share_authority() {
     let grant = browser(&e, request(&e, &id, BrowserAction::Grant { proof: form() })).unwrap();
     let gid = grant["grant_id"].as_str().unwrap().to_string();
     let changed = FormProof {
+        document_nonce: "c3b45e0f-227f-41fc-b9c5-af170af9a65d".into(),
         document_id: Some("replacement-document".into()),
         ..form()
     };
@@ -569,4 +571,65 @@ fn explicit_same_session_continue_and_refresh_keep_selection_but_invalidate_old_
     assert_eq!(selected["source_generation"], 3);
     assert_eq!(selected["scope"]["claim_generation"], 4);
     assert_eq!(selected["account"]["id"], a.id);
+}
+
+#[test]
+fn same_url_nonce_replacement_without_document_id_burns_grant_before_vault_read() {
+    let (_d, e, id, _a) = setup();
+    let store = e.store.lock().unwrap();
+    let mut selected = store
+        .get::<Selection>("site_account_selection", &id)
+        .unwrap();
+    selected.account.saved_fill = true;
+    selected.account.credential_ref = Some("nonexistent-fixture".into());
+    store
+        .put("site_account", &selected.account.id, &selected.account)
+        .unwrap();
+    drop(store);
+    let original = FormProof {
+        document_id: None,
+        ..form()
+    };
+    let grant = browser(
+        &e,
+        request(
+            &e,
+            &id,
+            BrowserAction::Grant {
+                proof: original.clone(),
+            },
+        ),
+    )
+    .unwrap();
+    let grant_id = grant["grant_id"].as_str().unwrap().to_owned();
+    let replacement = FormProof {
+        document_nonce: uuid::Uuid::new_v4().to_string(),
+        ..original.clone()
+    };
+    assert!(browser(
+        &e,
+        request(
+            &e,
+            &id,
+            BrowserAction::Consume {
+                grant_id: grant_id.clone(),
+                proof: replacement
+            }
+        )
+    )
+    .unwrap_err()
+    .to_string()
+    .contains("binding_stale"));
+    assert!(browser(
+        &e,
+        request(
+            &e,
+            &id,
+            BrowserAction::Consume {
+                grant_id,
+                proof: original
+            }
+        )
+    )
+    .is_err());
 }

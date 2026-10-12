@@ -7,6 +7,7 @@ export type PreviewBinding = {
   claimGeneration: number;
   sourceGeneration: number;
   documentGeneration: number;
+  documentNonce: string;
   page: string;
   adapterId: string;
   adapterVersion: string;

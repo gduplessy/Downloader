@@ -43,6 +43,7 @@ const binding: AccountBinding = {
   scope,
   sourceGeneration: 2,
   documentGeneration: 1,
+  documentNonce: 'c3b45e0f-227f-41fc-b9c5-af170af9a65d',
   documentId: 'document-1',
   page,
   adapterId: 'local-fixture',
@@ -56,6 +57,7 @@ const owned: OwnedAccountTab = {
   tabId: 12,
   frameId: 0,
   documentId: 'document-1',
+  documentNonce: 'c3b45e0f-227f-41fc-b9c5-af170af9a65d',
   page,
 };
 test('entitlement fails closed on expiry/MFA/quota/wrong account/live unqualified provider', () => {
@@ -95,6 +97,7 @@ test('worker only forwards exact owned tab/frame/document/source/session', async
     { tabId: 13 },
     { frameId: 1 },
     { documentId: 'other' },
+    { documentNonce: 'same-url-new-document' },
     { sourceGeneration: 1 },
     { scope: { ...scope, private: true } },
     { scope: { ...scope, container_id: 'other' } },
@@ -213,4 +216,26 @@ test('queued old document messages cannot replace actual current top-frame ident
       'new-document',
     ),
   ).rejects.toThrow();
+});
+
+test('same URL replacement needs the current nonce even when sender document ID is unavailable', async () => {
+  const nonce = 'c3b45e0f-227f-41fc-b9c5-af170af9a65d';
+  const api = {
+    tabs: {
+      get: async () => ({ status: 'complete', url: page }),
+      executeScript: async () => [nonce],
+    },
+  };
+  expect(
+    await validateAccountDocument(api, 'firefox', 12, undefined, { nonce, generation: 1 }),
+  ).toBe(page);
+  await expect(
+    validateAccountDocument(api, 'firefox', 12, undefined, {
+      nonce: '5d7d0285-d238-4d6a-9661-6a5446851c7f',
+      generation: 1,
+    }),
+  ).rejects.toThrow('account_document_stale');
+  await expect(validateAccountDocument(api, 'firefox', 12, undefined)).rejects.toThrow(
+    'account_document_stale',
+  );
 });

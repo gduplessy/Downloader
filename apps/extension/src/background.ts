@@ -1,3 +1,4 @@
+import { verifyLiveDocument, type DocumentClaim } from './navigation/session/document';
 import { NavigationStarts } from './navigation/session/start';
 import { PremiumAuthorizations } from './navigation/accounts/premium';
 import { accountRequest, validateAccountRequest } from './navigation/accounts/worker';
@@ -896,7 +897,12 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
         (sender as any).documentId,
       );
     if (message.type === 'resolver_context')
-      return resolverContext(sender.tab.id!, sender.frameId ?? 0, (sender as any).documentId);
+      return resolverContext(
+        sender.tab.id!,
+        sender.frameId ?? 0,
+        (sender as any).documentId,
+        message.document,
+      );
     if (
       ['resolver_step', 'resolver_commit', 'resolver_abort', 'resolver_disable_adapter'].includes(
         message.type,
@@ -1065,6 +1071,7 @@ type ResolverRecord = {
   documentGeneration?: number;
   sessionEpoch?: string;
   documentId?: string;
+  documentNonce?: string;
   tabId: number;
   started: number;
   steps: number;
@@ -1338,6 +1345,7 @@ function authorizationBinding(
     binding.claimGeneration !== record.scope.claim_generation ||
     binding.sourceGeneration !== record.sourceGeneration ||
     binding.documentGeneration !== record.documentGeneration ||
+    binding.documentNonce !== record.documentNonce ||
     binding.adapterId !== adapter.id ||
     binding.adapterVersion !== adapter.version ||
     binding.fingerprint !== message.fingerprint ||
@@ -1352,13 +1360,18 @@ function authorizationBinding(
     scope: record.scope,
     sourceGeneration: record.sourceGeneration!,
     documentGeneration: binding.documentGeneration,
+    documentNonce: binding.documentNonce,
     adapterId: adapter.id,
     adapterVersion: adapter.version,
     fingerprint: binding.fingerprint,
   };
 }
 async function resolverAction(message: any, tabId: number, page: string, documentId?: string) {
-  if (message.type === 'resolver_step') return resolverStep(message, tabId, page, documentId);
+  if (message.type === 'resolver_step') {
+    const ctx = await resolverContext(tabId, 0, documentId, message.document);
+    if (!ctx) throw Error('navigation_authorization_stale');
+    return resolverStep(message, tabId, page, ctx.documentId);
+  }
   if (message.type === 'resolver_abort') {
     navigationAuthorizations.cancel(message.token);
     premiumAuthorizations.cancel(message.token);
@@ -1369,7 +1382,7 @@ async function resolverAction(message: any, tabId: number, page: string, documen
     }
     return true;
   }
-  const ctx = await resolverContext(tabId, 0, documentId);
+  const ctx = await resolverContext(tabId, 0, documentId, message.document);
   if (!ctx) throw Error('navigation_authorization_stale');
   if (message.type === 'resolver_disable_adapter') {
     const adapter = matchAdapter(page);
@@ -1430,6 +1443,7 @@ async function resolverAction(message: any, tabId: number, page: string, documen
   return { click: !direct, direct, repeat: true };
 }
 async function resolverStep(message: any, tabId: number, currentUrl: string, documentId?: string) {
+  const snapshot = await browserSnapshot();
   const storage: Record<string, any> = await navigationStore.get(null);
   const entry = Object.entries(storage).find(
     ([key, r]) => key.startsWith('resolver-') && r.tabId === tabId,
@@ -1437,7 +1451,6 @@ async function resolverStep(message: any, tabId: number, currentUrl: string, doc
   if (!entry || message.url !== currentUrl) return { click: false, repeat: false };
   const id = entry[0].slice(9),
     record = entry[1] as ResolverRecord,
-    snapshot = await browserSnapshot(),
     job = snapshot.jobs.find((j: any) => j.id === id);
   if (!job || !['waiting_browser', 'waiting_user'].includes(job.state) || record.downloadId)
     return { click: false, repeat: false };
@@ -1472,6 +1485,7 @@ async function resolverStep(message: any, tabId: number, currentUrl: string, doc
       binding.sessionKey !== sessionKey(record.scope) ||
       binding.claimGeneration !== record.scope.claim_generation ||
       binding.sourceGeneration !== record.sourceGeneration ||
+      binding.documentNonce !== record.documentNonce ||
       !Number.isSafeInteger(binding.documentGeneration) ||
       binding.documentGeneration < (record.documentGeneration ?? 0)
     )
@@ -1622,6 +1636,7 @@ browser.tabs.onUpdated.addListener((tabId, change) => {
         if (key.startsWith('resolver-') && record.tabId === tabId) {
           record.documentGeneration = 0;
           delete record.documentId;
+          delete record.documentNonce;
           delete record.fingerprint;
           await navigationStore.set({ [key]: record });
         }
@@ -1726,13 +1741,24 @@ async function browserSnapshot(): Promise<any> {
 }
 
 async function resolverAccount(
-  message: { request: AccountAction; binding: AccountBinding },
+  message: { request: AccountAction; binding: AccountBinding; document: DocumentClaim },
   tabId: number,
   frameId: number,
   documentId?: string,
 ) {
-  const currentPage = await validateAccountDocument(browser, BROWSER, tabId, documentId);
-  const ctx = await resolverContext(tabId, frameId, documentId);
+  if (
+    message.document?.nonce !== message.binding?.documentNonce ||
+    message.document?.generation !== message.binding?.documentGeneration
+  )
+    throw Error('account_document_stale');
+  const currentPage = await validateAccountDocument(
+    browser,
+    BROWSER,
+    tabId,
+    documentId,
+    message.document,
+  );
+  const ctx = await resolverContext(tabId, frameId, documentId, message.document);
   if (!ctx || !ctx.sourceGeneration || !message.binding || frameId !== 0)
     throw Error('account_binding_stale');
   const records = await navigationStore.get(null);
@@ -1756,7 +1782,8 @@ async function resolverAccount(
     sourceGeneration: ctx.sourceGeneration,
     tabId,
     frameId,
-    documentId: documentId ?? null,
+    documentId: ctx.documentId ?? null,
+    documentNonce: ctx.documentNonce,
     page: currentPage,
   };
   validateAccountRequest(message.request, message.binding, owned);
@@ -1767,8 +1794,15 @@ async function resolverAccount(
     throw Error('account_owned_tab_required');
   return accountRequest(message.request, message.binding, owned, native);
 }
-async function resolverContext(tabId: number, frameId: number, documentId?: string) {
+async function resolverContext(
+  tabId: number,
+  frameId: number,
+  documentId?: string,
+  document?: DocumentClaim,
+) {
   if (frameId !== 0 || (await browser.tabs.get(tabId)).status !== 'complete') return null;
+  const live = await verifyLiveDocument(browser, BROWSER, tabId, document!, documentId);
+  if (!live) return null;
   const snapshot = await browserSnapshot();
   const records = await navigationStore.get(null);
   const entry = Object.entries(records).find(
@@ -1794,9 +1828,17 @@ async function resolverContext(tabId: number, frameId: number, documentId?: stri
     frameId,
   );
   if (!sameScope(current, record.scope)) return null;
-  if (documentId && record.documentId !== documentId) {
-    record.documentId = documentId;
+  if (record.documentNonce !== live.nonce || record.documentId !== live.documentId) {
+    navigationAuthorizations.invalidateTab(tabId);
+    premiumAuthorizations.invalidateTab(tabId);
+    record.documentNonce = live.nonce;
+    record.documentId = live.documentId;
     record.documentGeneration = 0;
+    await navigationStore.set({ [entry[0]]: record });
+  }
+  if (document!.generation < (record.documentGeneration ?? 0)) return null;
+  if (record.documentGeneration !== document!.generation) {
+    record.documentGeneration = document!.generation;
     await navigationStore.set({ [entry[0]]: record });
   }
   return {
@@ -1805,6 +1847,8 @@ async function resolverContext(tabId: number, frameId: number, documentId?: stri
     scope: record.scope,
     sourceGeneration: record.sourceGeneration,
     documentId: record.documentId,
+    documentNonce: record.documentNonce,
+    documentGeneration: record.documentGeneration,
     selectedHost: job.selected_host,
     disabledAdapters: settings.disabledAdapters ?? [],
     locale: settings.locale,

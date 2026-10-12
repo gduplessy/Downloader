@@ -22,6 +22,7 @@ const bound: PreviewBinding = {
   sourceGeneration: 1,
   claimGeneration: 2,
   documentGeneration: 1,
+  documentNonce: 'c3b45e0f-227f-41fc-b9c5-af170af9a65d',
   page,
   adapterId: 'local-fixture',
   adapterVersion: '1.0.0',

@@ -40,6 +40,7 @@ export type FormProof = {
   adapter_version: string;
   fingerprint: string;
   document_generation: number;
+  document_nonce: string;
   document_id: string | null;
   username_name: string;
   password_name: string;
@@ -50,6 +51,7 @@ export type AccountBinding = {
   scope: SessionScope;
   sourceGeneration: number;
   documentGeneration: number;
+  documentNonce: string;
   documentId: string | null;
   page: string;
   adapterId: string;

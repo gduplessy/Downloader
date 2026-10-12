@@ -10,6 +10,7 @@ export type OwnedAccountTab = {
   tabId: number;
   frameId: number;
   documentId: string | null;
+  documentNonce: string;
   page: string;
 };
 export async function accountRequest(
@@ -39,6 +40,7 @@ export function validateAccountRequest(
     binding.frameId !== 0 ||
     owned.frameId !== 0 ||
     binding.documentId !== owned.documentId ||
+    binding.documentNonce !== owned.documentNonce ||
     binding.page !== owned.page ||
     scopeKey(binding.scope) !== scopeKey(owned.scope) ||
     binding.scope.claim_generation !== owned.scope.claim_generation ||
@@ -57,6 +59,7 @@ export function validateAccountRequest(
       p.adapter_id !== adapter.id ||
       p.adapter_version !== adapter.version ||
       p.document_id !== binding.documentId ||
+      p.document_nonce !== binding.documentNonce ||
       p.document_generation !== binding.documentGeneration
     )
       throw Error('account_form_binding_stale');

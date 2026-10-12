@@ -29,3 +29,5 @@ node scripts/nav-fixtures/accounts/production-worker.mjs
 ```
 
 The UI driver detaches its fixture-page debugger after input, before production capture. Fixture packaging only substitutes the unique native host name; no native/browser transport mocks, byte relay or file import occur. Native release, private/container coverage and same-URL document replacement remain separately fenced and tested; unavailable browser/OS acceptance stays pending.
+
+`production-chrome-nonce.json` records the production Chrome 155 rerun using live document nonce verification and the required native form nonce. One login and one native file transfer publish the expected hash. This does not qualify Firefox or the final Edge nonce path. Full native fault-injection regression, Clippy/fmt, frontend tests/types/builds and Windows native desktop compilation passed for 0.9.8.

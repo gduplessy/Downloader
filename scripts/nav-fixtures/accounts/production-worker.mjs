@@ -462,6 +462,27 @@ try {
       throw Error(JSON.stringify({ job, requests, consoleEvents }));
     await new Promise((r) => setTimeout(r, 200));
   }
+  let accountFailure;
+  if (job?.state !== 'complete' && job?.bytes === 0) {
+    const target = (await command('Target.getTargets')).targetInfos.find(
+      (t) => t.type === 'page' && t.url.startsWith(base + '/nav-adapters/ddownload/'),
+    );
+    if (target) {
+      const probe = (
+        await command('Target.attachToTarget', { targetId: target.targetId, flatten: true })
+      ).sessionId;
+      const result = await command(
+        'Runtime.evaluate',
+        {
+          expression: `document.querySelector('[data-downloader-ui="account"]')?.dataset.downloaderAccountFailure ?? null`,
+          returnByValue: true,
+        },
+        probe,
+      );
+      accountFailure = result.result?.value;
+      await command('Target.detachFromTarget', { sessionId: probe });
+    }
+  }
   assert.equal(
     job?.state,
     'complete',
@@ -469,6 +490,7 @@ try {
       job,
       requests,
       consoleEvents,
+      accountFailure,
       diagnostics: await evaluate(`chrome.runtime.sendMessage({type:'diagnostics'})`),
     }),
   );

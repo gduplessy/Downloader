@@ -38,6 +38,7 @@ export async function observeAccount(
       fingerprint,
       document_generation: binding.documentGeneration,
       document_id: binding.documentId,
+      document_nonce: binding.documentNonce,
       username_name: '',
       password_name: '',
     };

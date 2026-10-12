@@ -80,6 +80,7 @@ fn main() -> Result<()> {
             adapter_version: "1.0.0".into(),
             fingerprint: "a".repeat(64),
             document_generation: 1,
+            document_nonce: "c3b45e0f-227f-41fc-b9c5-af170af9a65d".into(),
             document_id: Some("qualification-document".into()),
             username_name: "username".into(),
             password_name: "password".into(),

@@ -97,6 +97,7 @@ pub struct FormProof {
     pub adapter_version: String,
     pub fingerprint: String,
     pub document_generation: u64,
+    pub document_nonce: String,
     #[serde(default)]
     pub document_id: Option<String>,
     pub username_name: String,
@@ -246,6 +247,9 @@ pub fn save(
     Ok(account)
 }
 fn proof(proof: &FormProof, account: &Account, login: bool) -> Result<()> {
+    if uuid::Uuid::parse_str(&proof.document_nonce).is_err() {
+        bail!("account_document_nonce_invalid");
+    }
     if proof.frame_id != 0
         || proof.document_generation == 0
         || proof.origin != account.origin

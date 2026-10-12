@@ -8,6 +8,7 @@ export function sameAccountBinding(a: AccountBinding, b: AccountBinding): boolea
     a.scope.claim_generation === b.scope.claim_generation &&
     a.sourceGeneration === b.sourceGeneration &&
     a.documentGeneration === b.documentGeneration &&
+    a.documentNonce === b.documentNonce &&
     a.documentId === b.documentId &&
     a.page === b.page &&
     a.adapterId === b.adapterId &&

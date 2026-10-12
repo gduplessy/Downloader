@@ -101,6 +101,7 @@ export async function supportedForm(
       fingerprint,
       document_generation: binding.documentGeneration,
       document_id: binding.documentId,
+      document_nonce: binding.documentNonce,
       username_name: username.name,
       password_name: password.name,
     },

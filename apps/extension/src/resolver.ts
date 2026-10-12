@@ -29,7 +29,10 @@ import { showPreview, type PreviewHandle } from './navigation/adapters/selection
 
 // Runs only in the top-level tab assigned to an explicit navigation job.
 import { scopeKey, type ResolverContext } from './navigation/adapters/context';
+const documentRoot = globalThis as typeof globalThis & { __downloaderDocumentNonce?: string };
+const documentNonce = (documentRoot.__downloaderDocumentNonce ??= crypto.randomUUID());
 let documentGeneration = 1;
+const documentClaim = () => ({ nonce: documentNonce, generation: documentGeneration });
 let documentActive = true;
 let previewHandle: PreviewHandle | undefined;
 let running = false;
@@ -38,7 +41,7 @@ const submissions = new SubmissionGate();
 async function context(): Promise<ResolverContext | null> {
   if (!documentActive) return null;
   const result = (await browser.runtime
-    .sendMessage({ type: 'resolver_context' })
+    .sendMessage({ type: 'resolver_context', document: documentClaim() })
     .catch(() => null)) as ResolverContext | null;
   return documentActive ? result : null;
 }
@@ -50,6 +53,7 @@ function accountBinding(ctx: ResolverContext): AccountBinding {
     scope: ctx.scope,
     sourceGeneration: ctx.sourceGeneration,
     documentGeneration,
+    documentNonce,
     documentId: ctx.documentId ?? null,
     page: location.href,
     adapterId: adapter.id,
@@ -57,7 +61,12 @@ function accountBinding(ctx: ResolverContext): AccountBinding {
   };
 }
 async function accountAction(request: AccountAction, bound: AccountBinding): Promise<any> {
-  return browser.runtime.sendMessage({ type: 'resolver_account', request, binding: bound });
+  return browser.runtime.sendMessage({
+    type: 'resolver_account',
+    request,
+    binding: bound,
+    document: documentClaim(),
+  });
 }
 async function currentAccountBinding(): Promise<AccountBinding | null> {
   const ctx = await context();
@@ -101,6 +110,7 @@ function binding(
     claimGeneration: ctx.scope.claim_generation,
     sourceGeneration: ctx.sourceGeneration,
     documentGeneration,
+    documentNonce,
     page: location.href,
     adapterId: inspection.adapter.id,
     adapterVersion: inspection.adapter.version,
@@ -169,12 +179,18 @@ async function submit(
   let token: string | undefined;
   let completed = false;
   const abort = () => {
-    if (token) void browser.runtime.sendMessage({ type: 'resolver_abort', token });
+    if (token)
+      void browser.runtime.sendMessage({
+        type: 'resolver_abort',
+        token,
+        document: documentClaim(),
+      });
   };
   signal?.addEventListener('abort', abort, { once: true });
   try {
     reply = await browser.runtime.sendMessage({
       type: 'resolver_step',
+      document: documentClaim(),
       url: location.href,
       decision: {
         kind: 'click',
@@ -204,6 +220,7 @@ async function submit(
     if (signal?.aborted) throw Error('adapter_selection_cancelled');
     reply = await browser.runtime.sendMessage({
       type: 'resolver_commit',
+      document: documentClaim(),
       token,
       binding: binding(freshContext, fresh.inspection, fresh.fingerprint),
       fingerprint: fresh.fingerprint,
@@ -267,6 +284,7 @@ async function step() {
       );
       await browser.runtime.sendMessage({
         type: 'resolver_step',
+        document: documentClaim(),
         url: location.href,
         decision: {
           kind: 'user',
@@ -300,6 +318,7 @@ async function step() {
         async () => {
           const disabled = await browser.runtime.sendMessage({
             type: 'resolver_disable_adapter',
+            document: documentClaim(),
             adapterId: preview.binding.adapterId,
           });
           if (disabled !== true) throw Error('adapter_disable_rejected');
@@ -326,6 +345,7 @@ async function step() {
     const element = chosen ? observed.collected.elements.get(chosen.localId) : undefined;
     const reply: any = await browser.runtime.sendMessage({
       type: 'resolver_step',
+      document: documentClaim(),
       url: location.href,
       decision: {
         ...decision,
