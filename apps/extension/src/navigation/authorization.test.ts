@@ -40,6 +40,7 @@ describe('one-use navigation authorization', () => {
       { page: 'https://example.test/changed' },
       { sourceGeneration: 5 },
       { documentGeneration: 2 },
+      { documentNonce: '33333333-3333-4333-8333-333333333333' },
       { adapterVersion: '2.0.0' },
       { fingerprint: 'b'.repeat(64) },
       { scope: { ...binding.scope, claim_generation: 4 } },
@@ -53,6 +54,19 @@ describe('one-use navigation authorization', () => {
       expect(() => grants.consume(token, { ...binding, ...variant })).toThrow('stale');
       expect(() => grants.consume(token, binding)).toThrow('stale');
     }
+  });
+  it('consumes an old Firefox token when the same URL reloads with a new nonce', () => {
+    const grants = new NavigationAuthorizations();
+    const firefox = {
+      ...binding,
+      documentId: undefined,
+      scope: { ...binding.scope, browser: 'firefox' as const },
+    };
+    const token = grants.issue(firefox, action);
+    expect(() =>
+      grants.consume(token, { ...firefox, documentNonce: '33333333-3333-4333-8333-333333333333' }),
+    ).toThrow('stale');
+    expect(() => grants.consume(token, firefox)).toThrow('stale');
   });
   it('retains the prepared provider choice until consume', () => {
     const grants = new NavigationAuthorizations();

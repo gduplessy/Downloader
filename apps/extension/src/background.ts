@@ -20,6 +20,7 @@ import { armChromium, takeFirefox, originalResponseMetadata } from './navigation
 import { readOwnedBlob } from './navigation/streams/blob';
 import { applyEvents } from '../../../packages/shared/src/events';
 import browser from 'webextension-polyfill';
+import { challengeHandler } from './navigation/challenges/worker';
 import { shouldSolve } from './resolver-policy';
 import { NavigationScheduler, WAIT_ALARM_PREFIX } from './navigation/scheduler/runtime';
 import { observeWait, waitFingerprint, type DurableWait } from './navigation/scheduler/waits';
@@ -904,6 +905,14 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
         message.document,
       );
     if (
+      [
+        'resolver_challenge_select',
+        'resolver_challenge_authorize',
+        'resolver_challenge_paid',
+      ].includes(message.type)
+    )
+      return challengeMessage(message, sender);
+    if (
       ['resolver_step', 'resolver_commit', 'resolver_abort', 'resolver_disable_adapter'].includes(
         message.type,
       )
@@ -1346,6 +1355,7 @@ function authorizationBinding(
     binding.sourceGeneration !== record.sourceGeneration ||
     binding.documentGeneration !== record.documentGeneration ||
     binding.documentNonce !== record.documentNonce ||
+    message.document?.nonce !== record.documentNonce ||
     binding.adapterId !== adapter.id ||
     binding.adapterVersion !== adapter.version ||
     binding.fingerprint !== message.fingerprint ||
@@ -1360,18 +1370,13 @@ function authorizationBinding(
     scope: record.scope,
     sourceGeneration: record.sourceGeneration!,
     documentGeneration: binding.documentGeneration,
-    documentNonce: binding.documentNonce,
+    documentNonce: record.documentNonce!,
     adapterId: adapter.id,
     adapterVersion: adapter.version,
     fingerprint: binding.fingerprint,
   };
 }
 async function resolverAction(message: any, tabId: number, page: string, documentId?: string) {
-  if (message.type === 'resolver_step') {
-    const ctx = await resolverContext(tabId, 0, documentId, message.document);
-    if (!ctx) throw Error('navigation_authorization_stale');
-    return resolverStep(message, tabId, page, ctx.documentId);
-  }
   if (message.type === 'resolver_abort') {
     navigationAuthorizations.cancel(message.token);
     premiumAuthorizations.cancel(message.token);
@@ -1383,7 +1388,14 @@ async function resolverAction(message: any, tabId: number, page: string, documen
     return true;
   }
   const ctx = await resolverContext(tabId, 0, documentId, message.document);
-  if (!ctx) throw Error('navigation_authorization_stale');
+  if (!ctx) {
+    if (message.token) {
+      navigationAuthorizations.cancel(message.token);
+      premiumAuthorizations.cancel(message.token);
+    }
+    throw Error('navigation_authorization_stale');
+  }
+  if (message.type === 'resolver_step') return resolverStep(message, tabId, page, ctx.documentId);
   if (message.type === 'resolver_disable_adapter') {
     const adapter = matchAdapter(page);
     if (adapter.id === 'generic' || adapter.id !== message.adapterId)
@@ -1801,8 +1813,6 @@ async function resolverContext(
   document?: DocumentClaim,
 ) {
   if (frameId !== 0 || (await browser.tabs.get(tabId)).status !== 'complete') return null;
-  const live = await verifyLiveDocument(browser, BROWSER, tabId, document!, documentId);
-  if (!live) return null;
   const snapshot = await browserSnapshot();
   const records = await navigationStore.get(null);
   const entry = Object.entries(records).find(
@@ -1828,27 +1838,33 @@ async function resolverContext(
     frameId,
   );
   if (!sameScope(current, record.scope)) return null;
-  if (record.documentNonce !== live.nonce || record.documentId !== live.documentId) {
+  if (!document) return null;
+  const live = await verifyLiveDocument(browser, BROWSER, tabId, document, documentId);
+  if (!live) return null;
+  if (record.documentNonce === live.nonce && document.generation < (record.documentGeneration ?? 0))
+    return null;
+  if (record.documentNonce !== live.nonce) {
     navigationAuthorizations.invalidateTab(tabId);
     premiumAuthorizations.invalidateTab(tabId);
-    record.documentNonce = live.nonce;
-    record.documentId = live.documentId;
-    record.documentGeneration = 0;
-    await navigationStore.set({ [entry[0]]: record });
   }
-  if (document!.generation < (record.documentGeneration ?? 0)) return null;
-  if (record.documentGeneration !== document!.generation) {
-    record.documentGeneration = document!.generation;
-    await navigationStore.set({ [entry[0]]: record });
-  }
+  record.documentNonce = live.nonce;
+  record.documentGeneration = document.generation;
+  if (
+    !Number.isSafeInteger(record.sourceGeneration) ||
+    record.sourceGeneration! < 1 ||
+    record.sourceGeneration !== job.source_generation
+  )
+    return null;
+  record.documentId = live.documentId ?? documentId;
+  await navigationStore.set({ [entry[0]]: record });
   return {
     tabId,
     frameId,
     scope: record.scope,
-    sourceGeneration: record.sourceGeneration,
+    sourceGeneration: record.sourceGeneration!,
     documentId: record.documentId,
-    documentNonce: record.documentNonce,
-    documentGeneration: record.documentGeneration,
+    documentGeneration: document.generation,
+    documentNonce: live.nonce,
     selectedHost: job.selected_host,
     disabledAdapters: settings.disabledAdapters ?? [],
     locale: settings.locale,
@@ -1865,4 +1881,90 @@ async function reportError(error: unknown, privateSession = privateWorker) {
     return;
   }
   await browser.storage.local.set({ lastError: String(error) });
+}
+
+const challengeAuthorizations = new Set<string>();
+async function challengeMessage(message: any, sender: browser.Runtime.MessageSender) {
+  const tabId = sender.tab?.id,
+    frameId = sender.frameId ?? 0,
+    documentId = (sender as any).documentId;
+  if (tabId === undefined || frameId !== 0 || !message.document)
+    throw Error('challenge_session_rejected');
+  async function recordForTab() {
+    const records = await navigationStore.get(null);
+    const row = Object.entries(records).find(
+      ([key, value]: any) => key.startsWith('resolver-') && value.tabId === tabId,
+    );
+    return row ? { id: row[0].slice(9), record: row[1] as ResolverRecord } : null;
+  }
+  async function owned() {
+    const ctx = await resolverContext(tabId!, frameId, documentId, message.document);
+    const current = await browser.tabs.get(tabId!);
+    if (
+      !ctx ||
+      !Number.isSafeInteger(ctx.sourceGeneration) ||
+      !current.url ||
+      current.url !== sender.url
+    )
+      return null;
+    return { ...ctx, page: current.url, selectedHost: ctx.selectedHost ?? '' };
+  }
+  const ctx = await owned(),
+    row = await recordForTab();
+  if (!ctx || !row) throw Error('challenge_session_rejected');
+  const authorizeSite = async () => {
+    if (!(await scheduler.admitted(row.id))) return false;
+    await scheduler.heartbeat(row.id, tabId!);
+    if (!(await owned())) return false;
+    await native('browser_status', {
+      id: row.id,
+      state: 'waiting_user',
+      url: ctx.page,
+      message: 'Image challenge requires an answer in the owning browser tab.',
+      bytes: 0,
+      total: null,
+    });
+    return true;
+  };
+  if (message.type === 'resolver_challenge_select') {
+    if (
+      !['g4u.to', 'ddownload.com', 'rapidgator.net', 'gofile.io'].includes(message.selectedHost) ||
+      !(await authorizeSite())
+    )
+      throw Error('challenge_host_rejected');
+    const fresh = await owned();
+    if (!fresh) throw Error('challenge_session_rejected');
+    const adapter = matchAdapter(fresh.page, settings.disabledAdapters);
+    await native('navigation_selection', {
+      id: row.id,
+      owner: fresh.scope.profile,
+      scope: fresh.scope,
+      source_generation: fresh.sourceGeneration,
+      page: fresh.page,
+      selected_host: message.selectedHost,
+      adapter: { id: adapter.id, version: adapter.version },
+    });
+    eventSnapshot = null;
+    return true;
+  }
+  if (
+    !message.binding ||
+    message.binding.documentGeneration !== message.document.generation ||
+    message.binding.documentNonce !== message.document.nonce
+  )
+    throw Error('challenge_session_rejected');
+  const handler = challengeHandler(
+    {
+      owned: async () => owned(),
+      authorizeSite,
+      jobId: async () => row.id,
+      native: async (args) => native('captcha', args),
+      now: () => Date.now(),
+    },
+    challengeAuthorizations,
+  );
+  const identity = { tabId, frameId, page: sender.url ?? '' };
+  if (message.type === 'resolver_challenge_authorize')
+    return handler.authorize(identity, message.binding);
+  return handler.paid(identity, message.binding, { action: message.action, image: message.image });
 }

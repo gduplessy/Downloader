@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.9.8<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.9.9<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -275,13 +275,29 @@ The native selection command now retains an explicitly chosen downstream host an
 
 Direct browser streaming (0.7.1) is off by default. Original POST and page Blob bytes completed through the native receiver in local stable Chrome/Edge fixtures; integrated preview and Firefox/private/container/live-provider acceptance remain pending. See [stream evidence and contracts](docs/NAV_BROWSER_STREAMS.md).
 
+Local image challenges: qualified open-circle geometry and optional disabled-by-default 2Captcha accounting are implemented; see docs/evidence/nav-challenges/README.md for synthetic and pending browser/live acceptance.
+
+Challenge recovery 0.10.1 adds bounded service-owned paid accounting, source/claim task fences, current desktop budget controls and runnable four-host local fixtures; recorded evidence distinguishes mocked-worker DOM from real CLI desktop bytes.
+
+Challenge control qualification 0.10.2 covers production React FlareSolverr settings through isolated native state and eight browser stale-answer cases. Installed extension navigation remains the next integration gate.
+
+Challenge runtime 0.10.3 integrates explicit scoped host choice, live document identity, whole-site admission and browser-only challenge form submission. Installed qualification remains in progress until its intended-file hashes pass.
+
 Shared integration 0.8.10: adapter actions now prepare one-use authorization before capture, recheck current page/session/source authority before commit, and abort cancelled capture. Selected provider metadata is recorded through the scoped native command; rendered-discovery navigation opens the selected resource while retaining its provenance page. Full installed-worker acceptance remains pending.
 
 Shared integration 0.8.11: same-context read-only authority renewal adopts claim/source replacements and invalidates old grants/capture. Recovery, heartbeat and tab closure require current browser epoch and actual owned session; stale tab IDs do not authorize a substituted context. Scoped refreshed sources remain in browser navigation until replay qualification. Installed-worker/private-session acceptance remains pending.
 
+Challenge qualification can exercise the actual installed production worker/resolver through scripts/nav-fixtures/challenges/installed.mjs, with an isolated native host and local fixture permissions. Final installed native hashes remain pending.
+
 Shared integration 0.8.12: private and regular scheduler responses and reconciliation are isolated by explicit worker lane, while capacity and host locks remain service-global. Six native scheduler regressions cover lane isolation, retained peer leases, durable private exclusion, authority replacement and queue recovery.
 
+Challenge scope comparisons use canonical browser session identity; cancelled host-choice callbacks stay closed. Installed runtime hash qualification remains in progress.
+
 Shared integration 0.8.13: scoped incremental subscriptions preserve null snapshots; cached subscription cursors recover on scope/claim changes. First production installed Chrome 155 POST gate passes one original submission, 262,161 bytes and native SHA-256. Broader installed blob/cancel/replacement/private/container/Firefox and integrated account/challenge/discovery acceptance remains pending.
+
+Challenge integration 0.10.6: adapter actions and grants now require the verified live document nonce; same-URL Firefox replacement consumes stale authority. Installed challenge acceptance remains pending.
+
+Shared integration 0.12.0: queued metadata writes reject older native source/claim counters, including private ephemeral records. Chromium restart reconciliation verifies actual cookie-store membership. Extension regressions, types and browser builds pass; the broader installed acceptance matrix remains pending.
 Scoped browser-account controls are available under Settings. Select an owned browser job and exact session before saving or selecting account metadata. Passwords use the OS credential store; private sessions use existing browser accounts only. Browser login/premium fixture qualification is being integrated; live provider layouts and APIs remain pending.
 
 Account grant and credential lifecycle qualification (0.9.1): Windows OS-keyring save/read/remove and the production Engine one-use grant path pass with deleted test-only credentials. Form cancellation, request overrides and stale documents are covered by real Headless Chromium DOM checks with mocked grant transport. Installed-extension/native downstream acceptance and live/provider account qualification remain pending.
@@ -295,3 +311,4 @@ Account integration (0.9.5) uses canonical native/browser partition comparison a
 Selected account recovery (0.9.6) preserves an explicit account only through same-session owner continuation/refresh, renews nonsecret association fences, invalidates earlier grants and observations, and retains bounded sign-in attempts. Installed worker authentication/premium acceptance remains in progress.
 Account integration (0.9.7) includes authority-qualified incremental browser snapshots and the checked production Chrome capture prerequisite. Installed Chrome 155 local fixtures pass both explicit saved-fill sign-in and existing-session premium download through actual extension/native transports, publishing 311,296 hash-verified bytes with one login and one file request. Edge qualification remains pending after a recorded zero-byte continuation failure; live hosts, provider APIs, Firefox and other OS rows remain pending.
 Account document proof (0.9.8) binds native credential grants and premium capture to the actual isolated document nonce and generation, plus Chromium document ID when available. The nonce-protected Chrome 155 saved-fill fixture publishes the expected verified bytes. Edge 155 baseline saved-fill passed; its final nonce-protected row and Firefox remain pending further integration.
+Account staging integration (0.9.9) adopts the checked monotonic navigation-record guard, deep-cloned private memory storage, actual Chromium cookie-store reconciliation and E challenge document contract. Credential and capture grants keep distinct purposes and require the current verified nonce. Final installed account reruns follow this shared prerequisite update.

@@ -69,7 +69,7 @@ describe('candidate evidence and deterministic selection', () => {
   });
   test.each(['Premium download', 'Download torrent', 'Buy now', 'Sponsored download'])(
     'rejects %s',
-    (text) => {
+    (text: string) => {
       const result = inspectCandidates(page, [c('bad', { text }), c('good')]);
       expect(result.selected?.localId).toBe('good');
       expect(result.candidates[0].confidence).toBe('rejected');
@@ -80,7 +80,7 @@ describe('candidate evidence and deterministic selection', () => {
     'javascript:alert(1)',
     'data:application/octet-stream,x',
     'https://a:secret@example.org/file',
-  ])('rejects unsafe destination %s', (target) => {
+  ])('rejects unsafe destination %s', (target: string) => {
     expect(inspectCandidates(page, [c('bad', { target, href: target })]).kind).toBe('user');
   });
   test('hidden, ad context and disabled controls cannot be selected', () => {
@@ -144,7 +144,7 @@ describe('preview ownership and stale submission', () => {
       validateSelection(createPreview(bound, inspection), bound, inspection, 'b').localId,
     ).toBe('b');
   });
-  test.each(Object.keys(bound) as (keyof PreviewBinding)[])('rejects changed %s', (key) => {
+  test.each(Object.keys(bound) as (keyof PreviewBinding)[])('rejects changed %s', (key: keyof PreviewBinding) => {
     const changed = { ...bound, [key]: typeof bound[key] === 'number' ? 99 : 'changed' };
     expect(() =>
       validateSelection(createPreview(bound, inspection), changed, inspection, 'a'),

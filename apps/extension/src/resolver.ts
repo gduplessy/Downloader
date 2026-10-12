@@ -5,6 +5,7 @@ import { accountLabel } from './navigation/accounts/labels';
 import type { AccountAction, AccountBinding, Selection } from './navigation/accounts/types';
 import { matchAdapter } from './navigation/adapters/policy';
 import browser from 'webextension-polyfill';
+import { showChallenge, type ChallengeBridge } from './navigation/challenges/page';
 import { decide, classifyBlocker } from './resolver-policy';
 import {
   collectControls,
@@ -34,6 +35,7 @@ const documentNonce = (documentRoot.__downloaderDocumentNonce ??= crypto.randomU
 let documentGeneration = 1;
 const documentClaim = () => ({ nonce: documentNonce, generation: documentGeneration });
 let documentActive = true;
+let challengeHandle: { close(): void } | undefined;
 let previewHandle: PreviewHandle | undefined;
 let running = false;
 let accountPanel: { close: () => void } | undefined;
@@ -256,9 +258,48 @@ async function step() {
   try {
     accountPanel?.close();
     accountPanel = undefined;
+    challengeHandle?.close();
+    challengeHandle = undefined;
     previewHandle?.close();
     previewHandle = undefined;
     const ctx = await context();
+    if (ctx) {
+      challengeHandle =
+        (await showChallenge(
+          document,
+          {
+            context,
+            chooseHost: async (host: string) =>
+              browser.runtime.sendMessage({
+                type: 'resolver_challenge_select',
+                selectedHost: host,
+                document: { nonce: documentNonce, generation: documentGeneration },
+              }),
+            authorize: async (bound, signal) => {
+              if (signal.aborted) return false;
+              const reply = await browser.runtime.sendMessage({
+                type: 'resolver_challenge_authorize',
+                binding: bound,
+                document: { nonce: documentNonce, generation: documentGeneration },
+              });
+              return !signal.aborted && reply === true;
+            },
+            paid: async (action, bound, image) =>
+              browser.runtime.sendMessage({
+                type: 'resolver_challenge_paid',
+                binding: bound,
+                action,
+                image,
+                document: { nonce: documentNonce, generation: documentGeneration },
+              }),
+          } as ChallengeBridge,
+          documentGeneration,
+          () => {
+            setTimeout(() => void step().catch(() => {}), 500);
+          },
+        )) ?? undefined;
+      if (challengeHandle) return;
+    }
     const observed = await observe(ctx);
     if (ctx && observed.account)
       accountPanel = await showAccountPanel(

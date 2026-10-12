@@ -38,6 +38,7 @@ export class NavigationAuthorizations {
       binding.sourceGeneration < 1 ||
       !Number.isSafeInteger(binding.documentGeneration) ||
       binding.documentGeneration < 1 ||
+      !/^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(binding.documentNonce) ||
       !Number.isSafeInteger(binding.scope.claim_generation) ||
       binding.scope.claim_generation < 1 ||
       !['http:', 'https:'].includes(page.protocol) ||

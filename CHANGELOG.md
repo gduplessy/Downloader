@@ -1,5 +1,54 @@
 # Changelog
 
+## 0.9.9 — Integrate monotonic navigation record ownership
+
+- Adopt checked shared record write fencing and actual Chromium cookie-store reconciliation.
+- Preserve account, challenge and adapter document claims with distinct expiring credential/capture purposes.
+- Keep live hosts/accounts, paid-provider calls and unavailable browser/OS acceptance pending.
+
+## 0.12.0
+
+- Integrate live document nonce authorization with shared navigation recovery.
+- Serialize navigation metadata writes and reject delayed records with older native source or claim counters; private records remain ephemeral.
+- Reconcile Chromium tab ownership against actual cookie-store membership when the Tab API omits cookieStoreId.
+- Verify 106 extension regressions, extension types and both browser builds. Installed Firefox and broader integrated acceptance remain pending.
+
+## 0.10.5
+
+- Adopt canonical scope ordering and validated CLI navigation ownership from coordinator integration.
+- Normalize image binding scope identity and stop cancelled host-choice callbacks from reopening the solver.
+
+
+## 0.10.4
+
+- Integrate coordinator two-phase capture and read-only authority adoption while retaining live-document and challenge form fences.
+- Add an isolated actual-installed production worker/resolver qualification driver; final native hash acceptance remains pending until its checks pass.
+
+
+## 0.10.3
+
+- Integrate the verified coordinator capture/session/scheduler base and wire owner-fenced image challenge selection, local/manual/paid controls, and HTML-form fresh-link continuation.
+- Verify live isolated-world document identities before resolver contexts and challenge actions; enforce service admission before paid task creation.
+
+
+## 0.10.2
+
+- Bind image challenge submissions to complete form state and selected-host fields, reject occluded targets, and preserve immutable session snapshots.
+- Qualify production React FlareSolverr settings against isolated native state, including save/test/stale result/disable/restart; eight stale browser lifecycle cases submit zero forms.
+
+
+## 0.10.1
+
+- Add service restart/late-result reconciliation with source/claim-bound paid tasks, actual image dimension checks, translated budget controls and strict worker authorization.
+- Qualify 120 unique held-out images plus 80 negative images and four synthetic fresh-link desktop hashes. Installed worker/live host acceptance remains pending.
+
+
+## 0.10.0
+
+- Add qualified local open-circle geometry, stale-answer fencing, six-locale challenge controls, and service-owned optional CoordinatesTask reservations tested entirely against mocks.
+- Paid solving remains disabled with zero budget; live challenge and downstream browser acceptance remain pending.
+
+
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
 ## 0.9.8 — Bind account and capture authority to the actual document
@@ -305,3 +354,8 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 ## 0.1.0 — Initial development preview
 
 - Original GPL-3.0 desktop, CLI and extension foundation, hosted-page navigation fixtures, media/grabber adapters and public roadmap.
+
+### 0.10.6
+- Integrated native scoped incremental projection and cursor fixes from coordinator 0.8.13 for actual challenge qualification.
+
+- Bind all adapter actions to the verified live document nonce, burn stale tokens, and read resolver ownership after native projection renewal.

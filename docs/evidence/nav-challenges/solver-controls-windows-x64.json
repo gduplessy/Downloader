@@ -1,0 +1,10 @@
+{
+  "fixture": "production-solver-settings-native-cli-v1",
+  "enable_save": true,
+  "test_connection": true,
+  "changed_setting_invalidates_result": true,
+  "disable_save_restart": true,
+  "paid_budget": 0,
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "qualification": "Production React settings controls and real isolated CLI/native service; fake local FlareSolverr health, no clearance claim or installed native window observation."
+}

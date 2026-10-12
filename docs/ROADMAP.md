@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.9.8<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.9.9<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -172,15 +172,31 @@ NAV-04 / NAV-10 browser increment: service admission and extension queue control
 
 NAV-07/08/09/11 implementation increment (0.7.0): durable direct-response receiver, strict replay policy, generation fences, scoped projections and transient private records implemented. Real extension transport/browser matrix, private legacy-history review and live-provider acceptance remain pending.
 
+NAV-13 increment 0.10.0: local geometry/lifecycle and durable mocked paid-provider accounting implemented. Browser submission, fresh selected-host links, intended-hash and live acceptance remain separate pending gates.
+
+NAV-01 local Rust solver lifecycle: 7/7 fixtures pass. NAV-13 synthetic corpus 120/120 unique accepted-correct images, 80/80 negative abstentions; 4/4 fresh selected-host desktop files match intended SHA256. Installed extension challenge path and live/paid qualification remain pending.
+
+NAV-01 production settings controls: local enable/save/test/stale-setting invalidation/disable/restart pass in the browser component harness backed by isolated native state. NAV-13 form/host/occlusion fences pass eight stale DOM cases with zero submissions. Installed extension acceptance remains pending.
+
 NAV-04 / NAV-10 qualification increment: production queue UI and actual Engine policy verified with three/twenty real fixture renderer tabs, limit lowering, same-host locking and replaced-wait/restart lifecycle. [Evidence and pending scope/browser/live-host gates](evidence/nav-scheduling/README.md).
+
+NAV-13 runtime integration: production worker and resolver hooks added with a live isolated document nonce, native selected-host metadata, scheduler admission and original browser HTML form submission. Installed fixture acceptance is in progress.
 
 Shared integration 0.8.10: adapter actions now prepare one-use authorization before capture, recheck current page/session/source authority before commit, and abort cancelled capture. Selected provider metadata is recorded through the scoped native command; rendered-discovery navigation opens the selected resource while retaining its provenance page. Full installed-worker acceptance remains pending.
 
 Shared integration 0.8.11: same-context read-only authority renewal adopts claim/source replacements and invalidates old grants/capture. Recovery, heartbeat and tab closure require current browser epoch and actual owned session; stale tab IDs do not authorize a substituted context. Scoped refreshed sources remain in browser navigation until replay qualification. Installed-worker/private-session acceptance remains pending.
 
+NAV-13 installed qualification driver added against the combined production worker/resolver. Browser startup and scoped capture acceptance are still under investigation; no live or paid success is inferred.
+
 Shared integration 0.8.12: private and regular scheduler responses and reconciliation are isolated by explicit worker lane, while capacity and host locks remain service-global. Six native scheduler regressions cover lane isolation, retained peer leases, durable private exclusion, authority replacement and queue recovery.
 
+NAV-13 canonical scope and CLI-created navigation ownership corrections integrated; actual installed acceptance remains under investigation with no inferred success.
+
 Shared integration 0.8.13: scoped incremental subscriptions preserve null snapshots; cached subscription cursors recover on scope/claim changes. First production installed Chrome 155 POST gate passes one original submission, 262,161 bytes and native SHA-256. Broader installed blob/cancel/replacement/private/container/Firefox and integrated account/challenge/discovery acceptance remains pending.
+
+NAV-13/adapter integration 0.10.6: current document claims are required for prepare/commit/disable; nonce-keyed grants reject same-URL replacement. Full native/client checks pass; installed challenge qualification is still active.
+
+Shared integration 0.12.0: serialized metadata writes prevent stale source/claim replacement in regular and private lanes. Chromium restart reconciliation resolves actual cookie-store membership. 106 extension regressions, types and both browser builds pass; broader installed acceptance remains pending.
 ### NAV-02/03 account foundation (0.9.0)
 
 Desktop account creation/selection/removal, exact-session metadata, OS-keyring references, typed auth/entitlement recovery and one-use expiring grants are implemented. Browser form integration, native credential lifecycle and downstream file-hash acceptance remain in progress. Live host/account qualification and provider APIs remain pending.
@@ -196,3 +212,4 @@ Account integration (0.9.5) uses canonical native/browser partition comparison a
 Selected account recovery (0.9.6) preserves an explicit account only through same-session owner continuation/refresh, renews nonsecret association fences, invalidates earlier grants and observations, and retains bounded sign-in attempts. Installed worker authentication/premium acceptance remains in progress.
 Account integration (0.9.7) includes authority-qualified incremental browser snapshots and the checked production Chrome capture prerequisite. Installed Chrome 155 local fixtures pass both explicit saved-fill sign-in and existing-session premium download through actual extension/native transports, publishing 311,296 hash-verified bytes with one login and one file request. Edge qualification remains pending after a recorded zero-byte continuation failure; live hosts, provider APIs, Firefox and other OS rows remain pending.
 Account document proof (0.9.8) binds native credential grants and premium capture to the actual isolated document nonce and generation, plus Chromium document ID when available. The nonce-protected Chrome 155 saved-fill fixture publishes the expected verified bytes. Edge 155 baseline saved-fill passed; its final nonce-protected row and Firefox remain pending further integration.
+Account staging integration (0.9.9) adopts the checked monotonic navigation-record guard, deep-cloned private memory storage, actual Chromium cookie-store reconciliation and E challenge document contract. Credential and capture grants keep distinct purposes and require the current verified nonce. Final installed account reruns follow this shared prerequisite update.
