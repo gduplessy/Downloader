@@ -59,7 +59,7 @@ describe('original response takeover', () => {
     await vi.waitFor(() => expect(states).toContain('complete'));
     expect(admit).toHaveBeenCalledWith({ 'content-type': 'application/octet-stream' });
     expect(f.sink.chunk).toHaveBeenCalledWith(new Uint8Array([1, 2, 3]));
-    expect(f.send.mock.calls.map((c) => c[1])).toContain('Fetch.fulfillRequest');
+    expect(f.send.mock.calls.map((c: unknown[]) => c[1])).toContain('Fetch.fulfillRequest');
     expect(f.sink.end).toHaveBeenCalledOnce();
   });
   it('returns navigation HTML to the browser without taking bytes or completing a file', async () => {
@@ -73,7 +73,7 @@ describe('original response takeover', () => {
     );
     f.emit({ ...response, responseHeaders: [{ name: 'Content-Type', value: 'text/html' }] });
     await vi.waitFor(() => expect(f.sink.abort).toHaveBeenCalled());
-    expect(f.send.mock.calls.map((c) => c[1])).not.toContain('Fetch.takeResponseBodyAsStream');
+    expect(f.send.mock.calls.map((c: unknown[]) => c[1])).not.toContain('Fetch.takeResponseBodyAsStream');
     expect(f.sink.end).not.toHaveBeenCalled();
   });
   it('correlates redirects from the approved request and ignores foreign frame events', async () => {
@@ -87,7 +87,7 @@ describe('original response takeover', () => {
     );
     f.emit({ ...response, frameId: 'foreign' });
     await vi.waitFor(() =>
-      expect(f.send.mock.calls.map((c) => c[1])).toContain('Fetch.continueRequest'),
+      expect(f.send.mock.calls.map((c: unknown[]) => c[1])).toContain('Fetch.continueRequest'),
     );
     expect(f.sink.chunk).not.toHaveBeenCalled();
     f.emit({

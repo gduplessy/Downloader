@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.11.7<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.11.8<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -210,3 +210,6 @@ Shared integration 0.8.13: scoped incremental subscriptions preserve null snapsh
 NAV-13/adapter integration 0.10.6: current document claims are required for prepare/commit/disable; nonce-keyed grants reject same-URL replacement. Full native/client checks pass; installed challenge qualification is still active.
 
 NAV-12 0.11.7: installed Chrome155 delayed/authenticated discovery and one original GET matched native SHA-256 on base4001f58. Final combined-base, Edge and remaining release-matrix acceptance are tracked separately.
+Shared integration 0.12.0: serialized metadata writes prevent stale source/claim replacement in regular and private lanes. Chromium restart reconciliation resolves actual cookie-store membership. 106 extension regressions, types and both browser builds pass; broader installed acceptance remains pending.
+
+NAV-12 0.11.8 adopts checked common base9dc9986. Installed Chrome/Edge qualification is being refreshed; live hosts/accounts and remaining platform/browser matrix stay pending.

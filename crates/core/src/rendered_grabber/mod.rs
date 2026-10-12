@@ -507,15 +507,18 @@ pub fn report(engine: &crate::Engine, request: PageResult) -> Result<serde_json:
     let mut scheduler = engine.navigation_scheduler.lock().unwrap();
     let store = engine.store.lock().unwrap();
     let mut state = load(&store, &request.id)?;
+    let duplicate = state.reports.contains_key(&canonical(&request.page_url)?);
     state.report(request, chrono::Utc::now().timestamp_millis())?;
-    scheduler.apply(
-        &state.scope.as_ref().unwrap().profile,
-        crate::navigation_scheduler::SchedulerRequest::Release {
-            id: format!("discovery:{}", state.project.id),
-            generation: state.generation,
-        },
-        chrono::Utc::now().timestamp_millis(),
-    )?;
+    if !duplicate {
+        scheduler.apply(
+            &state.scope.as_ref().unwrap().profile,
+            crate::navigation_scheduler::SchedulerRequest::Release {
+                id: format!("discovery:{}", state.project.id),
+                generation: state.generation,
+            },
+            chrono::Utc::now().timestamp_millis(),
+        )?;
+    }
     scheduler.persist(&store)?;
     store.put("rendered_discovery", &state.project.id, &state)?;
     Ok(serde_json::json!({"status":state.status}))

@@ -201,7 +201,10 @@ export class RenderedDiscovery {
         generation: record.generation,
         page_url: record.page_url,
         document,
-        ...result,
+        final_url: result.final_url,
+        bytes: result.bytes,
+        links: result.links,
+        reason: result.reason,
       });
       if (result.reason) {
         await browser.tabs.update(record.tabId, { active: true });

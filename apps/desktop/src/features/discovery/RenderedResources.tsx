@@ -8,11 +8,13 @@ interface File {
 }
 export function RenderedResources({
   id,
+  count,
   chosen,
   onChosen,
   t,
 }: {
   id: string;
+  count: number;
   chosen: string[];
   onChosen: (urls: string[]) => void;
   t: (key: Key) => string;
@@ -39,7 +41,7 @@ export function RenderedResources({
     return () => {
       live = false;
     };
-  }, [id, offset]);
+  }, [id, offset, count]);
   return (
     <>
       <p role="status">

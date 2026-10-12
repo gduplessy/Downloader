@@ -195,3 +195,37 @@ fn stale_document_result_cannot_replace_current_rendered_page() {
     assert_eq!(state["resources"].as_array().unwrap().len(), 0);
     assert_eq!(state["lease"]["document"], current);
 }
+
+#[test]
+fn duplicate_old_page_report_cannot_release_the_current_page_lease() {
+    let dir = tempfile::tempdir().unwrap();
+    let engine = Engine::open(dir.path()).unwrap();
+    initialize(&engine, dir.path(), false);
+    let args = json!({"id":"rendered-project","scope":scope(false),"generation":1,"tab_id":42});
+    call(&engine, "discovery_claim", args.clone());
+    let mut report = json!({"id":"rendered-project","scope":scope(false),"generation":1,"page_url":"http://127.0.0.1:18782/","final_url":"http://127.0.0.1:18782/","bytes":20,"links":[{"url":"http://127.0.0.1:18782/next","resource":false,"name":"next","size":null,"content_type":""}],"reason":null});
+    call(&engine, "discovery_page_result", report.clone());
+    call(&engine, "discovery_claim", args);
+    report["document"] = json!({"nonce":"00000000-0000-4000-8000-000000000001","generation":1});
+    downloader_core::rendered_grabber::report(&engine, serde_json::from_value(report).unwrap())
+        .unwrap();
+    let state = call(
+        &engine,
+        "discovery_status",
+        json!({"id":"rendered-project","scope":scope(false),"generation":1,"action":"snapshot"}),
+    );
+    assert_eq!(state["lease"]["url"], "http://127.0.0.1:18782/next");
+    let scheduler = call(
+        &engine,
+        "navigation_scheduler",
+        json!({"owner":scope(false)["profile"],"private_lane":false,"request":{"action":"snapshot"}}),
+    );
+    let task = scheduler["tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|task| task["id"] == "discovery:rendered-project")
+        .unwrap();
+    assert_eq!(task["status"], "active");
+    assert!(task["lease"].is_object());
+}

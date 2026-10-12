@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.12.0
+
+- Integrate live document nonce authorization with shared navigation recovery.
+- Serialize navigation metadata writes and reject delayed records with older native source or claim counters; private records remain ephemeral.
+- Reconcile Chromium tab ownership against actual cookie-store membership when the Tab API omits cookieStoreId.
+- Verify 106 extension regressions, extension types and both browser builds. Installed Firefox and broader integrated acceptance remain pending.
+
 ## 0.10.5
 
 - Adopt canonical scope ordering and validated CLI navigation ownership from coordinator integration.
@@ -37,6 +44,11 @@
 
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
+
+## 0.11.8
+
+- Adopt monotonic navigation metadata writes and actual Chromium cookie-store reconciliation.
+- Keep rendered resource pages current as discovery progresses; refresh final installed Chrome/Edge qualification against the combined base.
 
 ## 0.11.7
 
