@@ -5,6 +5,8 @@ use std::collections::BTreeSet;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Page {
+    #[serde(default)]
+    pub document: Option<DocumentProof>,
     pub url: String,
     pub depth: usize,
 }
@@ -49,8 +51,15 @@ pub struct Link {
     pub size: Option<u64>,
     pub content_type: String,
 }
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct DocumentProof {
+    pub nonce: String,
+    pub generation: u64,
+}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PageResult {
+    #[serde(default)]
+    pub document: Option<DocumentProof>,
     pub id: String,
     pub scope: SessionScope,
     pub generation: u64,
@@ -68,7 +77,11 @@ impl Discovery {
         }
         Ok(Self {
             private: project.private,
-            pending: vec![Page { url, depth: 0 }],
+            pending: vec![Page {
+                url,
+                depth: 0,
+                document: None,
+            }],
             project,
             scope: None,
             generation: 1,
@@ -163,6 +176,9 @@ impl Discovery {
             .as_ref()
             .context("Missing discovery lease")?
             .clone();
+        if page.document != report.document {
+            bail!("Stale discovery document");
+        }
         if page.url != page_url {
             bail!("Wrong discovery page");
         }
@@ -237,6 +253,7 @@ impl Discovery {
                 self.pending.push(Page {
                     url: text,
                     depth: page.depth + 1,
+                    document: None,
                 });
             }
         }
@@ -258,7 +275,12 @@ impl Discovery {
                 self.generation += 1;
                 self.lease = None;
             }
+            "wait_browser" => {
+                self.status = "waiting_browser".into();
+                self.lease = None;
+            }
             "resume" => {
+                self.started_ms = 0;
                 if self.status == "cancelled" {
                     bail!("Cancelled discovery cannot resume");
                 }
@@ -288,7 +310,13 @@ fn matches_filter(filter: &str, text: &str) -> bool {
         })
 }
 fn canonical(text: &str) -> Result<String> {
+    if text.len() > 8192 {
+        bail!("Discovery URL exceeds bound");
+    }
     let mut url = crate::security::validate_url(text)?;
+    if !matches!(url.scheme(), "http" | "https") {
+        bail!("Rendered discovery requires HTTP or HTTPS");
+    }
     url.set_fragment(None);
     Ok(url.to_string())
 }
@@ -303,6 +331,8 @@ pub struct Claim {
     pub observed_url: Option<String>,
     #[serde(default)]
     pub resume: bool,
+    #[serde(default)]
+    pub document: Option<DocumentProof>,
     #[serde(default)]
     pub permitted_origins: Vec<String>,
 }
@@ -340,6 +370,12 @@ pub fn list(engine: &crate::Engine, scope: &SessionScope) -> Result<serde_json::
 pub fn claim(engine: &crate::Engine, request: Claim) -> Result<serde_json::Value> {
     let _operation = engine.discovery_operations.lock().unwrap();
     let now = chrono::Utc::now().timestamp_millis();
+    if request
+        .tab_id
+        .is_some_and(|id| id < 0 || id > 9_007_199_254_740_991)
+    {
+        bail!("Invalid owned discovery tab");
+    }
     // Same lock order as navigation: scheduler, then store. Both admissions share one budget.
     let mut scheduler = engine.navigation_scheduler.lock().unwrap();
     let store = engine.store.lock().unwrap();
@@ -431,7 +467,19 @@ pub fn claim(engine: &crate::Engine, request: Claim) -> Result<serde_json::Value
             )?;
         }
     }
-    let page = if admitted { state.next(now)? } else { None };
+    let mut page = if admitted { state.next(now)? } else { None };
+    if let Some(document) = &request.document {
+        uuid::Uuid::parse_str(&document.nonce)?;
+        if document.generation == 0 || document.generation > 9_007_199_254_740_991 {
+            bail!("Invalid discovery document generation");
+        }
+        let lease = state
+            .lease
+            .as_mut()
+            .context("Missing document page lease")?;
+        lease.document = Some(document.clone());
+        page = Some(lease.clone());
+    }
     if admitted && page.is_none() {
         scheduler.apply(
             &request.scope.profile,
@@ -449,6 +497,9 @@ pub fn claim(engine: &crate::Engine, request: Claim) -> Result<serde_json::Value
     )
 }
 pub fn report(engine: &crate::Engine, request: PageResult) -> Result<serde_json::Value> {
+    if request.document.is_none() {
+        bail!("Rendered result requires an enrolled document proof");
+    }
     let _operation = engine.discovery_operations.lock().unwrap();
     let mut scheduler = engine.navigation_scheduler.lock().unwrap();
     let store = engine.store.lock().unwrap();
@@ -467,6 +518,9 @@ pub fn report(engine: &crate::Engine, request: PageResult) -> Result<serde_json:
     Ok(serde_json::json!({"status":state.status}))
 }
 pub fn status(engine: &crate::Engine, request: Status) -> Result<serde_json::Value> {
+    if !["snapshot", "resume", "cancel", "wait_browser"].contains(&request.action.as_str()) {
+        bail!("Invalid discovery control");
+    }
     let _operation = engine.discovery_operations.lock().unwrap();
     let mut scheduler = engine.navigation_scheduler.lock().unwrap();
     let store = engine.store.lock().unwrap();
@@ -511,6 +565,7 @@ mod tests {
     }
     fn result() -> PageResult {
         PageResult {
+            document: None,
             id: "project".into(),
             scope: scope(),
             generation: 1,
@@ -622,6 +677,7 @@ pub fn select(
     if request.urls.len() > 1000 {
         bail!("Selection exceeds bound");
     }
+    let selected_urls: BTreeSet<_> = request.urls.iter().cloned().collect();
     let mut ids = vec![];
     for url in request.urls {
         let file = state
@@ -687,7 +743,7 @@ pub fn select(
         let store = engine.store.lock().unwrap();
         let mut current = load(&store, &request.id)?;
         current.authorize(&request.scope, request.generation)?;
-        current.selected.clear();
+        current.selected.retain(|url| !selected_urls.contains(url));
         store.put("rendered_discovery", &request.id, &current)?;
     }
     Ok(serde_json::json!({"jobs":ids}))
@@ -695,26 +751,56 @@ pub fn select(
 pub fn projects(engine: &crate::Engine) -> Result<serde_json::Value> {
     let store = engine.store.lock().unwrap();
     let states = store.all::<Discovery>("rendered_discovery")?;
-    let mut projects = store.all::<GrabberProject>("grabber")?;
-    for project in &mut projects {
-        if let Some(state) = states.iter().find(|s| s.project.id == project.id) {
+    let projects = store.all::<GrabberProject>("grabber")?;
+    let mut rows = vec![];
+    for mut project in projects {
+        let state = states.iter().find(|state| state.project.id == project.id);
+        let mut found_count = project.found.len();
+        let mut visited_count = project.visited.len();
+        if let Some(state) = state {
             project.status = state.status.clone();
-            project.visited = state.visited.clone();
-            project.found = state
-                .resources
-                .iter()
-                .map(|r| crate::model::GrabberFile {
-                    url: r.url.clone(),
-                    name: r.name.clone(),
-                    size: r.size,
-                    content_type: r.content_type.clone(),
-                })
-                .collect();
+            found_count = state.resources.len();
+            visited_count = state.visited.len();
+            project.found.clear();
+            project.visited.clear();
         }
+        let mut row = serde_json::to_value(project)?;
+        row["found_count"] = serde_json::json!(found_count);
+        row["visited_count"] = serde_json::json!(visited_count);
+        rows.push(row);
     }
-    Ok(serde_json::to_value(projects)?)
+    Ok(serde_json::to_value(rows)?)
 }
+pub fn results(
+    engine: &crate::Engine,
+    id: &str,
+    offset: usize,
+    limit: usize,
+) -> Result<serde_json::Value> {
+    if limit == 0 || limit > 16 {
+        bail!("Resource page limit must be one through sixteen");
+    }
+    let store = engine.store.lock().unwrap();
+    let state = load(&store, id)?;
+    let files: Vec<_> = state
+        .resources
+        .iter()
+        .skip(offset)
+        .take(limit)
+        .map(|resource| crate::model::GrabberFile {
+            url: resource.url.clone(),
+            name: resource.name.clone(),
+            size: resource.size,
+            content_type: resource.content_type.clone(),
+        })
+        .collect();
+    Ok(serde_json::json!({"items":files,"total":state.resources.len(),"offset":offset}))
+}
+
 pub fn control(engine: &crate::Engine, id: &str, action: &str) -> Result<serde_json::Value> {
+    if !["resume", "cancel"].contains(&action) {
+        bail!("Invalid discovery control");
+    }
     let _operation = engine.discovery_operations.lock().unwrap();
     let mut scheduler = engine.navigation_scheduler.lock().unwrap();
     let store = engine.store.lock().unwrap();
@@ -757,7 +843,14 @@ pub fn stage_selection(
             bail!("Resource is not in discovery results");
         }
     }
-    state.selected = urls.to_vec();
+    for url in urls {
+        if !state.selected.contains(url) {
+            state.selected.push(url.clone());
+        }
+    }
+    if state.selected.len() > 1000 {
+        bail!("Staged selection exceeds bound");
+    }
     store.put("rendered_discovery", id, &state)?;
     Ok(serde_json::json!({"status":"waiting_browser","selected":urls.len()}))
 }
@@ -768,4 +861,25 @@ fn same_session(a: &SessionScope, b: &SessionScope) -> bool {
         && a.private == b.private
         && a.cookie_store_id == b.cookie_store_id
         && a.container_id == b.container_id
+}
+
+pub fn browser_projection(value: serde_json::Value) -> serde_json::Value {
+    let selected: Vec<_> = value["selected"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .take(16)
+        .cloned()
+        .collect();
+    let resources: Vec<_> = value["resources"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|resource| {
+            selected.is_empty() || selected.iter().any(|url| url == &resource["url"])
+        })
+        .take(16)
+        .cloned()
+        .collect();
+    serde_json::json!({"id":value["project"]["id"],"scope":value["scope"],"generation":value["generation"],"status":value["status"],"lease":value["lease"],"bytes":value["bytes"],"selected":selected,"resources":resources,"resource_count":value["resources"].as_array().map_or(0,Vec::len),"visited_count":value["visited"].as_array().map_or(0,Vec::len),"pending_count":value["pending"].as_array().map_or(0,Vec::len)})
 }

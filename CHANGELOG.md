@@ -2,6 +2,12 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.11.5
+
+- Integrate private-lane scheduler admission with fresh original source-tab authority for selected discovery jobs.
+- Bind rendered reports to the current document nonce and generation; add bounded resource paging and desktop selection controls.
+- Native frontier and Engine regressions pass. Installed authenticated original-stream qualification remains in progress.
+
 ## 0.11.4
 
 - Bound delayed/open-shadow DOM extraction and add a reproducible installed Chrome/Edge discovery/native qualification fixture.
@@ -26,6 +32,26 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 
 - Add atomically persisted rendered discovery frontiers, provenance, bounded results, scoped command fences, duplicate-report fingerprints, and shared navigation admission.
 - Keep new private projects and frontier metadata ephemeral. Local backend qualification is in progress; browser/native rendered fixture qualification is pending.
+
+## 0.8.12
+
+- Isolate regular/private scheduler projections, mutation authority and recovery while retaining shared service capacity and host locks.
+- Add a native mixed-lane regression proving regular recovery cannot release private leases or expose private task identifiers.
+- Canonicalize native/browser partition-key comparison and mark validated scoped claims as browser sources for desktop-created navigation jobs.
+- Add a production background/resolver installed POST fixture runner. Initial runs remain waiting before submission; full-worker acceptance is pending despite passing module/native regressions.
+
+## 0.8.11
+
+- Add narrowly scoped read-only claim/source renewal without exposing URLs or weakening stale-write fences.
+- Require current browser epoch and actual original tab context for recovery, heartbeat and closure; invalidate old authorization/capture when source authority changes.
+- Keep scoped refreshed sources awaiting browser qualification and prevent unknown-source resume from starting native probes.
+- Five native selection/renewal/refresh regressions cover generation replacement, unrelated sessions, durable metadata, private persistence and unqualified replay.
+
+## 0.8.10
+
+- Wire one-use prepare/commit/abort for adapter actions; fence source generation, document, bundled adapter and actual top-level sender before capture.
+- Persist prepared provider selection through scoped native metadata; support owned adapter disable and selected-resource navigation with original provenance retained.
+- Full installed-worker acceptance remains pending; local module checks do not establish complete browser flows.
 
 ## 0.8.9 — Integrate original-response capture and scoped recovery
 

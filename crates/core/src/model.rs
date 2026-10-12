@@ -356,10 +356,17 @@ pub enum Command {
     NavigationScheduler {
         owner: String,
         #[serde(default)]
+        private_lane: bool,
+        #[serde(default)]
         scope: Option<crate::navigation::SessionScope>,
         request: crate::navigation_scheduler::SchedulerRequest,
     },
     NavigationSelection(crate::navigation_selection::SelectionRequest),
+    NavigationAuthority {
+        id: String,
+        owner: String,
+        scope: crate::navigation::SessionScope,
+    },
     ClaimNavigation {
         id: String,
         owner: String,
@@ -473,6 +480,11 @@ pub enum Command {
     },
     DiscoveryClaim(crate::rendered_grabber::Claim),
     DiscoverySelect(crate::rendered_grabber::Select),
+    GrabberResults {
+        id: String,
+        offset: usize,
+        limit: usize,
+    },
     GrabberControl {
         id: String,
         action: String,

@@ -1,5 +1,13 @@
 import { translations } from './translations';
 export const en = {
+  discoveryPrevious: 'Previous resources',
+  discoveryNext: 'Next resources',
+  discoveryExploring: 'Exploring rendered pages',
+  discoveryReady: 'Resources ready',
+  discoveryAuthentication: 'Sign in through the owned browser tab',
+  discoveryLimit: 'Discovery limit reached',
+  discoveryTimeout: 'Rendered page timed out',
+  discoveryTabClosed: 'Owned browser tab closed',
   discoveryBrowser: 'Select a browser session in the extension to explore this project.',
   discoveryPrivate: 'Private project (kept in memory)',
   discoveryResume: 'Resume rendered discovery',

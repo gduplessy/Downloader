@@ -1,5 +1,62 @@
 // Each row is French, Spanish, German, Arabic, Simplified Chinese.
 export const translations: Record<string, [string, string, string, string, string]> = {
+  discoveryPrevious: [
+    'Ressources précédentes',
+    'Recursos anteriores',
+    'Vorherige Ressourcen',
+    'الموارد السابقة',
+    '上一页资源',
+  ],
+  discoveryNext: [
+    'Ressources suivantes',
+    'Recursos siguientes',
+    'Nächste Ressourcen',
+    'الموارد التالية',
+    '下一页资源',
+  ],
+  discoveryExploring: [
+    'Exploration des pages rendues',
+    'Explorando páginas renderizadas',
+    'Gerenderte Seiten werden erkundet',
+    'استكشاف الصفحات المعروضة',
+    '正在探索渲染页面',
+  ],
+  discoveryReady: [
+    'Ressources prêtes',
+    'Recursos listos',
+    'Ressourcen bereit',
+    'الموارد جاهزة',
+    '资源已就绪',
+  ],
+  discoveryAuthentication: [
+    'Connectez-vous dans l’onglet du navigateur',
+    'Inicie sesión en la pestaña del navegador',
+    'Im eigenen Browsertab anmelden',
+    'سجل الدخول في علامة تبويب المتصفح المملوكة',
+    '在受控浏览器标签页中登录',
+  ],
+  discoveryLimit: [
+    'Limite d’exploration atteinte',
+    'Límite de exploración alcanzado',
+    'Erkundungslimit erreicht',
+    'تم بلوغ حد الاستكشاف',
+    '已达到探索限制',
+  ],
+  discoveryTimeout: [
+    'Délai de rendu dépassé',
+    'Tiempo de renderizado agotado',
+    'Zeitlimit für Seitendarstellung erreicht',
+    'انتهت مهلة عرض الصفحة',
+    '渲染页面超时',
+  ],
+  discoveryTabClosed: [
+    'Onglet du navigateur fermé',
+    'Pestaña del navegador cerrada',
+    'Eigener Browsertab geschlossen',
+    'تم إغلاق علامة تبويب المتصفح المملوكة',
+    '受控浏览器标签页已关闭',
+  ],
+
   discoveryBrowser: [
     'Sélectionnez une session dans l’extension pour explorer ce projet.',
     'Seleccione una sesión en la extensión para explorar este proyecto.',

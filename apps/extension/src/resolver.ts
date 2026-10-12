@@ -68,6 +68,7 @@ function binding(
     frameId: ctx.frameId,
     sessionKey: scopeKey(ctx.scope),
     claimGeneration: ctx.scope.claim_generation,
+    sourceGeneration: ctx.sourceGeneration,
     documentGeneration,
     page: location.href,
     adapterId: inspection.adapter.id,
@@ -107,6 +108,12 @@ async function submit(
   const originalOutline = element.style.outline;
   element.style.outline = '3px solid #185ac5';
   let reply: any;
+  let token: string | undefined;
+  let completed = false;
+  const abort = () => {
+    if (token) void browser.runtime.sendMessage({ type: 'resolver_abort', token });
+  };
+  signal?.addEventListener('abort', abort, { once: true });
   try {
     reply = await browser.runtime.sendMessage({
       type: 'resolver_step',
@@ -123,12 +130,9 @@ async function submit(
       adapter_id: observed.inspection.adapter.id,
       adapter_version: observed.inspection.adapter.version,
     });
+    token = reply?.authorization;
     if (signal?.aborted) throw Error('adapter_selection_cancelled');
-    if (reply?.direct === true) {
-      submissions.consume(bound, chosen.localId);
-      return;
-    }
-    if (!reply?.click) throw Error('adapter_authorization_rejected');
+    if (!token) throw Error('adapter_authorization_rejected');
     const freshContext = await context();
     if (!freshContext) throw Error('adapter_preview_stale');
     const fresh = await observe(freshContext);
@@ -139,9 +143,33 @@ async function submit(
       chosen.localId,
     );
     if (signal?.aborted) throw Error('adapter_selection_cancelled');
-    submissions.consume(bound, chosen.localId);
-    element.click();
+    reply = await browser.runtime.sendMessage({
+      type: 'resolver_commit',
+      token,
+      binding: binding(freshContext, fresh.inspection, fresh.fingerprint),
+      fingerprint: fresh.fingerprint,
+      selected_host: chosen.panelHost ?? ctx.selectedHost ?? null,
+    });
+    if (signal?.aborted) throw Error('adapter_selection_cancelled');
+    if (reply?.direct !== true) {
+      const committedContext = await context();
+      if (!committedContext) throw Error('adapter_preview_stale');
+      const committed = await observe(committedContext);
+      validateSelection(
+        createPreview(bound, observed.inspection),
+        binding(committedContext, committed.inspection, committed.fingerprint),
+        committed.inspection,
+        chosen.localId,
+      );
+      if (signal?.aborted) throw Error('adapter_selection_cancelled');
+      if (!reply?.click) throw Error('adapter_authorization_rejected');
+      submissions.consume(bound, chosen.localId);
+      element.click();
+    } else submissions.consume(bound, chosen.localId);
+    completed = true;
   } finally {
+    signal?.removeEventListener('abort', abort);
+    if (!completed) abort();
     element.style.outline = originalOutline;
   }
   if (reply?.repeat) setTimeout(() => void step(), 1000);

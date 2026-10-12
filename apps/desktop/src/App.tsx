@@ -1,3 +1,4 @@
+import { RenderedResources } from './features/discovery/RenderedResources';
 import { applyEvents, type EventBatch } from '../../../packages/shared/src/events';
 import { useEffect, useMemo, useState, useRef, useId, type ReactNode } from 'react';
 import {
@@ -1501,7 +1502,23 @@ function GrabberPage({ t, run, directory }: { t: T; run: Run; directory: string 
           <div>
             <h2>{p.name}</h2>
             <p>
-              {safeHost(p.url)} · {p.found.length} · {p.status}
+              {safeHost(p.url)} · {p.found_count ?? p.found.length} ·{' '}
+              {p.rendered
+                ? t(
+                    ((
+                      {
+                        waiting_browser: 'waiting_browser',
+                        exploring: 'discoveryExploring',
+                        ready: 'discoveryReady',
+                        authentication_required: 'discoveryAuthentication',
+                        limit_reached: 'discoveryLimit',
+                        render_timeout: 'discoveryTimeout',
+                        tab_closed: 'discoveryTabClosed',
+                        cancelled: 'cancelled',
+                      } as Record<string, string>
+                    )[p.status] ?? 'working') as Key,
+                  )
+                : p.status}
             </p>
           </div>
           <button
@@ -1554,6 +1571,9 @@ function GrabberPage({ t, run, directory }: { t: T; run: Run; directory: string 
             />
             {t('selectAll')}
           </label>
+          {current.rendered && (
+            <RenderedResources id={current.id} chosen={chosen} onChosen={setChosen} t={t} />
+          )}
           {current.found.map((f: any) => (
             <label className="check" key={f.url}>
               <input
@@ -1573,7 +1593,15 @@ function GrabberPage({ t, run, directory }: { t: T; run: Run; directory: string 
           <button
             disabled={!chosen.length}
             className="primary"
-            onClick={() => void run('grabber_download', { id: current.id, urls: chosen })}
+            onClick={() =>
+              void (async () => {
+                for (let index = 0; index < chosen.length; index += 16)
+                  await run('grabber_download', {
+                    id: current.id,
+                    urls: chosen.slice(index, index + 16),
+                  });
+              })()
+            }
           >
             {t('downloadSelected')}
           </button>

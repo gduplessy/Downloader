@@ -361,6 +361,7 @@ impl Engine {
     fn schedule_navigation(
         &self,
         owner: &str,
+        private_lane: bool,
         scope: Option<crate::navigation::SessionScope>,
         request: crate::navigation_scheduler::SchedulerRequest,
     ) -> Result<serde_json::Value> {
@@ -368,7 +369,7 @@ impl Engine {
         uuid::Uuid::parse_str(owner).context("Invalid browser profile identifier")?;
         if let Some(scope) = &scope {
             scope.validate()?;
-            if scope.profile != owner {
+            if scope.profile != owner || scope.private != private_lane {
                 bail!("Scheduler scope owner mismatch");
             }
         }
@@ -500,7 +501,10 @@ impl Engine {
                     let state = crate::rendered_grabber::load(&self.store.lock().unwrap(), id)?;
                     let scope = lease.scope.as_ref().context("Missing discovery scope")?;
                     state.authorize(scope, lease.generation)?;
-                    if scope.profile != owner || state.lease.is_none() {
+                    if scope.profile != owner
+                        || scope.private != private_lane
+                        || state.lease.is_none()
+                    {
                         bail!("Reconciled discovery scope is stale or foreign");
                     }
                     continue;
@@ -509,7 +513,8 @@ impl Engine {
                     .iter()
                     .find(|job| job.id == lease.id)
                     .context("Unknown reconciled navigation job")?;
-                if job.navigation_owner.as_deref() != Some(owner)
+                if job.private != private_lane
+                    || job.navigation_owner.as_deref() != Some(owner)
                     || job.source_generation != lease.generation
                     || job.navigation_scope != lease.scope
                 {
@@ -523,8 +528,8 @@ impl Engine {
                 .iter_mut()
                 .find(|t| &t.id == id)
                 .context("Unknown navigation task")?;
-            if task.owner != owner {
-                bail!("Scheduler task owner mismatch");
+            if task.owner != owner || task.private != private_lane {
+                bail!("Scheduler task owner or private lane mismatch");
             }
             if let Some(existing) = &task.scope {
                 if scope.as_ref() != Some(existing) {
@@ -538,10 +543,12 @@ impl Engine {
             }
         }
         let now = chrono::Utc::now().timestamp_millis();
-        let result = scheduler.apply(owner, request, now)?;
+        let result = scheduler.apply_for_lane(owner, request, now, Some(private_lane))?;
         scheduler.persist(&self.store.lock().unwrap())?;
         let mut result = result;
-        result.tasks.retain(|t| t.owner == owner);
+        result
+            .tasks
+            .retain(|t| t.owner == owner && t.private == private_lane);
         // Host lock identities are service internal. Browser UI needs only the typed reason.
         for task in &mut result.tasks {
             task.host_keys.clear();
@@ -563,6 +570,27 @@ impl Engine {
     }
     pub fn command(self: &Arc<Self>, command: Command) -> Result<serde_json::Value> {
         match command {
+            Command::NavigationAuthority { id, owner, scope } => {
+                scope.validate()?;
+                let shared = self.job(&id)?;
+                let job = shared.lock().unwrap();
+                let current = job
+                    .navigation_scope
+                    .as_ref()
+                    .ok_or_else(|| anyhow::anyhow!("Navigation task is not scoped"))?;
+                let mut comparable = scope.clone();
+                comparable.claim_generation = current.claim_generation;
+                if job.navigation_owner.as_ref() != Some(&owner)
+                    || owner != scope.profile
+                    || comparable != *current
+                    || scope.claim_generation > current.claim_generation
+                {
+                    bail!("Navigation authority context mismatch");
+                }
+                // Read-only renewal metadata contains no URL, credential or task mutation.
+                Ok(serde_json::json!({ "scope": current,
+                    "source_generation": job.source_generation, "state": job.state }))
+            }
             Command::NavigationSelection(request) => {
                 crate::navigation_selection::record(self, request)
             }
@@ -571,9 +599,10 @@ impl Engine {
             )?),
             Command::NavigationScheduler {
                 owner,
+                private_lane,
                 scope,
                 request,
-            } => self.schedule_navigation(&owner, scope, request),
+            } => self.schedule_navigation(&owner, private_lane, scope, request),
             Command::TestSolver { settings } => {
                 let result = crate::solver::test(&settings)?;
                 self.cleanup_solver_sessions();
@@ -678,6 +707,7 @@ impl Engine {
                                 .map_or(1, |old| old.claim_generation.saturating_add(1));
                         }
                         j.navigation_scope = Some(scope);
+                        j.browser_source = true;
                     } else if j.navigation_scope.is_some() {
                         bail!("Scoped navigation requires a fenced claim");
                     }
@@ -895,6 +925,22 @@ impl Engine {
                 if job.state == JobState::Complete {
                     bail!("Download is already complete");
                 }
+                if job.navigation_scope.is_some()
+                    && !job.replay_decision.as_ref().is_some_and(|decision| {
+                        decision.source_generation == job.source_generation
+                            && matches!(
+                                decision.disposition,
+                                crate::navigation::ReplayDisposition::Replayable
+                            )
+                    })
+                {
+                    job.state = JobState::WaitingBrowser;
+                    job.error =
+                        Some("Fresh browser action required before replay qualification".into());
+                    drop(job);
+                    self.persist(&j)?;
+                    return Ok(serde_json::json!({"id": id}));
+                }
                 if job.page_url.as_ref() == Some(&job.url) {
                     job.state = JobState::WaitingBrowser;
                     job.error = Some("Continue page navigation from the browser extension".into());
@@ -938,7 +984,26 @@ impl Engine {
                 }
                 context.browser = Some("extension".into());
                 context.profile = Some(owner);
-                self.command(Command::Refresh { id, url, context })
+                let scoped = scope.is_some();
+                let result = self.command(Command::Refresh {
+                    id: id.clone(),
+                    url: url.clone(),
+                    context,
+                })?;
+                if scoped {
+                    let shared = self.job(&id)?;
+                    {
+                        let mut job = shared.lock().unwrap();
+                        job.navigation_url = Some(url);
+                        job.state = JobState::WaitingBrowser;
+                        job.error = Some(
+                            "Fresh browser action required before replay qualification".into(),
+                        );
+                    }
+                    self.persist(&shared)?;
+                    return Ok(serde_json::to_value(shared.lock().unwrap().clone())?);
+                }
+                Ok(result)
             }
             Command::Refresh { id, url, context } => {
                 security::validate_url(&url)?;
@@ -1075,6 +1140,9 @@ impl Engine {
             }
             Command::DiscoveryList { scope } => crate::rendered_grabber::list(self, &scope),
             Command::DiscoverySelect(request) => crate::rendered_grabber::select(self, request),
+            Command::GrabberResults { id, offset, limit } => {
+                crate::rendered_grabber::results(self, &id, offset, limit)
+            }
             Command::GrabberControl { id, action } => {
                 crate::rendered_grabber::control(self, &id, &action)
             }
@@ -1083,6 +1151,18 @@ impl Engine {
             Command::DiscoveryStatus(request) => crate::rendered_grabber::status(self, request),
             Command::Grabber(project) => {
                 security::validate_url(&project.url)?;
+                if self
+                    .store
+                    .lock()
+                    .unwrap()
+                    .all::<GrabberProject>("grabber")?
+                    .iter()
+                    .any(|existing| {
+                        existing.id == project.id && existing.private != project.private
+                    })
+                {
+                    bail!("Create a new project for a different privacy lane");
+                }
                 if project.private && !project.rendered {
                     bail!("Private projects require an explicit rendered browser session");
                 }
@@ -1589,6 +1669,9 @@ fn filter_browser_projection(
     private: bool,
     scopes: &[crate::navigation::SessionScope],
 ) {
+    if !value.is_object() {
+        return;
+    }
     if let Some(jobs) = value["jobs"].as_array_mut() {
         jobs.retain(|job| browser_job_visible(job, owner, private, scopes));
     }

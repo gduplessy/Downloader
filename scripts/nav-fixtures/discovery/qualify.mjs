@@ -47,6 +47,7 @@ await build({
 (globalThis).fixture={native,discovery,browserSnapshot,pollResolvers,profile,async setup(base,id){await browser.storage.local.set({settings:{...defaults,directCapture:true}});await load();const tab=await browser.tabs.create({url:base+'/login',active:false});while((await browser.tabs.get(tab.id)).status!=='complete')await new Promise(r=>setTimeout(r,50));await browser.tabs.update(tab.id,{url:base+'/nav-adapters/gofile/rendered'});while((await browser.tabs.get(tab.id)).status!=='complete')await new Promise(r=>setTimeout(r,50));await discovery.start(id,tab.id,[]);return tab.id;}};`,
     resolveDir: resolve('apps/extension/src'),
     sourcefile: 'fixture-background.ts',
+    loader: 'ts',
   },
   outfile: resolve(ext, 'background.js'),
   nodePaths: [resolve('apps/extension/node_modules')],
@@ -343,6 +344,7 @@ try {
     if ((await evaluate('typeof fixture')) === 'object') break;
     await new Promise((r) => setTimeout(r, 100));
   }
+  console.log('fixture: starting owned discovery');
   await evaluate('fixture.setup(' + JSON.stringify(base) + ',' + JSON.stringify(projectId) + ')');
   let state, record;
   for (let i = 0; i < 200; i++) {
@@ -358,14 +360,20 @@ try {
   assert.equal(state.status, 'ready');
   assert.equal(state.resources.length, 1);
   assert.equal(requests.length, 0);
-  assert.equal(state.visited.length, 1);
-  const selected = await evaluate(
-    'fixture.native("discovery_select",{id:' +
-      JSON.stringify(projectId) +
-      ',scope:Array.from(fixture.discovery.records.values())[0].scope,generation:1,urls:' +
-      JSON.stringify([base + '/nav-adapters/gofile/authenticated.bin']) +
-      '})',
+  assert.equal(state.visited_count, 1);
+  execFileSync(
+    cli,
+    ['--json', 'grabber-download', projectId, base + '/nav-adapters/gofile/authenticated.bin'],
+    { env, windowsHide: true, stdio: 'ignore' },
   );
+  console.log('fixture: selecting resource');
+  await evaluate('fixture.discovery.poll()');
+  console.log('fixture: selection enrolled');
+  const selectedJobs = JSON.parse(
+    execFileSync(cli, ['--json', 'list'], { env, windowsHide: true, encoding: 'utf8' }),
+  );
+  const selected = { jobs: (selectedJobs.jobs ?? selectedJobs).map((job) => job.id) };
+  assert.equal(selected.jobs.length, 1);
   await evaluate('fixture.pollResolvers(true)');
   let resolverTab;
   for (let i = 0; i < 150; i++) {
@@ -378,6 +386,7 @@ try {
     }
     await new Promise((r) => setTimeout(r, 100));
   }
+  if (!resolverTab) console.error(JSON.stringify({ jobs: JSON.parse(execFileSync(cli, ['--json', 'list'], { env, windowsHide: true, encoding: 'utf8' })), records: await evaluate('Array.from(fixture.discovery.records.values())'), scopes: await evaluate('fixture.discovery.liveScopes()'), storage: await evaluate('chrome.storage.local.get(null)') }, null, 2));
   assert.ok(
     resolverTab,
     'Owned resolver tab must be enrolled through exact discovery source scope',
@@ -411,15 +420,43 @@ try {
     await command('Target.detachFromTarget', { sessionId: attached.sessionId });
   }
   assert.ok(tabSession, 'Real resolver preview must be visible');
-  for (const [key, code] of [
-    [' ', 'Space'],
-    ['Tab', 'Tab'],
-    ['Enter', 'Enter'],
+  await command('DOM.enable', {}, tabSession);
+  const flattened = await command(
+    'DOM.getFlattenedDocument',
+    { depth: -1, pierce: true },
+    tabSession,
+  );
+  const radio = flattened.nodes.find(
+    (node) =>
+      node.nodeName === 'INPUT' &&
+      node.attributes?.some(
+        (attribute, index) => attribute === 'type' && node.attributes[index + 1] === 'radio',
+      ),
+  );
+  const button = flattened.nodes.find((node) => node.nodeName === 'BUTTON');
+  assert.ok(radio && button);
+  for (const [node, name] of [
+    [radio, '__discoveryFixtureRadio'],
+    [button, '__discoveryFixtureContinue'],
   ]) {
-    await command('Input.dispatchKeyEvent', { type: 'keyDown', key, code }, tabSession);
-    await command('Input.dispatchKeyEvent', { type: 'keyUp', key, code }, tabSession);
+    const resolved = await command('DOM.resolveNode', { nodeId: node.nodeId }, tabSession);
+    await command(
+      'Runtime.callFunctionOn',
+      {
+        objectId: resolved.object.objectId,
+        functionDeclaration: 'function(){globalThis[' + JSON.stringify(name) + ']=this;}',
+        returnByValue: true,
+      },
+      tabSession,
+    );
   }
+  // Drive the real preview after detaching; production chrome.debugger exclusively owns byte capture.
   await command('Target.detachFromTarget', { sessionId: tabSession });
+  await evaluate(
+    'chrome.scripting.executeScript({target:{tabId:' +
+      resolverTab +
+      '},world:"MAIN",func:()=>{globalThis.__discoveryFixtureRadio.click();globalThis.__discoveryFixtureContinue.click();delete globalThis.__discoveryFixtureRadio;delete globalThis.__discoveryFixtureContinue;}})',
+  );
   let jobs;
   for (let i = 0; i < 400; i++) {
     jobs = JSON.parse(
@@ -442,7 +479,7 @@ try {
     transport:
       'Production discovery worker/content and resolver, actual native messaging, original response direct streaming',
     resources: state.resources.length,
-    visited: state.visited.length,
+    visited: state.visited_count,
     bytes: bytes.length,
     sha256: digest(bytes),
     requests,
@@ -453,6 +490,7 @@ try {
       'scoped selected resource reopened provenance page',
       'authenticated original resource GET consumed once',
       'native storage completed matching SHA-256',
+      'driver detached before preview submission; production chrome.debugger exclusively owned response bytes',
     ],
     limitations: [
       'Local fixtures only; live hosts/accounts pending',

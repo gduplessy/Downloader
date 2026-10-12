@@ -19,6 +19,7 @@ const bound: PreviewBinding = {
   tabId: 4,
   frameId: 0,
   sessionKey: 'profile-a',
+  sourceGeneration: 1,
   claimGeneration: 2,
   documentGeneration: 1,
   page,

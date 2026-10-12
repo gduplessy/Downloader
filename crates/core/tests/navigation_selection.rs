@@ -20,7 +20,7 @@ fn setup(private: bool) -> (tempfile::TempDir, std::sync::Arc<Engine>, Selection
             paused: true,
             context: RequestContext {
                 profile: Some(owner.clone()),
-                browser: Some("chromium".into()),
+                browser: None,
                 private,
                 ..Default::default()
             },
@@ -38,6 +38,7 @@ fn setup(private: bool) -> (tempfile::TempDir, std::sync::Arc<Engine>, Selection
         partition_key: None,
         claim_generation: 1,
     };
+    assert!(!engine.job(&id).unwrap().lock().unwrap().browser_source);
     engine
         .command(Command::ClaimNavigation {
             id: id.clone(),
@@ -47,6 +48,7 @@ fn setup(private: bool) -> (tempfile::TempDir, std::sync::Arc<Engine>, Selection
             source_generation: Some(1),
         })
         .unwrap();
+    assert!(engine.job(&id).unwrap().lock().unwrap().browser_source);
     (
         dir,
         engine,
@@ -153,4 +155,91 @@ fn private_selection_metadata_stays_transient() {
     assert!(Engine::open(dir.path()).unwrap().job(&request.id).is_err());
     let bytes = std::fs::read(dir.path().join("downloader.db")).unwrap();
     assert!(!String::from_utf8_lossy(&bytes).contains("ddownload.com"));
+}
+
+#[test]
+fn authority_renewal_reads_only_current_generations_in_the_same_context() {
+    let (_, engine, request) = setup(false);
+    let shared = engine.job(&request.id).unwrap();
+    {
+        let mut job = shared.lock().unwrap();
+        job.source_generation += 1;
+        job.navigation_scope.as_mut().unwrap().claim_generation += 1;
+    }
+    let command = |owner: String, scope: SessionScope| Command::NavigationAuthority {
+        id: request.id.clone(),
+        owner,
+        scope,
+    };
+    let value = engine
+        .command(command(request.owner.clone(), request.scope.clone()))
+        .unwrap();
+    assert_eq!(value["source_generation"], 2);
+    assert_eq!(value["scope"]["claim_generation"], 2);
+    assert_eq!(value.as_object().unwrap().len(), 3);
+    assert!(value.get("url").is_none());
+    assert!(engine
+        .command(command(
+            uuid::Uuid::new_v4().to_string(),
+            request.scope.clone()
+        ))
+        .is_err());
+    for changed in [
+        SessionScope {
+            private: true,
+            ..request.scope.clone()
+        },
+        SessionScope {
+            cookie_store_id: Some("different".into()),
+            ..request.scope.clone()
+        },
+        SessionScope {
+            container_id: Some("different".into()),
+            ..request.scope.clone()
+        },
+        SessionScope {
+            claim_generation: 3,
+            ..request.scope.clone()
+        },
+    ] {
+        assert!(engine
+            .command(command(request.owner.clone(), changed))
+            .is_err());
+    }
+    assert!(engine
+        .command(Command::NavigationSelection(request))
+        .is_err());
+    assert_eq!(shared.lock().unwrap().source_generation, 2);
+}
+
+#[test]
+fn refreshed_scoped_sources_wait_for_qualification_and_cannot_resume_into_probing() {
+    let (_, engine, request) = setup(false);
+    let updated = engine
+        .command(Command::RefreshBrowser {
+            id: request.id.clone(),
+            owner: request.owner.clone(),
+            url: "http://127.0.0.1:9/one-use-new".into(),
+            context: RequestContext::default(),
+            scope: Some(request.scope.clone()),
+            source_generation: Some(1),
+        })
+        .unwrap();
+    assert_eq!(updated["state"], "waiting_browser");
+    assert_eq!(updated["source_generation"], 2);
+    engine
+        .command(Command::Resume {
+            id: request.id.clone(),
+            restart: false,
+        })
+        .unwrap();
+    let shared = engine.job(&request.id).unwrap();
+    let job = shared.lock().unwrap();
+    assert_eq!(job.state, downloader_core::JobState::WaitingBrowser);
+    assert!(job.replay_decision.is_none());
+    assert_eq!(job.page_url.as_deref(), Some(request.page.as_str()));
+    drop(job);
+    assert!(engine
+        .command(Command::NavigationSelection(request.clone()))
+        .is_err());
 }

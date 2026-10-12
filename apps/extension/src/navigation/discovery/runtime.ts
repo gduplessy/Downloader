@@ -1,3 +1,4 @@
+import { verifyLiveDocument, type DocumentClaim } from '../session/document';
 import browser from 'webextension-polyfill';
 import type { SessionScope } from '../../../../../packages/shared/src/navigation';
 import { scopeForTab, sameScope } from '../session/scope';
@@ -9,6 +10,7 @@ interface RecordState {
   generation: number;
   tabId: number;
   sourceTabId: number;
+  jobs: string[];
   page_url: string;
   windowId: number;
   permitted_origins: string[];
@@ -73,6 +75,7 @@ export class RenderedDiscovery {
       generation: project.generation,
       tabId: -1,
       sourceTabId: tabId,
+      jobs: [],
       page_url: '',
       windowId: tab.windowId!,
       permitted_origins: permittedOrigins,
@@ -141,9 +144,41 @@ export class RenderedDiscovery {
       await browser.scripting.executeScript({ target: { tabId }, files: ['discovery.js'] });
     else await browser.tabs.executeScript(tabId, { file: 'discovery.js', runAt: 'document_idle' });
   }
-  async result(sender: any, result: any) {
+  async context(sender: any, document: DocumentClaim) {
+    const record = [...this.records.values()].find((record) => record.tabId === sender.tab?.id);
+    if (!record || sender.frameId !== 0 || record.sessionEpoch !== (await this.epoch()))
+      return null;
+    const live = await verifyLiveDocument(
+      browser,
+      BROWSER,
+      record.tabId,
+      document,
+      sender.documentId,
+    );
+    if (!live) return null;
+    const scope = await scopeForTab(
+      browser,
+      BROWSER,
+      record.scope.profile,
+      record.tabId,
+      record.scope.claim_generation,
+    );
+    if (!sameScope(scope, record.scope)) return null;
+    const claimed = await this.native('discovery_claim', {
+      id: record.id,
+      scope,
+      generation: record.generation,
+      tab_id: record.tabId,
+      permitted_origins: record.permitted_origins,
+      document,
+    });
+    return { accepted: !!claimed.page };
+  }
+  async result(sender: any, result: any, document: DocumentClaim) {
     const record = [...this.records.values()].find((r) => r.tabId === sender.tab?.id);
     if (!record || sender.frameId !== 0) throw Error('Unowned discovery document');
+    if (!(await verifyLiveDocument(browser, BROWSER, record.tabId, document, sender.documentId)))
+      throw Error('Stale discovery document');
     if (this.busy.has(record.id)) return;
     this.busy.add(record.id);
     try {
@@ -164,6 +199,7 @@ export class RenderedDiscovery {
         scope,
         generation: record.generation,
         page_url: record.page_url,
+        document,
         ...result,
       });
       if (result.reason) {
@@ -189,6 +225,52 @@ export class RenderedDiscovery {
     });
     if (next.page) await this.open(record, next.page.url);
   }
+  async scopeForJob(id: string) {
+    for (const record of this.records.values()) {
+      if (!(record.jobs ?? []).includes(id) || record.sessionEpoch !== (await this.epoch()))
+        continue;
+      const actual = await scopeForTab(
+        browser,
+        BROWSER,
+        record.scope.profile,
+        record.sourceTabId,
+        record.scope.claim_generation,
+      ).catch(() => null);
+      if (!actual) continue;
+      const authority = await this.native('navigation_authority', { id, owner: record.scope.profile, scope: actual }).catch(
+        () => null,
+      );
+      if (!authority?.scope) continue;
+      const proof = await scopeForTab(
+        browser,
+        BROWSER,
+        record.scope.profile,
+        record.sourceTabId,
+        authority.scope.claim_generation,
+      ).catch(() => null);
+      if (proof && sameScope(proof, authority.scope)) return authority.scope;
+    }
+    return null;
+  }
+  async sourceForJob(job: any) {
+    for (const record of this.records.values()) {
+      if (
+        !(record.jobs ?? []).includes(job.id) ||
+        record.sessionEpoch !== (await this.epoch()) ||
+        !job.navigation_scope
+      )
+        continue;
+      const actual = await scopeForTab(
+        browser,
+        BROWSER,
+        record.scope.profile,
+        record.sourceTabId,
+        job.navigation_scope.claim_generation,
+      ).catch(() => null);
+      if (actual && sameScope(actual, job.navigation_scope)) return record.sourceTabId;
+    }
+    return undefined;
+  }
   async liveScopes() {
     const scopes: SessionScope[] = [];
     for (const record of this.records.values()) {
@@ -200,7 +282,22 @@ export class RenderedDiscovery {
         record.sourceTabId,
         record.scope.claim_generation,
       ).catch(() => null);
-      if (actual && sameScope(actual, record.scope)) scopes.push(record.scope);
+      if (!actual) continue;
+      if (sameScope(actual, record.scope)) scopes.push(record.scope);
+      for (const id of (record.jobs ?? []).slice(0, 64)) {
+        const authority = await this.native('navigation_authority', { id, owner: record.scope.profile, scope: actual }).catch(
+          () => null,
+        );
+        if (!authority?.scope) continue;
+        const proof = await scopeForTab(
+          browser,
+          BROWSER,
+          record.scope.profile,
+          record.sourceTabId,
+          authority.scope.claim_generation,
+        ).catch(() => null);
+        if (proof && sameScope(proof, authority.scope)) scopes.push(authority.scope);
+      }
     }
     return scopes;
   }
@@ -281,6 +378,8 @@ export class RenderedDiscovery {
             generation: record.generation,
             urls: state.selected,
           });
+          record.jobs = [...new Set([...(record.jobs ?? []), ...selected.jobs])].slice(-1000);
+          await this.save(record);
           for (const id of selected.jobs) await this.startSelected(id, record.sourceTabId);
         }
         if (state.status !== 'exploring') continue;
@@ -298,6 +397,12 @@ export class RenderedDiscovery {
           if (tab.status === 'complete') await this.loaded(record.tabId);
         }
       } catch {
+        await this.native('discovery_status', {
+          id: record.id,
+          scope: record.scope,
+          generation: record.generation,
+          action: 'wait_browser',
+        }).catch(() => {});
         /* Retain durable frontier; browser absence/session expiry never falls back anonymously. */
       } finally {
         this.busy.delete(record.id);

@@ -1,7 +1,21 @@
 use downloader_core::{Command, Engine};
 use serde_json::{json, Value};
 use std::sync::Arc;
-fn call(engine: &Arc<Engine>, command: &str, args: Value) -> Value {
+fn call(engine: &Arc<Engine>, command: &str, mut args: Value) -> Value {
+    if command == "discovery_page_result" {
+        let state = engine
+            .store
+            .lock()
+            .unwrap()
+            .all::<downloader_core::rendered_grabber::Discovery>("rendered_discovery")
+            .unwrap()
+            .into_iter()
+            .find(|state| state.project.id == args["id"])
+            .unwrap();
+        let document = json!({"nonce":"00000000-0000-4000-8000-000000000001","generation":1});
+        downloader_core::rendered_grabber::claim(engine,serde_json::from_value(json!({"id":args["id"],"scope":args["scope"],"generation":args["generation"],"tab_id":42,"permitted_origins":state.permitted_origins,"document":document})).unwrap()).unwrap();
+        args["document"] = document;
+    }
     let value = json!({"command":command,"args":args});
     let request: downloader_core::Request = serde_json::from_value(
         json!({"version":1,"id":"fixture","command":command,"args":value["args"]}),
@@ -153,4 +167,31 @@ fn discovery_shares_global_admission_and_reconciles_only_exact_project_scope() {
         .unwrap()
         .iter()
         .any(|task| task["id"] == "discovery:rendered-project"));
+}
+
+#[test]
+fn stale_document_result_cannot_replace_current_rendered_page() {
+    let dir = tempfile::tempdir().unwrap();
+    let engine = Engine::open(dir.path()).unwrap();
+    initialize(&engine, dir.path(), false);
+    let current = json!({"nonce":"00000000-0000-4000-8000-000000000002","generation":2});
+    call(
+        &engine,
+        "discovery_claim",
+        json!({"id":"rendered-project","scope":scope(false),"generation":1,"tab_id":42,"document":current}),
+    );
+    for document in [
+        Value::Null,
+        json!({"nonce":"00000000-0000-4000-8000-000000000001","generation":1}),
+    ] {
+        let request = serde_json::from_value(json!({"id":"rendered-project","scope":scope(false),"generation":1,"page_url":"http://127.0.0.1:18782/","final_url":"http://127.0.0.1:18782/","bytes":20,"links":[{"url":"http://127.0.0.1:18782/evil.bin","resource":true,"name":"evil.bin","size":null,"content_type":"application/octet-stream"}],"reason":null,"document":document})).unwrap();
+        assert!(downloader_core::rendered_grabber::report(&engine, request).is_err());
+    }
+    let state = call(
+        &engine,
+        "discovery_status",
+        json!({"id":"rendered-project","scope":scope(false),"generation":1,"action":"snapshot"}),
+    );
+    assert_eq!(state["resources"].as_array().unwrap().len(), 0);
+    assert_eq!(state["lease"]["document"], current);
 }
