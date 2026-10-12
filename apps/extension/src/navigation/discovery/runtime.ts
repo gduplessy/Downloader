@@ -36,10 +36,11 @@ export class RenderedDiscovery {
     const tab = await browser.tabs.get(tabId);
     if (!!tab.incognito !== this.privateWorker)
       throw Error('Discovery belongs to another browser lane');
-    const scope = await scopeForTab(browser, BROWSER, await this.profile(), tabId, 1);
+    let scope = await scopeForTab(browser, BROWSER, await this.profile(), tabId, 1);
     const projects = await this.native('discovery_list', { scope });
     const project = projects.find((p: any) => p.id === id);
     if (!project) throw Error('Discovery project unavailable in this session');
+    scope = await scopeForTab(browser, BROWSER, await this.profile(), tabId, project.claim_generation ?? 1);
     if (new URL(tab.url!).origin !== new URL(project.url).origin)
       throw Error('Open the project page in the selected browser session first');
     if (

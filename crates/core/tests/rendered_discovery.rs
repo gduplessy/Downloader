@@ -103,7 +103,7 @@ fn cross_origin_requires_explicit_permission_and_fresh_same_store_partition() {
     engine.command(Command::Grabber(p.clone())).unwrap();
     downloader_core::rendered_grabber::start(&engine, p).unwrap();
     let mut first = scope(false);
-    first["partition_key"] = json!({"top_level_site":"http://127.0.0.1:18782"});
+    first["partition_key"] = json!({"top_level_site":"http://127.0.0.1"});
     let args = json!({"id":"rendered-project","scope":first,"generation":1,"tab_id":42,"permitted_origins":["http://127.0.0.2:18783"]});
     call(&engine, "discovery_claim", args.clone());
     call(
@@ -114,7 +114,7 @@ fn cross_origin_requires_explicit_permission_and_fresh_same_store_partition() {
     let next = call(&engine, "discovery_claim", args);
     assert_eq!(next["page"]["url"], "http://127.0.0.2:18783/page");
     let mut renewed = first.clone();
-    renewed["partition_key"] = json!({"top_level_site":"http://127.0.0.2:18783"});
+    renewed["partition_key"] = json!({"top_level_site":"http://127.0.0.2"});
     renewed["claim_generation"] = json!(2);
     let claim = json!({"id":"rendered-project","scope":renewed,"generation":1,"tab_id":42,"observed_url":"http://127.0.0.2:18783/page","permitted_origins":["http://127.0.0.2:18783"]});
     let mut foreign = claim.clone();

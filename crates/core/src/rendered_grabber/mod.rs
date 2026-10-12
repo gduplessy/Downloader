@@ -364,7 +364,7 @@ pub fn start(engine: &crate::Engine, project: GrabberProject) -> Result<()> {
 pub fn list(engine: &crate::Engine, scope: &SessionScope) -> Result<serde_json::Value> {
     scope.validate()?;
     let store = engine.store.lock().unwrap();
-    let states:Vec<_>=store.all::<Discovery>("rendered_discovery")?.into_iter().filter(|d|d.private == scope.private && d.scope.as_ref().is_none_or(|s|s==scope) && !["ready","cancelled"].contains(&d.status.as_str())).map(|d|serde_json::json!({"id":d.project.id,"url":d.project.url,"generation":d.generation,"status":d.status,"claim_generation":d.scope.as_ref().map(|s|s.claim_generation)})).collect();
+    let states:Vec<_>=store.all::<Discovery>("rendered_discovery")?.into_iter().filter(|d|d.private == scope.private && d.scope.as_ref().is_none_or(|s| { let mut current = s.clone(); current.claim_generation = scope.claim_generation; &current == scope }) && d.status != "cancelled").map(|d|serde_json::json!({"id":d.project.id,"url":d.project.url,"generation":d.generation,"status":d.status,"claim_generation":d.scope.as_ref().map(|s|s.claim_generation)})).collect();
     Ok(serde_json::to_value(states)?)
 }
 pub fn claim(engine: &crate::Engine, request: Claim) -> Result<serde_json::Value> {
@@ -372,7 +372,7 @@ pub fn claim(engine: &crate::Engine, request: Claim) -> Result<serde_json::Value
     let now = chrono::Utc::now().timestamp_millis();
     if request
         .tab_id
-        .is_some_and(|id| id < 0 || id > 9_007_199_254_740_991)
+        .is_some_and(|id| !(0..=9_007_199_254_740_991).contains(&id))
     {
         bail!("Invalid owned discovery tab");
     }
@@ -390,7 +390,10 @@ pub fn claim(engine: &crate::Engine, request: Claim) -> Result<serde_json::Value
                 .as_ref()
                 .context("Partition renewal needs observed owned page")?;
             let observed = canonical(observed)?;
-            let origin = url::Url::parse(&observed)?.origin().ascii_serialization();
+            let mut site = url::Url::parse(&observed)?;
+            site.set_port(None)
+                .map_err(|_| anyhow::anyhow!("Invalid discovery site"))?;
+            let origin = site.origin().ascii_serialization();
             if state.lease.is_none()
                 || request.tab_id.is_none_or(|id| id < 0)
                 || !state.permitted(&observed)

@@ -1,5 +1,6 @@
 import { RenderedDiscovery } from './navigation/discovery/runtime';
 
+import { ProjectionCursor, type ProjectionTicket } from './navigation/session/projection';
 import {
   NavigationAuthorizations,
   type NavigationAuthorizationBinding,
@@ -45,6 +46,7 @@ const scheduler = new NavigationScheduler(
 let schedulerRecovered = false;
 const resolverSteps = new Map<number, Promise<unknown>>();
 const navigationAuthorizations = new NavigationAuthorizations();
+const subscriptionCursor = new ProjectionCursor();
 const committedAuthorizations = new Map<string, number>();
 
 const privateWorker = Boolean(browser.extension.inIncognitoContext);
@@ -139,7 +141,7 @@ const discovery = new RenderedDiscovery(
   privateWorker,
   () => browserEpoch,
   async (id, sourceTabId) => {
-    const snapshot = await browserSnapshot();
+    const snapshot = await native('snapshot');
     const job = snapshot.jobs.find((job: any) => job.id === id);
     if (job) await startResolver(job, true, sourceTabId);
   },
@@ -402,6 +404,7 @@ async function native(command: string, args?: unknown): Promise<any> {
         live: [...(args as any).request.live, ...(await discovery.liveRecords())],
       },
     };
+  let projectionTicket: ProjectionTicket | undefined;
   if (
     [
       'navigation_scheduler',
@@ -439,6 +442,13 @@ async function native(command: string, args?: unknown): Promise<any> {
   }
   if (command === 'snapshot' || command === 'subscribe') {
     const projection = await projectionScope();
+    if (command === 'subscribe') {
+      projectionTicket = subscriptionCursor.prepare(
+        projection,
+        (args as any)?.after_sequence ?? null,
+      );
+      args = { ...(args as any), after_sequence: projectionTicket.after_sequence };
+    }
     command = command === 'snapshot' ? 'browser_snapshot' : 'browser_subscribe';
     args = { ...(args as any), ...projection };
   }
@@ -452,6 +462,7 @@ async function native(command: string, args?: unknown): Promise<any> {
   if (response?.id !== requestId || response?.version !== 1)
     throw Error('Invalid native response envelope');
   if (!response?.ok) throw Error(response?.error?.message ?? 'Native host unavailable');
+  if (projectionTicket) subscriptionCursor.accept(projectionTicket);
   return response.data;
 }
 async function menus() {

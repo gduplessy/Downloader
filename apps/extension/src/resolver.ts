@@ -180,8 +180,15 @@ async function step() {
   try {
     previewHandle?.close();
     previewHandle = undefined;
-    const ctx = await context();
-    const observed = await observe(ctx);
+    let ctx = await context();
+    let observed = await observe(ctx);
+    const deadline = Date.now() + 10000;
+    while (ctx?.selectedResource && !observed.inspection.candidates.length && !observed.signals.blocker && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      ctx = await context();
+      if (!ctx) return;
+      observed = await observe(ctx);
+    }
     if (ctx && observed.inspection.kind === 'click' && observed.inspection.selected) {
       await submit(ctx, observed, observed.inspection.selected);
       return;

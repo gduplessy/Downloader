@@ -38,13 +38,16 @@ await writeFile(
   JSON.stringify({ chrome_ids: [extId], firefox_ids: [] }),
 );
 await cp(resolve('apps/extension/dist/chromium'), ext, { recursive: true });
+const resolverBundle = await readFile(resolve(ext,'resolver.js'),'utf8');
+await writeFile(resolve(ext,'resolver.js'),resolverBundle.replaceAll('void step().catch(() => {','void step().catch((error) => { document.documentElement.dataset.fixtureResolverError=String(error);'));
+
 const background = await readFile('apps/extension/src/background.ts', 'utf8');
 await build({
   stdin: {
     contents:
       background +
       `
-(globalThis).fixture={native,discovery,browserSnapshot,pollResolvers,profile,async setup(base,id){await browser.storage.local.set({settings:{...defaults,directCapture:true}});await load();const tab=await browser.tabs.create({url:base+'/login',active:false});while((await browser.tabs.get(tab.id)).status!=='complete')await new Promise(r=>setTimeout(r,50));await browser.tabs.update(tab.id,{url:base+'/nav-adapters/gofile/rendered'});while((await browser.tabs.get(tab.id)).status!=='complete')await new Promise(r=>setTimeout(r,50));await discovery.start(id,tab.id,[]);return tab.id;}};`,
+(globalThis).fixture={native,discovery,browserSnapshot,pollResolvers,resolverContext,profile,async setup(base,id){await browser.storage.local.set({settings:{...defaults,directCapture:true}});await load();const tab=await browser.tabs.create({url:base+'/login',active:false});while((await browser.tabs.get(tab.id)).status!=='complete')await new Promise(r=>setTimeout(r,50));await browser.tabs.update(tab.id,{url:base+'/nav-adapters/gofile/rendered'});while((await browser.tabs.get(tab.id)).status!=='complete')await new Promise(r=>setTimeout(r,50));await discovery.start(id,tab.id,[]);return tab.id;}};`,
     resolveDir: resolve('apps/extension/src'),
     sourcefile: 'fixture-background.ts',
     loader: 'ts',
@@ -113,7 +116,7 @@ const server = createServer((req, res) => {
       return;
     }
     res.end(
-      '<!doctype html><meta charset="utf-8"><title>Rendered discovery fixture</title><div aria-busy="true" id="loading">Loading</div><script>setTimeout(()=>{const a=document.createElement("a");a.setAttribute("data-nav-fixture-control","");a.setAttribute("download","authenticated.bin");a.href="/nav-adapters/gofile/authenticated.bin";a.textContent="Download authenticated file";document.body.append(a);document.querySelector("#loading").remove();const loop=document.createElement("a");loop.href="/nav-adapters/gofile/rendered#loop";loop.textContent="Loop";document.body.append(loop)},900)</script>',
+      '<!doctype html><meta charset="utf-8"><title>Rendered discovery fixture</title><div aria-busy="true" id="loading">Loading</div><script>setTimeout(()=>{const a=document.createElement("a");a.href="/nav-adapters/gofile/authenticated.bin";a.textContent="T\u00e9l\u00e9charger";document.body.append(a);document.querySelector("#loading").remove();const loop=document.createElement("a");loop.href="/nav-adapters/gofile/rendered#loop";loop.textContent="Loop";document.body.append(loop)},900)</script>',
     );
     return;
   }
@@ -374,7 +377,7 @@ try {
   );
   const selected = { jobs: (selectedJobs.jobs ?? selectedJobs).map((job) => job.id) };
   assert.equal(selected.jobs.length, 1);
-  await evaluate('fixture.pollResolvers(true)');
+
   let resolverTab;
   for (let i = 0; i < 150; i++) {
     const snapshot = await evaluate('fixture.browserSnapshot()');
@@ -404,6 +407,7 @@ try {
     (t) => t.type === 'page' && t.url === actual.url,
   );
   let tabSession;
+  for (let attempt = 0; attempt < 150 && !tabSession; attempt++) {
   for (const candidate of targets) {
     const attached = await command('Target.attachToTarget', {
       targetId: candidate.targetId,
@@ -413,12 +417,16 @@ try {
       '!!document.querySelector("#__downloader_adapter_preview")',
       attached.sessionId,
     );
+    if (attempt === 149 && !has) console.error(await evaluate('JSON.stringify({html:document.body.innerText,error:document.documentElement.dataset.fixtureResolverError})',attached.sessionId));
     if (has) {
       tabSession = attached.sessionId;
       break;
     }
     await command('Target.detachFromTarget', { sessionId: attached.sessionId });
   }
+    if (!tabSession) await new Promise((r) => setTimeout(r, 100));
+  }
+  if (!tabSession) console.error(JSON.stringify({requests, context: await evaluate('fixture.resolverContext('+resolverTab+',0)'), jobs: JSON.parse(execFileSync(cli,['--json','list'],{env,windowsHide:true,encoding:'utf8'})), storage: await evaluate('chrome.storage.local.get(null)')},null,2));
   assert.ok(tabSession, 'Real resolver preview must be visible');
   await command('DOM.enable', {}, tabSession);
   const flattened = await command(

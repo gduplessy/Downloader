@@ -2,6 +2,11 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.11.6
+
+- Integrate scope-aware native subscription cursors and preserve discovery admission/document fences.
+- Use fresh scoped snapshots for newly selected jobs and wait for the exact delayed resource before resolver submission. Local streaming qualification remains in progress.
+
 ## 0.11.5
 
 - Integrate private-lane scheduler admission with fresh original source-tab authority for selected discovery jobs.
@@ -32,6 +37,12 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 
 - Add atomically persisted rendered discovery frontiers, provenance, bounded results, scoped command fences, duplicate-report fingerprints, and shared navigation admission.
 - Keep new private projects and frontier metadata ephemeral. Local backend qualification is in progress; browser/native rendered fixture qualification is pending.
+## 0.8.13
+
+- Preserve null snapshots in scoped incremental subscriptions; prevent cached event cursors from surviving visible authority changes.
+- Add six native selection/subscription regressions and three authority-cursor tests; 90 extension tests and type checks pass.
+- Qualify the production Chrome 155 worker/resolver POST flow: one original submission, 262,161 bytes and matching native SHA-256, with diagnostic source changes disabled.
+- Broader installed-flow acceptance remains pending; preserve prior failures and qualification boundaries in evidence.
 
 ## 0.8.12
 
