@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.2
+
+- Prevent legacy browser-download observers from pausing, replaying or changing the status of jobs owned by an active original-response stream.
+- Bind direct ownership to tab, job, exact scope/source and stream identity; terminal and failed admissions release only their own stream.
+- Verify 13 stream regressions, extension types/builds and an installed production Chrome POST with one submission and a matching 262,161-byte native hash. Firefox remains under qualification.
+
 ## 0.12.1
 
 - Preserve owner, private lane and exact navigation claim on removal events; scoped subscriptions reject foreign or historical unqualified tombstones.
