@@ -19,6 +19,7 @@ pub struct Engine {
     pub(crate) discovery_operations: Mutex<()>,
     contexts: Mutex<HashMap<String, RequestContext>>,
     pub(crate) controls: Mutex<HashMap<String, Arc<AtomicU8>>>,
+    captcha_lock: Mutex<()>,
     solver_tasks: Mutex<HashMap<String, Arc<AtomicU8>>>,
     pub(crate) browser_stream_locks: Mutex<HashMap<String, Arc<Mutex<()>>>>,
     pub stopping: AtomicBool,
@@ -109,6 +110,7 @@ impl Engine {
             queues: Mutex::new(queues),
             contexts: Mutex::new(contexts),
             controls: Mutex::new(HashMap::new()),
+            captcha_lock: Mutex::new(()),
             solver_tasks: Mutex::new(HashMap::new()),
             browser_stream_locks: Mutex::new(HashMap::new()),
             stopping: AtomicBool::new(false),
@@ -117,6 +119,33 @@ impl Engine {
         Ok(engine)
     }
     pub fn start(self: &Arc<Self>) {
+        let provider_engine = self.clone();
+        std::thread::spawn(move || {
+            while !provider_engine.stopping.load(Ordering::Relaxed) {
+                {
+                    let _lock = provider_engine.captcha_lock.lock().unwrap();
+                    let settings = provider_engine.settings.lock().unwrap().captcha.clone();
+                    let available = provider_engine
+                        .jobs
+                        .lock()
+                        .unwrap()
+                        .values()
+                        .filter_map(|job| crate::captcha::ownership(&job.lock().unwrap()))
+                        .collect::<Vec<_>>();
+                    let _ = crate::captcha::cancel_unavailable(
+                        &provider_engine.store.lock().unwrap(),
+                        &available,
+                    );
+                    let _ = crate::captcha::reconcile(
+                        &provider_engine.store.lock().unwrap(),
+                        &settings,
+                        chrono::Utc::now().timestamp_millis(),
+                        &crate::captcha::HttpTransport,
+                    );
+                }
+                std::thread::sleep(Duration::from_secs(5));
+            }
+        });
         let engine = self.clone();
         std::thread::spawn(move || {
             while !engine.stopping.load(Ordering::Relaxed) {
@@ -570,6 +599,61 @@ impl Engine {
     }
     pub fn command(self: &Arc<Self>, command: Command) -> Result<serde_json::Value> {
         match command {
+            Command::Captcha {
+                id,
+                owner,
+                scope,
+                source_generation,
+                request,
+            } => {
+                let _lock = self.captcha_lock.lock().unwrap();
+                let job = self.job(&id)?;
+                {
+                    let j = job.lock().unwrap();
+                    scope.validate()?;
+                    if j.navigation_scope.as_ref() != Some(&scope)
+                        || j.source_generation != source_generation
+                        || j.navigation_owner.as_ref() != Some(&owner)
+                        || scope.profile != owner
+                        || j.private
+                        || !matches!(j.state, JobState::WaitingBrowser | JobState::WaitingUser)
+                    {
+                        bail!("captcha_session_rejected");
+                    }
+                }
+                let ownership = crate::captcha::ownership(&job.lock().unwrap())
+                    .context("captcha_session_rejected")?;
+                let settings = self.settings.lock().unwrap().captcha.clone();
+                if matches!(&request, crate::captcha::ProviderRequest::Start { .. })
+                    && settings.enabled
+                    && settings.external_opt_in
+                    && settings.total_budget_microusd > 0
+                {
+                    let scheduler = self.navigation_scheduler.lock().unwrap();
+                    if !scheduler.tasks.iter().any(|task| {
+                        task.id == id
+                            && task.owner == owner
+                            && task.scope.as_ref() == Some(&scope)
+                            && task.generation == source_generation
+                            && task.status == crate::navigation_scheduler::QueueStatus::Active
+                            && task.lease.as_ref().is_some_and(|lease| {
+                                lease.owner == owner
+                                    && lease.generation == source_generation
+                                    && lease.expires_at_ms > chrono::Utc::now().timestamp_millis()
+                            })
+                    }) {
+                        bail!("captcha_site_busy");
+                    }
+                }
+                crate::captcha::handle(
+                    &self.store.lock().unwrap(),
+                    &settings,
+                    &ownership,
+                    request,
+                    chrono::Utc::now().timestamp_millis(),
+                    &crate::captcha::HttpTransport,
+                )
+            }
             Command::NavigationAuthority { id, owner, scope } => {
                 scope.validate()?;
                 let shared = self.job(&id)?;
@@ -888,6 +972,7 @@ impl Engine {
                 }
                 Ok(value)
             }
+            Command::CaptchaBudget => crate::captcha::budget(&self.store.lock().unwrap()),
             Command::Snapshot => Ok(serde_json::to_value(self.snapshot())?),
             Command::Add(add) => Ok(serde_json::to_value(self.add(add)?)?),
             Command::Pause { id } => {
@@ -1056,6 +1141,7 @@ impl Engine {
             Command::Settings(settings) => {
                 settings.network.validate()?;
                 settings.solver.validate()?;
+                settings.captcha.validate()?;
                 if settings.max_jobs == 0
                     || settings.max_jobs > 32
                     || settings.connections == 0

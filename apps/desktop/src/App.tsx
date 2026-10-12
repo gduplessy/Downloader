@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { api, pickDirectory, fileAction } from './api';
 import type { Job, Snapshot, Settings, Queue } from './types';
+import { CaptchaSettings } from './features/CaptchaSettings';
 import { translate, languages, type Key, type Locale } from '../../../packages/shared/src/i18n';
 import { bytes, expandUrls } from '../../../packages/shared/src/utils';
 const activeStates = [
@@ -731,7 +732,7 @@ function AddModal({
     </Modal>
   );
 }
-function SettingsPage({ settings, t, run }: { settings: Settings; t: T; run: Run }) {
+export function SettingsPage({ settings, t, run }: { settings: Settings; t: T; run: Run }) {
   const [value, setValue] = useState(settings),
     [saved, setSaved] = useState(false),
     [id, setId] = useState(''),
@@ -809,6 +810,20 @@ function SettingsPage({ settings, t, run }: { settings: Settings; t: T; run: Run
         </section>
         <section className="card">
           <h2>{t('networking')}</h2>
+          <CaptchaSettings
+            value={value.captcha}
+            locale={value.locale}
+            onChange={(v) => update('captcha', v)}
+            saveKey={(id, key) => run('credential', { id, username: '2captcha', password: key })}
+            loadBudget={async () =>
+              (await run('captcha_budget')) as {
+                spent_microusd: number;
+                reserved_microusd: number;
+                pending: number;
+              }
+            }
+          />
+
           <fieldset>
             <legend>FlareSolverr</legend>
             <label className="check">

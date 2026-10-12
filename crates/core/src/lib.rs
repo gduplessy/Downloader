@@ -29,3 +29,4 @@ pub mod browser_stream;
 pub mod navigation_scheduler;
 
 pub mod rendered_grabber;
+pub mod captcha;

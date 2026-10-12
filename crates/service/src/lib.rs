@@ -357,6 +357,7 @@ pub fn native(args: &[String]) -> Result<()> {
                 c @ downloader_core::Command::NavigationScheduler { .. } => call(c),
 
                 c @ downloader_core::Command::BrowserStream(_) => call(c),
+                c @ downloader_core::Command::Captcha { .. } => call(c),
                 c @ downloader_core::Command::NavigationSelection(_) => call(c),
                 c @ downloader_core::Command::DiscoveryList { .. } => call(c),
                 c @ downloader_core::Command::DiscoveryClaim(_) => call(c),

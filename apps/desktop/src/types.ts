@@ -49,6 +49,13 @@ export type NetworkSettings = {
   checkpoint_milliseconds: number;
 };
 export type Settings = {
+  captcha: {
+    enabled: boolean;
+    external_opt_in: boolean;
+    key_ref: string;
+    total_budget_microusd: number;
+    task_ceiling_microusd: number;
+  };
   solver: { enabled: boolean; endpoint: string; timeout_seconds: number };
   network: NetworkSettings;
   directory: string;

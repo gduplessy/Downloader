@@ -38,8 +38,6 @@ await writeFile(
   JSON.stringify({ chrome_ids: [extId], firefox_ids: [] }),
 );
 await cp(resolve('apps/extension/dist/chromium'), ext, { recursive: true });
-const resolverBundle = await readFile(resolve(ext,'resolver.js'),'utf8');
-await writeFile(resolve(ext,'resolver.js'),resolverBundle.replaceAll('void step().catch(() => {','void step().catch((error) => { document.documentElement.dataset.fixtureResolverError=String(error);'));
 
 const background = await readFile('apps/extension/src/background.ts', 'utf8');
 await build({
@@ -482,6 +480,11 @@ try {
   assert.deepEqual(requests, [{ method: 'GET', authenticated: true }]);
   const evidence = {
     browser: version.product,
+    productVersion: JSON.parse(await readFile('package.json','utf8')).version,
+    sourceCommit: execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8',windowsHide:true}).trim(),
+    serviceSha256: digest(await readFile(nativeBinary)),
+    resolverSha256: digest(await readFile(resolve(ext,'resolver.js'))),
+    diagnosticBundleChanges: false,
     os: process.platform,
     architecture: process.arch,
     transport:

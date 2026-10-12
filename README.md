@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.11.6<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.11.7<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -284,10 +284,19 @@ NAV-12 0.11.2 integrates production discovery commands and owned tabs. Selected 
 NAV-12 0.11.3 binds explicitly permitted cross-origin pages and resources to their observed partition; browser epoch recovery is fenced. Installed rendered/authenticated acceptance remains pending.
 
 NAV-12 0.11.4 adds installed-browser qualification commands and real Engine shared-budget/cross-origin regressions; production worker capture and resource SHA-256 acceptance remain pending.
+Local image challenges: qualified open-circle geometry and optional disabled-by-default 2Captcha accounting are implemented; see docs/evidence/nav-challenges/README.md for synthetic and pending browser/live acceptance.
+
+Challenge recovery 0.10.1 adds bounded service-owned paid accounting, source/claim task fences, current desktop budget controls and runnable four-host local fixtures; recorded evidence distinguishes mocked-worker DOM from real CLI desktop bytes.
+
+Challenge control qualification 0.10.2 covers production React FlareSolverr settings through isolated native state and eight browser stale-answer cases. Installed extension navigation remains the next integration gate.
+
+Challenge runtime 0.10.3 integrates explicit scoped host choice, live document identity, whole-site admission and browser-only challenge form submission. Installed qualification remains in progress until its intended-file hashes pass.
 
 Shared integration 0.8.10: adapter actions now prepare one-use authorization before capture, recheck current page/session/source authority before commit, and abort cancelled capture. Selected provider metadata is recorded through the scoped native command; rendered-discovery navigation opens the selected resource while retaining its provenance page. Full installed-worker acceptance remains pending.
 
 Shared integration 0.8.11: same-context read-only authority renewal adopts claim/source replacements and invalidates old grants/capture. Recovery, heartbeat and tab closure require current browser epoch and actual owned session; stale tab IDs do not authorize a substituted context. Scoped refreshed sources remain in browser navigation until replay qualification. Installed-worker/private-session acceptance remains pending.
+
+Challenge qualification can exercise the actual installed production worker/resolver through scripts/nav-fixtures/challenges/installed.mjs, with an isolated native host and local fixture permissions. Final installed native hashes remain pending.
 
 Shared integration 0.8.12: private and regular scheduler responses and reconciliation are isolated by explicit worker lane, while capacity and host locks remain service-global. Six native scheduler regressions cover lane isolation, retained peer leases, durable private exclusion, authority replacement and queue recovery.
 
@@ -295,3 +304,10 @@ Rendered discovery uses persisted bounded frontiers, live document fences and pa
 Shared integration 0.8.13: scoped incremental subscriptions preserve null snapshots; cached subscription cursors recover on scope/claim changes. First production installed Chrome 155 POST gate passes one original submission, 262,161 bytes and native SHA-256. Broader installed blob/cancel/replacement/private/container/Firefox and integrated account/challenge/discovery acceptance remains pending.
 
 NAV-12 0.11.6 integrates scope-aware subscription recovery, freshly projected selected jobs and exact delayed-resource readiness. Local installed capture qualification remains in progress.
+Challenge scope comparisons use canonical browser session identity; cancelled host-choice callbacks stay closed. Installed runtime hash qualification remains in progress.
+
+Shared integration 0.8.13: scoped incremental subscriptions preserve null snapshots; cached subscription cursors recover on scope/claim changes. First production installed Chrome 155 POST gate passes one original submission, 262,161 bytes and native SHA-256. Broader installed blob/cancel/replacement/private/container/Firefox and integrated account/challenge/discovery acceptance remains pending.
+
+Challenge integration 0.10.6: adapter actions and grants now require the verified live document nonce; same-URL Firefox replacement consumes stale authority. Installed challenge acceptance remains pending.
+
+NAV-12 0.11.7 adopts the verified live document contract. Installed Chrome155 discovery and authenticated original GET completed the expected native hash; final combined-base evidence is being refreshed.

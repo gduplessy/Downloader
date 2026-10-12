@@ -1,4 +1,5 @@
 import browser from 'webextension-polyfill';
+import { showChallenge, type ChallengeBridge } from './navigation/challenges/page';
 import { decide, classifyBlocker } from './resolver-policy';
 import {
   collectControls,
@@ -23,13 +24,19 @@ import { showPreview, type PreviewHandle } from './navigation/adapters/selection
 
 // Runs only in the top-level tab assigned to an explicit navigation job.
 import { scopeKey, type ResolverContext } from './navigation/adapters/context';
+const documentRoot = globalThis as typeof globalThis & { __downloaderDocumentNonce?: string };
+const documentNonce = (documentRoot.__downloaderDocumentNonce ??= crypto.randomUUID());
 let documentGeneration = 1;
+let challengeHandle: { close(): void } | undefined;
 let previewHandle: PreviewHandle | undefined;
 let running = false;
 const submissions = new SubmissionGate();
 async function context(): Promise<ResolverContext | null> {
   return (await browser.runtime
-    .sendMessage({ type: 'resolver_context' })
+    .sendMessage({
+      type: 'resolver_context',
+      document: { nonce: documentNonce, generation: documentGeneration },
+    })
     .catch(() => null)) as ResolverContext | null;
 }
 function blockers(elements: Element[]) {
@@ -117,6 +124,7 @@ async function submit(
   try {
     reply = await browser.runtime.sendMessage({
       type: 'resolver_step',
+      document: { nonce: documentNonce, generation: documentGeneration },
       url: location.href,
       decision: {
         kind: 'click',
@@ -145,6 +153,7 @@ async function submit(
     if (signal?.aborted) throw Error('adapter_selection_cancelled');
     reply = await browser.runtime.sendMessage({
       type: 'resolver_commit',
+      document: { nonce: documentNonce, generation: documentGeneration },
       token,
       binding: binding(freshContext, fresh.inspection, fresh.fingerprint),
       fingerprint: fresh.fingerprint,
@@ -178,9 +187,48 @@ async function step() {
   if (running) return;
   running = true;
   try {
+    challengeHandle?.close();
+    challengeHandle = undefined;
     previewHandle?.close();
     previewHandle = undefined;
     let ctx = await context();
+    if (ctx) {
+      challengeHandle =
+        (await showChallenge(
+          document,
+          {
+            context,
+            chooseHost: async (host: string) =>
+              browser.runtime.sendMessage({
+                type: 'resolver_challenge_select',
+                selectedHost: host,
+                document: { nonce: documentNonce, generation: documentGeneration },
+              }),
+            authorize: async (bound, signal) => {
+              if (signal.aborted) return false;
+              const reply = await browser.runtime.sendMessage({
+                type: 'resolver_challenge_authorize',
+                binding: bound,
+                document: { nonce: documentNonce, generation: documentGeneration },
+              });
+              return !signal.aborted && reply === true;
+            },
+            paid: async (action, bound, image) =>
+              browser.runtime.sendMessage({
+                type: 'resolver_challenge_paid',
+                binding: bound,
+                action,
+                image,
+                document: { nonce: documentNonce, generation: documentGeneration },
+              }),
+          } as ChallengeBridge,
+          documentGeneration,
+          () => {
+            setTimeout(() => void step().catch(() => {}), 500);
+          },
+        )) ?? undefined;
+      if (challengeHandle) return;
+    }
     let observed = await observe(ctx);
     const deadline = Date.now() + 10000;
     while (ctx?.selectedResource && !observed.inspection.candidates.length && !observed.signals.blocker && Date.now() < deadline) {
@@ -204,6 +252,7 @@ async function step() {
       );
       await browser.runtime.sendMessage({
         type: 'resolver_step',
+        document: { nonce: documentNonce, generation: documentGeneration },
         url: location.href,
         decision: {
           kind: 'user',
@@ -237,6 +286,7 @@ async function step() {
         async () => {
           const disabled = await browser.runtime.sendMessage({
             type: 'resolver_disable_adapter',
+            document: { nonce: documentNonce, generation: documentGeneration },
             adapterId: preview.binding.adapterId,
           });
           if (disabled !== true) throw Error('adapter_disable_rejected');
@@ -263,6 +313,7 @@ async function step() {
     const element = chosen ? observed.collected.elements.get(chosen.localId) : undefined;
     const reply: any = await browser.runtime.sendMessage({
       type: 'resolver_step',
+      document: { nonce: documentNonce, generation: documentGeneration },
       url: location.href,
       decision: {
         ...decision,

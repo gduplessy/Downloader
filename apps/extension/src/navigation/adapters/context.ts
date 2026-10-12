@@ -4,6 +4,8 @@ export type ResolverContext = {
   frameId: number;
   scope: SessionScope;
   sourceGeneration: number;
+  documentGeneration: number;
+  documentNonce: string;
   selectedHost?: string;
   selectedResource?: string;
   disabledAdapters?: string[];
