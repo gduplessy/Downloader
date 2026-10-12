@@ -80,8 +80,7 @@ export function durableNavigationRecord(key: string, value: any): any {
 // Nonsecret regular task references survive browser restart; signed action URLs,
 // request contexts and private metadata remain in the ephemeral overlay only.
 export function navigationStorage(local: Area, session: Area, privateWorker: boolean): Area {
-  if (privateWorker) return session;
-  return {
+  const area: Area = privateWorker ? session : {
     async get(keys?: any) {
       const [durable, transient] = await Promise.all([local.get(keys), session.get(keys)]);
       const safe: Record<string, any> = {};
@@ -113,20 +112,53 @@ export function navigationStorage(local: Area, session: Area, privateWorker: boo
       if (regular.length) await local.remove(regular);
     },
   };
+  // Native claim/source counters are monotonic. A delayed read/modify/write must
+  // never replace a newer claim, including in the private ephemeral overlay.
+  let writes = Promise.resolve();
+  function serialize(operation: () => Promise<void>): Promise<void> {
+    const result = writes.then(operation);
+    writes = result.catch(() => {});
+    return result;
+  }
+  return {
+    get: (keys?: any) => area.get(keys),
+    set(values) {
+      const next = structuredClone(values);
+      return serialize(async () => {
+        const current = await area.get(Object.keys(next));
+        for (const [key, value] of Object.entries(next)) {
+          if (!key.startsWith('resolver-') || !current[key]) continue;
+          for (const [previous, incoming] of [
+            [current[key].sourceGeneration, value?.sourceGeneration],
+            [current[key].scope?.claim_generation, value?.scope?.claim_generation],
+          ]) {
+            if (Number.isSafeInteger(previous) &&
+                (!Number.isSafeInteger(incoming) || incoming < previous))
+              throw new Error('Navigation record is stale');
+          }
+        }
+        await area.set(next);
+      });
+    },
+    remove(keys) {
+      const selected = typeof keys === 'string' ? keys : [...keys];
+      return serialize(() => area.remove(selected));
+    },
+  };
 }
 export function memoryStorage(): Area {
   const values: Record<string, any> = {};
   return {
     async get(keys?: any) {
-      if (!keys) return { ...values };
+      if (!keys) return structuredClone(values);
       const selected =
         typeof keys === 'string' ? [keys] : Array.isArray(keys) ? keys : Object.keys(keys);
-      return Object.fromEntries(
+      return structuredClone(Object.fromEntries(
         selected.filter((key: string) => key in values).map((key: string) => [key, values[key]]),
-      );
+      ));
     },
     async set(next) {
-      Object.assign(values, next);
+      Object.assign(values, structuredClone(next));
     },
     async remove(keys) {
       for (const key of typeof keys === 'string' ? [keys] : keys) delete values[key];

@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.10.6<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.12.0<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -195,3 +195,5 @@ NAV-13 canonical scope and CLI-created navigation ownership corrections integrat
 Shared integration 0.8.13: scoped incremental subscriptions preserve null snapshots; cached subscription cursors recover on scope/claim changes. First production installed Chrome 155 POST gate passes one original submission, 262,161 bytes and native SHA-256. Broader installed blob/cancel/replacement/private/container/Firefox and integrated account/challenge/discovery acceptance remains pending.
 
 NAV-13/adapter integration 0.10.6: current document claims are required for prepare/commit/disable; nonce-keyed grants reject same-URL replacement. Full native/client checks pass; installed challenge qualification is still active.
+
+Shared integration 0.12.0: serialized metadata writes prevent stale source/claim replacement in regular and private lanes. Chromium restart reconciliation resolves actual cookie-store membership. 106 extension regressions, types and both browser builds pass; broader installed acceptance remains pending.
