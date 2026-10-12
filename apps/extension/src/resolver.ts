@@ -118,6 +118,7 @@ async function submit(
   try {
     reply = await browser.runtime.sendMessage({
       type: 'resolver_step',
+      document: { nonce: documentNonce, generation: documentGeneration },
       url: location.href,
       decision: {
         kind: 'click',
@@ -146,6 +147,7 @@ async function submit(
     if (signal?.aborted) throw Error('adapter_selection_cancelled');
     reply = await browser.runtime.sendMessage({
       type: 'resolver_commit',
+      document: { nonce: documentNonce, generation: documentGeneration },
       token,
       binding: binding(freshContext, fresh.inspection, fresh.fingerprint),
       fingerprint: fresh.fingerprint,
@@ -237,6 +239,7 @@ async function step() {
       );
       await browser.runtime.sendMessage({
         type: 'resolver_step',
+        document: { nonce: documentNonce, generation: documentGeneration },
         url: location.href,
         decision: {
           kind: 'user',
@@ -270,6 +273,7 @@ async function step() {
         async () => {
           const disabled = await browser.runtime.sendMessage({
             type: 'resolver_disable_adapter',
+            document: { nonce: documentNonce, generation: documentGeneration },
             adapterId: preview.binding.adapterId,
           });
           if (disabled !== true) throw Error('adapter_disable_rejected');
@@ -296,6 +300,7 @@ async function step() {
     const element = chosen ? observed.collected.elements.get(chosen.localId) : undefined;
     const reply: any = await browser.runtime.sendMessage({
       type: 'resolver_step',
+      document: { nonce: documentNonce, generation: documentGeneration },
       url: location.href,
       decision: {
         ...decision,

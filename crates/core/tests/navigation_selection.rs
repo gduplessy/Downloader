@@ -243,3 +243,44 @@ fn refreshed_scoped_sources_wait_for_qualification_and_cannot_resume_into_probin
         .command(Command::NavigationSelection(request.clone()))
         .is_err());
 }
+
+#[test]
+fn scoped_incremental_subscription_preserves_a_null_snapshot() {
+    let (_, engine, request) = setup(false);
+    let snapshot = engine
+        .command(Command::BrowserSnapshot {
+            owner: request.owner.clone(),
+            private: false,
+            scopes: vec![request.scope.clone()],
+        })
+        .unwrap();
+    let batch = engine
+        .command(Command::BrowserSubscribe {
+            owner: request.owner.clone(),
+            private: false,
+            scopes: vec![request.scope.clone()],
+            after_sequence: Some(snapshot["sequence"].as_u64().unwrap()),
+            limit: 50,
+        })
+        .unwrap();
+    assert!(batch["snapshot"].is_null(), "{}", batch);
+    assert!(batch["events"].is_array());
+    engine
+        .command(Command::NavigationSelection(request.clone()))
+        .unwrap();
+    let changed = engine
+        .command(Command::BrowserSubscribe {
+            owner: request.owner.clone(),
+            private: false,
+            scopes: vec![request.scope],
+            after_sequence: Some(snapshot["sequence"].as_u64().unwrap()),
+            limit: 50,
+        })
+        .unwrap();
+    assert!(changed["snapshot"].is_null());
+    assert!(changed["events"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|event| event["job"]["selected_host"] == "ddownload.com"));
+}

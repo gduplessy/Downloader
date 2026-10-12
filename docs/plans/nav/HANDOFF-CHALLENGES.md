@@ -1,6 +1,6 @@
 # Challenge runtime handoff
 
-Feature branch: codex/nav-challenges. Current coordinator parent integrated: 1da6fa6. Later coordinator capture/authority commits must merge before installed fixture acceptance.
+Feature branch: codex/nav-challenges. Current coordinator parent integrated: 4001f58 (0.8.13). Production installed challenge acceptance remains under qualification.
 
 ## Runtime contract
 
@@ -18,7 +18,7 @@ ChallengeBinding contains scope, source/document generations, the live document 
 
 ## Coordinator integration
 
-General adapter prepare/commit/abort should carry the same document claim and call verifyLiveDocument before acting. A context request alone cannot authorize a later document. Keep current source changes, cancellation and tab recovery work intact when reconciling shared files.
+General adapter step/commit/disable messages now carry the same document claim and call verifyLiveDocument before acting. NavigationAuthorizationBinding requires documentNonce and its canonical key includes it; failed current-context commits burn the token. A same-URL Firefox reload regression rejects and consumes old nonce authority. Abort remains cleanup-only. A context request alone cannot authorize a later document. Keep current source changes, cancellation and tab recovery work intact when reconciling shared files.
 
 The challenge page helper requires the explicit qualified open-circle image/form contract. Other variants remain manual. Its successful POST yields fresh selected-host links that continue through normal adapter/stream ownership. Fresh links and final native file hashes remain separate evidence from coordinate accuracy.
 

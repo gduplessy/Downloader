@@ -1,3 +1,4 @@
+import { ProjectionCursor, type ProjectionTicket } from './navigation/session/projection';
 import {
   NavigationAuthorizations,
   type NavigationAuthorizationBinding,
@@ -45,6 +46,7 @@ const scheduler = new NavigationScheduler(
 let schedulerRecovered = false;
 const resolverSteps = new Map<number, Promise<unknown>>();
 const navigationAuthorizations = new NavigationAuthorizations();
+const subscriptionCursor = new ProjectionCursor();
 const committedAuthorizations = new Map<string, number>();
 
 const privateWorker = Boolean(browser.extension.inIncognitoContext);
@@ -382,6 +384,7 @@ async function load() {
   await pollResolvers();
 }
 async function native(command: string, args?: unknown): Promise<any> {
+  let projectionTicket: ProjectionTicket | undefined;
   if (
     [
       'navigation_scheduler',
@@ -415,6 +418,13 @@ async function native(command: string, args?: unknown): Promise<any> {
   }
   if (command === 'snapshot' || command === 'subscribe') {
     const projection = await projectionScope();
+    if (command === 'subscribe') {
+      projectionTicket = subscriptionCursor.prepare(
+        projection,
+        (args as any)?.after_sequence ?? null,
+      );
+      args = { ...(args as any), after_sequence: projectionTicket.after_sequence };
+    }
     command = command === 'snapshot' ? 'browser_snapshot' : 'browser_subscribe';
     args = { ...(args as any), ...projection };
   }
@@ -428,6 +438,7 @@ async function native(command: string, args?: unknown): Promise<any> {
   if (response?.id !== requestId || response?.version !== 1)
     throw Error('Invalid native response envelope');
   if (!response?.ok) throw Error(response?.error?.message ?? 'Native host unavailable');
+  if (projectionTicket) subscriptionCursor.accept(projectionTicket);
   return response.data;
 }
 async function menus() {
@@ -1306,6 +1317,7 @@ function authorizationBinding(
     binding.claimGeneration !== record.scope.claim_generation ||
     binding.sourceGeneration !== record.sourceGeneration ||
     binding.documentGeneration !== record.documentGeneration ||
+    message.document?.nonce !== record.documentNonce ||
     binding.adapterId !== adapter.id ||
     binding.adapterVersion !== adapter.version ||
     binding.fingerprint !== message.fingerprint ||
@@ -1320,13 +1332,13 @@ function authorizationBinding(
     scope: record.scope,
     sourceGeneration: record.sourceGeneration!,
     documentGeneration: binding.documentGeneration,
+    documentNonce: record.documentNonce!,
     adapterId: adapter.id,
     adapterVersion: adapter.version,
     fingerprint: binding.fingerprint,
   };
 }
 async function resolverAction(message: any, tabId: number, page: string, documentId?: string) {
-  if (message.type === 'resolver_step') return resolverStep(message, tabId, page, documentId);
   if (message.type === 'resolver_abort') {
     navigationAuthorizations.cancel(message.token);
     if (committedAuthorizations.get(message.token) === tabId) {
@@ -1336,8 +1348,12 @@ async function resolverAction(message: any, tabId: number, page: string, documen
     }
     return true;
   }
-  const ctx = await resolverContext(tabId, 0, documentId);
-  if (!ctx) throw Error('navigation_authorization_stale');
+  const ctx = await resolverContext(tabId, 0, documentId, message.document);
+  if (!ctx) {
+    if (message.token) navigationAuthorizations.cancel(message.token);
+    throw Error('navigation_authorization_stale');
+  }
+  if (message.type === 'resolver_step') return resolverStep(message, tabId, page, documentId);
   if (message.type === 'resolver_disable_adapter') {
     const adapter = matchAdapter(page);
     if (adapter.id === 'generic' || adapter.id !== message.adapterId)
@@ -1666,6 +1682,7 @@ async function resolverContext(
   document?: DocumentClaim,
 ) {
   if (frameId !== 0 || (await browser.tabs.get(tabId)).status !== 'complete') return null;
+  const snapshot = await browserSnapshot();
   const records = await navigationStore.get(null);
   const entry = Object.entries(records).find(
     ([key, value]: any) => key.startsWith('resolver-') && value.tabId === tabId,
@@ -1673,7 +1690,7 @@ async function resolverContext(
   if (!entry) return null;
   const record = entry[1] as ResolverRecord;
   if (record.sessionEpoch !== (await browserEpoch)) return null;
-  const job = (await browserSnapshot()).jobs.find((job: any) => job.id === entry[0].slice(9));
+  const job = snapshot.jobs.find((job: any) => job.id === entry[0].slice(9));
   if (
     !job ||
     !record.scope ||
