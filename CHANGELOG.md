@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.12.3
+
+- Adopt the checked per-job startup serializer and persist renewed claims before scheduler heartbeat.
+- Retain Firefox blocking request observation until filter completion/refusal, with explicit listener cleanup.
+- Reject late admission, chunks and EOF after stream cancellation; terminal callbacks remain idempotent.
+- Verify 33 session/stream regressions and extension types/builds. Actual Firefox qualification remains pending.
+
 ## 0.12.2
 
 - Prevent legacy browser-download observers from pausing, replaying or changing the status of jobs owned by an active original-response stream.

@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.12.2<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.12.3<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -201,3 +201,5 @@ Shared integration 0.12.0: serialized metadata writes prevent stale source/claim
 Shared integration 0.12.1: removal event projection preserves owner/private/exact claim and rejects unqualified historical tombstones. Real engine coverage confirms isolation in both browser lanes and after claim replacement.
 
 Shared integration 0.12.2: direct stream ownership prevents competing legacy download handoffs. 13 stream tests, extension types/builds and actual Chrome original POST hash verification pass. Installed Firefox and broader acceptance remain pending.
+
+Shared integration 0.12.3: adopt serialized job startup and claim-before-heartbeat persistence; retain Firefox request listeners through filter completion and reject terminal-stream revival. 33 session/stream regressions pass; actual Firefox acceptance remains open.

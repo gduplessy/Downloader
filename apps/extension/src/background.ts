@@ -7,6 +7,7 @@ import { matchAdapter } from './navigation/adapters/policy';
 import type { SessionScope, StreamIdentity } from '../../../packages/shared/src/navigation';
 import { scopeForTab, sameScope, sessionKey, type ScopedRequest } from './navigation/session/scope';
 import { navigationStorage, memoryStorage } from './navigation/session/store';
+import { NavigationStarts } from './navigation/session/start';
 import { classifyReplay } from './navigation/streams/replay';
 import { DurableStreamSink, NativeStreamPort } from './navigation/streams/transport';
 import { DirectCaptureOwners } from './navigation/streams/ownership';
@@ -347,12 +348,18 @@ async function armDirect(
         return;
       taken = true;
       requestId = details.requestId;
-      browser.webRequest.onBeforeRequest.removeListener(listen);
       takeFirefox(
         (browser.webRequest as any).filterResponseData(details.requestId),
         sink,
-        () => {},
+        () => {
+          browser.webRequest.onBeforeRequest.removeListener(listen);
+          browser.webRequest.onHeadersReceived.removeListener(headers);
+        },
         ready,
+        () => {
+          browser.webRequest.onBeforeRequest.removeListener(listen);
+          browser.webRequest.onHeadersReceived.removeListener(headers);
+        },
       );
     };
     browser.webRequest.onHeadersReceived.addListener(
@@ -1113,7 +1120,11 @@ async function injectResolver(tabId: number) {
       runAt: 'document_idle',
     });
 }
+const resolverStarts = new NavigationStarts();
 async function startResolver(job: any, force = false, sourceTabId?: number) {
+  return resolverStarts.run(job.id, () => startOwnedResolver(job, force, sourceTabId));
+}
+async function startOwnedResolver(job: any, force = false, sourceTabId?: number) {
   const startUrl = job.navigation_url ?? job.page_url;
   if (!/^https?:\/\//.test(startUrl)) throw Error('Page navigation requires HTTP or HTTPS');
   if (force)
@@ -1152,10 +1163,10 @@ async function startResolver(job: any, force = false, sourceTabId?: number) {
       record.scope = claim.scope;
       record.sourceGeneration = claim.source_generation;
       record.generation = claim.source_generation;
-      await scheduler.heartbeat(job.id, record.tabId);
       record.started = Date.now();
       record.steps = 0;
       await navigationStore.set({ [key]: record });
+      await scheduler.heartbeat(job.id, record.tabId);
       await injectResolver(record.tabId);
       await browser.tabs.sendMessage(record.tabId, {
         type: 'resolver_continue',

@@ -127,7 +127,8 @@ describe('original response takeover', () => {
       abort: vi.fn(async () => {}),
     } as unknown as DurableStreamSink;
     const filter: any = { suspend: vi.fn(), resume: vi.fn(), close: vi.fn(), disconnect: vi.fn() };
-    takeFirefox(filter, sink, () => {});
+    const complete = vi.fn();
+    takeFirefox(filter, sink, () => {}, Promise.resolve(true), complete);
     filter.ondata({ data: new Uint8Array([1, 2, 3]).buffer });
     await vi.waitFor(() => expect(sink.chunk).toHaveBeenCalledOnce());
     expect(filter.suspend).toHaveBeenCalledOnce();
@@ -136,5 +137,19 @@ describe('original response takeover', () => {
     release();
     await vi.waitFor(() => expect(filter.close).toHaveBeenCalledOnce());
     expect(sink.end).toHaveBeenCalledOnce();
+    expect(complete).toHaveBeenCalledOnce();
+  });
+  it('cleans up Firefox listeners on refused admission without consuming the original body', async () => {
+    const sink = {chunk: vi.fn(), end: vi.fn(), abort: vi.fn()} as unknown as DurableStreamSink;
+    const filter: any = {suspend: vi.fn(), resume: vi.fn(), close: vi.fn(), disconnect: vi.fn()};
+    const complete = vi.fn();
+    takeFirefox(filter, sink, vi.fn(), Promise.resolve(false), complete);
+    await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    filter.ondata({data: new Uint8Array([1]).buffer});
+    filter.onstop();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(filter.disconnect).toHaveBeenCalledOnce();
+    expect(sink.chunk).not.toHaveBeenCalled();
+    expect(sink.end).not.toHaveBeenCalled();
   });
 });

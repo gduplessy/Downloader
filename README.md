@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.12.2<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.12.3<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -302,3 +302,5 @@ Shared integration 0.12.0: queued metadata writes reject older native source/cla
 Shared integration 0.12.1: removal events carry the original owner, private lane and exact claim. Scoped subscriptions exclude foreign and historical unqualified tombstones; a real engine regression covers regular/private and replaced-claim cases.
 
 Shared integration 0.12.2: active direct streams fence legacy download observers by exact tab/job/scope/source identity. Installed Chrome original POST requalification passes one submission and 262,161 verified bytes; Firefox response-filter qualification is still pending.
+
+Shared integration 0.12.3: per-job startup serialization prevents duplicate tabs; renewed claims persist before heartbeat. Firefox filter listeners remain until completion and terminal streams refuse late admission. Session/stream regressions pass; installed Firefox acceptance remains pending.
