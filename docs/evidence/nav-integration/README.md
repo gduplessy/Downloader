@@ -21,3 +21,13 @@ Current source review records installed-module hashes and Mozilla links. Archive
 With `NAV_PAYLOAD=binary`, `NAV_ATTACHMENT=1` and `NAV_NORMALIZE=1`, the server returns the original `application/octet-stream` attachment headers. A probe-only blocking onHeadersReceived listener records those headers, then returns browser-processing headers with Content-Disposition removed, Content-Type set to text/plain and X-Content-Type-Options set to nosniff. This still returns Invalid request ID, zero filtered bytes and one original POST on Firefox 157.0.1. Both header sets are preserved in the matrix; returning modified headers does not itself prove the browser's classification state changed.
 
 This additional packaged probe has no native admission step and does not qualify a production fix. Server-supplied nosniff success cannot be extrapolated to extension-side normalization. Production headers/actions remain unchanged by these artifacts. The exact attachment-to-native path and the internal classification/refusal branch remain pending.
+
+## Installed Firefox Blob lane
+
+[Actual installed Blob evidence](production-firefox-blob.json): stable Firefox 157.0.1 on Windows x64, checked source 12687b4 and native 0.13.5 complete the production worker/resolver/owned_blob_stream path. The original page generates 262,161 deterministic Blob bytes; real keyboard input selects its closed-shadow preview. Native verified SHA-256 and the independently read desktop file both match `ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862`.
+
+Only the original page GET and favicon request reach the local HTTP server. Payload refetches and driver byte relays are zero. The report includes exact service/CLI, source and extension-bundle hashes; source tracing is off. This supports the Blob lane while ordinary binary navigation POST/download filtering remains pending.
+
+Run `NAV_SCENARIO=blob node scripts/nav-fixtures/streams/production-firefox.mjs` from the intended production checkout after building matching CLI/service binaries. `NAV_FILENAME` optionally sets a Unicode destination. The runner creates isolated state, native registration, profile, ports and output and cleans up only its own process tree. Native diagnostics supply the actual binary version.
+
+Live hosts/accounts, Firefox ESR, other OS/browser versions, private/container scope, Blob cancellation/worker-loss and user permission prompts remain separate pending gates. Local permissions are pregranted in the isolated fixture manifest.
