@@ -20,6 +20,20 @@ type Prepared = {
 type Phase =
   'idle' | 'preparing' | 'ready' | 'cancelling' | 'cancelled' | 'expired' | 'stale' | 'failed';
 type View = { phase: Phase; seconds: number; error: TransferLabel | null };
+const CODE_LIFETIME_MS = 5 * 60 * 1000;
+type Preparation = {
+  input: Job;
+  fence: string;
+  expectedScope: SessionScope;
+  expectedSource: number;
+  monotonicLimit: number;
+  observedFrozen: boolean;
+};
+type NativeJobFields = {
+  navigation_owner?: string | null;
+  private?: boolean;
+  partial_created?: boolean;
+};
 const safeCounter = (n: unknown): n is number => Number.isSafeInteger(n) && (n as number) > 0;
 function validScope(scope: SessionScope | null | undefined): scope is SessionScope {
   if (
@@ -69,7 +83,12 @@ function jobFence(job: Job) {
     job.source_generation,
     job.state,
     job.bytes,
-    job.segments?.some((segment) => segment.downloaded > 0) ?? false,
+    job.segments?.some((segment) => segment.downloaded !== 0) ?? false,
+    (job as Job & NativeJobFields).partial_created ?? false,
+    (job as Job & NativeJobFields).navigation_owner ?? null,
+    (job as Job & NativeJobFields).private ?? job.navigation_scope?.private,
+    job.navigation_transfer_pending ?? false,
+    job.navigation_transfer_recovery ?? false,
   ]);
 }
 function waitingWithoutData(job: Job) {
@@ -80,6 +99,24 @@ function waitingWithoutData(job: Job) {
     !(job.segments ?? []).some((segment) => segment.downloaded !== 0)
   );
 }
+function expectedPending(job: Job, preparation: Preparation) {
+  const input = preparation.input;
+  return (
+    job.id === input.id &&
+    validScope(job.navigation_scope) &&
+    scopeKey(job.navigation_scope) === scopeKey(preparation.expectedScope) &&
+    job.source_generation === preparation.expectedSource &&
+    job.navigation_transfer_pending === true &&
+    job.navigation_transfer_recovery !== true &&
+    job.state === 'waiting_user' &&
+    waitingWithoutData(job) &&
+    ((job as Job & NativeJobFields).navigation_owner ?? null) ===
+      ((input as Job & NativeJobFields).navigation_owner ?? null) &&
+    ((job as Job & NativeJobFields).private ?? job.navigation_scope.private) ===
+      ((input as Job & NativeJobFields).private ?? input.navigation_scope!.private)
+  );
+}
+
 export function canPrepareTransfer(job: Job) {
   return (
     validScope(job.navigation_scope) &&
@@ -116,6 +153,9 @@ function errorLabel(error: unknown): TransferLabel {
 export class NavigationTransferSession {
   private prepared: Prepared | null = null;
   private originalFence: string | null = null;
+  private preparation: Preparation | null = null;
+  private preparedOrigin: Preparation | null = null;
+  private monotonicDeadline: number | null = null;
   private revision = 0;
   private disposed = false;
   private listeners = new Set<() => void>();
@@ -125,6 +165,7 @@ export class NavigationTransferSession {
     private request: Request,
     private refresh: () => Promise<void>,
     private now: () => number = Date.now,
+    private monotonic: () => number = () => performance.now(),
   ) {}
   getSnapshot = () => this.view;
   subscribe = (listener: () => void) => {
@@ -140,6 +181,9 @@ export class NavigationTransferSession {
   private forget() {
     this.prepared = null;
     this.originalFence = null;
+    this.preparation = null;
+    this.preparedOrigin = null;
+    this.monotonicDeadline = null;
   }
   mount() {
     this.disposed = false;
@@ -153,25 +197,24 @@ export class NavigationTransferSession {
     this.listeners.clear();
   }
   update(job: Job, request = this.request, refresh = this.refresh) {
-    const changed = jobFence(job) !== jobFence(this.job);
     this.request = request;
     this.refresh = refresh;
-    if (changed && this.view.phase === 'preparing') {
-      this.revision++;
-      this.forget();
-      this.publish({ phase: 'stale', error: null });
+    if (this.view.phase === 'preparing' && this.preparation) {
+      const frozen = expectedPending(job, this.preparation);
+      const unchanged =
+        !this.preparation.observedFrozen && jobFence(job) === this.preparation.fence;
+      if (frozen) this.preparation.observedFrozen = true;
+      else if (!unchanged) {
+        this.revision++;
+        this.forget();
+        this.publish({ phase: 'stale', seconds: 0, error: null });
+      }
     }
-    if (this.prepared) {
-      const frozen =
-        job.id === this.prepared.id &&
-        !!job.navigation_scope &&
-        scopeKey(job.navigation_scope) === scopeKey(this.prepared.scope) &&
-        job.source_generation === this.prepared.source_generation;
-      if (
-        !waitingWithoutData(job) ||
-        (!frozen && jobFence(job) !== this.originalFence) ||
-        (frozen && job.navigation_transfer_pending === false)
-      ) {
+    if (this.prepared && this.preparedOrigin) {
+      const frozen = expectedPending(job, this.preparedOrigin);
+      const unchanged = !this.preparedOrigin.observedFrozen && jobFence(job) === this.originalFence;
+      if (frozen) this.preparedOrigin.observedFrozen = true;
+      else if (!unchanged) {
         this.revision++;
         this.forget();
         this.publish({ phase: 'stale', seconds: 0, error: null });
@@ -180,8 +223,15 @@ export class NavigationTransferSession {
     this.job = job;
     this.publish({});
   }
+  private remainingMilliseconds() {
+    if (!this.prepared || this.monotonicDeadline === null) return 0;
+    return Math.max(
+      0,
+      Math.min(this.prepared.expires_at_ms - this.now(), this.monotonicDeadline - this.monotonic()),
+    );
+  }
   get code(): string | null {
-    return !this.disposed && this.prepared && this.prepared.expires_at_ms > this.now()
+    return !this.disposed && this.prepared && this.remainingMilliseconds() > 0
       ? this.prepared.token
       : null;
   }
@@ -204,7 +254,7 @@ export class NavigationTransferSession {
   }
   tick() {
     if (!this.prepared || this.disposed) return;
-    const seconds = Math.max(0, Math.ceil((this.prepared.expires_at_ms - this.now()) / 1000));
+    const seconds = Math.ceil(this.remainingMilliseconds() / 1000);
     if (!seconds) {
       this.revision++;
       this.forget();
@@ -225,6 +275,18 @@ export class NavigationTransferSession {
     const inputFence = jobFence(input);
     const operation = ++this.revision;
     this.forget();
+    const preparation: Preparation = {
+      input,
+      fence: inputFence,
+      expectedScope: {
+        ...input.navigation_scope!,
+        claim_generation: input.navigation_scope!.claim_generation + 1,
+      },
+      expectedSource: input.source_generation! + 1,
+      monotonicLimit: this.monotonic() + CODE_LIFETIME_MS,
+      observedFrozen: false,
+    };
+    this.preparation = preparation;
     this.publish({ phase: 'preparing', seconds: 0, error: null });
     try {
       const reply = await this.request({
@@ -235,15 +297,15 @@ export class NavigationTransferSession {
         consent: true,
       });
       if (this.disposed || operation !== this.revision) return;
-      if (jobFence(this.job) !== inputFence) {
+      if (!(
+        expectedPending(this.job, preparation) ||
+        (!preparation.observedFrozen && jobFence(this.job) === inputFence)
+      )) {
         this.forget();
         this.publish({ phase: 'stale', seconds: 0, error: null });
         return;
       }
-      const expectedScope = {
-        ...input.navigation_scope!,
-        claim_generation: input.navigation_scope!.claim_generation + 1,
-      };
+      const expectedScope = preparation.expectedScope;
       if (
         reply?.id !== input.id ||
         !validScope(reply.scope) ||
@@ -255,19 +317,34 @@ export class NavigationTransferSession {
         !Number.isSafeInteger(reply.expires_at_ms) ||
         reply.expires_at_ms <= this.now()
       ) {
+        this.forget();
         this.publish({ phase: 'failed', error: 'preparationFailed' });
         return;
       }
+      this.monotonicDeadline = Math.min(
+        preparation.monotonicLimit,
+        this.monotonic() + Math.min(CODE_LIFETIME_MS, reply.expires_at_ms - this.now()),
+      );
+      if (this.monotonicDeadline <= this.monotonic()) {
+        this.forget();
+        this.publish({ phase: 'expired', seconds: 0, error: null });
+        return;
+      }
+      this.preparation = null;
+      this.preparedOrigin = preparation;
+      if (expectedPending(this.job, preparation)) this.preparedOrigin.observedFrozen = true;
       this.prepared = structuredClone(reply);
       this.originalFence = inputFence;
       this.publish({
         phase: 'ready',
-        seconds: Math.ceil((reply.expires_at_ms - this.now()) / 1000),
+        seconds: Math.ceil(this.remainingMilliseconds() / 1000),
         error: null,
       });
     } catch (error) {
-      if (!this.disposed && operation === this.revision)
+      if (!this.disposed && operation === this.revision) {
+        this.forget();
         this.publish({ phase: 'failed', error: errorLabel(error) });
+      }
     } finally {
       await this.refreshState();
     }

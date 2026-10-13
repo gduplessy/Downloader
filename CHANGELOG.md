@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.17.1
+
+- Accept only the exact native pending source/claim advance when desktop polling publishes it before the prepare reply; retain strict owner, private, store, container, partition, cancellation, recovery and data fences. Reject rollback after the frozen pending state has been observed.
+- Bound memory-only code display by a monotonic five-minute deadline, including request latency, so wall-clock rollback cannot extend its lifetime. Expiry and unmount continue to forget without automatic cancellation.
+- Verify 50 controlled transfer/session/clock regressions, six existing desktop tests, types/builds and synchronized version artifacts. Shared App/native integration remains with the coordinator.
+
 ## 0.17.0
 
 - Add an isolated desktop browser-ownership transfer component with explicit consent, memory-only codes, expiry countdown, optional copy and intentional cancellation/recovery.

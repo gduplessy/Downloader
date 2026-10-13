@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.17.0<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.17.1<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -277,3 +277,5 @@ NAV-12 0.13.3 records final clean committed-source 7f752d3 Chrome/Edge cross-ori
 NAV-11 session-transfer integration (0.16.0) adds native pending/manual-recovery gates, transient one-use tickets, and explicit recipient acceptance using the destination tab's actual cookie/container/partition scope. Native compilation and focused recipient tests pass; desktop controls and installed cross-session qualification remain in progress.
 
 Desktop transfer component 0.17.0 adds explicit memory-only handoff preparation, exact frozen-session reply checks, expiry, copy and cancellation in six locales. It uses the checked native transfer contract from 11ca229; the request callback must return before refreshing job metadata. Root App integration and installed two-session acceptance are being completed separately.
+
+Desktop transfer UI 0.17.1 allows an exact native pending +1 source/+1 claim projection to arrive before its RPC reply without dropping the code. Other ownership, cancellation/recovery and data changes still invalidate it. A monotonic five-minute deadline prevents wall-clock rollback from extending display; expiry never automatically cancels the native transfer.

@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.17.0<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.17.1<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -376,3 +376,5 @@ NAV-12 0.13.3 records final clean committed-source 7f752d3 Chrome/Edge cross-ori
 Session-transfer integration (0.16.0) adds ephemeral one-use handoff tickets and explicit recipient acceptance in an observed browser session. Pending or interrupted handoffs block automated navigation; desktop controls and installed cross-session acceptance remain in progress.
 
 Desktop transfer component 0.17.0 adds explicit memory-only handoff preparation, exact frozen-session reply checks, expiry, copy and cancellation in six locales. It uses the checked native transfer contract from 11ca229; the request callback must return before refreshing job metadata. Root App integration and installed two-session acceptance are being completed separately.
+
+Desktop transfer UI 0.17.1 allows an exact native pending +1 source/+1 claim projection to arrive before its RPC reply without dropping the code. Other ownership, cancellation/recovery and data changes still invalidate it. A monotonic five-minute deadline prevents wall-clock rollback from extending display; expiry never automatically cancels the native transfer.

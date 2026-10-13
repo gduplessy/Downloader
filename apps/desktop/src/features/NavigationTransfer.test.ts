@@ -52,9 +52,22 @@ function deferred<T>() {
 }
 function setup(request = vi.fn().mockResolvedValue(reply())) {
   let now = 100000;
+  let monotonic = 0;
   const refresh = vi.fn().mockResolvedValue(undefined);
-  const session = new NavigationTransferSession(job(), request, refresh, () => now);
-  return { session, request, refresh, setNow: (value: number) => (now = value) };
+  const session = new NavigationTransferSession(
+    job(),
+    request,
+    refresh,
+    () => now,
+    () => monotonic,
+  );
+  return {
+    session,
+    request,
+    refresh,
+    setNow: (value: number) => (now = value),
+    setMonotonic: (value: number) => (monotonic = value),
+  };
 }
 describe('desktop transfer lifetime and exact native fences', () => {
   it('does nothing until an explicit prepare and accepts exactly the advanced frozen claim/source', async () => {
@@ -79,6 +92,191 @@ describe('desktop transfer lifetime and exact native fences', () => {
     });
     expect(session.code).toBe(reply().token);
     expect(session.canPrepare).toBe(false);
+  });
+  it('keeps an exact pending native advance published before the prepare reply', async () => {
+    const pending = deferred<ReturnType<typeof reply>>();
+    const request = vi.fn().mockReturnValue(pending.promise);
+    const { session } = setup(request);
+    const preparing = session.prepare();
+    session.update({
+      ...job(),
+      navigation_scope: reply().scope,
+      source_generation: 13,
+      navigation_transfer_pending: true,
+      navigation_transfer_recovery: false,
+      state: 'waiting_user',
+      bytes: 0,
+    });
+    expect(session.getSnapshot().phase).toBe('preparing');
+    pending.resolve(reply());
+    await preparing;
+    expect(session.code).toBe(reply().token);
+    expect(session.getSnapshot().phase).toBe('ready');
+    expect(request).toHaveBeenCalledTimes(1);
+  });
+  it.each([
+    'id',
+    'profile',
+    'private',
+    'cookie',
+    'container',
+    'partition',
+    'ancestor',
+    'source',
+    'claim',
+    'terminal',
+    'bytes',
+    'segments',
+    'partial',
+    'recovery',
+    'cancelled',
+    'owner',
+    'private_metadata',
+  ] as const)('refuses a pre-reply pending projection changed in %s', async (field) => {
+    const pending = deferred<ReturnType<typeof reply>>();
+    const request = vi.fn().mockReturnValue(pending.promise);
+    const { session } = setup(request);
+    const preparing = session.prepare();
+    const current = {
+      ...job(),
+      navigation_scope: reply().scope,
+      source_generation: 13,
+      navigation_transfer_pending: true,
+      navigation_transfer_recovery: false,
+      state: 'waiting_user',
+    } as Job & { partial_created?: boolean; navigation_owner?: string; private?: boolean };
+    if (field === 'id') current.id = 'foreign';
+    if (field === 'profile') current.navigation_scope!.profile = 'foreign';
+    if (field === 'private') current.navigation_scope!.private = true;
+    if (field === 'cookie') current.navigation_scope!.cookie_store_id = 'foreign';
+    if (field === 'container') current.navigation_scope!.container_id = 'foreign';
+    if (field === 'partition')
+      current.navigation_scope!.partition_key!.top_level_site = 'https://foreign.example';
+    if (field === 'ancestor')
+      current.navigation_scope!.partition_key!.has_cross_site_ancestor = false;
+    if (field === 'source') current.source_generation = 14;
+    if (field === 'claim') current.navigation_scope!.claim_generation = 11;
+    if (field === 'terminal') current.state = 'complete';
+    if (field === 'bytes') current.bytes = 1;
+    if (field === 'segments') current.segments = [{ start: 0, end: 1, downloaded: 1 }];
+    if (field === 'partial') current.partial_created = true;
+    if (field === 'recovery') current.navigation_transfer_recovery = true;
+    if (field === 'cancelled') current.navigation_transfer_pending = false;
+    if (field === 'owner') current.navigation_owner = 'foreign';
+    if (field === 'private_metadata') current.private = true;
+    session.update(current);
+    pending.resolve(reply());
+    await preparing;
+    expect(session.code).toBeNull();
+    expect(session.getSnapshot().phase).toBe('stale');
+    expect(request).toHaveBeenCalledTimes(1);
+  });
+  it('cannot restore the original input after observing the expected pending advance', async () => {
+    const pending = deferred<ReturnType<typeof reply>>();
+    const { session } = setup(vi.fn().mockReturnValue(pending.promise));
+    const preparing = session.prepare();
+    session.update({
+      ...job(),
+      navigation_scope: reply().scope,
+      source_generation: 13,
+      navigation_transfer_pending: true,
+      state: 'waiting_user',
+    });
+    session.update(job());
+    pending.resolve(reply());
+    await preparing;
+    expect(session.code).toBeNull();
+    expect(session.getSnapshot().phase).toBe('stale');
+  });
+  it('rejects recovery at unchanged counters and forgets ready codes when pending is cancelled', async () => {
+    const pending = deferred<ReturnType<typeof reply>>();
+    const { session } = setup(vi.fn().mockReturnValue(pending.promise));
+    const preparing = session.prepare();
+    session.update({ ...job(), navigation_transfer_recovery: true });
+    pending.resolve(reply());
+    await preparing;
+    expect(session.code).toBeNull();
+    const ready = setup();
+    await ready.session.prepare();
+    ready.session.update({
+      ...job(),
+      navigation_scope: reply().scope,
+      source_generation: 13,
+      navigation_transfer_pending: false,
+      navigation_transfer_recovery: true,
+      state: 'waiting_user',
+    });
+    expect(ready.session.code).toBeNull();
+    expect(ready.session.getSnapshot().phase).toBe('stale');
+  });
+  it('cannot display a late reply after explicit cancellation of the projected pending transfer', async () => {
+    const pending = deferred<ReturnType<typeof reply>>();
+    const request = vi
+      .fn()
+      .mockReturnValueOnce(pending.promise)
+      .mockResolvedValueOnce({ cancelled: true });
+    const { session } = setup(request);
+    const preparing = session.prepare();
+    session.update({
+      ...job(),
+      navigation_scope: reply().scope,
+      source_generation: 13,
+      navigation_transfer_pending: true,
+      state: 'waiting_user',
+    });
+    await session.cancel();
+    pending.resolve(reply());
+    await preparing;
+    expect(session.code).toBeNull();
+    expect(session.getSnapshot().phase).toBe('cancelled');
+    expect(request).toHaveBeenLastCalledWith({
+      action: 'cancel',
+      id: 'job',
+      expected_scope: reply().scope,
+      expected_source_generation: 13,
+    });
+  });
+  it('forgets the code within five monotonic minutes despite wall-clock rollback', async () => {
+    const value = { ...reply(), expires_at_ms: 400000 };
+    const { session, request, refresh, setNow, setMonotonic } = setup(
+      vi.fn().mockResolvedValue(value),
+    );
+    await session.prepare();
+    expect(session.getSnapshot().seconds).toBe(300);
+    setNow(-1000000);
+    setMonotonic(299001);
+    session.tick();
+    expect(session.code).toBe(value.token);
+    expect(session.getSnapshot().seconds).toBe(1);
+    setMonotonic(300000);
+    session.tick();
+    expect(session.code).toBeNull();
+    expect(session.getSnapshot().phase).toBe('expired');
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(refresh).toHaveBeenCalledTimes(2);
+  });
+  it('caps overly long native expiry and includes request latency in the monotonic bound', async () => {
+    const pending = deferred<ReturnType<typeof reply>>();
+    const { session, setNow, setMonotonic } = setup(vi.fn().mockReturnValue(pending.promise));
+    const preparing = session.prepare();
+    setMonotonic(100000);
+    pending.resolve({ ...reply(), expires_at_ms: 2000000 });
+    await preparing;
+    expect(session.getSnapshot().seconds).toBe(200);
+    setNow(-1000000);
+    setMonotonic(300000);
+    session.tick();
+    expect(session.code).toBeNull();
+  });
+  it('does not expose a native reply arriving after the monotonic preparation budget', async () => {
+    const pending = deferred<ReturnType<typeof reply>>();
+    const { session, setMonotonic } = setup(vi.fn().mockReturnValue(pending.promise));
+    const preparing = session.prepare();
+    setMonotonic(300001);
+    pending.resolve({ ...reply(), expires_at_ms: 2000000 });
+    await preparing;
+    expect(session.code).toBeNull();
+    expect(session.getSnapshot().phase).toBe('expired');
   });
   it('rejects a delayed reply after input ownership changes without cancelling automatically', async () => {
     const pending = deferred<ReturnType<typeof reply>>();
