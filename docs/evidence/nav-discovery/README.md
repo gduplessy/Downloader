@@ -36,6 +36,6 @@ The restart mode delays rendering, stops/restarts the real service database owne
 
 ## Committed-source evidence
 
-- [Chrome 155 Windows x64](committed-chrome-windows-x64.json) and [Edge 155 Windows x64](committed-edge-windows-x64.json) qualify committed 6296339 (0.13.1), sourceDirty=false. Both use copied native executable SHA-256 and the exact resolver bundle SHA-256 recorded in JSON.
+- [Chrome 155 Windows x64](committed-chrome-windows-x64.json) and [Edge 155 Windows x64](committed-edge-windows-x64.json) qualify committed 7f752d3 (0.13.2), sourceDirty=false. Both use copied native executable SHA-256 and the exact resolver bundle SHA-256 recorded in JSON.
 - One earlier Edge pre-integration attempt stopped before any resource request (WaitingBrowser, zero bytes); the repeat and clean committed rows completed. Same-live-document startup coalescing is included in the checked shared base; no fallback or ownership gate was weakened to obtain acceptance.
-- The final 0.13.2 integration delta adopts checked main/shared WaitingUser/countdown recovery and is separately validated; browser evidence never silently relabels its source revision.
+- Both final rows include checked main/shared WaitingUser/countdown recovery. The 0.13.3 documentation/version increment records this immutable 0.13.2 source evidence; browser evidence never silently relabels its source revision.

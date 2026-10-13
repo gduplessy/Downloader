@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.13.3
+
+- Record final clean committed-source 7f752d3 (0.13.2) Chrome/Edge cross-origin authenticated discovery after complete browser, service and worker restart. Both complete exactly one original GET and the expected native hash with diagnostics off.
+- Preserve explicit live provider/account, Firefox/ESR, private/container installed, other OS and owner UI qualification boundaries. This increment changes documentation and synchronized versions only.
+
 ## 0.13.2
 
 - Reconcile checked coordinator base 7e44b00 and latest main, preserving resolver/countdown regressions and explicit WaitingUser recovery after source replacement.

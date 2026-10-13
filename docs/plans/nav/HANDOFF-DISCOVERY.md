@@ -14,7 +14,7 @@
 
 The branch integrates checked coordinator bases c8ac54d, 91d0553 and 7e44b00, including latest main 16d8ec2. It preserves account/challenge grants, source replacement recovery, same-document startup coalescing, stream ownership and three-digit countdown tests. The batch PR targets `codex/nav-integration`; it must remain separate and must not be automatically merged or closed.
 
-Focused 0.13.0/0.13.1 increments qualify actual stable Windows Chrome/Edge cross-origin authenticated discovery, service restart, extension ServiceWorker replacement and complete browser-process restart. Clean committed 6296339 evidence records exactly one authenticated GET, zero HEAD, 262,161 native bytes and matching SHA-256. The driver detaches from the byte-capture page before the real adapter preview submission; production chrome.debugger and native transport own the original response.
+Focused 0.13.0/0.13.1 increments qualify actual stable Windows Chrome/Edge cross-origin authenticated discovery, service restart, extension ServiceWorker replacement and complete browser-process restart. Clean committed 7f752d3 evidence records exactly one authenticated GET, zero HEAD, 262,161 native bytes and matching SHA-256. The driver detaches from the byte-capture page before the real adapter preview submission; production chrome.debugger and native transport own the original response.
 
 [Discovery evidence and reproduction](../../evidence/nav-discovery/README.md) names immutable source/binary revisions. The final combined increment runs frontend types, all client tests/builds, full native tests, strict Clippy, native compilation, Rustfmt and version checks. Eight real Engine discovery regressions and two retained-provenance race/document tests cover the specific fences.
 
