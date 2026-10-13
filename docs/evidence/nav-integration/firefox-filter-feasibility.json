@@ -177,6 +177,63 @@
         }
       ],
       "evidenceOrigin": "packaged standalone runner; controlled nosniff-only binary comparison"
+    },
+    {
+      "lane": "main_frame",
+      "event": "onBeforeRequest",
+      "browser": "Firefox/157.0.1",
+      "os": "win32",
+      "architecture": "x64",
+      "persistentBackground": true,
+      "responseDelayMs": 500,
+      "driverDisconnectedBeforeSubmission": true,
+      "originalPostCount": 1,
+      "bytesObserved": 0,
+      "payloadKind": "binary",
+      "contentType": "application/octet-stream",
+      "contentDisposition": "attachment; filename=\"original-post.bin\"",
+      "nosniff": false,
+      "normalizationApplied": true,
+      "originalResponseHeaders": [
+        {
+          "name": "Content-Type",
+          "value": "application/octet-stream"
+        },
+        {
+          "name": "Content-Disposition",
+          "value": "attachment; filename=\"original-post.bin\""
+        },
+        {
+          "name": "Content-Length",
+          "value": "8388625"
+        }
+      ],
+      "browserProcessingHeaders": [
+        {
+          "name": "Content-Length",
+          "value": "8388625"
+        },
+        {
+          "name": "Content-Type",
+          "value": "text/plain"
+        },
+        {
+          "name": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ],
+      "events": [
+        {
+          "event": "request",
+          "type": "main_frame",
+          "method": "POST"
+        },
+        {
+          "event": "error",
+          "error": "Invalid request ID"
+        }
+      ],
+      "evidenceOrigin": "packaged original attachment probe; exactURL/POST/status200 blocking response-header normalization; no native admission"
     }
   ],
   "nativeDesktopAcceptance": false,
@@ -194,7 +251,8 @@
       "Current traceable-channel lookup checks extension browsing-context group process and URI access",
       "Actual failing C++ branch is unobserved; source conditions are diagnostic leads",
       "Controlled packaged pair: main_frame text/plain with no Content-Disposition passes ASCII payload but refuses binary payload, with identical settings/timing/action; consistent with content-dependent document/download classification, exact C++ branch still unobserved",
-      "Adding only X-Content-Type-Options:nosniff to the refused binary main-frame response restores filtering of all8388625bytes with onePOST; content sniffing is causally isolated in this local API fixture, exact attachment/native capture remains pending"
+      "Adding only X-Content-Type-Options:nosniff to the refused binary main-frame response restores filtering of all 8,388,625 bytes with one POST; content sniffing is causally isolated in this local API fixture, exact attachment/native capture remains pending",
+      "Actual original attachment/octet-stream response remains Invalid request ID even when the probe returns text/plain+nosniff headers with disposition removed; server-supplied nosniff success cannot establish extension-side normalization sufficiency"
     ],
     "links": [
       "https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/filterResponseData",

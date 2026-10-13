@@ -24,6 +24,8 @@ assert.ok(['ascii', 'binary'].includes(payloadKind));
 if (payloadKind === 'binary')
   for (let i = 0; i < payload.length; i++) payload[i] = (i * 31 + 7) % 251;
 const nosniff = process.env.NAV_NOSNIFF === '1';
+const attachment = process.env.NAV_ATTACHMENT === '1';
+const normalize = process.env.NAV_NORMALIZE === '1';
 let observation;
 const server = createServer(async (req, res) => {
   if (req.url === '/page') {
@@ -40,7 +42,9 @@ const server = createServer(async (req, res) => {
       res.end('consumed');
       return;
     }
-    res.setHeader('Content-Type', 'text/plain');
+    res.setHeader('Content-Type', attachment ? 'application/octet-stream' : 'text/plain');
+    if (attachment)
+      res.setHeader('Content-Disposition', 'attachment; filename="original-post.bin"');
     if (nosniff) res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Length', bytes);
     await new Promise((r) => setTimeout(r, 500));
@@ -73,6 +77,12 @@ const action =
 const addon = [
   'const base=' + JSON.stringify(base) + ', action=' + JSON.stringify(action) + ';',
   'const stats={bytes:0,events:[]};',
+  'const normalize=' + JSON.stringify(normalize) + ';',
+  'browser.webRequest.onHeadersReceived.addListener(details=>{if(details.url!==base+"/one-use"||details.method!=="POST"||details.statusCode!==200)return;',
+  'const original=details.responseHeaders??[];const selected=h=>["content-type","content-disposition","content-length","x-content-type-options"].includes(h.name.toLowerCase());stats.originalResponseHeaders=original.filter(selected);',
+  'if(!normalize)return;const header=name=>original.find(h=>h.name.toLowerCase()===name)?.value??"";if(!/attachment/i.test(header("content-disposition"))||header("content-type")!=="application/octet-stream")return;',
+  'const changed=original.filter(h=>!["content-type","content-disposition","x-content-type-options"].includes(h.name.toLowerCase()));changed.push({name:"Content-Type",value:"text/plain"},{name:"X-Content-Type-Options",value:"nosniff"});stats.browserProcessingHeaders=changed.filter(selected);stats.normalizationApplied=true;return {responseHeaders:changed};',
+  '},{urls:["http://127.0.0.1/*"]},["blocking","responseHeaders"]);',
   'const report=()=>fetch(base+"/metadata",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(stats)}).catch(()=>{});',
   'browser.runtime.onInstalled.addListener(()=>browser.runtime.openOptionsPage());',
   'browser.runtime.onMessage.addListener(message=>{if(message.type!=="arm")return;setTimeout(async()=>{try{',
@@ -269,14 +279,20 @@ try {
     architecture: process.arch,
     lane,
     event: 'onBeforeRequest',
-    response: 'inline text/plain; 500ms delay',
+    response: attachment
+      ? 'original attachment/octet-stream; 500ms delay'
+      : 'inline text/plain; 500ms delay',
     driverDisconnectedBeforeSubmission: true,
     originalPostCount: requests.length,
     bytesExpected: bytes,
     payloadKind,
     nosniff,
-    contentType: 'text/plain',
-    contentDisposition: null,
+    contentType: attachment ? 'application/octet-stream' : 'text/plain',
+    contentDisposition: attachment ? 'attachment; filename="original-post.bin"' : null,
+    normalizationRequested: normalize,
+    normalizationAdmission: normalize
+      ? 'exact probe URL, POST, status200, original attachment/octet-stream only; no native admission in this API probe'
+      : null,
     observation,
     nativeDesktopAcceptance: false,
     responseBytesRelayedByDriver: false,
