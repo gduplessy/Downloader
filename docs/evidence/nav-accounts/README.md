@@ -1,33 +1,50 @@
 # NAV-02/03 account qualification
 
-- `keyring-windows.json`: actual Windows x64 OS-keyring lifecycle and Engine save/select/one-use grant/consume/remove. Only generated test credentials; cleanup verified.
-- `client-dom.json`: actual Headless Chromium 145 DOM forms and production account form module. Grant transport explicitly mocked. Cancellation and changed claim/form prevent stale fill; normal submission occurs once. This is not installed-extension acceptance.
-- `http.json`: four synthetic provider fixture contracts; authenticated permitted bytes have an expected SHA-256, and logout rejects the same cookie. This is HTTP fixture acceptance, not desktop publication.
+The scoped account/session implementation is locally qualified on installed Chrome and Edge on Windows x64. All live g4u/ddownload/Rapidgator/Gofile layouts, accounts and APIs remain pending. Unknown forms stay manual.
 
-`production-chrome-saved.json` and `production-chrome-session.json` record installed Chrome 155 on Windows x64 using production background/resolver/native transports. Both local fixtures publish 311,296 bytes with the expected SHA-256, one login, one file transfer and zero purchase/ad requests. The existing-session row stores no credential. Test account removal runs before browser shutdown.
+## Installed production acceptance (0.9.10)
 
-`production-edge-pending.json` records the failed Edge continuation row with zero file bytes; no Edge acceptance is claimed. Windows Edge and Firefox stable/ESR rows remain pending. macOS/Linux native credential targets and all real g4u/ddownload/Rapidgator/Gofile accounts/layouts remain pending. No provider API integration, payments, account hopping or real credentials are used.
+| Target | Account path | Result | Evidence |
+| --- | --- | --- | --- |
+| Chrome 155.0.8059.39 / Windows x64 | Explicit saved fill, native OS keyring | Passed | [Chrome saved](production-integrated-chrome-saved.json) |
+| Edge 155.0.4283.45 / Windows x64 | Explicit saved fill, native OS keyring | Passed | [Edge saved](production-integrated-edge-saved.json) |
+| Chrome 155.0.8059.39 / Windows x64 | Existing entitled browser session, no stored credential | Passed | [Chrome session](production-integrated-chrome-session.json) |
+| Firefox stable / ESR | Account flow and same-document lifecycle | Pending | No installed account acceptance claimed |
+| macOS Intel / Apple Silicon, Ubuntu x64 | OS credential lifecycle and installed account flow | Pending | Native target unavailable in these runs |
 
-Reproduce:
+Each accepted run creates exactly one owned tab, submits one sign-in, transfers one file and submits zero purchase/ad requests. The actual background/resolver and persistent native messaging sink publish 311,296 bytes with SHA-256 `de16d381af1835e9fb8fcf379da3f439db796cf46f4668fd2fcb778ff4f43cee`. The completed native job retains `ddownload.com`, original `/nav-adapters/ddownload/login`, current `/nav-adapters/ddownload/account`, and the qualified `local-fixture@1.0.0` adapter.
+
+The tested tree is the pending merge of checked `c8ac54d` into D `c7d569f`, plus fixture assertions. Artifacts include exact source hashes and native/product version 0.9.10. They do not label uncommitted source as a commit. Generated profiles, local fixture URLs and credentials stay outside committed artifacts. Test account removal succeeds before browser shutdown; independent read-only audits confirm zero `site_account` records in each isolated database. The native removal command deletes its keyring reference before removing metadata. Only each fixture's unique temporary native-host registration is removed.
+
+The UI driver detaches its fixture-page debugger immediately after explicit sign-in input, before production capture. Fixture packaging substitutes only the unique native host name and grants loopback fixture permissions. No browser/native transport mocks, byte relay or file import occur. Permission-prompt/install UX, Firefox/ESR, private/container installed account paths and live provider acceptance remain separate gates.
+
+## Other evidence
+
+- [Windows keyring](keyring-windows.json): actual Windows OS-keyring create/read/delete and Engine one-use scoped grant/consume/remove using generated test credentials; cleanup verified.
+- [Client DOM](client-dom.json): actual Headless Chromium 145 with the production form module, **mocked grant transport**. Cancellation and changed claim/form prevent stale fill; normal submission happens once. This does not prove installed-extension transport.
+- [HTTP fixtures](http.json): four synthetic provider namespaces with authenticated permitted bytes and logout refusal. HTTP requests alone do not prove desktop publication.
+- Historical [Chrome saved](production-chrome-saved.json), [Chrome session](production-chrome-session.json), [Chrome nonce](production-chrome-nonce.json) and [failed Edge continuation](production-edge-pending.json) are retained as earlier evidence. The failed Edge row claims zero acceptance; the final passing Edge row above supersedes its pending status.
+
+Native/client tests separately cover MFA, rejected/expired credentials, unknown/expired/quota entitlement, mismatched account/profile/source/claim, private ephemeral metadata, credential edit/remove, same-URL nonce replacement without document ID, bounded attempts, duplicate consumption, cancellation, and competing account/session fences. Six locale dictionaries, keyboard focus, RTL and visible cancellation are implemented. Native desktop compilation does not establish native GUI visual acceptance.
+
+## Reproduce
 
 ```powershell
 $env:CARGO_TARGET_DIR = Join-Path $PWD '.local/cargo-accounts'
+$env:CARGO_INCREMENTAL = '0'
+cargo build -p downloader-service -p downloader-cli
+cargo build -p downloader-service --example account_fixture_command
 cargo run -p downloader-core --example qualify_accounts
 node scripts/nav-fixtures/accounts/build.mjs
 node scripts/nav-fixtures/accounts/http.test.mjs
-node scripts/nav-fixtures/accounts/server.mjs
-```
-
-Use the gstack `/browse` skill for the local DOM evaluator `scripts/nav-fixtures/accounts/browser-forms.js`; isolate `BROWSE_STATE_FILE`. Never store actual credentials, cookies or private URLs in qualification artifacts.
-
-Production fixture reproduction:
-
-```powershell
 node scripts/nav-fixtures/accounts/production-worker.mjs
+$env:NAV_BROWSER = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
+node scripts/nav-fixtures/accounts/production-worker.mjs
+Remove-Item Env:NAV_BROWSER
 $env:NAV_EXISTING_SESSION = '1'
 node scripts/nav-fixtures/accounts/production-worker.mjs
 ```
 
-The UI driver detaches its fixture-page debugger after input, before production capture. Fixture packaging only substitutes the unique native host name; no native/browser transport mocks, byte relay or file import occur. Native release, private/container coverage and same-URL document replacement remain separately fenced and tested; unavailable browser/OS acceptance stays pending.
+Use gstack `/browse` for the local DOM evaluator `scripts/nav-fixtures/accounts/browser-forms.js`; isolate `BROWSE_STATE_FILE`. Never place actual passwords, cookies, private URLs or signed links in evidence. Provider APIs require individual contracts and qualification; no payments, account hopping or premium bypass are implemented.
 
-`production-chrome-nonce.json` records the production Chrome 155 rerun using live document nonce verification and the required native form nonce. One login and one native file transfer publish the expected hash. This does not qualify Firefox or the final Edge nonce path. Full native fault-injection regression, Clippy/fmt, frontend tests/types/builds and Windows native desktop compilation passed for 0.9.8.
+[Final check record](checks-integrated.json): 121 extension tests, six desktop tests, both typechecks/builds, 113 passing native fault-injection tests, strict all-target Clippy/fmt, isolated binaries, native Tauri compilation, fresh Windows keyring lifecycle and version/artifact checks passed. Four subprocess fixture entries are intentionally ignored in direct invocation.

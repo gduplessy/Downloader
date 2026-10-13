@@ -57,9 +57,9 @@ export function page(provider, scenario, { account = 'alice', authenticated = fa
   if (status === 'authenticated')
     return html(
       marker +
-        '<a data-nav-fixture-control data-nav-premium-control download href="' +
+        '<section data-download-host="ddownload.com"><a data-nav-fixture-control data-nav-premium-control download href="' +
         base +
-        '/premium.bin">Premium download</a><a href="' +
+        '/premium.bin">Premium download</a></section><a href="' +
         base +
         '/purchase">Buy premium</a><div data-ad><a data-nav-fixture-control data-nav-premium-control href="' +
         base +

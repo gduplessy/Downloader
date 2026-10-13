@@ -1,0 +1,56 @@
+{
+  "browser": "Chrome/155.0.8059.39",
+  "productVersion": "0.9.10",
+  "sourceCommit": "c7d569f09b2ae7f25ce03bf370279ffa0696a3a8",
+  "sourceHashes": {
+    "apps/extension/src/background.ts": "2262612342e764a82aec8da7e349b2f6ed17de97c4bda0144f89234935040aea",
+    "apps/extension/src/resolver.ts": "05a9c29bc693939b3540465442815991b2ee257268a046062e46685cdc791367",
+    "scripts/nav-fixtures/accounts/server.mjs": "6cc04b1caad6615b0dee58212d0b0f288f5add451e1c01b3d47d6b6c5a9c1903"
+  },
+  "os": "win32",
+  "architecture": "x64",
+  "extensionAPI": "Production saved-fill/native keyring grant and entitled-session direct stream",
+  "transport": "persistent chrome.runtime.connectNative",
+  "submissions": 1,
+  "accountPath": "Explicit opt-in saved credential fill",
+  "debuggerHandoff": "Driver page session detached immediately after explicit fill dispatch; production chrome.debugger owns capture",
+  "fixtureRequests": {
+    "login": 1,
+    "file": 1,
+    "purchase": 0
+  },
+  "sha256": "de16d381af1835e9fb8fcf379da3f439db796cf46f4668fd2fcb778ff4f43cee",
+  "expectedSha256": "de16d381af1835e9fb8fcf379da3f439db796cf46f4668fd2fcb778ff4f43cee",
+  "productionBackground": true,
+  "productionResolver": true,
+  "limitations": [
+    "Local fixtures; live hosts/accounts pending",
+    "No stable/ESR Firefox or other OS qualification from this run",
+    "Fixture manifest grants loopback optional permissions; runtime permission prompt is not qualified",
+    "One authenticated premium fixture accepted; live account/provider API and other browser/OS rows pending"
+  ],
+  "fixture": "nav-account-production-v1",
+  "sourceIntegrationBase": "c8ac54d",
+  "sourceTreeState": "Pending merge of checked c8ac54d into c7d569f, plus recorded fixture provenance assertions; source hashes identify tested files",
+  "serviceVersion": "0.9.10",
+  "acceptedJob": {
+    "state": "complete",
+    "bytes": 311296,
+    "verified_sha256": "de16d381af1835e9fb8fcf379da3f439db796cf46f4668fd2fcb778ff4f43cee",
+    "adapter": {
+      "id": "local-fixture",
+      "version": "1.0.0"
+    },
+    "originalPath": "/nav-adapters/ddownload/login",
+    "currentPath": "/nav-adapters/ddownload/account",
+    "selected_host": "ddownload.com",
+    "claim_generation": 3,
+    "source_generation": 2
+  },
+  "cleanup": {
+    "runnerExit": 0,
+    "testAccountMetadataRemaining": 0,
+    "nativeRemoveAccount": "Succeeded; native remove deletes its keyring reference before metadata removal",
+    "uniqueFixtureRegistrationRemoved": true
+  }
+}

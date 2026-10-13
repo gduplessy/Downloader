@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.12.5
+
+- Integrate final account batch evidence and provider/provenance assertions: actual Chrome saved-fill, Edge saved-fill and Chrome existing-session downloads publish verified bytes with one login/file request and no purchases.
+- Preserve the recorded live-provider/API, Firefox-account, other-platform, permission-prompt and private/container acceptance boundaries.
+
+## 0.9.10 — Qualify integrated scoped accounts
+
+- Adopt the checked combined account/challenge/stream lifecycle and removal-event privacy contracts.
+- Assert selected downstream provider and original provenance through authenticated redirect, original-response capture and native publication.
+- Qualify installed Chrome/Edge saved-fill and Chrome existing-session hashes; preserve pending live provider, permission-prompt, Firefox and non-Windows acceptance.
+- Verify 127 client and 113 native tests, strict Clippy/fmt, frontend types/builds, native Tauri compilation and actual Windows generated-keyring cleanup.
+
 ## 0.12.4
 
 - Integrate the checked account batch: desktop OS-keyring metadata, explicit saved fills, existing-session premium controls, purpose-separated grants and live document proof.
