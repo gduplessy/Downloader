@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.18.0
+
+- Wire desktop session handoff controls to the native API, with explicit preparation/cancellation and six-locale instructions for recipient preview and acceptance.
+- Hold codes only in panel memory, honor the shorter native deadline, and cap display with monotonic five-minute expiry. Legitimate pending projections may arrive before the reply without losing the code; changed authority invalidates it.
+- Add fifty desktop handoff regressions for reply, projection, cancellation, expiry and locale behavior. Installed two-profile/container qualification remains in progress.
+
 ## 0.16.2
 
 - Retry exact pending handoff recovery after native storage failures while preserving consumed tickets, manual recovery, terminal states, and the bounded 128-entry runtime.
