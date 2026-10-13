@@ -152,4 +152,19 @@ describe('original response takeover', () => {
     expect(sink.chunk).not.toHaveBeenCalled();
     expect(sink.end).not.toHaveBeenCalled();
   });
+  it('bounds aggregate queued Firefox bytes while admission is pending', async () => {
+    let admit!: (allowed: boolean) => void;
+    const admission = new Promise<boolean>(resolve => { admit = resolve; });
+    const sink = {chunk: vi.fn(), end: vi.fn(), abort: vi.fn(async()=>{})} as unknown as DurableStreamSink;
+    const filter: any = {suspend: vi.fn(), resume: vi.fn(), close: vi.fn(), disconnect: vi.fn()};
+    const failed = vi.fn();
+    takeFirefox(filter, sink, failed, admission);
+    for (let index=0;index<4;index++) filter.ondata({data: new Uint8Array(192*1024).buffer});
+    expect(filter.suspend).toHaveBeenCalledTimes(2);
+    expect(filter.disconnect).toHaveBeenCalledOnce();
+    expect(failed).toHaveBeenCalledOnce();
+    admit(true);
+    await new Promise(resolve=>setTimeout(resolve,0));
+    expect(sink.chunk).not.toHaveBeenCalled();
+  });
 });

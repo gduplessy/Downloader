@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.12.9
+
+- Bound total queued Firefox response-filter bytes while native admission or durable acknowledgement is pending, instead of bounding individual events only.
+- Regression verifies excess queued data interrupts capture before any bytes enter the sink. Installed Firefox POST qualification remains open.
+
 ## 0.12.8
 
 - Replacing a browser source now moves the desktop job to actionable recovery immediately, while advancing source and claim counters to reject old stream frames and EOF.

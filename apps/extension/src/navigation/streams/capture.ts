@@ -171,6 +171,7 @@ export function takeFirefox(
     }
   });
   let failed = false;
+  let queuedBytes = 0;
   const abort = () => {
     if (failed) return;
     failed = true;
@@ -179,16 +180,22 @@ export function takeFirefox(
     onError();
   };
   filter.ondata = (event) => {
-    if (event.data.byteLength > STREAM_CHUNK_BYTES * 2) {
+    if (failed) return;
+    if (queuedBytes + event.data.byteLength > STREAM_CHUNK_BYTES * 2) {
       abort();
       return;
     }
+    queuedBytes += event.data.byteLength;
     filter.suspend();
     queue = queue
       .then(async () => {
-        if (failed) return;
-        await sink.chunk(new Uint8Array(event.data));
-        filter.resume();
+        try {
+          if (failed) return;
+          await sink.chunk(new Uint8Array(event.data));
+          filter.resume();
+        } finally {
+          queuedBytes -= event.data.byteLength;
+        }
       })
       .catch(abort);
   };

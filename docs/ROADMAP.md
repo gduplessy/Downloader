@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.12.8<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.12.9<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -17,6 +17,8 @@ Shared navigation contracts are defined for the feature batches; all unfinished 
 Automatic startup coalesces against the actual isolated resolver document; explicit Continue still refreshes its claim. Blob capture states carry the exact session scope and source generation. Installed cancellation, replacement and private-session qualification remain active integration gates.
 
 Desktop browser-source replacement now enters `WaitingUser` immediately and fences old stream frames/EOF. A native regression verifies durable partial ingress, counter advancement and no publication; installed replacement qualification remains pending.
+
+Firefox response-filter queues are bounded across all outstanding events during admission and durable acknowledgement. The installed POST filter failure is still being investigated; this regression does not establish Firefox transfer acceptance.
 
 Coordinator staging combines versioned adapters, validated countdowns, the durable scheduler and bounded browser-stream storage while preserving separate batch PRs. Queue enrollment follows persisted job scope/source generations and validates per-tab recovery reports. Installed worker transport, preview cancellation and browser lifecycle acceptance remain pending integration checks.
 
