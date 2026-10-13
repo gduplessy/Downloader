@@ -200,15 +200,19 @@ async function newSink(
   deferred = false,
 ) {
   if (!record.scope) throw Error('Direct capture needs an explicit browser scope');
+  if (!Number.isSafeInteger(record.sourceGeneration) || record.sourceGeneration! < 1)
+    throw Error('Direct capture needs a current source generation');
   if (record.scope.private && !browser.storage.session)
     throw Error('Private capture requires ephemeral browser session storage');
   const identity: StreamIdentity = {
     stream_id: crypto.randomUUID(),
     scope: record.scope,
-    source_generation: record.sourceGeneration ?? 1,
+    source_generation: record.sourceGeneration!,
   };
-  const sink = new DurableStreamSink(identity, new NativeStreamPort(), () =>
-    verifyStreamOwner(id, record.tabId, identity.scope, identity.source_generation),
+  const sink = new DurableStreamSink(
+    identity,
+    new NativeStreamPort(() => browser.runtime.connectNative(HOST)),
+    () => verifyStreamOwner(id, record.tabId, identity.scope, identity.source_generation),
     () => directOwners.release(record.tabId, identity.stream_id),
   );
   if (!deferred) await sink.begin({ kind: 'job', id }, filename, total);
@@ -244,7 +248,7 @@ async function armDirect(
       scope: record.scope,
       sink,
       jobId: id,
-      sourceGeneration: record.sourceGeneration ?? 1,
+      sourceGeneration: record.sourceGeneration!,
     });
     if (BROWSER === 'chromium')
       void browser.scripting

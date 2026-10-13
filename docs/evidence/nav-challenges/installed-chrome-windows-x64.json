@@ -1,0 +1,55 @@
+{
+  "fixture": "production-installed-challenges-v1",
+  "browser": "Chrome/155.0.8059.39",
+  "os": "win32",
+  "arch": "x64",
+  "native_version": "0.10.9",
+  "native_binary_sha256": "4162843133e22644c4ef63a5956ed42f790d96cdbd78dd030b6f711040894753",
+  "diagnostic_source_changes": false,
+  "rows": [
+    {
+      "provider": "g4u",
+      "selected_host": "gofile.io",
+      "bytes": 253952,
+      "sha256": "3956ab3c089f6def510fd6fafb24e11c5a6a0ddc8a521c99994746ee3756bc51",
+      "state": "complete",
+      "claim_generation": 2,
+      "source_generation": 1
+    },
+    {
+      "provider": "ddownload",
+      "selected_host": "gofile.io",
+      "bytes": 253952,
+      "sha256": "3956ab3c089f6def510fd6fafb24e11c5a6a0ddc8a521c99994746ee3756bc51",
+      "state": "complete",
+      "claim_generation": 2,
+      "source_generation": 1
+    },
+    {
+      "provider": "rapidgator",
+      "selected_host": "gofile.io",
+      "bytes": 253952,
+      "sha256": "3956ab3c089f6def510fd6fafb24e11c5a6a0ddc8a521c99994746ee3756bc51",
+      "state": "complete",
+      "claim_generation": 2,
+      "source_generation": 1
+    },
+    {
+      "provider": "gofile",
+      "selected_host": "gofile.io",
+      "bytes": 253952,
+      "sha256": "3956ab3c089f6def510fd6fafb24e11c5a6a0ddc8a521c99994746ee3756bc51",
+      "state": "complete",
+      "claim_generation": 2,
+      "source_generation": 1
+    }
+  ],
+  "accepted_original_submissions": 4,
+  "paid_calls": 0,
+  "limits": [
+    "Synthetic open-circle protocol only; live providers/accounts and paid provider pending",
+    "Pregranted loopback permissions and unique fixture native host name; production worker/resolver/modules otherwise unchanged",
+    "Host choice, local solve and radio use AX/Input. Final actual Continue element click is scheduled 500ms after driver detachment, preserving exclusive production debugger ownership; no response bytes travel through CDP",
+    "The trusted extension Continue action resumes the fresh HTML page before preview; native desktop window and unavailable browser/platform matrix remain pending"
+  ]
+}

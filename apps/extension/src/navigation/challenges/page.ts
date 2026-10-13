@@ -68,7 +68,7 @@ export async function showChallenge(
 ): Promise<{ close(): void } | null> {
   const found = discover(doc),
     ctx = await bridge.context();
-  if (!found || !ctx || !Number.isSafeInteger(ctx.sourceGeneration) || ctx.sourceGeneration < 1)
+  if (!found || !ctx || !Number.isSafeInteger(ctx.sourceGeneration) || ctx.sourceGeneration < 1 || ctx.documentGeneration !== documentGeneration || !/^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(ctx.documentNonce))
     return null;
 
   if (!ctx.selectedHost || found.hostInput.value !== ctx.selectedHost) {
@@ -104,18 +104,19 @@ export async function showChallenge(
     choose.type = manual.type = 'button';
     choose.textContent = (labels[ctx.locale] ?? labels.en) + ': ' + selected;
     manual.textContent = locale[2];
-    const close = () => host.remove();
+    let closed = false;
+    const close = () => { closed = true; host.remove(); };
     manual.onclick = close;
     choose.onclick = () => {
       choose.disabled = true;
       void bridge.chooseHost!(selected)
         .then(() => {
+          if (closed) return;
           close();
           onSubmitted();
         })
         .catch(() => {
-          status.textContent = locale[4];
-          choose.disabled = false;
+          if (!closed) { status.textContent = locale[4]; choose.disabled = false; }
         });
     };
     panel.onkeydown = (e) => {
@@ -163,7 +164,7 @@ export async function showChallenge(
       claim_generation: current.scope.claim_generation,
     },
     sourceGeneration: current.sourceGeneration,
-    documentGeneration,
+    documentGeneration: current.documentGeneration,
     documentNonce: current.documentNonce,
     page: doc.location.href,
     selectedHost: current.selectedHost ?? '',
@@ -223,7 +224,9 @@ export async function showChallenge(
     const freshCanvas = doc.createElement('canvas');
     freshCanvas.width = found.width;
     freshCanvas.height = found.height;
-    freshCanvas.getContext('2d')!.drawImage(found.image, 0, 0);
+    const freshRendering = freshCanvas.getContext('2d', {willReadFrequently:true})!;
+    freshRendering.drawImage(found.image, 0, 0);
+    freshRendering.getImageData(0,0,found.width,found.height);
     const currentUrl = freshCanvas.toDataURL('image/png');
     const binding = await capture(current);
     binding.imageDigest = await digest(found.image.currentSrc + '|' + currentUrl);

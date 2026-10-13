@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.12.5<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.12.6<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -63,17 +63,17 @@ Hosted page → free-download step → countdown → final GET link/form
 
 With FlareSolverr enabled, recognized browser protection receives one automatic resolution attempt. The resolver respects waiting periods and stops for custom CAPTCHA, sign-in, payment, or ambiguous controls. Complete the manual step in the tab, then choose **Continue page navigation**. Non-replayable POST requests and browser-generated blobs remain browser-managed.
 
-Navigation is bounded to three active pages and one page per host. Browser profiles claim navigation jobs exclusively to avoid competing workers. This is a heuristic workflow; changing live sites require separate acceptance testing. Custom CAPTCHA, premium-access and DRM bypass remain unsupported. These limits are tracked explicitly in the [hosted-page and challenge roadmap](docs/ROADMAP.md#1-hosted-download-pages-and-challenges) and [protected-content roadmap](docs/ROADMAP.md#5-media-and-protected-content).
+Navigation is bounded to three active pages and one page per host. Browser profiles claim navigation jobs exclusively to avoid competing workers. This is a heuristic workflow; changing live sites require separate acceptance testing. Unsupported image variants remain manual; live premium-account acceptance and DRM bypass remain unsupported. These limits are tracked explicitly in the [hosted-page and challenge roadmap](docs/ROADMAP.md#1-hosted-download-pages-and-challenges) and [protected-content roadmap](docs/ROADMAP.md#5-media-and-protected-content).
 
 ### Optional local FlareSolverr
 
-The local adapter is implemented ([NAV-01](docs/ROADMAP.md#1-hosted-download-pages-and-challenges)); live browser-challenge clearance still needs qualification. Custom/image CAPTCHA adapters, including the g4u click challenge, remain a separate research item (NAV-13).
+The local adapter is implemented ([NAV-01](docs/ROADMAP.md#1-hosted-download-pages-and-challenges)); live browser-challenge clearance still needs qualification. NAV-13 now provides a qualified local open-circle image adapter with selected-host controls, strict document/session binding and manual fallback. Live g4u variants remain unqualified; see [challenge evidence](docs/evidence/nav-challenges/README.md).
 
 In **Settings → Networking → FlareSolverr**, test `http://localhost:9191/`, select **Direct** proxy routing, enable the integration and save. The default timeout is 60 seconds; only HTTP loopback root endpoints are supported. Use [the Docker walkthrough](docs/FLARESOLVERR_DOCKER.md) and [pinned Compose file](docker-compose.flaresolverr.yml) to install the qualified service.
 
 Recognized browser protection gets one automatic attempt after opt-in; an ordinary 403 does not trigger solving. **Try FlareSolverr** in desktop job details or the extension popup starts a fresh manual attempt. The service serializes requests, isolates temporary sessions and cookies, uses the matching User-Agent for engine requests, and discards cancelled or stale results. Browser-profile ownership and POST/blob fallback are retained. FlareSolverr handles page resolution; libcurl transfers and verifies file bytes. Solver `status: ok` alone cannot complete a download.
 
-The qualified FlareSolverr 3.4.6 deployment rendered a generated GET link/cookie and completed a 2 MiB SHA-256-verified transfer with range pause/resume. Custom-CAPTCHA and expiry fixtures stopped with zero bytes. **Real Cloudflare challenge clearance, fresh g4u links and downstream hosts remain unqualified.** Login, private/credential-backed navigation, countdowns and unsupported interactions stay manual. The g4u image CAPTCHA requires separate research; no paid solver or external CAPTCHA upload is enabled. See [evidence and limits](docs/FLARESOLVERR_QUALIFICATION.md), [CAPTCHA research](docs/CAPTCHA_RESEARCH.md), and [the implementation plan](docs/FLARESOLVERR_PLAN.md).
+The qualified FlareSolverr 3.4.6 deployment rendered a generated GET link/cookie and completed a 2 MiB SHA-256-verified transfer with range pause/resume. Custom-CAPTCHA and expiry fixtures stopped with zero bytes. **Real Cloudflare challenge clearance, fresh g4u links and downstream hosts remain unqualified.** Login, private/credential-backed navigation, countdowns and unsupported interactions stay manual. The local synthetic image adapter has separate installed qualification; no paid solver or external CAPTCHA upload is enabled by default. See [evidence and limits](docs/FLARESOLVERR_QUALIFICATION.md), [CAPTCHA research](docs/CAPTCHA_RESEARCH.md), and [the implementation plan](docs/FLARESOLVERR_PLAN.md).
 
 ## Build from source
 
@@ -227,7 +227,7 @@ The hosted-page loopback fixture serves countdown/session, CAPTCHA, POST, and ra
 
 The [complete roadmap](docs/ROADMAP.md) inventories every documented unsupported workflow and missing acceptance gate. Planned implementation, qualification, research, and later-platform items are labeled separately; inclusion does not claim current support.
 
-- **Hosted pages and challenges:** live-host qualification of the implemented FlareSolverr browser-challenge workflow; custom/image CAPTCHA adapter research; login/MFA and session refresh, premium-account integration and bypass feasibility, countdown recovery, ambiguous controls/site adapters, non-replayable POST/blob/one-use downloads, configurable navigation limits, and profile isolation.
+- **Hosted pages and challenges:** live-host qualification of the implemented FlareSolverr browser-challenge workflow; live custom/image CAPTCHA qualification; login/MFA and session refresh, premium-account integration and bypass feasibility, countdown recovery, ambiguous controls/site adapters, non-replayable POST/blob/one-use downloads, configurable navigation limits, and profile isolation.
 - **Transfer engine:** implemented and covered by deterministic fixtures, including pooling, durable recovery, source refresh, typed events, >4 GiB transfers, and measured performance. Ordered PAC failover and real filesystem recovery passed on Windows/macOS/Linux. A disposable AD realm qualifies Windows/Linux NTLM and Linux Kerberos; native macOS/Windows Kerberos, enterprise routing, installer provenance and a successful IDM comparison remain qualification gates.
 - **Management:** editable properties/columns, drop target and input workflows, archive qualification, ordered queues, recurring/DST/missed-window schedules, synchronization, unified quotas, and import/export acceptance.
 - **Browser integration:** stable Chrome/Edge/Firefox/ESR coverage, capture/session/fallback and worker-restart tests, automatic native-host onboarding, media/page tools, Firefox signing, and extension-store distribution.
@@ -287,7 +287,7 @@ Shared integration 0.8.10: adapter actions now prepare one-use authorization bef
 
 Shared integration 0.8.11: same-context read-only authority renewal adopts claim/source replacements and invalidates old grants/capture. Recovery, heartbeat and tab closure require current browser epoch and actual owned session; stale tab IDs do not authorize a substituted context. Scoped refreshed sources remain in browser navigation until replay qualification. Installed-worker/private-session acceptance remains pending.
 
-Challenge qualification can exercise the actual installed production worker/resolver through scripts/nav-fixtures/challenges/installed.mjs, with an isolated native host and local fixture permissions. Final installed native hashes remain pending.
+Challenge qualification can exercise the actual installed production worker/resolver through scripts/nav-fixtures/challenges/installed.mjs, with an isolated native host and local fixture permissions. Four local installed Chrome original CAPTCHA POST-to-fresh-link native hashes pass; the report preserves pending live, paid and broader browser/platform rows.
 
 Shared integration 0.8.12: private and regular scheduler responses and reconciliation are isolated by explicit worker lane, while capacity and host locks remain service-global. Six native scheduler regressions cover lane isolation, retained peer leases, durable private exclusion, authority replacement and queue recovery.
 
@@ -299,9 +299,13 @@ Challenge integration 0.10.6: adapter actions and grants now require the verifie
 
 Shared integration 0.12.0: queued metadata writes reject older native source/claim counters, including private ephemeral records. Chromium restart reconciliation verifies actual cookie-store membership. Extension regressions, types and browser builds pass; the broader installed acceptance matrix remains pending.
 
+Challenge 0.10.7: image revalidation uses the same canvas readback path as initial capture; twelve stale/cancel/session/occlusion DOM cases submit nothing. Installed original form POST and fresh links pass; final desktop handoff is pending the shared observer fix.
+
 Shared integration 0.12.1: removal events carry the original owner, private lane and exact claim. Scoped subscriptions exclude foreign and historical unqualified tombstones; a real engine regression covers regular/private and replaced-claim cases.
 
 Shared integration 0.12.2: active direct streams fence legacy download observers by exact tab/job/scope/source identity. Installed Chrome original POST requalification passes one submission and 262,161 verified bytes; Firefox response-filter qualification is still pending.
+
+Challenge integration 0.10.8 adopts source-bound direct-stream ownership and removal-event isolation. 108 extension and 6 desktop tests plus the full native suite and desktop compilation pass; installed final GET hashes remain pending.
 
 Shared integration 0.12.3: per-job startup serialization prevents duplicate tabs; renewed claims persist before heartbeat. Firefox filter listeners remain until completion and terminal streams refuse late admission. Session/stream regressions pass; installed Firefox acceptance remains pending.
 
@@ -323,3 +327,6 @@ Account document proof (0.9.8) binds native credential grants and premium captur
 Account staging integration (0.9.9) adopts the checked monotonic navigation-record guard, deep-cloned private memory storage, actual Chromium cookie-store reconciliation and E challenge document contract. Credential and capture grants keep distinct purposes and require the current verified nonce. Final installed account reruns follow this shared prerequisite update.
 
 Account fixture qualification (0.9.10) uses the combined checked integration, explicit saved fills and existing entitled browser sessions. Production extension/native publication retains the selected downstream provider and original provenance. See [account evidence and target limits](docs/evidence/nav-accounts/README.md); unknown/live forms stay manual, provider APIs await individual qualification.
+
+
+Challenge increment 0.10.9 qualifies four local installed Chrome 155 original CAPTCHA POSTs through fresh gofile.io links to matching 253,952-byte native files. Controls and byte streams use the same native HOST; invalid source counters are refused. Twelve stale/cancelled DOM scenarios submit zero times. The explicit Continue recovery path is qualified; live host/account, paid-provider, automatic fresh-page preview and unavailable browser/platform acceptance remain pending. See [challenge evidence](docs/evidence/nav-challenges/README.md).

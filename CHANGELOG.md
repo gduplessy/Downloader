@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.12.6
+
+- Integrate checked CAPTCHA qualification, canvas readback handling and a shared native endpoint for control and direct byte streams.
+- Require a valid current source generation before capture. Four installed Chrome fixture downloads pass native hash verification; paid calls remain zero and live host acceptance remains pending.
+
 ## 0.12.5
 
 - Integrate final account batch evidence and provider/provenance assertions: actual Chrome saved-fill, Edge saved-fill and Chrome existing-session downloads publish verified bytes with one login/file request and no purchases.
@@ -11,6 +16,13 @@
 - Assert selected downstream provider and original provenance through authenticated redirect, original-response capture and native publication.
 - Qualify installed Chrome/Edge saved-fill and Chrome existing-session hashes; preserve pending live provider, permission-prompt, Firefox and non-Windows acceptance.
 - Verify 127 client and 113 native tests, strict Clippy/fmt, frontend types/builds, native Tauri compilation and actual Windows generated-keyring cleanup.
+
+## 0.10.9
+
+- Route native control messages and original-response byte streams through the same canonical HOST; reject absent or invalid source counters before capture.
+- Adopt checked account/scheduler integration while preserving strict challenge document, scope, source, frame and selected-host proof.
+- Qualify four installed Chrome 155 local CAPTCHA POST-to-fresh-link desktop hashes, diagnostics off and paid calls zero. Record twelve stale/cancelled DOM cases with zero submissions.
+- Verify 121 extension, 6 desktop and 113 native tests, client types/builds, Rustfmt, strict Clippy, desktop Rust compilation and version artifacts. Live/paid, automatic fresh-page preview and broader browser/platform rows remain pending.
 
 ## 0.12.4
 
@@ -396,3 +408,11 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Integrated native scoped incremental projection and cursor fixes from coordinator 0.8.13 for actual challenge qualification.
 
 - Bind all adapter actions to the verified live document nonce, burn stale tokens, and read resolver ownership after native projection renewal.
+
+### 0.10.7
+- Align initial/revalidated image pixels, preserve cancelled host choices, and add wrong-session/occlusion/cancel fixtures.
+- Adopt serialized navigation storage and repair the inherited mock predicate typing; retain installed GET handoff as pending.
+
+### 0.10.8
+- Adopt exact direct-stream ownership and removal-event privacy fixes.
+- Keep pending installed GET qualification distinct from accepted CAPTCHA POST/fresh links; extend only the synthetic fixture lifetime for concurrent builds.

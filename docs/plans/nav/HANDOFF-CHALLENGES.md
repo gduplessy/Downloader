@@ -1,6 +1,6 @@
 # Challenge runtime handoff
 
-Feature branch: codex/nav-challenges. Current coordinator parent integrated: 4001f58 (0.8.13). Production installed challenge acceptance remains under qualification.
+Feature branch: codex/nav-challenges. Current coordinator parent integrated: c8ac54d (0.12.4); feature increment 0.10.9. Four local installed Chrome challenge-to-native-hash rows pass.
 
 ## Runtime contract
 
@@ -24,4 +24,11 @@ The challenge page helper requires the explicit qualified open-circle image/form
 
 ## Evidence
 
-Corpus and DOM/CLI/native-backed React control reports are under docs/evidence/nav-challenges. The production worker/resolver installed path remains pending until the final combined fixture passes. Live g4u/ddownload/Rapidgator/Gofile, paid-provider and unavailable browser/platform rows remain pending. Budget is $0 and all provider tests use injected mocks.
+Corpus, twelve stale DOM cases, DOM/CLI, native-backed React controls and the production installed Chrome report are under docs/evidence/nav-challenges. All four original CAPTCHA POSTs yield fresh gofile.io links and verified 253,952-byte desktop files. The trusted extension Continue action resumes each fresh HTML page; automatic post-navigation preview is not inferred. Live g4u/ddownload/Rapidgator/Gofile, paid-provider and unavailable browser/platform rows remain pending. Budget is $0 and all provider tests use injected mocks.
+
+
+## Native byte endpoint
+
+newSink explicitly injects browser.runtime.connectNative(HOST) into NativeStreamPort, so controls and bytes share the canonical native registration. A missing, non-integer or nonpositive sourceGeneration refuses capture before any native stream begins; blob readers receive the same validated counter. Keep strict frame, URL, method, scope, source, claim and live document checks. The fixture does not patch transport or capture modules and does not relay response bytes through CDP.
+
+The qualified driver detaches its page CDP session before the final scheduled preview click lets production chrome.debugger own the byte response. Existing exact direct-stream ownership continues to fence legacy download observers. Preserve the merged account and serialized scheduler startup/renewal hooks.
