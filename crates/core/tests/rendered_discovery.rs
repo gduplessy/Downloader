@@ -229,3 +229,74 @@ fn duplicate_old_page_report_cannot_release_the_current_page_lease() {
     assert_eq!(task["status"], "active");
     assert!(task["lease"].is_object());
 }
+
+#[test]
+fn preparation_binds_known_resource_provenance_and_cancellation_releases_its_slot() {
+    let dir = tempfile::tempdir().unwrap();
+    let engine = Engine::open(dir.path()).unwrap();
+    initialize(&engine, dir.path(), false);
+    let owner = scope(false);
+    call(
+        &engine,
+        "discovery_claim",
+        json!({"id":"rendered-project","scope":owner,"generation":1,"tab_id":42}),
+    );
+    call(
+        &engine,
+        "discovery_page_result",
+        json!({"id":"rendered-project","scope":owner,"generation":1,"page_url":"http://127.0.0.1:18782/","final_url":"http://127.0.0.1:18782/","bytes":20,"links":[{"url":"http://127.0.0.1:18782/auth.bin","resource":true,"name":"auth.bin","size":null,"content_type":""}],"reason":null}),
+    );
+    let selected = call(
+        &engine,
+        "discovery_select",
+        json!({"id":"rendered-project","scope":owner,"generation":1,"urls":["http://127.0.0.1:18782/auth.bin"]}),
+    );
+    let id = selected["jobs"][0].as_str().unwrap();
+    let mut request = json!({"id":"rendered-project","job_id":id,"scope":owner,"generation":1,"action":"admit","observed_url":"http://127.0.0.1:18782/","tab_id":42});
+    let admitted = call(&engine, "discovery_prepare", request.clone());
+    assert_eq!(admitted["admitted"], true);
+    assert_eq!(admitted["page_url"], "http://127.0.0.1:18782/");
+    request["action"] = json!("enroll");
+    request["tab_id"] = json!(43);
+    request["document"] = json!({"nonce":"00000000-0000-4000-8000-000000000003","generation":1});
+    let mut foreign = request.clone();
+    foreign["scope"]["cookie_store_id"] = json!("foreign");
+    assert!(downloader_core::rendered_grabber::prepare(
+        &engine,
+        serde_json::from_value(foreign).unwrap()
+    )
+    .is_err());
+    call(&engine, "discovery_prepare", request.clone());
+    request["action"] = json!("release");
+    let mut stale = request.clone();
+    stale["document"]["nonce"] = json!("00000000-0000-4000-8000-000000000004");
+    assert!(downloader_core::rendered_grabber::prepare(
+        &engine,
+        serde_json::from_value(stale).unwrap()
+    )
+    .is_err());
+    engine
+        .command(Command::GrabberControl {
+            id: "rendered-project".into(),
+            action: "cancel".into(),
+        })
+        .unwrap();
+    let state = call(
+        &engine,
+        "navigation_scheduler",
+        json!({"owner":owner["profile"],"private_lane":false,"request":{"action":"snapshot"}}),
+    );
+    let task = state["tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|task| task["id"] == "discovery-resource:rendered-project")
+        .unwrap();
+    assert!(task["lease"].is_null());
+    assert_ne!(task["status"], "active");
+    assert!(downloader_core::rendered_grabber::prepare(
+        &engine,
+        serde_json::from_value(request).unwrap()
+    )
+    .is_err());
+}

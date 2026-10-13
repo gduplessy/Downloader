@@ -11,6 +11,7 @@ use std::{
 };
 
 pub struct Engine {
+    pub(crate) site_accounts: Mutex<crate::site_accounts::Runtime>,
     pub store: Arc<Mutex<Store>>,
     pub jobs: Mutex<HashMap<String, transfer::SharedJob>>,
     pub settings: Mutex<Settings>,
@@ -113,6 +114,7 @@ impl Engine {
             captcha_lock: Mutex::new(()),
             solver_tasks: Mutex::new(HashMap::new()),
             browser_stream_locks: Mutex::new(HashMap::new()),
+            site_accounts: Mutex::default(),
             stopping: AtomicBool::new(false),
         });
         engine.cleanup_solver_sessions();
@@ -413,7 +415,8 @@ impl Engine {
         jobs.sort_by_key(|job| job.created);
         let mut scheduler = self.navigation_scheduler.lock().unwrap();
         scheduler.tasks.retain(|task| {
-            task.id.starts_with("discovery:") || jobs.iter().any(|job| job.id == task.id)
+            (task.id.starts_with("discovery:") || task.id.starts_with("discovery-resource:"))
+                || jobs.iter().any(|job| job.id == task.id)
         });
         for job in &jobs {
             if job.page_url.is_none() {
@@ -526,6 +529,24 @@ impl Engine {
         };
         if let crate::navigation_scheduler::SchedulerRequest::Reconcile { live } = &request {
             for lease in live {
+                if let Some(id) = lease.id.strip_prefix("discovery-resource:") {
+                    let state = crate::rendered_grabber::load(&self.store.lock().unwrap(), id)?;
+                    let proof = state
+                        .preparation
+                        .as_ref()
+                        .context("Missing provenance preparation")?;
+                    let scope = lease.scope.as_ref().context("Missing provenance scope")?;
+                    if state.generation != lease.generation
+                        || proof.scope != *scope
+                        || proof.tab_id != Some(lease.tab_id)
+                        || scope.profile != owner
+                        || scope.private != private_lane
+                        || proof.document.is_none()
+                    {
+                        bail!("Stale or foreign provenance preparation");
+                    }
+                    continue;
+                }
                 if let Some(id) = lease.id.strip_prefix("discovery:") {
                     let state = crate::rendered_grabber::load(&self.store.lock().unwrap(), id)?;
                     let scope = lease.scope.as_ref().context("Missing discovery scope")?;
@@ -599,6 +620,8 @@ impl Engine {
     }
     pub fn command(self: &Arc<Self>, command: Command) -> Result<serde_json::Value> {
         match command {
+            Command::SiteAccount(request) => crate::site_accounts::desktop(self, request),
+            Command::BrowserAccount(request) => crate::site_accounts::browser(self, request),
             Command::Captcha {
                 id,
                 owner,
@@ -799,6 +822,7 @@ impl Engine {
                 }
                 self.persist(&job)?;
                 let claimed = job.lock().unwrap().clone();
+                crate::site_accounts::renew_association(self, &claimed)?;
                 Ok(
                     serde_json::json!({"id":id,"scope":claimed.navigation_scope,"source_generation":claimed.source_generation}),
                 )
@@ -1083,7 +1107,9 @@ impl Engine {
                         );
                     }
                     self.persist(&shared)?;
-                    return Ok(serde_json::to_value(shared.lock().unwrap().clone())?);
+                    let renewed = shared.lock().unwrap().clone();
+                    crate::site_accounts::renew_association(self, &renewed)?;
+                    return Ok(serde_json::to_value(renewed)?);
                 }
                 Ok(result)
             }
@@ -1223,6 +1249,7 @@ impl Engine {
             }
             Command::DiscoveryList { scope } => crate::rendered_grabber::list(self, &scope),
             Command::DiscoverySelect(request) => crate::rendered_grabber::select(self, request),
+            Command::DiscoveryPrepare(request) => crate::rendered_grabber::prepare(self, request),
             Command::GrabberResults { id, offset, limit } => {
                 crate::rendered_grabber::results(self, &id, offset, limit)
             }

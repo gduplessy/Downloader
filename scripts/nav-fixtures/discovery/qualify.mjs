@@ -5,6 +5,9 @@ import { mkdir, writeFile, readFile, cp } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import assert from 'node:assert/strict';
+const crossOrigin = process.env.NAV_CROSS_ORIGIN === '1';
+const restartWorker = process.env.NAV_RESTART_WORKER === '1';
+const restartService = process.env.NAV_RESTART_SERVICE === '1';
 const require = createRequire(new URL('../../../apps/extension/package.json', import.meta.url));
 const { build } = require('esbuild');
 const executable =
@@ -45,7 +48,7 @@ await build({
     contents:
       background +
       `
-(globalThis).fixture={native,discovery,browserSnapshot,pollResolvers,resolverContext,profile,async setup(base,id){await browser.storage.local.set({settings:{...defaults,directCapture:true}});await load();const tab=await browser.tabs.create({url:base+'/login',active:false});while((await browser.tabs.get(tab.id)).status!=='complete')await new Promise(r=>setTimeout(r,50));await browser.tabs.update(tab.id,{url:base+'/nav-adapters/gofile/rendered'});while((await browser.tabs.get(tab.id)).status!=='complete')await new Promise(r=>setTimeout(r,50));await discovery.start(id,tab.id,[]);return tab.id;}};`,
+(globalThis).fixture={native,discovery,browserSnapshot,pollResolvers,resolverContext,profile,async setup(base,id,cross){await browser.storage.local.set({settings:{...defaults,directCapture:true}});await load();const tab=await browser.tabs.create({url:base+'/login',active:false});while((await browser.tabs.get(tab.id)).status!=='complete')await new Promise(r=>setTimeout(r,50));if(cross){await browser.tabs.update(tab.id,{url:cross+'/login'});while((await browser.tabs.get(tab.id)).status!=='complete')await new Promise(r=>setTimeout(r,50));}await browser.tabs.update(tab.id,{url:base+'/nav-adapters/gofile/rendered'});while((await browser.tabs.get(tab.id)).status!=='complete')await new Promise(r=>setTimeout(r,50));await discovery.start(id,tab.id,cross?[cross]:[]);return tab.id;}};`,
     resolveDir: resolve('apps/extension/src'),
     sourcefile: 'fixture-background.ts',
     loader: 'ts',
@@ -73,7 +76,7 @@ await writeFile(resolve(ext, 'background.js'), bundle.replaceAll('org.downloader
 await writeFile(resolve(ext, 'fixture.html'), '<script src="wake.js"></script>');
 await writeFile(
   resolve(ext, 'wake.js'),
-  'setInterval(()=>chrome.runtime.sendMessage({type:"fixture_ping"}).catch(()=>{}),500)',
+  'globalThis.__fixtureWake=setInterval(()=>chrome.runtime.sendMessage({type:"fixture_ping"}).catch(()=>{}),500)',
 );
 const manifest = JSON.parse(await readFile(resolve(ext, 'manifest.json'), 'utf8'));
 Object.assign(manifest, {
@@ -90,7 +93,7 @@ Object.assign(manifest, {
       'webRequest',
     ]),
   ],
-  host_permissions: ['http://127.0.0.1/*'],
+  host_permissions: ['http://127.0.0.1/*', ...(crossOrigin ? ['http://127.0.0.2/*'] : [])],
 });
 await writeFile(resolve(ext, 'manifest.json'), JSON.stringify(manifest));
 const payload = Buffer.alloc(Number(process.env.NAV_BYTES ?? 256 * 1024 + 17));
@@ -99,6 +102,7 @@ const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const requests = [];
 let consumed = false;
 let pageRequests = 0;
+let crossBase;
 const server = createServer((req, res) => {
   if (req.url === '/login') {
     res.setHeader('Set-Cookie', 'fixture_auth=1; Path=/; SameSite=Lax');
@@ -113,8 +117,20 @@ const server = createServer((req, res) => {
       res.end('<input type="password">');
       return;
     }
+    if (crossOrigin && req.headers.host.startsWith('127.0.0.1')) {
+      res.end(
+        '<!doctype html><meta charset="utf-8"><div aria-busy="true" id="loading">Loading</div><script>setTimeout(()=>{const a=document.createElement("a");a.href=' +
+          JSON.stringify(crossBase + '/nav-adapters/gofile/rendered') +
+          ';a.textContent="Next rendered page";document.body.append(a);document.querySelector("#loading").remove()},' +
+          (restartService || restartWorker ? 5000 : 900) +
+          ')</script>',
+      );
+      return;
+    }
     res.end(
-      '<!doctype html><meta charset="utf-8"><title>Rendered discovery fixture</title><div aria-busy="true" id="loading">Loading</div><script>setTimeout(()=>{const a=document.createElement("a");a.href="/nav-adapters/gofile/authenticated.bin";a.textContent="T\u00e9l\u00e9charger";document.body.append(a);document.querySelector("#loading").remove();const loop=document.createElement("a");loop.href="/nav-adapters/gofile/rendered#loop";loop.textContent="Loop";document.body.append(loop)},900)</script>',
+      '<!doctype html><meta charset="utf-8"><title>Rendered discovery fixture</title><div aria-busy="true" id="loading">Loading</div><script>setTimeout(()=>{const a=document.createElement("a");a.href="/nav-adapters/gofile/authenticated.bin";a.textContent="T\u00e9l\u00e9charger";document.body.append(a);document.querySelector("#loading").remove();const loop=document.createElement("a");loop.href="/nav-adapters/gofile/rendered#loop";loop.textContent="Loop";document.body.append(loop)},' +
+        (restartService || restartWorker ? 5000 : 900) +
+        ')</script>',
     );
     return;
   }
@@ -140,8 +156,14 @@ const server = createServer((req, res) => {
 });
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const base = 'http://127.0.0.1:' + server.address().port;
+const second = crossOrigin ? createServer(server.listeners('request')[0]) : null;
+if (second) {
+  await new Promise((r) => second.listen(0, '127.0.0.2', r));
+  crossBase = 'http://127.0.0.2:' + second.address().port;
+}
+const resourceBase = crossBase ?? base;
 const env = { ...process.env, DOWNLOADER_DATA_DIR: data };
-const daemon = spawn(nativeBinary, ['daemon'], {
+let daemon = spawn(nativeBinary, ['daemon'], {
   env,
   windowsHide: true,
   stdio: ['ignore', 'ignore', 'pipe'],
@@ -182,7 +204,7 @@ const project = {
   directory: resolve(dir, 'downloads'),
   depth: 2,
   max_pages: 3,
-  same_domain: true,
+  same_domain: !crossOrigin,
   include: '*.bin',
   exclude: '',
   min_size: 0,
@@ -206,6 +228,7 @@ execFileSync('reg', ['ADD', registry, '/ve', '/t', 'REG_SZ', '/d', nativeManifes
 let browserProc, ws;
 let seq = 0;
 const pending = new Map();
+const workerVersions = new Map();
 function command(method, params = {}, sessionId) {
   const id = ++seq;
   return new Promise((resolveResult, reject) => {
@@ -281,6 +304,8 @@ try {
   };
   ws.onmessage = ({ data }) => {
     const event = JSON.parse(data);
+    if (event.method === 'ServiceWorker.workerVersionUpdated')
+      for (const version of event.params.versions) workerVersions.set(version.versionId, version);
     if (!event.id) return;
     const waiter = pending.get(event.id);
     pending.delete(event.id);
@@ -310,7 +335,13 @@ try {
       }),
     );
   }
-  await command('Target.createTarget', { url: 'chrome-extension://' + extId + '/fixture.html' });
+  const fixturePage = await command('Target.createTarget', {
+    url: 'chrome-extension://' + extId + '/fixture.html',
+  });
+  const fixtureSession = (
+    await command('Target.attachToTarget', { targetId: fixturePage.targetId, flatten: true })
+  ).sessionId;
+  await command('ServiceWorker.enable', {}, fixtureSession);
   let worker;
   for (let i = 0; i < 100; i++) {
     const targets = await command('Target.getTargets');
@@ -328,7 +359,7 @@ try {
         ': ' +
         JSON.stringify({ extId, loadResult, targets: await command('Target.getTargets') }),
     );
-  const { sessionId } = await command('Target.attachToTarget', {
+  let { sessionId } = await command('Target.attachToTarget', {
     targetId: worker.targetId,
     flatten: true,
   });
@@ -346,25 +377,166 @@ try {
     await new Promise((r) => setTimeout(r, 100));
   }
   console.log('fixture: starting owned discovery');
-  await evaluate('fixture.setup(' + JSON.stringify(base) + ',' + JSON.stringify(projectId) + ')');
+  await evaluate(
+    'fixture.setup(' +
+      JSON.stringify(base) +
+      ',' +
+      JSON.stringify(projectId) +
+      ',' +
+      JSON.stringify(crossBase ?? null) +
+      ')',
+  );
   let state, record;
-  for (let i = 0; i < 200; i++) {
+  if (restartService || restartWorker) {
     record = await evaluate('Array.from(fixture.discovery.records.values())[0]');
     state = await evaluate(
       'fixture.native("discovery_status",{id:' +
         JSON.stringify(projectId) +
         ',scope:Array.from(fixture.discovery.records.values())[0].scope,generation:1,action:"snapshot"})',
     );
-    if (state.status === 'ready') break;
+    assert.equal(
+      state.status,
+      'exploring',
+      'Restart begins while rendered frontier is still active',
+    );
+    assert.equal(
+      state.resources.length,
+      0,
+      'Fixture has not extracted the delayed resource before restart',
+    );
+    const savedResources = state.resources.map((resource) => ({
+      url: resource.url,
+      page_url: resource.page_url,
+      scope: resource.scope,
+    }));
+    const originalEpoch = record.sessionEpoch;
+    if (restartService) {
+      const exited = new Promise((resolve) => daemon.once('exit', resolve));
+      daemon.kill();
+      await exited;
+      daemon = spawn(nativeBinary, ['daemon'], {
+        env,
+        windowsHide: true,
+        stdio: ['ignore', 'ignore', 'pipe'],
+      });
+      daemon.stderr.on('data', (data) => (daemonError += data));
+      let healthy = false;
+      for (let i = 0; i < 100; i++) {
+        try {
+          execFileSync(cli, ['--json', 'settings'], { env, windowsHide: true, stdio: 'ignore' });
+          healthy = true;
+          break;
+        } catch {}
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      assert.ok(healthy, 'Actual restarted service must reopen its persisted database');
+      await evaluate('fixture.discovery.poll()');
+    }
+    if (restartWorker) {
+      const old = [...workerVersions.values()].find(
+        (version) =>
+          version.scriptURL === 'chrome-extension://' + extId + '/background.js' &&
+          version.runningStatus === 'running',
+      );
+      assert.ok(old, 'Actual extension service-worker version must be observed');
+      await command(
+        'Runtime.evaluate',
+        { expression: 'clearInterval(globalThis.__fixtureWake)' },
+        fixtureSession,
+      );
+      await command('Target.detachFromTarget', { sessionId });
+      await command('ServiceWorker.stopWorker', { versionId: old.versionId }, fixtureSession);
+      let stopped = false;
+      for (let i = 0; i < 100; i++) {
+        if (workerVersions.get(old.versionId)?.runningStatus === 'stopped') {
+          stopped = true;
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 20));
+      }
+      assert.ok(stopped, 'Actual extension worker must stop before restart');
+      await command(
+        'Runtime.evaluate',
+        { expression: 'chrome.runtime.sendMessage({type:"fixture_ping"}).catch(()=>{})' },
+        fixtureSession,
+      );
+      let replacement;
+      for (let i = 0; i < 100; i++) {
+        replacement = (await command('Target.getTargets')).targetInfos.find(
+          (t) =>
+            t.type === 'service_worker' &&
+            t.url === 'chrome-extension://' + extId + '/background.js' &&
+            t.targetId !== worker.targetId,
+        );
+        if (replacement) break;
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      assert.ok(replacement, 'Actual extension worker must restart as a new target');
+      sessionId = (
+        await command('Target.attachToTarget', { targetId: replacement.targetId, flatten: true })
+      ).sessionId;
+      for (let i = 0; i < 100; i++) {
+        if ((await evaluate('typeof fixture')) === 'object') break;
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      await evaluate('fixture.discovery.poll()');
+    }
+    if (restartService || restartWorker) {
+      record = await evaluate('Array.from(fixture.discovery.records.values())[0]');
+      assert.equal(
+        record.sessionEpoch,
+        originalEpoch,
+        'Worker recovery must retain the real browser epoch',
+      );
+      state = await evaluate(
+        'fixture.native("discovery_status",{id:' +
+          JSON.stringify(projectId) +
+          ',scope:Array.from(fixture.discovery.records.values())[0].scope,generation:1,action:"snapshot"})',
+      );
+      assert.ok(['exploring', 'ready'].includes(state.status));
+      assert.deepEqual(
+        state.resources.map((resource) => ({
+          url: resource.url,
+          page_url: resource.page_url,
+          scope: resource.scope,
+        })),
+        savedResources,
+        'Restart preserves resource order, provenance and exact observed scope',
+      );
+      assert.equal(requests.length, 0, 'Restart must not probe selected resources');
+      assert.equal(
+        (
+          JSON.parse(
+            execFileSync(cli, ['--json', 'list'], { env, windowsHide: true, encoding: 'utf8' }),
+          ).jobs ?? []
+        ).length,
+        0,
+        'Restart cannot create duplicate jobs',
+      );
+    }
+  }
+  for (let i = 0; i < 200; i++) {
+    record = await evaluate('Array.from(fixture.discovery.records.values())[0]');
+    state = await evaluate(
+      'fixture.native("discovery_status",{id:' +
+        JSON.stringify(projectId) +
+        ',scope:Array.from(fixture.discovery.records.values())[0].scope,generation:1,action:"snapshot"}).catch(()=>null)',
+    );
+    if (state?.status === 'ready') break;
     await new Promise((r) => setTimeout(r, 100));
   }
   assert.equal(state.status, 'ready');
   assert.equal(state.resources.length, 1);
   assert.equal(requests.length, 0);
-  assert.equal(state.visited_count, 1);
+  assert.equal(state.visited_count, crossOrigin ? 2 : 1);
   execFileSync(
     cli,
-    ['--json', 'grabber-download', projectId, base + '/nav-adapters/gofile/authenticated.bin'],
+    [
+      '--json',
+      'grabber-download',
+      projectId,
+      resourceBase + '/nav-adapters/gofile/authenticated.bin',
+    ],
     { env, windowsHide: true, stdio: 'ignore' },
   );
   console.log('fixture: selecting resource');
@@ -387,7 +559,21 @@ try {
     }
     await new Promise((r) => setTimeout(r, 100));
   }
-  if (!resolverTab) console.error(JSON.stringify({ jobs: JSON.parse(execFileSync(cli, ['--json', 'list'], { env, windowsHide: true, encoding: 'utf8' })), records: await evaluate('Array.from(fixture.discovery.records.values())'), scopes: await evaluate('fixture.discovery.liveScopes()'), storage: await evaluate('chrome.storage.local.get(null)') }, null, 2));
+  if (!resolverTab)
+    console.error(
+      JSON.stringify(
+        {
+          jobs: JSON.parse(
+            execFileSync(cli, ['--json', 'list'], { env, windowsHide: true, encoding: 'utf8' }),
+          ),
+          records: await evaluate('Array.from(fixture.discovery.records.values())'),
+          scopes: await evaluate('fixture.discovery.liveScopes()'),
+          storage: await evaluate('chrome.storage.local.get(null)'),
+        },
+        null,
+        2,
+      ),
+    );
   assert.ok(
     resolverTab,
     'Owned resolver tab must be enrolled through exact discovery source scope',
@@ -406,25 +592,45 @@ try {
   );
   let tabSession;
   for (let attempt = 0; attempt < 150 && !tabSession; attempt++) {
-  for (const candidate of targets) {
-    const attached = await command('Target.attachToTarget', {
-      targetId: candidate.targetId,
-      flatten: true,
-    });
-    const has = await evaluate(
-      '!!document.querySelector("#__downloader_adapter_preview")',
-      attached.sessionId,
-    );
-    if (attempt === 149 && !has) console.error(await evaluate('JSON.stringify({html:document.body.innerText,error:document.documentElement.dataset.fixtureResolverError})',attached.sessionId));
-    if (has) {
-      tabSession = attached.sessionId;
-      break;
+    for (const candidate of targets) {
+      const attached = await command('Target.attachToTarget', {
+        targetId: candidate.targetId,
+        flatten: true,
+      });
+      const has = await evaluate(
+        '!!document.querySelector("#__downloader_adapter_preview")',
+        attached.sessionId,
+      );
+      if (attempt === 149 && !has)
+        console.error(
+          await evaluate(
+            'JSON.stringify({html:document.body.innerText,error:document.documentElement.dataset.fixtureResolverError})',
+            attached.sessionId,
+          ),
+        );
+      if (has) {
+        tabSession = attached.sessionId;
+        break;
+      }
+      await command('Target.detachFromTarget', { sessionId: attached.sessionId });
     }
-    await command('Target.detachFromTarget', { sessionId: attached.sessionId });
-  }
     if (!tabSession) await new Promise((r) => setTimeout(r, 100));
   }
-  if (!tabSession) console.error(JSON.stringify({requests, context: await evaluate('fixture.resolverContext('+resolverTab+',0)'), jobs: JSON.parse(execFileSync(cli,['--json','list'],{env,windowsHide:true,encoding:'utf8'})), storage: await evaluate('chrome.storage.local.get(null)')},null,2));
+  if (!tabSession)
+    console.error(
+      JSON.stringify(
+        {
+          requests,
+          context: await evaluate('fixture.resolverContext(' + resolverTab + ',0)'),
+          jobs: JSON.parse(
+            execFileSync(cli, ['--json', 'list'], { env, windowsHide: true, encoding: 'utf8' }),
+          ),
+          storage: await evaluate('chrome.storage.local.get(null)'),
+        },
+        null,
+        2,
+      ),
+    );
   assert.ok(tabSession, 'Real resolver preview must be visible');
   await command('DOM.enable', {}, tabSession);
   const flattened = await command(
@@ -473,6 +679,19 @@ try {
     await new Promise((r) => setTimeout(r, 100));
   }
   const job = jobs.find((j) => j.id === selected.jobs[0]);
+  if (job.state !== 'complete')
+    console.error(
+      JSON.stringify({
+        state: job.state,
+        bytes: job.bytes,
+        failure: job.failure,
+        requests,
+        lastError: (await evaluate('chrome.storage.local.get("lastError")')).lastError,
+          capture: await evaluate('chrome.storage.local.get("capture-'+selected.jobs[0]+'")'),
+          owner: await evaluate('chrome.storage.local.get("resolver-'+selected.jobs[0]+'").then(rows=>{const r=rows["resolver-'+selected.jobs[0]+'"];return r?{tabId:r.tabId,scope:r.scope,sourceGeneration:r.sourceGeneration,documentGeneration:r.documentGeneration,hasDocument:!!r.documentNonce}:null})'),
+          preview: await evaluate('chrome.scripting.executeScript({target:{tabId:'+resolverTab+'},func:()=>document.querySelector("#__downloader_adapter_preview")?.shadowRoot?.textContent}).then(rows=>rows[0]?.result)').catch(()=>null),
+      }),
+    );
   assert.equal(job.state, 'complete');
   const bytes = await readFile(resolve(dir, 'downloads', 'authenticated.bin'));
   assert.equal(bytes.length, payload.length);
@@ -480,11 +699,17 @@ try {
   assert.deepEqual(requests, [{ method: 'GET', authenticated: true }]);
   const evidence = {
     browser: version.product,
-    productVersion: JSON.parse(await readFile('package.json','utf8')).version,
-    sourceCommit: execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8',windowsHide:true}).trim(),
-    sourceDirty: !!execFileSync('git',['status','--porcelain','--untracked-files=no'],{encoding:'utf8',windowsHide:true}).trim(),
+    productVersion: JSON.parse(await readFile('package.json', 'utf8')).version,
+    sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], {
+      encoding: 'utf8',
+      windowsHide: true,
+    }).trim(),
+    sourceDirty: !!execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], {
+      encoding: 'utf8',
+      windowsHide: true,
+    }).trim(),
     serviceSha256: digest(await readFile(nativeBinary)),
-    resolverSha256: digest(await readFile(resolve(ext,'resolver.js'))),
+    resolverSha256: digest(await readFile(resolve(ext, 'resolver.js'))),
     diagnosticBundleChanges: false,
     os: process.platform,
     architecture: process.arch,
@@ -492,6 +717,9 @@ try {
       'Production discovery worker/content and resolver, actual native messaging, original response direct streaming',
     resources: state.resources.length,
     visited: state.visited_count,
+    crossOrigin,
+    restartWorker,
+    restartService,
     bytes: bytes.length,
     sha256: digest(bytes),
     requests,
@@ -500,6 +728,14 @@ try {
       'delayed JavaScript resource discovered without a probe',
       'loop deduplicated',
       'scoped selected resource reopened provenance page',
+      ...(restartWorker
+        ? [
+            'actual extension service worker stopped and restarted; saved discovery ownership recovered',
+          ]
+        : []),
+      ...(restartService
+        ? ['actual service process restarted its persisted discovery record']
+        : []),
       'authenticated original resource GET consumed once',
       'native storage completed matching SHA-256',
       'driver detached before preview submission; production chrome.debugger exclusively owned response bytes',
@@ -519,6 +755,7 @@ try {
   browserProc?.kill();
   daemon.kill();
   server.close();
+  second?.close();
   // Remove only the unique fixture-created registration; user host registrations are never modified.
   execFileSync('reg', ['DELETE', registry, '/f'], { windowsHide: true, stdio: 'ignore' });
 }

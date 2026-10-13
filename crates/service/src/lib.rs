@@ -357,11 +357,13 @@ pub fn native(args: &[String]) -> Result<()> {
                 c @ downloader_core::Command::NavigationScheduler { .. } => call(c),
 
                 c @ downloader_core::Command::BrowserStream(_) => call(c),
+                c @ downloader_core::Command::BrowserAccount(_) => call(c),
                 c @ downloader_core::Command::Captcha { .. } => call(c),
                 c @ downloader_core::Command::NavigationSelection(_) => call(c),
                 c @ downloader_core::Command::DiscoveryList { .. } => call(c),
                 c @ downloader_core::Command::DiscoveryClaim(_) => call(c),
                 c @ downloader_core::Command::DiscoverySelect(_) => call(c),
+                c @ downloader_core::Command::DiscoveryPrepare(_) => call(c),
                 c @ downloader_core::Command::DiscoveryPageResult(_) => call(c),
                 c @ downloader_core::Command::DiscoveryStatus(_) => Ok(
                     downloader_core::rendered_grabber::browser_projection(call(c)?),
@@ -568,10 +570,10 @@ mod tests {
     #[test]
     fn bounded_binary_framing() {
         let mut out = Vec::new();
-        write_frame(&mut out, "العربية".as_bytes(), 1024).unwrap();
+        write_frame(&mut out, "Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©".as_bytes(), 1024).unwrap();
         assert_eq!(
             read_frame(&mut out.as_slice(), 1024).unwrap().unwrap(),
-            "العربية".as_bytes()
+            "Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©".as_bytes()
         );
         assert!(read_frame(&mut (2048u32.to_ne_bytes().as_slice()), 1024).is_err());
     }

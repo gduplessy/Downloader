@@ -17,7 +17,7 @@ const binding: NavigationAuthorizationBinding = {
   },
   sourceGeneration: 4,
   documentGeneration: 1,
-  documentNonce: '22222222-2222-4222-8222-222222222222',
+  documentNonce: 'c3b45e0f-227f-41fc-b9c5-af170af9a65d',
   adapterId: 'generic',
   adapterVersion: '1.0.0',
   fingerprint: 'a'.repeat(64),
@@ -36,6 +36,7 @@ describe('one-use navigation authorization', () => {
       { tabId: 8 },
       { frameId: 1 },
       { documentId: 'document-two' },
+      { documentNonce: '5d7d0285-d238-4d6a-9661-6a5446851c7f' },
       { page: 'https://example.test/changed' },
       { sourceGeneration: 5 },
       { documentGeneration: 2 },
@@ -56,9 +57,15 @@ describe('one-use navigation authorization', () => {
   });
   it('consumes an old Firefox token when the same URL reloads with a new nonce', () => {
     const grants = new NavigationAuthorizations();
-    const firefox = { ...binding, documentId: undefined, scope: { ...binding.scope, browser: 'firefox' as const } };
+    const firefox = {
+      ...binding,
+      documentId: undefined,
+      scope: { ...binding.scope, browser: 'firefox' as const },
+    };
     const token = grants.issue(firefox, action);
-    expect(() => grants.consume(token, { ...firefox, documentNonce: '33333333-3333-4333-8333-333333333333' })).toThrow('stale');
+    expect(() =>
+      grants.consume(token, { ...firefox, documentNonce: '33333333-3333-4333-8333-333333333333' }),
+    ).toThrow('stale');
     expect(() => grants.consume(token, firefox)).toThrow('stale');
   });
   it('retains the prepared provider choice until consume', () => {

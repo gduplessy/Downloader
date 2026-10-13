@@ -49,6 +49,7 @@ export class NavigationAuthorizations {
       destination.password ||
       (destination.protocol === 'blob:' && destination.origin !== page.origin) ||
       !['GET', 'POST'].includes(action.method) ||
+      !/^[0-9a-f-]{36}$/i.test(binding.documentNonce) ||
       !binding.adapterId ||
       !binding.adapterVersion ||
       !/^[a-f0-9]{64}$/.test(binding.fingerprint)

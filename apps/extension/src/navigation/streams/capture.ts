@@ -161,11 +161,13 @@ export function takeFirefox(
   sink: DurableStreamSink,
   onError: () => void,
   admission: Promise<boolean> = Promise.resolve(true),
+  onComplete: () => void = () => {},
 ): void {
   let queue = admission.then((accepted) => {
     if (!accepted) {
       failed = true;
       filter.disconnect();
+      onComplete();
     }
   });
   let failed = false;
@@ -196,6 +198,7 @@ export function takeFirefox(
         if (failed) return;
         await sink.end();
         filter.close();
+        onComplete();
       })
       .catch(abort);
   };

@@ -36,12 +36,14 @@ export async function extractRendered(
     return { final_url: doc.URL, bytes: 0, links: [], reason: 'authentication_required' };
   const result: DiscoveredLink[] = [];
   const seen = new Set<string>();
-  for (const element of allElements(doc).filter((element) => element.matches('a[href],img[src],video[src],audio[src],source[src],link[href]'))) {
+  for (const element of allElements(doc).filter((element) =>
+    element.matches('a[href],img[src],video[src],audio[src],source[src],link[href]'),
+  )) {
     const value = element.getAttribute('href') ?? element.getAttribute('src');
     if (!value) continue;
     let url: URL;
     try {
-      url = new URL(value, doc.URL);
+      url = new URL(value, doc.baseURI);
     } catch {
       continue;
     }

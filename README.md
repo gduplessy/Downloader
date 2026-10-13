@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.11.9<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.13.0<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -319,3 +319,23 @@ Shared integration 0.12.1: removal events carry the original owner, private lane
 Shared integration 0.12.2: active direct streams fence legacy download observers by exact tab/job/scope/source identity. Installed Chrome original POST requalification passes one submission and 262,161 verified bytes; Firefox response-filter qualification is still pending.
 
 NAV-12 0.11.9 adopts final combined direct-stream ownership fixes. Installed Chrome/Edge final-base qualification is being refreshed.
+Shared integration 0.12.3: per-job startup serialization prevents duplicate tabs; renewed claims persist before heartbeat. Firefox filter listeners remain until completion and terminal streams refuse late admission. Session/stream regressions pass; installed Firefox acceptance remains pending.
+
+Shared integration 0.12.4 combines the checked account batch with challenge and direct-stream authorization. 121 extension tests, six desktop tests, full native tests, strict Clippy, types and builds pass. Installed combined qualification remains in progress; live hosts/accounts and paid-provider acceptance remain pending.
+
+Scoped browser-account controls are available under Settings. Select an owned browser job and exact session before saving or selecting account metadata. Passwords use the OS credential store; private sessions use existing browser accounts only. Browser login/premium fixture qualification is being integrated; live provider layouts and APIs remain pending.
+
+Account grant and credential lifecycle qualification (0.9.1): Windows OS-keyring save/read/remove and the production Engine one-use grant path pass with deleted test-only credentials. Form cancellation, request overrides and stale documents are covered by real Headless Chromium DOM checks with mocked grant transport. Installed-extension/native downstream acceptance and live/provider account qualification remain pending.
+
+Account browser wiring (0.9.2) uses the owned resolver context for observations and one-use login fills, native selected-session entitlement checks, visible recovery, exact document/source/claim fencing, and cancellation. Combined installed-worker/file-publication qualification is in progress; no live provider or API qualification is claimed.
+
+Account authority integration (0.9.4) adopts intentional source/claim changes only in the original session, supports explicit saved-account edits, validates actual Chromium document identity before grants, and rechecks premium account/revision at capture commit. Owned authenticated observations retain original provenance across redirects. Installed worker qualification is in progress.
+
+Account integration (0.9.5) uses canonical native/browser partition comparison and the exact scheduler private lane. Installed production worker authentication/premium acceptance is being qualified with local permitted files.
+
+Selected account recovery (0.9.6) preserves an explicit account only through same-session owner continuation/refresh, renews nonsecret association fences, invalidates earlier grants and observations, and retains bounded sign-in attempts. Installed worker authentication/premium acceptance remains in progress.
+Account integration (0.9.7) includes authority-qualified incremental browser snapshots and the checked production Chrome capture prerequisite. Installed Chrome 155 local fixtures pass both explicit saved-fill sign-in and existing-session premium download through actual extension/native transports, publishing 311,296 hash-verified bytes with one login and one file request. Edge qualification remains pending after a recorded zero-byte continuation failure; live hosts, provider APIs, Firefox and other OS rows remain pending.
+Account document proof (0.9.8) binds native credential grants and premium capture to the actual isolated document nonce and generation, plus Chromium document ID when available. The nonce-protected Chrome 155 saved-fill fixture publishes the expected verified bytes. Edge 155 baseline saved-fill passed; its final nonce-protected row and Firefox remain pending further integration.
+Account staging integration (0.9.9) adopts the checked monotonic navigation-record guard, deep-cloned private memory storage, actual Chromium cookie-store reconciliation and E challenge document contract. Credential and capture grants keep distinct purposes and require the current verified nonce. Final installed account reruns follow this shared prerequisite update.
+
+NAV-12 0.13.0 adds bounded original-session provenance preparation for selected cross-origin resources. Installed Chrome local cross-origin and active-frontier service/worker restart qualification passes with one authenticated original GET and the expected native SHA-256; final browser evidence and pending release rows are recorded in [discovery qualification](docs/evidence/nav-discovery/README.md).

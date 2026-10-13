@@ -22,6 +22,7 @@ import {
   Download,
   PanelLeftClose,
 } from 'lucide-react';
+import { Accounts } from './navigation/Accounts';
 import { api, pickDirectory, fileAction } from './api';
 import type { Job, Snapshot, Settings, Queue } from './types';
 import { CaptchaSettings } from './features/CaptchaSettings';
@@ -291,7 +292,7 @@ export default function App() {
           </div>
         )}
         {page === 'settings' && snapshot ? (
-          <SettingsPage settings={snapshot.settings} t={t} run={run} />
+          <SettingsPage settings={snapshot.settings} jobs={snapshot.jobs} t={t} run={run} />
         ) : page === 'queues' && snapshot ? (
           <QueuesPage queues={snapshot.queues} t={t} run={run} />
         ) : page === 'media' ? (
@@ -732,7 +733,17 @@ function AddModal({
     </Modal>
   );
 }
-export function SettingsPage({ settings, t, run }: { settings: Settings; t: T; run: Run }) {
+export function SettingsPage({
+  settings,
+  jobs = [],
+  t,
+  run,
+}: {
+  settings: Settings;
+  jobs?: Job[];
+  t: T;
+  run: Run;
+}) {
   const [value, setValue] = useState(settings),
     [saved, setSaved] = useState(false),
     [id, setId] = useState(''),
@@ -1163,6 +1174,7 @@ export function SettingsPage({ settings, t, run }: { settings: Settings; t: T; r
         </section>
         <button className="primary">{saved ? t('saved') : t('save')}</button>
       </form>
+      <Accounts jobs={jobs} locale={value.locale} />
       <section className="card">
         <h2>{t('siteLogins')}</h2>
         <div className="form-grid">

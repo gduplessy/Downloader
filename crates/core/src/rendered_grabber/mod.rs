@@ -22,9 +22,18 @@ pub struct Resource {
     pub order: usize,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Preparation {
+    pub job_id: String,
+    pub scope: SessionScope,
+    pub tab_id: Option<i64>,
+    pub document: Option<DocumentProof>,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Discovery {
     #[serde(default)]
     pub private: bool,
+    #[serde(default)]
+    pub preparation: Option<Preparation>,
     pub project: GrabberProject,
     pub scope: Option<SessionScope>,
     pub generation: u64,
@@ -77,6 +86,7 @@ impl Discovery {
         }
         Ok(Self {
             private: project.private,
+            preparation: None,
             pending: vec![Page {
                 url,
                 depth: 0,
@@ -100,7 +110,11 @@ impl Discovery {
     }
     pub fn authorize(&self, scope: &SessionScope, generation: u64) -> Result<()> {
         scope.validate()?;
-        if self.scope.as_ref() != Some(scope) || self.generation != generation {
+        if self.scope.as_ref() != Some(scope)
+            || self.generation != generation
+            || self.private != scope.private
+            || self.project.private != scope.private
+        {
             bail!("Stale discovery session or generation");
         }
         Ok(())
@@ -332,6 +346,8 @@ pub struct Claim {
     #[serde(default)]
     pub resume: bool,
     #[serde(default)]
+    pub source_tab_id: Option<i64>,
+    #[serde(default)]
     pub document: Option<DocumentProof>,
     #[serde(default)]
     pub permitted_origins: Vec<String>,
@@ -364,7 +380,7 @@ pub fn start(engine: &crate::Engine, project: GrabberProject) -> Result<()> {
 pub fn list(engine: &crate::Engine, scope: &SessionScope) -> Result<serde_json::Value> {
     scope.validate()?;
     let store = engine.store.lock().unwrap();
-    let states:Vec<_>=store.all::<Discovery>("rendered_discovery")?.into_iter().filter(|d|d.private == scope.private && d.scope.as_ref().is_none_or(|s| { let mut current = s.clone(); current.claim_generation = scope.claim_generation; &current == scope }) && d.status != "cancelled").map(|d|serde_json::json!({"id":d.project.id,"url":d.project.url,"generation":d.generation,"status":d.status,"claim_generation":d.scope.as_ref().map(|s|s.claim_generation)})).collect();
+    let states:Vec<_>=store.all::<Discovery>("rendered_discovery")?.into_iter().filter(|d|d.private == scope.private && d.scope.as_ref().is_none_or(|s| same_session(s, scope)) && d.status != "cancelled").map(|d|serde_json::json!({"id":d.project.id,"url":d.project.url,"generation":d.generation,"status":d.status,"claim_generation":d.scope.as_ref().map(|s|s.claim_generation)})).collect();
     Ok(serde_json::to_value(states)?)
 }
 pub fn claim(engine: &crate::Engine, request: Claim) -> Result<serde_json::Value> {
@@ -394,8 +410,13 @@ pub fn claim(engine: &crate::Engine, request: Claim) -> Result<serde_json::Value
             site.set_port(None)
                 .map_err(|_| anyhow::anyhow!("Invalid discovery site"))?;
             let origin = site.origin().ascii_serialization();
-            if state.lease.is_none()
-                || request.tab_id.is_none_or(|id| id < 0)
+            if (state.lease.is_none() && !request.resume)
+                || (if request.resume {
+                    request.source_tab_id.or(request.tab_id)
+                } else {
+                    request.tab_id
+                })
+                .is_none_or(|id| !(0..=9_007_199_254_740_991).contains(&id))
                 || !state.permitted(&observed)
                 || !same_session(old, &request.scope)
                 || old.claim_generation.checked_add(1) != Some(request.scope.claim_generation)
@@ -409,6 +430,9 @@ pub fn claim(engine: &crate::Engine, request: Claim) -> Result<serde_json::Value
             }
             state.scope = Some(request.scope.clone());
         }
+    }
+    if request.resume {
+        state.control("resume")?;
     }
     state.claim(request.scope.clone(), now)?;
     for origin in &request.permitted_origins {
@@ -553,6 +577,16 @@ pub fn status(engine: &crate::Engine, request: Status) -> Result<serde_json::Val
                 chrono::Utc::now().timestamp_millis(),
             )?;
         }
+        if state.preparation.take().is_some() {
+            scheduler.apply(
+                &request.scope.profile,
+                crate::navigation_scheduler::SchedulerRequest::Release {
+                    id: format!("discovery-resource:{}", state.project.id),
+                    generation: state.generation,
+                },
+                chrono::Utc::now().timestamp_millis(),
+            )?;
+        }
         state.control(&request.action)?;
         scheduler.persist(&store)?;
         store.put("rendered_discovery", &state.project.id, &state)?;
@@ -680,11 +714,12 @@ pub fn select(
         state.authorize(&request.scope, request.generation)?;
         state
     };
-    if request.urls.len() > 1000 {
+    if request.urls.len() > 16 {
         bail!("Selection exceeds bound");
     }
     let selected_urls: BTreeSet<_> = request.urls.iter().cloned().collect();
     let mut ids = vec![];
+    let mut sources = vec![];
     for url in request.urls {
         let file = state
             .resources
@@ -743,6 +778,7 @@ pub fn select(
         }
         let job = job.lock().unwrap().clone();
         engine.store.lock().unwrap().put("job", &id, &job)?;
+        sources.push(serde_json::json!({"id":id,"page_url":file.page_url,"scope":file.scope}));
         ids.push(id);
     }
     {
@@ -752,7 +788,7 @@ pub fn select(
         current.selected.retain(|url| !selected_urls.contains(url));
         store.put("rendered_discovery", &request.id, &current)?;
     }
-    Ok(serde_json::json!({"jobs":ids}))
+    Ok(serde_json::json!({"jobs":ids,"sources":sources}))
 }
 pub fn projects(engine: &crate::Engine) -> Result<serde_json::Value> {
     let store = engine.store.lock().unwrap();
@@ -827,6 +863,20 @@ pub fn control(engine: &crate::Engine, id: &str, action: &str) -> Result<serde_j
             )?;
         }
     }
+    if state.preparation.take().is_some() {
+        scheduler.apply(
+            &state
+                .scope
+                .as_ref()
+                .context("Missing preparation owner")?
+                .profile,
+            crate::navigation_scheduler::SchedulerRequest::Release {
+                id: format!("discovery-resource:{}", state.project.id),
+                generation: state.generation,
+            },
+            chrono::Utc::now().timestamp_millis(),
+        )?;
+    }
     state.control(action)?;
     scheduler.persist(&store)?;
     store.put("rendered_discovery", id, &state)?;
@@ -888,4 +938,212 @@ pub fn browser_projection(value: serde_json::Value) -> serde_json::Value {
         .cloned()
         .collect();
     serde_json::json!({"id":value["project"]["id"],"scope":value["scope"],"generation":value["generation"],"status":value["status"],"lease":value["lease"],"bytes":value["bytes"],"selected":selected,"resources":resources,"resource_count":value["resources"].as_array().map_or(0,Vec::len),"visited_count":value["visited"].as_array().map_or(0,Vec::len),"pending_count":value["pending"].as_array().map_or(0,Vec::len)})
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Prepare {
+    pub id: String,
+    pub job_id: String,
+    pub scope: SessionScope,
+    pub generation: u64,
+    pub action: String,
+    pub observed_url: String,
+    pub tab_id: Option<i64>,
+    #[serde(default)]
+    pub document: Option<DocumentProof>,
+}
+/** Reserve a real navigation slot before opening only a known resource's approved HTML provenance. */
+pub fn prepare(engine: &crate::Engine, request: Prepare) -> Result<serde_json::Value> {
+    request.scope.validate()?;
+    if !["admit", "enroll", "release"].contains(&request.action.as_str())
+        || request
+            .tab_id
+            .is_some_and(|id| !(0..=9_007_199_254_740_991).contains(&id))
+    {
+        bail!("Invalid resource preparation");
+    }
+    let job = engine.job(&request.job_id)?.lock().unwrap().clone();
+    let _operation = engine.discovery_operations.lock().unwrap();
+    let mut scheduler = engine.navigation_scheduler.lock().unwrap();
+    let store = engine.store.lock().unwrap();
+    let mut state = load(&store, &request.id)?;
+    if state.generation != request.generation
+        || state.private != request.scope.private
+        || state.project.private != request.scope.private
+        || state.status == "cancelled"
+        || !state
+            .scope
+            .as_ref()
+            .is_some_and(|scope| same_session(scope, &request.scope))
+    {
+        bail!("Stale resource preparation owner");
+    }
+    let resource = state
+        .resources
+        .iter()
+        .find(|resource| resource.url == job.url)
+        .context("Unknown selected resource")?;
+    use sha2::{Digest, Sha256};
+    let expected_id = format!(
+        "discovery-{:x}",
+        Sha256::digest(
+            format!("{}:{}:{}", state.project.id, state.generation, resource.url).as_bytes()
+        )
+    );
+    if job.request_id != expected_id
+        || job.navigation_owner.as_deref() != Some(request.scope.profile.as_str())
+        || job.private != request.scope.private
+        || job.page_url.as_deref() != Some(resource.page_url.as_str())
+    {
+        bail!("Resource job provenance changed");
+    }
+    let expected_scope = resource
+        .scope
+        .as_ref()
+        .context("Missing observed resource session")?
+        .clone();
+    let page_url = resource.page_url.clone();
+    if !state.permitted(&page_url) || !same_session(&expected_scope, &request.scope) {
+        bail!("Resource preparation origin or session denied");
+    }
+    let observed = canonical(&request.observed_url)?;
+    let mut site = url::Url::parse(&observed)?;
+    site.set_port(None)
+        .map_err(|_| anyhow::anyhow!("Invalid source site"))?;
+    if request.scope.partition_key.as_ref().is_some_and(|key| {
+        key.top_level_site.trim_end_matches('/') != site.origin().ascii_serialization()
+    }) {
+        bail!("Source partition does not match actual source page");
+    }
+    let task_id = format!("discovery-resource:{}", state.project.id);
+    let now = chrono::Utc::now().timestamp_millis();
+    if request.action == "release" {
+        let current = state
+            .preparation
+            .as_ref()
+            .context("Missing preparation lease")?;
+        if current.job_id != request.job_id
+            || current.scope != request.scope
+            || current.tab_id != request.tab_id
+            || current.document.is_none()
+            || current.document != request.document
+            || observed != page_url
+        {
+            bail!("Stale preparation release");
+        }
+        scheduler.apply(
+            &request.scope.profile,
+            crate::navigation_scheduler::SchedulerRequest::Release {
+                id: task_id,
+                generation: state.generation,
+            },
+            now,
+        )?;
+        state.preparation = None;
+        scheduler.persist(&store)?;
+        store.put("rendered_discovery", &state.project.id, &state)?;
+        return Ok(serde_json::json!({"released":true}));
+    }
+    if request.action == "admit" {
+        if observed != canonical(&state.project.url)? && !state.visited.contains(&observed) {
+            bail!("Preparation needs the original or visited source page");
+        }
+        if state
+            .preparation
+            .as_ref()
+            .is_some_and(|lease| lease.job_id != request.job_id)
+        {
+            bail!("Another resource preparation is active");
+        }
+        state.preparation = Some(Preparation {
+            job_id: request.job_id.clone(),
+            scope: request.scope.clone(),
+            tab_id: request.tab_id,
+            document: None,
+        });
+    } else {
+        let current = state
+            .preparation
+            .as_ref()
+            .context("Missing admitted preparation")?;
+        if current.job_id != request.job_id
+            || request.scope != expected_scope
+            || observed != page_url
+            || request.tab_id.is_none()
+        {
+            bail!("Preparation is not the exact resource document/session");
+        }
+        let document = request
+            .document
+            .as_ref()
+            .context("Missing live preparation document")?;
+        uuid::Uuid::parse_str(&document.nonce)?;
+        if document.generation == 0 || document.generation > 9_007_199_254_740_991 {
+            bail!("Invalid preparation document generation");
+        }
+        state.preparation = Some(Preparation {
+            job_id: request.job_id.clone(),
+            scope: request.scope.clone(),
+            tab_id: request.tab_id,
+            document: request.document.clone(),
+        });
+    }
+    scheduler.enqueue(
+        task_id.clone(),
+        state.generation,
+        request.scope.profile.clone(),
+        vec![
+            url::Url::parse(&state.project.url)?
+                .host_str()
+                .context("Missing source host")?
+                .to_string(),
+            url::Url::parse(&page_url)?
+                .host_str()
+                .context("Missing provenance host")?
+                .to_string(),
+        ],
+    )?;
+    let task = scheduler
+        .tasks
+        .iter_mut()
+        .find(|task| task.id == task_id)
+        .unwrap();
+    if matches!(
+        task.status,
+        crate::navigation_scheduler::QueueStatus::Finished
+            | crate::navigation_scheduler::QueueStatus::Manual
+            | crate::navigation_scheduler::QueueStatus::Recovering
+    ) {
+        task.status = crate::navigation_scheduler::QueueStatus::Queued;
+        task.lease = None;
+    }
+    task.scope = Some(request.scope.clone());
+    task.private = request.scope.private;
+    let result = scheduler.apply(
+        &request.scope.profile,
+        crate::navigation_scheduler::SchedulerRequest::Admit {
+            id: task_id.clone(),
+            generation: state.generation,
+        },
+        now,
+    )?;
+    let admitted = result.tasks.iter().any(|task| {
+        task.id == task_id && task.status == crate::navigation_scheduler::QueueStatus::Active
+    });
+    if admitted && request.action == "enroll" {
+        if let Some(tab_id) = request.tab_id {
+            scheduler.apply(
+                &request.scope.profile,
+                crate::navigation_scheduler::SchedulerRequest::Heartbeat {
+                    id: task_id,
+                    generation: state.generation,
+                    tab_id,
+                },
+                now,
+            )?;
+        }
+    }
+    scheduler.persist(&store)?;
+    store.put("rendered_discovery", &state.project.id, &state)?;
+    Ok(serde_json::json!({"admitted":admitted,"page_url":page_url,"expected_scope":expected_scope}))
 }
