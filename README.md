@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.13.5<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.13.6<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -27,6 +27,8 @@ Capture cancellation also fences pending native admission. Failed Firefox respon
 Blob document replacement and closed-tab cleanup preserve explicit native recovery. Their installed browser qualification is in progress.
 
 Worker loss requires a fresh action for the exact owned stream and retains durable partial progress. Firefox 157 binary form-navigation/download capture remains explicitly pending; its reproducible lane evidence is recorded separately from supported Blob and page-owned fetch paths.
+
+Private navigation metadata uses a separate ephemeral namespace, including browser-download mappings. Regular storage reads and removal cannot cross that boundary.
 
 The integration branch retains main's shared countdown boundary handling and expands resolver regressions for delayed authorization and document/session replacement.
 

@@ -727,10 +727,11 @@ async function add(
 }
 async function capture(item: browser.Downloads.DownloadItem, resolverId?: string) {
   const download = item as Download;
+  const browserJob = (jobId: string) => ({jobId, private: privateWorker || item.incognito === true});
   let record =
     requestFor(download.finalUrl || item.url, Boolean(item.incognito)) ??
     requestFor(item.url, Boolean(item.incognito));
-  await browser.storage.local.set({
+  if (!privateWorker && !item.incognito) await browser.storage.local.set({
     lastCapture: {
       observedMethod: record?.method ?? null,
       state: item.state,
@@ -742,7 +743,7 @@ async function capture(item: browser.Downloads.DownloadItem, resolverId?: string
   const replayable =
     classifyReplay({ method: record?.method, sourceGeneration: 1 }).disposition === 'replayable';
   if (resolverId && (!replayable || item.state === 'complete')) {
-    await navigationStore.set({ ['browser-job-' + item.id]: resolverId });
+    await navigationStore.set({ ['browser-job-' + item.id]: browserJob(resolverId) });
     await native('browser_status', {
       id: resolverId,
       state: item.state === 'complete' ? 'browser_complete' : 'browser_downloading',
@@ -785,7 +786,7 @@ async function capture(item: browser.Downloads.DownloadItem, resolverId?: string
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
         await navigationStore.set({
-          ['browser-job-' + item.id]: resolverId,
+          ['browser-job-' + item.id]: browserJob(resolverId),
         });
         await native('browser_status', {
           id,
@@ -806,7 +807,7 @@ async function capture(item: browser.Downloads.DownloadItem, resolverId?: string
       if (resolverId && outcome === 'browser') {
         const [current] = await browser.downloads.search({ id: item.id });
         if (current) {
-          await navigationStore.set({ ['browser-job-' + item.id]: resolverId });
+          await navigationStore.set({ ['browser-job-' + item.id]: browserJob(resolverId) });
           await native('browser_status', {
             id: resolverId,
             state: current.state === 'complete' ? 'browser_complete' : 'browser_downloading',
@@ -861,9 +862,9 @@ browser.downloads.onChanged.addListener(
         record: Record<string, any> = await navigationStore.get(key);
       const [item] = await browser.downloads.search({ id: delta.id });
       if (!item) return;
-      if (record[key]) {
+      if (record[key]?.jobId) {
         await native('browser_status', {
-          id: record[key],
+          id: record[key].jobId,
           state:
             item.state === 'complete'
               ? 'browser_complete'

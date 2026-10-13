@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.6
+
+- Namespace private ephemeral navigation metadata so primitive browser-download IDs cannot cross into regular storage views or removal operations.
+- Use marked browser-download envelopes, refuse regular overwrites of private metadata, and omit unqualified legacy primitive mappings without deleting them.
+- Keep private capture diagnostics out of durable local storage. Installed primitive-fencing qualification remains pending.
+
 ## 0.13.5
 
 - Recover current owned stream markers after worker loss by terminating their exact stream identity and requiring a fresh browser action, without inventing a new reader or replaying a request.

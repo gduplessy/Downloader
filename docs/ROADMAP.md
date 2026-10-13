@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.13.5<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.13.6<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -25,6 +25,8 @@ Pending stream admission is fenced through cancellation and failed-filter cleanu
 Blob document replacement aborts its scoped reader before resetting the resolver document marker; tab-close status retains its native fence until reporting finishes. Installed lifecycle evidence for these paths is still pending.
 
 Worker startup/poll recovery terminates only exact current orphaned stream identities and retains durable partial progress. Installed worker-loss qualification is pending. The owner explicitly accepts the tested Firefox 157 binary form-navigation/download lane remaining pending while supported direct-stream lanes and PRs are completed.
+
+Private ephemeral storage now namespaces primitive mappings and fences regular reads/removal/overwrite. Unqualified legacy primitive IDs stay hidden and untouched. Unit coverage verifies both lane separation and preserved legacy data; installed primitive-fencing qualification remains pending.
 
 Latest main is reconciled through its adapter/scheduler merge. Shared three-digit countdown boundaries and resolver wait/authorization regressions are preserved under the current document nonce, source and claim protocol.
 

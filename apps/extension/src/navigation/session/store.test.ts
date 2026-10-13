@@ -10,6 +10,29 @@ const scope = {
   claim_generation: 1,
 };
 describe('browser restart references and private overlay', () => {
+  it('separates primitive private mappings and fences guessed removal or overwrite', async () => {
+    const local = memoryStorage(), session = memoryStorage();
+    const regular = navigationStorage(local, session, false);
+    const privateStore = navigationStorage(local, session, true);
+    await privateStore.set({'browser-job-1':'private-job-marker'});
+    expect(await regular.get()).toEqual({});
+    await regular.remove(['browser-job-1','private-nav:browser-job-1']);
+    expect((await privateStore.get())['browser-job-1']).toBe('private-job-marker');
+    await expect(regular.set({'private-nav:browser-job-1':'overwrite'})).rejects.toThrow('Private');
+    await regular.set({'browser-job-1':{jobId:'regular-job', private:false}});
+    await privateStore.remove('browser-job-1');
+    expect((await regular.get())['browser-job-1'].jobId).toBe('regular-job');
+    const legacy = {scope:{...scope, private:true}, sourceGeneration:1};
+    await session.set({'resolver-legacy':legacy, 'browser-job-legacy':'unqualified-marker'});
+    expect((await regular.get())['resolver-legacy']).toBeUndefined();
+    expect((await regular.get())['browser-job-legacy']).toBeUndefined();
+    expect((await privateStore.get())['browser-job-legacy']).toBeUndefined();
+    await regular.remove(['resolver-legacy','browser-job-legacy']);
+    await expect(regular.set({'resolver-legacy':{scope, sourceGeneration:2}})).rejects.toThrow('Private');
+    expect((await session.get())['resolver-legacy']).toEqual(legacy);
+    expect((await session.get())['browser-job-legacy']).toBe('unqualified-marker');
+    expect(await local.get()).toEqual({});
+  });
   it.each([false, true])('rejects delayed stale writes and recovers the write queue (private=%s)', async (privateWorker: boolean) => {
     const local = memoryStorage(), session = memoryStorage();
     const store = navigationStorage(local, session, privateWorker);
