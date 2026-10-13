@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.18.1
+
+- Record installed Edge 155 original binary attachment POST acceptance on checked integration 312a6dd: one submission, 8,388,625 bytes, and matching native and independent desktop SHA-256.
+- Preserve distinct pending rows for redirects, browser-loss recovery, install permission UX and live providers.
+
 ## 0.18.0
 
 - Wire desktop session handoff controls to the native API, with explicit preparation/cancellation and six-locale instructions for recipient preview and acceptance.

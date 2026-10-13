@@ -1,0 +1,39 @@
+{
+  "outcome": "passed",
+  "sourceRevision": "312a6dddde98f17b00935dda866b256a5c0f1b31",
+  "productVersion": "0.18.0",
+  "browser": "Edg/155.0.4283.45",
+  "os": "Windows x64",
+  "lane": "Original binary attachment POST",
+  "bytes": 8388625,
+  "originalSubmissions": 1,
+  "replayRequests": 0,
+  "nativeState": "complete",
+  "nativeVerifiedSha256": "c454f05473a97ef2f7a2c8d9ec8d08bc0de4268315e2c77ea6f16f7b91894a27",
+  "independentDesktopSha256": "c454f05473a97ef2f7a2c8d9ec8d08bc0de4268315e2c77ea6f16f7b91894a27",
+  "productionBackground": true,
+  "productionResolver": true,
+  "diagnosticSourceChanges": false,
+  "transport": "persistent chrome.runtime.connectNative",
+  "extensionAPI": "chrome.debugger Fetch.takeResponseBodyAsStream / IO.read",
+  "sourceHashes": {
+    "apps/extension/src/background.ts": "c5f91468ed466e3bc8961e32c986e4becebbda35911e39cdb7283bad2c1ce529",
+    "apps/extension/src/resolver.ts": "5268153e996f5aee1aa32494c0ea4231aae19b107908aab8d9d310e30a700f8e",
+    "apps/extension/src/navigation/streams/transport.ts": "db7f24424a6d19101c085e83f7baf0224f514a6a4578cd31700bc9ca56b9979b",
+    "apps/extension/src/navigation/streams/capture.ts": "b4b4a736e64fe02cf095ff9aba1b2f6d10d06a29dcfdc010898b325844b7a12c",
+    "scripts/nav-fixtures/streams/production-worker.mjs": "11b230eb44575fb83ee4a76922254b6dfeb84c904918feb513933367f43e7e5a"
+  },
+  "compiledBundleHashes": {
+    "background.js": "543707d8d03aba12557c220e6803afb46c5782e3ce2fd3cdd85c0c20ca33676c",
+    "resolver.js": "06be4cae03e91441b33401f9b8f8987d7f1d9802ffd55086c1b0adf85497aebf"
+  },
+  "nativeServiceSha256": "1f5b955509e1687e70501c92d398e06768001136f25443db03075f8e273b91b5",
+  "nativeCliSha256": "6c1311db276f20f19149be30f17f7d1ff41b2f9b12cddd37c3a93a54117166b6",
+  "nativeCliVersion": "0.18.0",
+  "limitations": [
+    "Local permitted fixture; live hosts/accounts remain pending",
+    "Loopback permissions/settings configured through trusted extension fixture page; install permission UX remains pending",
+    "Native binary hashes recorded after completion; pre-launch shell hash display was truncated",
+    "This row proves original attachment POST capture, not redirects, other response lanes, or browser-loss recovery"
+  ]
+}
