@@ -34,7 +34,7 @@ Live hosts/accounts, Firefox ESR, other OS/browser versions, private/container s
 
 ## Installed Firefox page-owned XHR diagnostics
 
-[Controlled native diagnostics](production-firefox-xhr-diagnostic.json) use immutable extension source9fa692a (0.13.6) and copied checked native binaries fromc310942 (0.14.1). The release-version difference is explicit; native crate sources are identical between those revisions. Trusted-options native diagnostics and CLI daemon diagnostics independently report0.14.1/protocol1. Exact executable SHA values preserve build provenance.
+[Controlled native diagnostics](production-firefox-xhr-diagnostic.json) requested immutable extension source 9fa692a (0.13.6), but compiled the unchanged E source base 26ce2a5 (0.10.9) because esbuild cached its initial working directory. Copied checked native binaries came from c310942 (0.14.1). These source-mismatch rows do not qualify the requested checkout. Trusted-options native diagnostics and CLI daemon diagnostics independently report0.14.1/protocol1. Exact executable SHA values preserve build provenance.
 
 The original fixture page owns a submit handler that issues one POST to its original form action/body; the extension selects the original control. This distinct fetch/XMLHttpRequest lane does not rewrite an ordinary navigation POST. The final fixture drains/discards response chunks through its own bounded getReader loop. No response bytes reach the driver.
 
@@ -43,3 +43,7 @@ Unread-response and consumed-response controls both leave all262,161 bytes as un
 Earlier native RPC rejection came from a hardcoded legacy target/debug service (SHA0ed6cc85...00ba1, Oct10 modification time), whose decoder lacks browser_subscribe. This diagnosis does not change the prior checked Blob pass, which captured a different exact executable SHA.
 
 For an immutable exported source tree, set NAV_SOURCE_ROOT/NAV_SOURCE_REVISION and NAV_NODE_MODULES explicitly. NAV_NATIVE_REVISION records the verified native build revision. Optional NAV_TRACE, NAV_RPC_TRACE and NAV_NATIVE_STDERR flags are metadata-only diagnostics; acceptance requires tracing and the stderr wrapper disabled. The diagnostic wrapper inherits stdin/stdout unchanged and records only its own child stderr/exit. NAV_DIRECT_SUBSCRIBE_PROBE requires zero live resolver/discovery records and uses the actual local owner; it performs no page action.
+
+### Compilation provenance correction
+
+The later requested11ca/native0.16 rows also compiled the old E worker. They remain diagnostic failures with exact actual native hashes, not proof that the checked EOF fix failed. The runner now sets explicit absWorkingDir, absolute entry points and onLoad resolveDir. Its metafile asserts every production source module resides in the intended tree; only declared node_modules dependencies may be external. It also verifies the intended capture module is an input and that the checked inputEnded guard appears in the emitted worker. NAV_BUILD_ONLY verifies these controls without launching a browser/native service. The earlier12687 Blob proof used its intended primary working directory and is unaffected.
