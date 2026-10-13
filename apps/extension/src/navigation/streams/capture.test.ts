@@ -138,6 +138,7 @@ describe('original response takeover', () => {
     await vi.waitFor(() => expect(filter.close).toHaveBeenCalledOnce());
     expect(sink.end).toHaveBeenCalledOnce();
     expect(complete).toHaveBeenCalledOnce();
+    expect(complete).toHaveBeenCalledWith(true);
   });
   it('cleans up Firefox listeners on refused admission without consuming the original body', async () => {
     const sink = {chunk: vi.fn(), end: vi.fn(), abort: vi.fn()} as unknown as DurableStreamSink;
@@ -145,6 +146,7 @@ describe('original response takeover', () => {
     const complete = vi.fn();
     takeFirefox(filter, sink, vi.fn(), Promise.resolve(false), complete);
     await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    expect(complete).toHaveBeenCalledWith(false);
     filter.ondata({data: new Uint8Array([1]).buffer});
     filter.onstop();
     await new Promise(resolve => setTimeout(resolve, 0));
@@ -166,5 +168,14 @@ describe('original response takeover', () => {
     admit(true);
     await new Promise(resolve=>setTimeout(resolve,0));
     expect(sink.chunk).not.toHaveBeenCalled();
+  });
+  it('recovers the native sink when an already failed Firefox filter rejects disconnect', async () => {
+    const sink = {abort: vi.fn(async () => {})} as unknown as DurableStreamSink;
+    const failed = vi.fn();
+    const filter: any = {disconnect: vi.fn(() => { throw Error('Invalid request ID'); })};
+    takeFirefox(filter, sink, failed);
+    expect(() => filter.onerror()).not.toThrow();
+    expect(sink.abort).toHaveBeenCalledWith('filter_interrupted');
+    expect(failed).toHaveBeenCalledOnce();
   });
 });

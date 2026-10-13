@@ -1,0 +1,23 @@
+{
+  "browser": "Firefox 157.0.1",
+  "os": "Windows",
+  "architecture": "x64",
+  "nativeBinaryVersion": "0.12.10",
+  "extensionCandidateVersion": "0.12.11",
+  "sourceDirtyDuringRun": true,
+  "diagnosticSourceChanges": true,
+  "fixture": "local one-use original form POST",
+  "originalPostRequests": 1,
+  "nativeBytes": 0,
+  "nativeState": "waiting_user",
+  "published": false,
+  "captureError": "Invalid request ID",
+  "recovery": "Request a fresh action in the owning browser; original requests are never replayed",
+  "transferAcceptance": "failed",
+  "recoveryAcceptance": "passed",
+  "limitations": [
+    "Candidate failure recovery evidence, not clean committed transfer qualification",
+    "Fixture permissions are pregranted; permission prompts unqualified",
+    "Live hosts, ESR and other platforms remain pending"
+  ]
+}

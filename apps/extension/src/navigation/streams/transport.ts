@@ -83,6 +83,7 @@ export class DurableStreamSink {
   offset = 0;
   peakBufferedBytes = 0;
   terminal = false;
+  private admission?: Promise<StreamAck>;
   constructor(
     readonly identity: StreamIdentity,
     private port: NativeStreamPort,
@@ -105,13 +106,15 @@ export class DurableStreamSink {
     this.assertOpen();
     await this.verifyOwner();
     this.assertOpen();
-    const ack = await this.port.operation({
+    this.admission = this.port.operation({
       ...this.identity,
       operation: 'begin',
       target,
       filename,
       total,
     });
+    const ack = await this.admission;
+    this.assertOpen();
     this.offset = ack.accepted_offset;
     this.validate(ack, this.offset);
   }
@@ -163,6 +166,9 @@ export class DurableStreamSink {
     if (this.terminal) return;
     this.terminal = true;
     try {
+      // A dispatched begin may create its native checkpoint after cancellation.
+      // Wait for that acknowledgement before sending the matching abort.
+      await this.admission?.catch(() => {});
       await this.verifyOwner();
       await this.port.operation({ ...this.identity, operation: 'abort', reason });
     } finally {

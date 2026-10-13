@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.12.11
+
+- Serialize cancellation after a dispatched native stream admission so a late checkpoint receives its matching abort.
+- Failed Firefox filters retain native recovery even when disconnect itself throws. Capture status distinguishes refused admission from verified completion.
+- Preserve a runnable installed Firefox original-POST fixture; current form-navigation capture qualification remains unresolved.
+- Installed candidate failure recovery retains one POST, zero desktop bytes/publication and `WaitingUser`; transfer acceptance still fails with `Invalid request ID`.
+
 ## 0.12.10
 
 - Reconcile latest merged main, retaining three-digit countdown clocks within the shared seven-day limit.

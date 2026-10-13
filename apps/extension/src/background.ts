@@ -239,6 +239,7 @@ async function armDirect(
     await navigationStore.set({ ['capture-' + id]: {
       state, tabId: record.tabId, scope: record.scope,
       sourceGeneration: record.sourceGeneration, streamId: sink.identity.stream_id,
+      documentNonce: record.documentNonce,
     } });
   };
   try {
@@ -330,6 +331,7 @@ async function armDirect(
       await sink.abort();
       throw Error('Firefox direct capture needs response-filter permissions');
     }
+    await captureState('armed');
     let taken = false;
     let requestId: string | undefined;
     let admit: (accepted: boolean) => void = () => {};
@@ -360,7 +362,7 @@ async function armDirect(
       }
       const metadata = originalResponseMetadata(values);
       void sink.begin({ kind: 'job', id }, metadata.filename ?? filename, metadata.total).then(
-        () => admit(true),
+        async () => { await captureState('streaming'); admit(true); },
         () => {
           directOwners.release(record.tabId, sink.identity.stream_id);
           admit(false);
@@ -384,11 +386,18 @@ async function armDirect(
         () => {
           browser.webRequest.onBeforeRequest.removeListener(listen);
           browser.webRequest.onHeadersReceived.removeListener(headers);
+          void captureState('interrupted');
+          void native('browser_status', {
+            id, state: 'waiting_user',
+            message: 'Firefox response capture failed. Request a fresh action in the owning browser; original requests are never replayed.',
+            bytes: sink.offset, total: null,
+          }).catch(() => {});
         },
         ready,
-        () => {
+        (completed) => {
           browser.webRequest.onBeforeRequest.removeListener(listen);
           browser.webRequest.onHeadersReceived.removeListener(headers);
+          void captureState(completed ? 'complete' : 'interrupted');
         },
       );
     };
@@ -405,6 +414,7 @@ async function armDirect(
       browser.webRequest.onBeforeRequest.removeListener(listen);
       browser.webRequest.onHeadersReceived.removeListener(headers);
       await sink.abort('cancelled').catch(() => {});
+      await captureState('interrupted');
     };
     captureCancels.set(record.tabId, cancel);
     setTimeout(() => {
@@ -1517,6 +1527,12 @@ async function resolverStep(message: any, tabId: number, currentUrl: string, doc
     record = entry[1] as ResolverRecord,
     job = snapshot.jobs.find((j: any) => j.id === id);
   if (!job || !['waiting_browser', 'waiting_user'].includes(job.state) || record.downloadId)
+    return { click: false, repeat: false };
+  const capture = storage['capture-' + id];
+  if (capture?.scope && record.scope && sameScope(capture.scope, record.scope)
+      && capture.sourceGeneration === record.sourceGeneration
+      && capture.documentNonce === record.documentNonce
+      && ['interrupted', 'detached'].includes(capture.state))
     return { click: false, repeat: false };
   record.lastOrigin = new URL(currentUrl).origin;
   let premiumSelection: Selection | null = null;

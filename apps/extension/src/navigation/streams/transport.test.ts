@@ -19,6 +19,29 @@ const identity = {
   source_generation: 1,
 };
 describe('persistent bounded durable native transport', () => {
+  it('aborts a native checkpoint admitted after cancellation without accepting bytes', async () => {
+    let release!: (ack: any) => void;
+    const admitted = new Promise<any>(resolve => { release = resolve; });
+    const operations: StreamOperation[] = [];
+    const operation = vi.fn((value: StreamOperation) => {
+      operations.push(value);
+      return value.operation === 'begin' ? admitted : Promise.resolve({
+        ...identity, claim_generation: 1, accepted_offset: 0, terminal: true,
+      });
+    });
+    const sink = new DurableStreamSink(identity, {
+      operation, close: vi.fn(),
+    } as unknown as NativeStreamPort, async () => {});
+    const begin = sink.begin({kind: 'job', id: 'owned'}, 'x', 1);
+    const outcome = expect(begin).rejects.toThrow('terminal');
+    await vi.waitFor(() => expect(operation).toHaveBeenCalledOnce());
+    const abort = sink.abort('cancelled');
+    expect(operations.map(value => value.operation)).toEqual(['begin']);
+    release({...identity, claim_generation: 1, accepted_offset: 0, terminal: false});
+    await Promise.all([outcome, abort]);
+    expect(operations.map(value => value.operation)).toEqual(['begin', 'abort']);
+    await expect(sink.chunk(new Uint8Array([1]))).rejects.toThrow('terminal');
+  });
   it('a filter cancellation cannot be followed by a late header admission or chunk', async () => {
     let release!: () => void;
     const gate = new Promise<void>(resolve => { release = resolve; });

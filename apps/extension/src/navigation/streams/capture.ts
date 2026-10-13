@@ -161,13 +161,13 @@ export function takeFirefox(
   sink: DurableStreamSink,
   onError: () => void,
   admission: Promise<boolean> = Promise.resolve(true),
-  onComplete: () => void = () => {},
+  onComplete: (completed: boolean) => void = () => {},
 ): void {
   let queue = admission.then((accepted) => {
     if (!accepted) {
       failed = true;
-      filter.disconnect();
-      onComplete();
+      try { filter.disconnect(); } catch {}
+      onComplete(false);
     }
   });
   let failed = false;
@@ -175,7 +175,8 @@ export function takeFirefox(
   const abort = () => {
     if (failed) return;
     failed = true;
-    filter.disconnect();
+    // A failed filter may itself reject disconnect; native recovery must still run.
+    try { filter.disconnect(); } catch {}
     void sink.abort('filter_interrupted').catch(() => {});
     onError();
   };
@@ -205,7 +206,7 @@ export function takeFirefox(
         if (failed) return;
         await sink.end();
         filter.close();
-        onComplete();
+        onComplete(true);
       })
       .catch(abort);
   };
