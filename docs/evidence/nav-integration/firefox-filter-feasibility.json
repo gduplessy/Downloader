@@ -1,0 +1,212 @@
+{
+  "fixture": "firefox-filter-differential-v1",
+  "rows": [
+    {
+      "lane": "main_frame",
+      "event": "onHeadersReceived",
+      "browser": "Firefox/157.0.1",
+      "os": "win32",
+      "architecture": "x64",
+      "persistentBackground": true,
+      "response": "inline text/plain",
+      "responseDelayMs": 0,
+      "driverDisconnectedBeforeSubmission": true,
+      "originalPostCount": 1,
+      "bytesObserved": 0,
+      "events": [
+        {
+          "event": "request",
+          "type": "main_frame",
+          "method": "POST"
+        },
+        {
+          "event": "error",
+          "error": "Invalid request ID"
+        }
+      ],
+      "evidenceOrigin": "autonomous addon diagnostic; packaged runner not yet browser-qualified",
+      "payloadKind": "binary",
+      "contentType": "text/plain",
+      "contentDisposition": "inline; filename=original-post.bin",
+      "nosniff": false
+    },
+    {
+      "lane": "main_frame",
+      "event": "onBeforeRequest",
+      "browser": "Firefox/157.0.1",
+      "os": "win32",
+      "architecture": "x64",
+      "persistentBackground": true,
+      "response": "inline text/plain",
+      "responseDelayMs": 500,
+      "driverDisconnectedBeforeSubmission": true,
+      "originalPostCount": 1,
+      "bytesObserved": 0,
+      "events": [
+        {
+          "event": "request",
+          "type": "main_frame",
+          "method": "POST"
+        },
+        {
+          "event": "error",
+          "error": "Invalid request ID"
+        }
+      ],
+      "evidenceOrigin": "autonomous addon diagnostic; packaged runner not yet browser-qualified",
+      "payloadKind": "binary",
+      "contentType": "text/plain",
+      "contentDisposition": "inline; filename=original-post.bin",
+      "nosniff": false
+    },
+    {
+      "lane": "xmlhttprequest",
+      "event": "onBeforeRequest",
+      "browser": "Firefox/157.0.1",
+      "os": "win32",
+      "architecture": "x64",
+      "persistentBackground": true,
+      "response": "inline text/plain",
+      "responseDelayMs": 500,
+      "driverDisconnectedBeforeSubmission": true,
+      "originalPostCount": 1,
+      "bytesObserved": 8388625,
+      "events": [
+        {
+          "event": "request",
+          "type": "xmlhttprequest",
+          "method": "POST"
+        },
+        {
+          "event": "start"
+        },
+        {
+          "event": "stop"
+        }
+      ],
+      "evidenceOrigin": "autonomous addon diagnostic; packaged runner not yet browser-qualified",
+      "payloadKind": "binary",
+      "contentType": "text/plain",
+      "contentDisposition": "inline; filename=original-post.bin",
+      "nosniff": false
+    },
+    {
+      "lane": "main_frame",
+      "event": "onBeforeRequest",
+      "browser": "Firefox/157.0.1",
+      "os": "win32",
+      "architecture": "x64",
+      "persistentBackground": true,
+      "responseDelayMs": 500,
+      "driverDisconnectedBeforeSubmission": true,
+      "originalPostCount": 1,
+      "bytesObserved": 0,
+      "payloadKind": "binary",
+      "contentType": "text/plain",
+      "contentDisposition": null,
+      "events": [
+        {
+          "event": "request",
+          "type": "main_frame",
+          "method": "POST"
+        },
+        {
+          "event": "error",
+          "error": "Invalid request ID"
+        }
+      ],
+      "evidenceOrigin": "packaged standalone runner; main_frame controlled payload comparison",
+      "nosniff": false
+    },
+    {
+      "lane": "main_frame",
+      "event": "onBeforeRequest",
+      "browser": "Firefox/157.0.1",
+      "os": "win32",
+      "architecture": "x64",
+      "persistentBackground": true,
+      "responseDelayMs": 500,
+      "driverDisconnectedBeforeSubmission": true,
+      "originalPostCount": 1,
+      "bytesObserved": 8388625,
+      "payloadKind": "ascii",
+      "contentType": "text/plain",
+      "contentDisposition": null,
+      "events": [
+        {
+          "event": "request",
+          "type": "main_frame",
+          "method": "POST"
+        },
+        {
+          "event": "start"
+        },
+        {
+          "event": "stop"
+        }
+      ],
+      "evidenceOrigin": "packaged standalone runner; main_frame controlled payload comparison",
+      "nosniff": false
+    },
+    {
+      "lane": "main_frame",
+      "event": "onBeforeRequest",
+      "browser": "Firefox/157.0.1",
+      "os": "win32",
+      "architecture": "x64",
+      "persistentBackground": true,
+      "responseDelayMs": 500,
+      "driverDisconnectedBeforeSubmission": true,
+      "originalPostCount": 1,
+      "bytesObserved": 8388625,
+      "payloadKind": "binary",
+      "contentType": "text/plain",
+      "contentDisposition": null,
+      "nosniff": true,
+      "events": [
+        {
+          "event": "request",
+          "type": "main_frame",
+          "method": "POST"
+        },
+        {
+          "event": "start"
+        },
+        {
+          "event": "stop"
+        }
+      ],
+      "evidenceOrigin": "packaged standalone runner; controlled nosniff-only binary comparison"
+    }
+  ],
+  "nativeDesktopAcceptance": false,
+  "responseBytesRelayedByDriver": false,
+  "paidCalls": 0,
+  "sourceReview": {
+    "installedFirefox": "157.0.1",
+    "installedModules": {
+      "WebRequest.sys.mjs": "a31dacd540c7335d8f703539de34b4f5eb5531a0e2eccf3bcb748bdcf2136e35",
+      "parent-ext-webRequest.js": "a93fae3268db3447f672e3a7705d868725d6740d349866a1c01bec48227fa7ca"
+    },
+    "findings": [
+      "Installed WebRequest.sys.mjs registers channel directly with opts.policy; archived gecko-dev remoteTab association does not describe this build",
+      "Current source clears traceable channel registration when RequestListener cannot attach (bug2044517); OnStartRequest also removes the entry",
+      "Current traceable-channel lookup checks extension browsing-context group process and URI access",
+      "Actual failing C++ branch is unobserved; source conditions are diagnostic leads",
+      "Controlled packaged pair: main_frame text/plain with no Content-Disposition passes ASCII payload but refuses binary payload, with identical settings/timing/action; consistent with content-dependent document/download classification, exact C++ branch still unobserved",
+      "Adding only X-Content-Type-Options:nosniff to the refused binary main-frame response restores filtering of all8388625bytes with onePOST; content sniffing is causally isolated in this local API fixture, exact attachment/native capture remains pending"
+    ],
+    "links": [
+      "https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/filterResponseData",
+      "https://github.com/mozilla-firefox/firefox/blob/main/toolkit/components/extensions/webrequest/ChannelWrapper.cpp",
+      "https://github.com/mozilla-firefox/firefox/blob/main/toolkit/components/extensions/webrequest/StreamFilterParent.cpp",
+      "https://bugzilla.mozilla.org/show_bug.cgi?id=2044517"
+    ]
+  },
+  "limitations": [
+    "Original navigation POST remains unqualified; changing it to fetch changes semantics and does not satisfy navigation capture",
+    "Successful addon fetch response filtering is not production native streaming or final desktop hash acceptance",
+    "This is Firefox157.0.1 on one Windows machine, not a universal Firefox restriction",
+    "No live hosts/accounts, user profile changes, private/container or cross-platform qualification"
+  ]
+}
