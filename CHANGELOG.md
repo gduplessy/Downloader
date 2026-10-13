@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.14.2
+
+- Integrate the coordinator private-session namespace and marked browser-download mappings for real split-worker qualification.
+- Preserve both release histories and strict same-session claims; explicit cross-session user transfer remains unimplemented.
+
 ## 0.14.1
 
 - Integrate checked worker-loss recovery and authoritative browser-source projection from coordinator 0.13.5.
@@ -10,6 +15,12 @@
 - Add a shared production worker/resolver Blob qualification driver with real preview events, scoped native ingress interruption and private-context bootstrap.
 - Preserve sanitized installed Chrome/Edge native-hash, cancellation, source/document replacement, tab-close and private-record visibility evidence.
 - Keep worker/service/browser recovery, complete privacy/container matrix, Firefox and live-provider acceptance explicit; private context-menu activation is synthetic and labeled.
+## 0.13.6
+
+- Namespace private ephemeral navigation metadata so primitive browser-download IDs cannot cross into regular storage views or removal operations.
+- Use marked browser-download envelopes, refuse regular overwrites of private metadata, and omit unqualified legacy primitive mappings without deleting them.
+- Keep private capture diagnostics out of durable local storage. Installed primitive-fencing qualification remains pending.
+
 ## 0.13.5
 
 - Recover current owned stream markers after worker loss by terminating their exact stream identity and requiring a fresh browser action, without inventing a new reader or replaying a request.

@@ -79,8 +79,34 @@ export function durableNavigationRecord(key: string, value: any): any {
 }
 // Nonsecret regular task references survive browser restart; signed action URLs,
 // request contexts and private metadata remain in the ephemeral overlay only.
+const privatePrefix = 'private-nav:';
+const privateValue = (value: any) => Boolean(value?.scope?.private || value?.private || value?.context?.private);
+const selectedKeys = (keys: any, values: Record<string, any>): string[] =>
+  keys == null ? Object.keys(values) : typeof keys === 'string' ? [keys]
+    : Array.isArray(keys) ? keys : Object.keys(keys);
 export function navigationStorage(local: Area, session: Area, privateWorker: boolean): Area {
-  const area: Area = privateWorker ? session : {
+  const area: Area = privateWorker ? {
+    async get(keys?: any) {
+      const all = await session.get(null), view: Record<string, any> = {};
+      // Read only marked legacy private objects; primitive legacy IDs have no authority.
+      for (const [key, value] of Object.entries(all))
+        if (!key.startsWith(privatePrefix) && privateValue(value)) view[key] = value;
+      for (const [key, value] of Object.entries(all))
+        if (key.startsWith(privatePrefix)) view[key.slice(privatePrefix.length)] = value;
+      return Object.fromEntries(selectedKeys(keys, view).filter(key => key in view).map(key => [key, view[key]]));
+    },
+    set(values) {
+      return session.set(Object.fromEntries(Object.entries(values).map(([key, value]) => [privatePrefix + key, value])));
+    },
+    async remove(keys) {
+      const items = typeof keys === 'string' ? [keys] : keys;
+      const legacy = await session.get(items);
+      await session.remove([
+        ...items.map((key: string) => privatePrefix + key),
+        ...items.filter((key: string) => privateValue(legacy[key])),
+      ]);
+    },
+  } : {
     async get(keys?: any) {
       const [durable, transient] = await Promise.all([local.get(keys), session.get(keys)]);
       const safe: Record<string, any> = {};
@@ -89,11 +115,16 @@ export function navigationStorage(local: Area, session: Area, privateWorker: boo
         if (record) safe[key] = record;
       }
       for (const [key, value] of Object.entries(transient))
-        if (!value?.scope?.private && !value?.private && !value?.context?.private)
+        if (!key.startsWith(privatePrefix) && !privateValue(value)
+            && !(key.startsWith('browser-job-') && typeof value !== 'object'))
           safe[key] = value;
       return safe;
     },
     async set(values) {
+      const previous = await session.get(Object.keys(values));
+      for (const [key, value] of Object.entries(values))
+        if (key.startsWith(privatePrefix) || privateValue(value) || privateValue(previous[key]))
+          throw Error('Private navigation metadata requires its original private store');
       await session.set(values);
       const durable: Record<string, any> = {};
       for (const [key, value] of Object.entries(values)) {
@@ -103,8 +134,11 @@ export function navigationStorage(local: Area, session: Area, privateWorker: boo
       if (Object.keys(durable).length) await local.set(durable);
     },
     async remove(keys) {
-      await session.remove(keys);
       const items = typeof keys === 'string' ? [keys] : keys;
+      const transient = await session.get(items);
+      await session.remove(items.filter((key: string) =>
+        !key.startsWith(privatePrefix) && !privateValue(transient[key])
+        && !(key.startsWith('browser-job-') && typeof transient[key] !== 'object')));
       const previous = await local.get(items);
       const regular = items.filter(
         (key) => durableNavigationRecord(key, previous[key]) !== undefined,
