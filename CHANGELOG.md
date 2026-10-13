@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.12.7
+
+- Coalesce automatic startup in an already running live resolver document, preserving selection previews while retaining explicit Continue and replacement recovery.
+- Expose scoped Blob capture progress and cancellation states; terminal callbacks cannot overwrite completion. Installed lifecycle qualification remains in progress.
+
 ## 0.12.6
 
 - Integrate checked CAPTCHA qualification, canvas readback handling and a shared native endpoint for control and direct byte streams.

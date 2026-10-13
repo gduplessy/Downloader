@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.12.6<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.12.7<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -13,6 +13,8 @@ The initial release still targets Windows 11 x64, macOS 14+ Intel and Apple Sili
 Detailed [NAV plans and execution batches](plans/nav/README.md) cover the remaining scope of NAV-01 through NAV-13. These plans preserve implemented FlareSolverr support, require direct POST/blob streaming for supported lanes, and separate local fixtures from pending live-host/account and paid-provider qualification.
 
 Shared navigation contracts are defined for the feature batches; all unfinished NAV implementation and qualification statuses remain open until their stated acceptance criteria pass.
+
+Automatic startup coalesces against the actual isolated resolver document; explicit Continue still refreshes its claim. Blob capture states carry the exact session scope and source generation. Installed cancellation, replacement and private-session qualification remain active integration gates.
 
 Coordinator staging combines versioned adapters, validated countdowns, the durable scheduler and bounded browser-stream storage while preserving separate batch PRs. Queue enrollment follows persisted job scope/source generations and validates per-tab recovery reports. Installed worker transport, preview cancellation and browser lifecycle acceptance remain pending integration checks.
 
