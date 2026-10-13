@@ -18,6 +18,7 @@ import { navigationStorage, memoryStorage } from './navigation/session/store';
 import { classifyReplay } from './navigation/streams/replay';
 import { DurableStreamSink, NativeStreamPort } from './navigation/streams/transport';
 import { DirectCaptureOwners } from './navigation/streams/ownership';
+import { orphanedStreamIdentity } from './navigation/streams/recovery';
 import { armChromium, takeFirefox, originalResponseMetadata } from './navigation/streams/capture';
 import { readOwnedBlob } from './navigation/streams/blob';
 import { applyEvents } from '../../../packages/shared/src/events';
@@ -882,6 +883,7 @@ browser.downloads.onChanged.addListener(
 );
 async function recover() {
   const storage: Record<string, any> = await navigationStore.get(null);
+  await recoverDirectCaptures(storage);
   for (const [key, value] of Object.entries(storage)) {
     if (!key.startsWith('pending-') || !value) continue;
     const p = value as any;
@@ -908,6 +910,34 @@ async function recover() {
         await navigationStore.remove(key);
       } catch {}
     }
+  }
+}
+const recoveringStreams = new Set<string>();
+async function recoverDirectCaptures(storage: Record<string, any>) {
+  for (const [key, capture] of Object.entries(storage)) {
+    if (!key.startsWith('capture-') || !capture?.scope
+        || !['armed', 'taking_original_response', 'streaming'].includes(capture.state)) continue;
+    const id = key.slice(8), record = storage['resolver-' + id] as ResolverRecord | undefined;
+    if (!record?.scope || recoveringStreams.has(id)
+        || directOwners.owns(record.tabId, id, record.scope, record.sourceGeneration!)) continue;
+    recoveringStreams.add(id);
+    try {
+      if (!(await ownsCurrentTab(record))) continue;
+      const job = (await browserSnapshot()).jobs.find((row: any) => row.id === id);
+      const identity = orphanedStreamIdentity(capture, record, job, await browserEpoch);
+      if (!identity) continue;
+      const port = new NativeStreamPort(() => browser.runtime.connectNative(HOST));
+      try { await port.operation({...identity, operation:'abort', reason:'worker_interrupted'}); }
+      catch { /* An armed response may not have admitted a native checkpoint yet. */ }
+      finally { port.close(); }
+      await native('browser_status', {
+        id, state:'waiting_user',
+        message:'browser_worker_interrupted: request a fresh action in the owning browser; original requests are never replayed',
+        bytes:job.bytes, total:job.total,
+      });
+      await navigationStore.set({[key]: {...capture, state:'interrupted'}});
+    } catch { /* Keep the active marker so the next service/poll recovery can retry. */ }
+    finally { recoveringStreams.delete(id); }
   }
 }
 browser.contextMenus.onClicked.addListener((info, tab) => {
@@ -1354,6 +1384,7 @@ async function pollResolvers(userGesture = false) {
   if (polling) return;
   polling = true;
   try {
+    await recoverDirectCaptures(await navigationStore.get(null));
     const snapshot = await browserSnapshot();
     const storage: Record<string, any> = await navigationStore.get(null);
     const liveKeys = new Set<string>();

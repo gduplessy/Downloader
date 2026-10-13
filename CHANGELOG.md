@@ -1,10 +1,20 @@
 # Changelog
 
+## 0.14.1
+
+- Integrate checked worker-loss recovery and authoritative browser-source projection from coordinator 0.13.5.
+- Preserve durable progress when transitioning an interrupted browser source to WaitingUser; installed repeat qualification remains pending.
+
 ## 0.14.0
 
 - Add a shared production worker/resolver Blob qualification driver with real preview events, scoped native ingress interruption and private-context bootstrap.
 - Preserve sanitized installed Chrome/Edge native-hash, cancellation, source/document replacement, tab-close and private-record visibility evidence.
 - Keep worker/service/browser recovery, complete privacy/container matrix, Firefox and live-provider acceptance explicit; private context-menu activation is synthetic and labeled.
+## 0.13.5
+
+- Recover current owned stream markers after worker loss by terminating their exact stream identity and requiring a fresh browser action, without inventing a new reader or replaying a request.
+- Preserve durable partial bytes and totals through browser recovery status; include authoritative browser-source status in scoped projections.
+- Record controlled Firefox response-filter lane evidence. The owner explicitly keeps binary form-navigation/download capture pending while supported direct-stream lanes are completed.
 
 ## 0.13.4
 

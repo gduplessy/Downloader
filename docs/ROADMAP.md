@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.14.0<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.14.1<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -23,6 +23,8 @@ Firefox response-filter queues are bounded across all outstanding events during 
 Pending stream admission is fenced through cancellation and failed-filter cleanup. Firefox capture status separates refusal/interruption from verified EOF; the runnable installed ordinary-POST reproducer remains a failing qualification gate.
 
 Blob document replacement aborts its scoped reader before resetting the resolver document marker; tab-close status retains its native fence until reporting finishes. Installed lifecycle evidence for these paths is still pending.
+
+Worker startup/poll recovery terminates only exact current orphaned stream identities and retains durable partial progress. Installed worker-loss qualification is pending. The owner explicitly accepts the tested Firefox 157 binary form-navigation/download lane remaining pending while supported direct-stream lanes and PRs are completed.
 
 Latest main is reconciled through its adapter/scheduler merge. Shared three-digit countdown boundaries and resolver wait/authorization regressions are preserved under the current document nonce, source and claim protocol.
 

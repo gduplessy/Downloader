@@ -165,6 +165,47 @@ fn desktop_source_replacement_leaves_actionable_recovery_and_fences_old_bytes() 
     assert_eq!(engine.snapshot().jobs[0].state, JobState::WaitingUser);
 }
 #[test]
+fn browser_recovery_status_preserves_durable_partial_progress() {
+    let (_, engine, id, identity) = setup(false);
+    frame(
+        &engine,
+        StreamOperation::Begin {
+            identity: identity.clone(),
+            target: NavigationTarget::Job { id: id.clone() },
+            filename: "partial.bin".into(),
+            total: Some(6),
+        },
+    )
+    .unwrap();
+    frame(
+        &engine,
+        StreamOperation::Chunk {
+            identity: identity.clone(),
+            offset: 0,
+            data_base64: "AQID".into(),
+        },
+    )
+    .unwrap();
+    engine
+        .command(Command::BrowserStatus {
+            id,
+            owner: identity.scope.profile.clone(),
+            state: JobState::WaitingUser,
+            message: Some("browser_document_replaced".into()),
+            bytes: 0,
+            total: None,
+            url: None,
+            scope: Some(identity.scope),
+            source_generation: Some(identity.source_generation),
+        })
+        .unwrap();
+    let current = &engine.snapshot().jobs[0];
+    assert_eq!(current.state, JobState::WaitingUser);
+    assert_eq!(current.bytes, 3);
+    assert_eq!(current.total, Some(6));
+    assert!(current.verified_sha256.is_none());
+}
+#[test]
 fn eof_and_offsets_cannot_falsely_complete() {
     let (_, engine, id, identity) = setup(false);
     assert!(frame(

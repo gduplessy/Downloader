@@ -956,14 +956,24 @@ impl Engine {
                     {
                         bail!("Job is not controlled by browser navigation");
                     }
+                    let preserve_partial =
+                        j.browser_source && j.partial_created && state == JobState::WaitingUser;
                     j.state = state;
                     if let Some(url) = url {
                         j.navigation_url = Some(url);
                     }
                     j.error = message
                         .map(|s| security::redact(&s.chars().take(1024).collect::<String>()));
-                    j.bytes = bytes;
-                    j.total = total;
+                    j.bytes = if preserve_partial {
+                        j.bytes.max(bytes)
+                    } else {
+                        bytes
+                    };
+                    j.total = if preserve_partial {
+                        total.or(j.total)
+                    } else {
+                        total
+                    };
                 }
                 self.persist(&job)?;
                 Ok(serde_json::json!({"id":id}))
