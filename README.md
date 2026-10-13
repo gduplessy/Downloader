@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.14.2<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.14.3<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -28,7 +28,7 @@ Blob document replacement and closed-tab cleanup preserve explicit native recove
 
 Worker loss requires a fresh action for the exact owned stream and retains durable partial progress. Firefox 157 binary form-navigation/download capture remains explicitly pending; its reproducible lane evidence is recorded separately from supported Blob and page-owned fetch paths.
 
-Private navigation metadata uses a separate ephemeral namespace, including browser-download mappings. Regular storage reads and removal cannot cross that boundary.
+Private navigation metadata uses a separate ephemeral namespace, including browser-download mappings. Regular storage reads and removal cannot cross that boundary. Installed Chrome worker-loss and safe native-service recovery, Chrome/Edge private Blob hashes, and a labeled primitive-storage probe are recorded in the [production stream matrix](docs/evidence/nav-browser-streams/README.md); broader session and owner-transfer acceptance remains pending.
 
 The integration branch retains main's shared countdown boundary handling and expands resolver regressions for delayed authorization and document/session replacement.
 
@@ -77,7 +77,7 @@ Hosted page → free-download step → countdown → final GET link/form
                            browser paused → desktop accepted → verified file
 ```
 
-With FlareSolverr enabled, recognized browser protection receives one automatic resolution attempt. The resolver respects waiting periods and stops for custom CAPTCHA, sign-in, payment, or ambiguous controls. Complete the manual step in the tab, then choose **Continue page navigation**. Non-replayable POST requests and browser-generated blobs remain browser-managed.
+With FlareSolverr enabled, recognized browser protection receives one automatic resolution attempt. The resolver respects waiting periods and stops for custom CAPTCHA, sign-in, payment, or ambiguous controls. Complete the manual step in the tab, then choose **Continue page navigation**. Optional direct capture streams qualified original POST and page Blob bytes to the desktop; unsupported responses remain recoverable in the browser.
 
 Navigation is bounded to three active pages and one page per host. Browser profiles claim navigation jobs exclusively to avoid competing workers. This is a heuristic workflow; changing live sites require separate acceptance testing. Unsupported image variants remain manual; live premium-account acceptance and DRM bypass remain unsupported. These limits are tracked explicitly in the [hosted-page and challenge roadmap](docs/ROADMAP.md#1-hosted-download-pages-and-challenges) and [protected-content roadmap](docs/ROADMAP.md#5-media-and-protected-content).
 

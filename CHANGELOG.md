@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.3
+
+- Record installed production Blob, genuine worker loss, safe native-service recovery and split-private storage qualification with precise remaining gates.
+- Correlate fixture targets by actual owned tab identity, bound CLI recovery calls and verify the original durable partial prefix.
+- Record native-host/daemon executable hashes separately from CLI versions and reject mid-run executable replacement.
+
 ## 0.14.2
 
 - Integrate the coordinator private-session namespace and marked browser-download mappings for real split-worker qualification.

@@ -8,7 +8,7 @@ export async function buildPrivateDriver({ build, ext }) {
   await build({
     stdin: {
       contents:
-        "import {navigationStorage} from './apps/extension/src/navigation/session/store.ts'; const area=navigationStorage(chrome.storage.local,chrome.storage.session,chrome.extension.inIncognitoContext);globalThis.__fixtureReadNavigation=()=>area.get(null);",
+        "import {navigationStorage} from './apps/extension/src/navigation/session/store.ts'; const area=navigationStorage(chrome.storage.local,chrome.storage.session,chrome.extension.inIncognitoContext);globalThis.__fixtureReadNavigation=()=>area.get(null);globalThis.__fixtureSetNavigation=v=>area.set(v);globalThis.__fixtureRemoveNavigation=k=>area.remove(k);",
       resolveDir: process.cwd(),
       sourcefile: 'private-storage-probe.ts',
       loader: 'ts',
@@ -194,9 +194,10 @@ export async function preparePrivateNavigation({
   );
   assert.ok(ownedTab?.id, 'No production-owned blob tab');
   const targets = await command('Target.getTargets');
-  const pageTarget = targets.targetInfos
-    .filter((t) => t.type === 'page' && t.url === sourceUrl)
-    .at(-1);
+  const debuggerTargets = await privateEvaluate('chrome.debugger.getTargets()');
+  const targetIdentity = debuggerTargets.find((target) => target.tabId === ownedTab.id);
+  assert.ok(targetIdentity?.id, 'Actual owned private tab has no debugger target identity');
+  const pageTarget = targets.targetInfos.find((target) => target.targetId === targetIdentity.id);
   assert.ok(pageTarget, 'No owned page target');
   return {
     jobId,
@@ -248,4 +249,27 @@ export async function auditPrivateNavigation({ evaluateRegular, jobId, privacyMa
   );
   assert.equal(observations.regularCaptureStatusHidesPrivate, true);
   return observations;
+}
+
+// Seed only a mapping-format fixture, using the actual private job created above.
+// This qualifies shared-area fencing; it does not fabricate a browser download event.
+export async function auditPrivatePrimitiveMappings({ regularEvaluate, privateEvaluate, jobId }) {
+  const key = 'browser-job-fixture-' + crypto.randomUUID();
+  try {
+    await privateEvaluate(
+      'globalThis.__fixtureSetNavigation(' + JSON.stringify({ [key]: jobId }) + ')',
+    );
+    const regular = await regularEvaluate('globalThis.__fixtureReadNavigation()');
+    const regularReadFenced = !(key in regular) && !JSON.stringify(regular).includes(jobId);
+    await regularEvaluate('globalThis.__fixtureRemoveNavigation(' + JSON.stringify(key) + ')');
+    const retained = await privateEvaluate('globalThis.__fixtureReadNavigation()');
+    return {
+      seededMapping: true,
+      actualSplitBrowserStorage: true,
+      regularReadFenced,
+      regularRemoveFenced: retained[key] === jobId,
+    };
+  } finally {
+    await privateEvaluate('globalThis.__fixtureRemoveNavigation(' + JSON.stringify(key) + ')');
+  }
 }

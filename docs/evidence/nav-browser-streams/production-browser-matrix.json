@@ -1,7 +1,92 @@
 {
   "recorded": "2026-10-13",
-  "acceptanceScope": "Exact local fixture rows only; broader matrix remains pending",
+  "acceptanceScope": "Exact installed local fixture rows only; full NAV/session/browser/platform matrix remains pending. CLI versions do not identify the native-host binary.",
   "rows": [
+    {
+      "mode": "blob",
+      "browser": "Chrome/155.0.8059.39",
+      "os": "win32",
+      "architecture": "x64",
+      "checkedBase": "52c0d98",
+      "sourceRevision": "52c0d98d9e508b853ef7036834c5d52441d923ce",
+      "driverSha256": "4486281228a3a91e2334bbc8aa484d3f9d2af3e634797986cfbf29ba185ff38d",
+      "privateContextSha256": "24368129d212eba0fd10509e0cd0282332a12cd3e8c47229a0bf93beb8631d5f",
+      "productionBackground": true,
+      "productionResolver": true,
+      "diagnosticSourceChanges": false,
+      "expectedBytes": 262161,
+      "actualBytes": 262161,
+      "state": "complete",
+      "sha256": "ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862",
+      "source_generation": 1,
+      "claim_generation": 1,
+      "originResponseRequests": 0,
+      "originRequests": [
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "browser": true
+        },
+        {
+          "method": "GET",
+          "path": "/favicon.ico",
+          "browser": true
+        }
+      ],
+      "limitations": [
+        "Local fixtures; live providers and permission prompt pending",
+        "No Firefox ESR or unavailable OS qualification from this run"
+      ],
+      "observations": {
+        "cliVersion": "downloader-cli 0.14.1",
+        "nativeExecutables": {
+          "hostAndDaemon": {
+            "workspaceRelativePath": "target/debug/downloader-service.exe",
+            "sha256": "91f3ab4f16b7fc79f92c1a9fbca9774e2ad0dc2b371cb450744b54ca523c5531",
+            "bytes": 17117184,
+            "modifiedUtc": "2026-10-13T12:33:25.079Z",
+            "selfReportedVersion": null,
+            "sameExecutable": true
+          },
+          "cli": {
+            "workspaceRelativePath": "target/debug/downloader.exe",
+            "sha256": "f3f90851fe831ffa916c2c790d74fcd2406dc4ce943c42bbad731a5a1dfd0812",
+            "bytes": 6307328,
+            "modifiedUtc": "2026-10-13T12:33:26.069Z",
+            "selfReportedVersion": "downloader-cli 0.14.1"
+          }
+        },
+        "durationMs": 46605,
+        "transferElapsedMs": 14707,
+        "firstDurableProgressMs": 14349,
+        "progressSamples": [
+          {
+            "elapsedMs": 14349,
+            "bytes": 262161
+          }
+        ],
+        "measuredBytesPerSecond": 17826,
+        "originalClicks": 0,
+        "previewStillVisible": false,
+        "interruptionApplied": false,
+        "private": false,
+        "nativeOriginRequests": 0,
+        "captureStates": ["complete"],
+        "typedRecoveryReason": null,
+        "adapter": {
+          "id": "local-fixture",
+          "version": "1.0.0",
+          "selectedHost": null
+        },
+        "publishedFileExists": true,
+        "workerHeap": {
+          "samples": 111,
+          "baselineBytes": 1548344,
+          "peakBytes": 7534748
+        },
+        "ownedTabCorrelation": "actual debugger target tabId"
+      }
+    },
     {
       "mode": "blob",
       "browser": "Chrome/155.0.8059.39",
@@ -37,7 +122,6 @@
         "No Firefox ESR or unavailable OS qualification from this run"
       ],
       "observations": {
-        "nativeVersion": "downloader-cli 0.13.4",
         "durationMs": 53221,
         "transferElapsedMs": 15195,
         "firstDurableProgressMs": 6251,
@@ -153,7 +237,10 @@
         ],
         "measuredBytesPerSecond": 552065,
         "originalClicks": 0,
+        "previewStillVisible": true,
         "interruptionApplied": false,
+        "private": false,
+        "nativeOriginRequests": 0,
         "captureStates": ["complete"],
         "typedRecoveryReason": null,
         "adapter": {
@@ -166,7 +253,8 @@
           "samples": 113,
           "baselineBytes": 1530852,
           "peakBytes": 20861672
-        }
+        },
+        "cliVersion": "downloader-cli 0.13.4"
       }
     },
     {
@@ -283,8 +371,6 @@
         "No Firefox ESR or unavailable OS qualification from this run"
       ],
       "observations": {
-        "nativeVersion": "downloader-cli 0.12.12",
-        "bytesAtInterruption": 458752,
         "durationMs": 20909,
         "transferElapsedMs": 9100,
         "firstDurableProgressMs": 5573,
@@ -300,13 +386,18 @@
         ],
         "measuredBytesPerSecond": null,
         "originalClicks": 0,
+        "previewStillVisible": false,
         "interruptionApplied": true,
+        "private": false,
+        "nativeOriginRequests": 0,
         "captureStates": ["interrupted"],
         "workerHeap": {
           "samples": 62,
           "baselineBytes": 1416004,
           "peakBytes": 7101956
-        }
+        },
+        "bytesAtInterruption": 458752,
+        "cliVersion": "downloader-cli 0.12.12"
       }
     },
     {
@@ -381,7 +472,6 @@
         "No Firefox ESR or unavailable OS qualification from this run"
       ],
       "observations": {
-        "nativeVersion": "downloader-cli 0.12.12",
         "durationMs": 53561,
         "transferElapsedMs": 24099,
         "firstDurableProgressMs": 23045,
@@ -397,7 +487,9 @@
         ],
         "measuredBytesPerSecond": 10879,
         "originalClicks": 0,
+        "previewStillVisible": false,
         "interruptionApplied": false,
+        "private": true,
         "privateCookieStore": "1",
         "workerIncognito": true,
         "sourceActivation": "synthetic event invoking unchanged registered production menu handler with actual private tab",
@@ -406,6 +498,7 @@
         "durableDbMarkerAbsent": true,
         "regularOverlayHidesPrivate": true,
         "regularCaptureStatusHidesPrivate": true,
+        "nativeOriginRequests": 0,
         "captureStates": ["complete"],
         "adapter": {
           "id": null,
@@ -418,7 +511,8 @@
           "samples": 109,
           "baselineBytes": 1584856,
           "peakBytes": 7973716
-        }
+        },
+        "cliVersion": "downloader-cli 0.12.12"
       }
     },
     {
@@ -426,8 +520,9 @@
       "browser": "Edg/155.0.4283.45",
       "os": "win32",
       "architecture": "x64",
-      "checkedBase": "14b9c6e",
-      "sourceRevision": "14b9c6e948d37bc0a6f2c3499f224904e02b4abc",
+      "checkedBase": "52c0d98",
+      "sourceRevision": "52c0d98d9e508b853ef7036834c5d52441d923ce",
+      "driverSha256": "096f175e47a942e7c5f18848bb5b0c7ae4e6bfc290d9b56cd4c8448ebe504677",
       "productionBackground": true,
       "productionResolver": true,
       "diagnosticSourceChanges": false,
@@ -457,23 +552,28 @@
       ],
       "limitations": [
         "Local fixtures; live providers and permission prompt pending",
-        "Private source activation uses the explicitly approved synthetic context-menu event; native menu UI pending",
+        "Private source activation uses approved synthetic context-menu event; native menu UI pending",
         "No Firefox ESR or unavailable OS qualification from this run"
       ],
       "observations": {
-        "nativeVersion": "downloader-cli 0.12.12",
-        "durationMs": 66296,
-        "transferElapsedMs": 6588,
-        "firstDurableProgressMs": 6588,
+        "durationMs": 40332,
+        "transferElapsedMs": 8154,
+        "firstDurableProgressMs": 7826,
         "progressSamples": [
           {
-            "elapsedMs": 6588,
+            "elapsedMs": 7826,
+            "bytes": 196608
+          },
+          {
+            "elapsedMs": 8154,
             "bytes": 262161
           }
         ],
-        "measuredBytesPerSecond": 39794,
+        "measuredBytesPerSecond": 32151,
         "originalClicks": 0,
+        "previewStillVisible": false,
         "interruptionApplied": false,
+        "private": true,
         "privateCookieStore": "1",
         "workerIncognito": true,
         "sourceActivation": "synthetic event invoking unchanged registered production menu handler with actual private tab",
@@ -482,13 +582,184 @@
         "durableDbMarkerAbsent": true,
         "regularOverlayHidesPrivate": true,
         "regularCaptureStatusHidesPrivate": true,
+        "nativeOriginRequests": 0,
         "captureStates": ["complete"],
+        "typedRecoveryReason": null,
+        "adapter": {
+          "id": "local-fixture",
+          "version": "1.0.0",
+          "selectedHost": null
+        },
+        "publishedFileExists": true,
         "differsFromRegularExpected": true,
         "workerHeap": {
-          "samples": 72,
-          "baselineBytes": 1460544,
-          "peakBytes": 8152644
+          "samples": 68,
+          "baselineBytes": 1763020,
+          "peakBytes": 6026512
+        },
+        "ownedTabCorrelation": "actual debugger target tabId",
+        "cliVersion": "downloader-cli 0.14.1"
+      }
+    },
+    {
+      "mode": "private-primitive-audit",
+      "browser": "Chrome/155.0.8059.39",
+      "os": "win32",
+      "architecture": "x64",
+      "checkedBase": "52c0d98",
+      "sourceRevision": "52c0d98d9e508b853ef7036834c5d52441d923ce",
+      "driverSha256": "096f175e47a942e7c5f18848bb5b0c7ae4e6bfc290d9b56cd4c8448ebe504677",
+      "productionBackground": true,
+      "productionResolver": true,
+      "diagnosticSourceChanges": false,
+      "expectedBytes": 262161,
+      "actualBytes": 262161,
+      "state": "complete",
+      "sha256": "fc55ee5d7a5516e4f888e2bb43fa66637b1c1a26d69f3298b6e8701cfb651d83",
+      "source_generation": 1,
+      "claim_generation": 1,
+      "originResponseRequests": 0,
+      "originRequests": [
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "browser": true
+        },
+        {
+          "method": "GET",
+          "path": "/favicon.ico",
+          "browser": true
+        },
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "browser": true
         }
+      ],
+      "limitations": [
+        "Local fixtures; live providers and permission prompt pending",
+        "Private source activation uses approved synthetic context-menu event; native menu UI pending",
+        "No Firefox ESR or unavailable OS qualification from this run"
+      ],
+      "observations": {
+        "durationMs": 43390,
+        "transferElapsedMs": 10640,
+        "firstDurableProgressMs": 10285,
+        "progressSamples": [
+          {
+            "elapsedMs": 10285,
+            "bytes": 262161
+          }
+        ],
+        "measuredBytesPerSecond": 24639,
+        "originalClicks": 0,
+        "previewStillVisible": false,
+        "interruptionApplied": false,
+        "private": true,
+        "privateCookieStore": "1",
+        "workerIncognito": true,
+        "sourceActivation": "synthetic event invoking unchanged registered production menu handler with actual private tab",
+        "normalProjectionHidesPrivate": true,
+        "localMarkerAbsent": true,
+        "durableDbMarkerAbsent": true,
+        "regularOverlayHidesPrivate": true,
+        "regularCaptureStatusHidesPrivate": true,
+        "nativeOriginRequests": 0,
+        "captureStates": ["complete"],
+        "typedRecoveryReason": null,
+        "adapter": {
+          "id": "local-fixture",
+          "version": "1.0.0",
+          "selectedHost": null
+        },
+        "publishedFileExists": true,
+        "differsFromRegularExpected": true,
+        "workerHeap": {
+          "samples": 84,
+          "baselineBytes": 1747480,
+          "peakBytes": 6068284
+        },
+        "primitiveMappings": {
+          "seededMapping": true,
+          "actualSplitBrowserStorage": true,
+          "regularReadFenced": true,
+          "regularRemoveFenced": true
+        },
+        "ownedTabCorrelation": "actual debugger target tabId",
+        "cliVersion": "downloader-cli 0.14.1"
+      }
+    },
+    {
+      "mode": "service-reconnect",
+      "browser": "Chrome/155.0.8059.39",
+      "os": "win32",
+      "architecture": "x64",
+      "checkedBase": "52c0d98",
+      "sourceRevision": "52c0d98d9e508b853ef7036834c5d52441d923ce",
+      "driverSha256": "a51206b955b4a716979d2e2c7574078054767a3958aadbf5815cd1cba32e3176",
+      "productionBackground": true,
+      "productionResolver": true,
+      "diagnosticSourceChanges": false,
+      "expectedBytes": 33554449,
+      "actualBytes": 65536,
+      "state": "waiting_user",
+      "sha256": null,
+      "source_generation": 1,
+      "claim_generation": 1,
+      "originResponseRequests": 0,
+      "originRequests": [
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "browser": true
+        },
+        {
+          "method": "GET",
+          "path": "/favicon.ico",
+          "browser": true
+        }
+      ],
+      "limitations": [
+        "Local fixtures; live providers and permission prompt pending",
+        "No Firefox ESR or unavailable OS qualification from this run"
+      ],
+      "observations": {
+        "durationMs": 34262,
+        "transferElapsedMs": 19271,
+        "firstDurableProgressMs": 10259,
+        "progressSamples": [
+          {
+            "elapsedMs": 10259,
+            "bytes": 65536
+          }
+        ],
+        "measuredBytesPerSecond": null,
+        "originalClicks": 0,
+        "previewStillVisible": true,
+        "interruptionApplied": true,
+        "private": false,
+        "nativeOriginRequests": 0,
+        "captureStates": ["interrupted"],
+        "typedRecoveryReason": null,
+        "adapter": {
+          "id": "local-fixture",
+          "version": "1.0.0",
+          "selectedHost": null
+        },
+        "publishedFileExists": false,
+        "workerHeap": {
+          "samples": 99,
+          "baselineBytes": 1534580,
+          "peakBytes": 9291208
+        },
+        "bytesAtInterruption": 65536,
+        "daemonRestarted": true,
+        "recoveryObservedAfterMs": 9012,
+        "durablePrefixVerified": true,
+        "partialFileBytes": 65536,
+        "recoveryOutcome": "manual_reauthorization",
+        "ownedTabCorrelation": "actual debugger target tabId",
+        "cliVersion": "downloader-cli 0.14.1"
       }
     },
     {
@@ -569,8 +840,6 @@
         "No Firefox ESR or unavailable OS qualification from this run"
       ],
       "observations": {
-        "nativeVersion": "downloader-cli 0.12.12",
-        "bytesAtInterruption": 196608,
         "durationMs": 73160,
         "transferElapsedMs": 10130,
         "firstDurableProgressMs": 6586,
@@ -582,13 +851,120 @@
         ],
         "measuredBytesPerSecond": null,
         "originalClicks": null,
+        "previewStillVisible": false,
         "interruptionApplied": true,
+        "private": false,
+        "nativeOriginRequests": 0,
         "captureStates": [],
         "workerHeap": {
           "samples": 115,
           "baselineBytes": 1400376,
           "peakBytes": 8073156
+        },
+        "bytesAtInterruption": 196608,
+        "cliVersion": "downloader-cli 0.12.12"
+      }
+    },
+    {
+      "mode": "worker-loss",
+      "browser": "Chrome/155.0.8059.39",
+      "os": "win32",
+      "architecture": "x64",
+      "checkedBase": "c310942",
+      "sourceRevision": "c310942469eb30148d19273d149c8563cb99a56f",
+      "driverSha256": "5b934679128b5ab74303c1397522286b7883e8611469590fbcedb5efe4c6534f",
+      "productionBackground": true,
+      "productionResolver": true,
+      "diagnosticSourceChanges": false,
+      "expectedBytes": 33554449,
+      "actualBytes": 393216,
+      "state": "waiting_user",
+      "sha256": null,
+      "source_generation": 1,
+      "claim_generation": 1,
+      "originResponseRequests": 0,
+      "originRequests": [
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "browser": true
+        },
+        {
+          "method": "GET",
+          "path": "/favicon.ico",
+          "browser": true
         }
+      ],
+      "limitations": [
+        "Local fixtures; live providers and permission prompt pending",
+        "No Firefox ESR or unavailable OS qualification from this run"
+      ],
+      "observations": {
+        "durationMs": 52986,
+        "transferElapsedMs": 22574,
+        "firstDurableProgressMs": 18797,
+        "progressSamples": [
+          {
+            "elapsedMs": 18797,
+            "bytes": 196608
+          },
+          {
+            "elapsedMs": 19700,
+            "bytes": 393216
+          }
+        ],
+        "measuredBytesPerSecond": null,
+        "originalClicks": 0,
+        "previewStillVisible": false,
+        "interruptionApplied": true,
+        "private": false,
+        "nativeOriginRequests": 0,
+        "captureStates": ["interrupted"],
+        "typedRecoveryReason": "browser_worker_interrupted",
+        "adapter": {
+          "id": "local-fixture",
+          "version": "1.0.0",
+          "selectedHost": null
+        },
+        "publishedFileExists": false,
+        "workerHeap": {
+          "samples": 99,
+          "baselineBytes": 1527756,
+          "peakBytes": 8277224
+        },
+        "bytesAtInterruption": 196608,
+        "oldWorkerGone": true,
+        "cliVersion": "downloader-cli 0.14.1"
+      }
+    }
+  ],
+  "regressions": [
+    {
+      "mode": "private-primitive-audit",
+      "browser": "Chrome/155.0.8059.39",
+      "sourceRevision": "c310942469eb30148d19273d149c8563cb99a56f",
+      "acceptance": "pending",
+      "cliVersion": "downloader-cli 0.14.1",
+      "probe": "seeded mapping-format fixture against actual split-browser storage; no fabricated browser download event",
+      "primitiveMappings": {
+        "seededMapping": true,
+        "actualSplitBrowserStorage": true,
+        "regularReadFenced": false,
+        "regularRemoveFenced": false
+      }
+    },
+    {
+      "mode": "private-primitive-audit",
+      "browser": "Chrome/155.0.8059.39",
+      "sourceRevision": "52c0d98d9e508b853ef7036834c5d52441d923ce",
+      "acceptance": "passed",
+      "cliVersion": "downloader-cli 0.14.1",
+      "probe": "seeded mapping-format fixture against actual split-browser storage; no fabricated browser download event",
+      "primitiveMappings": {
+        "seededMapping": true,
+        "actualSplitBrowserStorage": true,
+        "regularReadFenced": true,
+        "regularRemoveFenced": true
       }
     }
   ]

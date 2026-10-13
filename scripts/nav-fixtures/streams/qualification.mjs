@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { createHash, generateKeyPairSync } from 'node:crypto';
 import { spawn, execFileSync } from 'node:child_process';
-import { mkdir, writeFile, readFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile, stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import assert from 'node:assert/strict';
@@ -9,6 +9,7 @@ import {
   buildPrivateDriver,
   preparePrivateNavigation,
   auditPrivateNavigation,
+  auditPrivatePrimitiveMappings,
 } from './private-context.mjs';
 const require = createRequire(new URL('../../../apps/extension/package.json', import.meta.url));
 const { build } = require('esbuild');
@@ -18,7 +19,10 @@ assert.ok(
   !privateMode || process.env.NAV_TRACE !== '1',
   'Private diagnostic source tracing is prohibited',
 );
-const mode = process.env.NAV_CASE ?? (privateMode ? 'private-blob' : 'blob');
+const primitiveAudit = privateMode && process.env.NAV_AUDIT_PRIMITIVES === '1';
+const mode =
+  process.env.NAV_CASE ??
+  (primitiveAudit ? 'private-primitive-audit' : privateMode ? 'private-blob' : 'blob');
 const filename = 'original-雪.bin';
 const observations = {};
 const runStarted = Date.now();
@@ -49,10 +53,32 @@ let extId = [...createHash('sha256').update(Buffer.from(key, 'base64')).digest()
 const host = 'org.downloader.fixture_' + crypto.randomUUID().replaceAll('-', '');
 const nativeBinary = resolve('target/debug/downloader-service.exe');
 const cli = resolve('target/debug/downloader.exe');
-observations.nativeVersion = execFileSync(cli, ['--version'], {
+observations.cliVersion = execFileSync(cli, ['--version'], {
   encoding: 'utf8',
   windowsHide: true,
 }).trim();
+const executableIdentity = async (path, workspaceRelativePath) => {
+  const metadata = await stat(path);
+  return {
+    workspaceRelativePath,
+    sha256: createHash('sha256')
+      .update(await readFile(path))
+      .digest('hex'),
+    bytes: metadata.size,
+    modifiedUtc: metadata.mtime.toISOString(),
+  };
+};
+observations.nativeExecutables = {
+  hostAndDaemon: {
+    ...(await executableIdentity(nativeBinary, 'target/debug/downloader-service.exe')),
+    selfReportedVersion: null,
+    sameExecutable: true,
+  },
+  cli: {
+    ...(await executableIdentity(cli, 'target/debug/downloader.exe')),
+    selfReportedVersion: observations.cliVersion,
+  },
+};
 const nativeManifest = resolve(dir, 'native.json');
 await writeFile(
   nativeManifest,
@@ -472,11 +498,13 @@ try {
     );
     assert.ok(ownedTab?.id, 'No production-owned blob tab');
     const targets = await command('Target.getTargets');
-    pageTarget = targets.targetInfos.find(
-      (t) => t.type === 'page' && t.url === base + '/nav-adapters/g4u/blob',
-    );
+    const debuggerTargets = await evaluate('chrome.debugger.getTargets()');
+    const targetIdentity = debuggerTargets.find((target) => target.tabId === ownedTab.id);
+    assert.ok(targetIdentity?.id, 'Actual owned regular tab has no debugger target identity');
+    pageTarget = targets.targetInfos.find((target) => target.targetId === targetIdentity.id);
     assert.ok(pageTarget, 'No owned page target');
   }
+  observations.ownedTabCorrelation = 'actual debugger target tabId';
   const { sessionId: ownedSession } = await command('Target.attachToTarget', {
     targetId: pageTarget.targetId,
     flatten: true,
@@ -702,6 +730,10 @@ try {
         (interruptionApplied && Date.now() - interruptAt > 3500))
     )
       break;
+    if (mode === 'service-reconnect' && interruptionApplied && job?.state === 'waiting_user') {
+      observations.recoveryObservedAfterMs = Date.now() - interruptAt;
+      break;
+    }
     if (job?.state === 'complete') break;
     if (['failed', 'cancelled'].includes(job?.state))
       throw Error(JSON.stringify({ job, requests }));
@@ -767,7 +799,18 @@ try {
       throw error;
     },
   );
-  if (negative) {
+  if (mode === 'service-reconnect' && job?.state === 'waiting_user') {
+    const partial = await readFile(
+      resolve(dir, 'downloads', '.' + (privateMode ? 'blob' : filename) + '.' + jobId + '.part'),
+    );
+    assert.ok(partial.length >= job.bytes);
+    assert.equal(digest(partial.subarray(0, job.bytes)), digest(payload.subarray(0, job.bytes)));
+    observations.durablePrefixVerified = true;
+    observations.partialFileBytes = partial.length;
+    observations.recoveryOutcome = 'manual_reauthorization';
+  } else if (mode === 'service-reconnect' && job?.state === 'complete')
+    observations.recoveryOutcome = 'automatic_verified_completion';
+  if (negative || (mode === 'service-reconnect' && job?.state !== 'complete')) {
     assert.equal(
       observations.publishedFileExists,
       false,
@@ -798,10 +841,36 @@ try {
     !interruptionModes.includes(mode) ||
     mode === 'service-reconnect' ||
     ['waiting_user', 'waiting_source', 'failed', 'cancelled', 'paused'].includes(job?.state);
-  const accepted = negative ? typedRecovery : job?.state === 'complete';
+  if (primitiveAudit)
+    observations.primitiveMappings = await auditPrivatePrimitiveMappings({
+      regularEvaluate,
+      privateEvaluate: evaluate,
+      jobId,
+    });
+  const accepted =
+    (negative
+      ? typedRecovery
+      : job?.state === 'complete' ||
+        (mode === 'service-reconnect' &&
+          job?.state === 'waiting_user' &&
+          observations.durablePrefixVerified &&
+          observations.captureStates.includes('interrupted') &&
+          job.bytes >= observations.bytesAtInterruption)) &&
+    (!primitiveAudit ||
+      (observations.primitiveMappings.regularReadFenced &&
+        observations.primitiveMappings.regularRemoveFenced));
+  assert.equal(
+    digest(await readFile(nativeBinary)),
+    observations.nativeExecutables.hostAndDaemon.sha256,
+    'Native executable changed during qualification',
+  );
   const driverSha256 = digest(await readFile(new URL(import.meta.url)));
+  const privateContextSha256 = digest(
+    await readFile(new URL('./private-context.mjs', import.meta.url)),
+  );
   const evidence = {
     driverSha256,
+    privateContextSha256,
     acceptance: accepted
       ? process.env.NAV_TRACE === '1'
         ? 'diagnostic-passed'
@@ -811,7 +880,7 @@ try {
     browser: version.product,
     os: process.platform,
     architecture: process.arch,
-    checkedBase: process.env.NAV_CHECKED_BASE ?? '7e44b00',
+    checkedBase: process.env.NAV_CHECKED_BASE ?? sourceRevision,
     sourceRevision,
     productionBackground: true,
     productionResolver: true,
@@ -865,7 +934,7 @@ try {
         error: privateMode
           ? String(error).replaceAll(privacyMarker, '<private-fixture>')
           : String(error),
-        checkedBase: process.env.NAV_CHECKED_BASE ?? '7e44b00',
+        checkedBase: process.env.NAV_CHECKED_BASE ?? sourceRevision,
         browser: executable,
         state: latest?.state,
         bytes: latest?.bytes,
