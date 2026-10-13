@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.0
+
+- Add a shared production worker/resolver Blob qualification driver with real preview events, scoped native ingress interruption and private-context bootstrap.
+- Preserve sanitized installed Chrome/Edge native-hash, cancellation, source/document replacement, tab-close and private-record visibility evidence.
+- Keep worker/service/browser recovery, complete privacy/container matrix, Firefox and live-provider acceptance explicit; private context-menu activation is synthetic and labeled.
+
 ## 0.13.4
 
 - Integrate checked rendered discovery with bounded provenance preparation and explicit original-session restart recovery.

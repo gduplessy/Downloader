@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.13.4<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.14.0<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -269,3 +269,5 @@ NAV-12 0.13.1 preserves explicit original-session ownership across a complete br
 NAV-12 0.13.2 reconciles checked root 7e44b00/latest main. Clean committed-source Chrome 155 and Edge 155 both pass cross-origin authenticated discovery with full browser/service/worker restart and expected native hash. Live provider, Firefox/ESR, other OS and owner UI acceptance remain pending.
 
 NAV-12 0.13.3 records final clean committed-source 7f752d3 Chrome/Edge cross-origin and complete restart evidence. Both finish one authenticated original GET, zero HEAD and 262,161 hash-verified native bytes. Documentation/version-only increment; remaining release acceptance rows stay explicit.
+
+NAV-07/08/09/11 production qualification increment (0.14.0): installed Chrome/Edge Blob-to-native hashes and specific cancellation/replacement/private rows are recorded in [the full-worker matrix](evidence/nav-browser-streams/README.md). Worker/service/browser recovery, complete profile/partition/container qualification and Firefox/live-provider acceptance remain pending; these passing fixture rows do not close the roadmap items.

@@ -1,0 +1,595 @@
+{
+  "recorded": "2026-10-13",
+  "acceptanceScope": "Exact local fixture rows only; broader matrix remains pending",
+  "rows": [
+    {
+      "mode": "blob",
+      "browser": "Chrome/155.0.8059.39",
+      "os": "win32",
+      "architecture": "x64",
+      "checkedBase": "414435a",
+      "sourceRevision": "414435ad65ed2a8681457cb15b86a9225388e4e3",
+      "driverSha256": "fdfad9de597800df0ac222fd3eb5e0bfa61847f683fd7f3b1d1c4fb54e42934b",
+      "productionBackground": true,
+      "productionResolver": true,
+      "diagnosticSourceChanges": false,
+      "expectedBytes": 8388625,
+      "actualBytes": 8388625,
+      "state": "complete",
+      "sha256": "c454f05473a97ef2f7a2c8d9ec8d08bc0de4268315e2c77ea6f16f7b91894a27",
+      "source_generation": 1,
+      "claim_generation": 1,
+      "originResponseRequests": 0,
+      "originRequests": [
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "browser": true
+        },
+        {
+          "method": "GET",
+          "path": "/favicon.ico",
+          "browser": true
+        }
+      ],
+      "limitations": [
+        "Local fixtures; live providers and permission prompt pending",
+        "No Firefox ESR or unavailable OS qualification from this run"
+      ],
+      "observations": {
+        "nativeVersion": "downloader-cli 0.13.4",
+        "durationMs": 53221,
+        "transferElapsedMs": 15195,
+        "firstDurableProgressMs": 6251,
+        "progressSamples": [
+          {
+            "elapsedMs": 6251,
+            "bytes": 131072
+          },
+          {
+            "elapsedMs": 6539,
+            "bytes": 524288
+          },
+          {
+            "elapsedMs": 6856,
+            "bytes": 851968
+          },
+          {
+            "elapsedMs": 7263,
+            "bytes": 1114112
+          },
+          {
+            "elapsedMs": 7656,
+            "bytes": 1310720
+          },
+          {
+            "elapsedMs": 7992,
+            "bytes": 1441792
+          },
+          {
+            "elapsedMs": 8342,
+            "bytes": 1638400
+          },
+          {
+            "elapsedMs": 8638,
+            "bytes": 1900544
+          },
+          {
+            "elapsedMs": 8963,
+            "bytes": 2293760
+          },
+          {
+            "elapsedMs": 9286,
+            "bytes": 2490368
+          },
+          {
+            "elapsedMs": 9589,
+            "bytes": 2883584
+          },
+          {
+            "elapsedMs": 9943,
+            "bytes": 3276800
+          },
+          {
+            "elapsedMs": 10254,
+            "bytes": 3473408
+          },
+          {
+            "elapsedMs": 10557,
+            "bytes": 3801088
+          },
+          {
+            "elapsedMs": 10954,
+            "bytes": 4390912
+          },
+          {
+            "elapsedMs": 11244,
+            "bytes": 4784128
+          },
+          {
+            "elapsedMs": 11542,
+            "bytes": 4980736
+          },
+          {
+            "elapsedMs": 11867,
+            "bytes": 5373952
+          },
+          {
+            "elapsedMs": 12175,
+            "bytes": 5767168
+          },
+          {
+            "elapsedMs": 12467,
+            "bytes": 5963776
+          },
+          {
+            "elapsedMs": 12771,
+            "bytes": 6291456
+          },
+          {
+            "elapsedMs": 13078,
+            "bytes": 6750208
+          },
+          {
+            "elapsedMs": 13377,
+            "bytes": 7012352
+          },
+          {
+            "elapsedMs": 13679,
+            "bytes": 7405568
+          },
+          {
+            "elapsedMs": 13989,
+            "bytes": 7798784
+          },
+          {
+            "elapsedMs": 14294,
+            "bytes": 7995392
+          },
+          {
+            "elapsedMs": 14593,
+            "bytes": 8388625
+          }
+        ],
+        "measuredBytesPerSecond": 552065,
+        "originalClicks": 0,
+        "interruptionApplied": false,
+        "captureStates": ["complete"],
+        "typedRecoveryReason": null,
+        "adapter": {
+          "id": "local-fixture",
+          "version": "1.0.0",
+          "selectedHost": null
+        },
+        "publishedFileExists": true,
+        "workerHeap": {
+          "samples": 113,
+          "baselineBytes": 1530852,
+          "peakBytes": 20861672
+        }
+      }
+    },
+    {
+      "mode": "blob",
+      "browser": "Edg/155.0.4283.45",
+      "os": "win32",
+      "architecture": "x64",
+      "checkedBase": "7e44b00",
+      "productionBackground": true,
+      "productionResolver": true,
+      "diagnosticSourceChanges": false,
+      "expectedBytes": 8388625,
+      "actualBytes": 8388625,
+      "state": "complete",
+      "sha256": "c454f05473a97ef2f7a2c8d9ec8d08bc0de4268315e2c77ea6f16f7b91894a27",
+      "source_generation": 1,
+      "claim_generation": 1,
+      "originResponseRequests": 0,
+      "originRequests": [
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "browser": true
+        },
+        {
+          "method": "GET",
+          "path": "/favicon.ico",
+          "browser": true
+        }
+      ],
+      "limitations": [
+        "Local fixtures; live providers and permission prompt pending",
+        "No Firefox ESR or unavailable OS qualification from this run"
+      ],
+      "observations": {
+        "originalClicks": 0,
+        "interruptionApplied": false,
+        "captureStates": ["complete"],
+        "workerHeap": {
+          "samples": 66,
+          "baselineBytes": 1414564,
+          "peakBytes": 32777620
+        }
+      }
+    },
+    {
+      "mode": "capture-cancel",
+      "browser": "Chrome/155.0.8059.39",
+      "os": "win32",
+      "architecture": "x64",
+      "checkedBase": "c8ac54d",
+      "productionBackground": true,
+      "productionResolver": true,
+      "diagnosticSourceChanges": false,
+      "expectedBytes": 33554449,
+      "actualBytes": 393216,
+      "state": "waiting_user",
+      "sha256": null,
+      "source_generation": 1,
+      "claim_generation": 1,
+      "originResponseRequests": 0,
+      "limitations": [
+        "Local fixtures; live providers and permission prompt pending",
+        "No Firefox ESR or unavailable OS qualification from this run"
+      ],
+      "observations": {
+        "bytesAtInterruption": 196608,
+        "originalClicks": 0,
+        "interruptionApplied": true,
+        "captureStates": [],
+        "workerHeap": {
+          "samples": 102,
+          "baselineBytes": 1399420,
+          "peakBytes": 11908436
+        }
+      }
+    },
+    {
+      "mode": "document-replacement",
+      "browser": "Chrome/155.0.8059.39",
+      "os": "win32",
+      "architecture": "x64",
+      "checkedBase": "14b9c6e",
+      "sourceRevision": "14b9c6e948d37bc0a6f2c3499f224904e02b4abc",
+      "productionBackground": true,
+      "productionResolver": true,
+      "diagnosticSourceChanges": false,
+      "expectedBytes": 33554449,
+      "actualBytes": 0,
+      "state": "waiting_user",
+      "sha256": null,
+      "source_generation": 1,
+      "claim_generation": 1,
+      "originResponseRequests": 0,
+      "originRequests": [
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "browser": true
+        },
+        {
+          "method": "GET",
+          "path": "/favicon.ico",
+          "browser": true
+        },
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "browser": true
+        }
+      ],
+      "limitations": [
+        "Local fixtures; live providers and permission prompt pending",
+        "No Firefox ESR or unavailable OS qualification from this run"
+      ],
+      "observations": {
+        "nativeVersion": "downloader-cli 0.12.12",
+        "bytesAtInterruption": 458752,
+        "durationMs": 20909,
+        "transferElapsedMs": 9100,
+        "firstDurableProgressMs": 5573,
+        "progressSamples": [
+          {
+            "elapsedMs": 5573,
+            "bytes": 458752
+          },
+          {
+            "elapsedMs": 5938,
+            "bytes": 524288
+          }
+        ],
+        "measuredBytesPerSecond": null,
+        "originalClicks": 0,
+        "interruptionApplied": true,
+        "captureStates": ["interrupted"],
+        "workerHeap": {
+          "samples": 62,
+          "baselineBytes": 1416004,
+          "peakBytes": 7101956
+        }
+      }
+    },
+    {
+      "mode": "preview-cancel",
+      "browser": "Edg/155.0.4283.45",
+      "os": "win32",
+      "architecture": "x64",
+      "checkedBase": "c8ac54d",
+      "productionBackground": true,
+      "productionResolver": true,
+      "diagnosticSourceChanges": false,
+      "expectedBytes": 262161,
+      "actualBytes": 0,
+      "state": "waiting_user",
+      "sha256": null,
+      "source_generation": 1,
+      "claim_generation": 1,
+      "originResponseRequests": 0,
+      "limitations": [
+        "Local fixtures; live providers and permission prompt pending",
+        "No Firefox ESR or unavailable OS qualification from this run"
+      ],
+      "observations": {
+        "originalClicks": 0,
+        "interruptionApplied": false,
+        "captureStates": [],
+        "workerHeap": {
+          "samples": 81,
+          "baselineBytes": 1407132,
+          "peakBytes": 1834952
+        }
+      }
+    },
+    {
+      "mode": "private-blob",
+      "browser": "Chrome/155.0.8059.39",
+      "os": "win32",
+      "architecture": "x64",
+      "checkedBase": "14b9c6e",
+      "sourceRevision": "14b9c6e948d37bc0a6f2c3499f224904e02b4abc",
+      "driverSha256": "b2ef512848cf00b2f592931bf626611d516c48637ce943186906f9c5de068a4e",
+      "productionBackground": true,
+      "productionResolver": true,
+      "diagnosticSourceChanges": false,
+      "expectedBytes": 262161,
+      "actualBytes": 262161,
+      "state": "complete",
+      "sha256": "fc55ee5d7a5516e4f888e2bb43fa66637b1c1a26d69f3298b6e8701cfb651d83",
+      "source_generation": 1,
+      "claim_generation": 1,
+      "originResponseRequests": 0,
+      "originRequests": [
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "browser": true
+        },
+        {
+          "method": "GET",
+          "path": "/favicon.ico",
+          "browser": true
+        },
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "browser": true
+        }
+      ],
+      "limitations": [
+        "Local fixtures; live providers and permission prompt pending",
+        "Private source activation uses approved synthetic context-menu event; native menu UI pending",
+        "No Firefox ESR or unavailable OS qualification from this run"
+      ],
+      "observations": {
+        "nativeVersion": "downloader-cli 0.12.12",
+        "durationMs": 53561,
+        "transferElapsedMs": 24099,
+        "firstDurableProgressMs": 23045,
+        "progressSamples": [
+          {
+            "elapsedMs": 23045,
+            "bytes": 196608
+          },
+          {
+            "elapsedMs": 24099,
+            "bytes": 262161
+          }
+        ],
+        "measuredBytesPerSecond": 10879,
+        "originalClicks": 0,
+        "interruptionApplied": false,
+        "privateCookieStore": "1",
+        "workerIncognito": true,
+        "sourceActivation": "synthetic event invoking unchanged registered production menu handler with actual private tab",
+        "normalProjectionHidesPrivate": true,
+        "localMarkerAbsent": true,
+        "durableDbMarkerAbsent": true,
+        "regularOverlayHidesPrivate": true,
+        "regularCaptureStatusHidesPrivate": true,
+        "captureStates": ["complete"],
+        "adapter": {
+          "id": null,
+          "version": null,
+          "selectedHost": null
+        },
+        "publishedFileExists": true,
+        "differsFromRegularExpected": true,
+        "workerHeap": {
+          "samples": 109,
+          "baselineBytes": 1584856,
+          "peakBytes": 7973716
+        }
+      }
+    },
+    {
+      "mode": "private-blob",
+      "browser": "Edg/155.0.4283.45",
+      "os": "win32",
+      "architecture": "x64",
+      "checkedBase": "14b9c6e",
+      "sourceRevision": "14b9c6e948d37bc0a6f2c3499f224904e02b4abc",
+      "productionBackground": true,
+      "productionResolver": true,
+      "diagnosticSourceChanges": false,
+      "expectedBytes": 262161,
+      "actualBytes": 262161,
+      "state": "complete",
+      "sha256": "fc55ee5d7a5516e4f888e2bb43fa66637b1c1a26d69f3298b6e8701cfb651d83",
+      "source_generation": 1,
+      "claim_generation": 1,
+      "originResponseRequests": 0,
+      "originRequests": [
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "browser": true
+        },
+        {
+          "method": "GET",
+          "path": "/favicon.ico",
+          "browser": true
+        },
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "browser": true
+        }
+      ],
+      "limitations": [
+        "Local fixtures; live providers and permission prompt pending",
+        "Private source activation uses the explicitly approved synthetic context-menu event; native menu UI pending",
+        "No Firefox ESR or unavailable OS qualification from this run"
+      ],
+      "observations": {
+        "nativeVersion": "downloader-cli 0.12.12",
+        "durationMs": 66296,
+        "transferElapsedMs": 6588,
+        "firstDurableProgressMs": 6588,
+        "progressSamples": [
+          {
+            "elapsedMs": 6588,
+            "bytes": 262161
+          }
+        ],
+        "measuredBytesPerSecond": 39794,
+        "originalClicks": 0,
+        "interruptionApplied": false,
+        "privateCookieStore": "1",
+        "workerIncognito": true,
+        "sourceActivation": "synthetic event invoking unchanged registered production menu handler with actual private tab",
+        "normalProjectionHidesPrivate": true,
+        "localMarkerAbsent": true,
+        "durableDbMarkerAbsent": true,
+        "regularOverlayHidesPrivate": true,
+        "regularCaptureStatusHidesPrivate": true,
+        "captureStates": ["complete"],
+        "differsFromRegularExpected": true,
+        "workerHeap": {
+          "samples": 72,
+          "baselineBytes": 1460544,
+          "peakBytes": 8152644
+        }
+      }
+    },
+    {
+      "mode": "source-replacement",
+      "browser": "Chrome/155.0.8059.39",
+      "os": "win32",
+      "architecture": "x64",
+      "checkedBase": "7e44b00",
+      "productionBackground": true,
+      "productionResolver": true,
+      "diagnosticSourceChanges": false,
+      "expectedBytes": 33554449,
+      "actualBytes": 393216,
+      "state": "waiting_user",
+      "sha256": null,
+      "source_generation": 2,
+      "claim_generation": 2,
+      "originResponseRequests": 0,
+      "originRequests": [
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "browser": true
+        },
+        {
+          "method": "GET",
+          "path": "/favicon.ico",
+          "browser": true
+        }
+      ],
+      "limitations": [
+        "Local fixtures; live providers and permission prompt pending",
+        "No Firefox ESR or unavailable OS qualification from this run"
+      ],
+      "observations": {
+        "bytesAtInterruption": 196608,
+        "originalClicks": 0,
+        "interruptionApplied": true,
+        "captureStates": ["interrupted"],
+        "workerHeap": {
+          "samples": 72,
+          "baselineBytes": 1413768,
+          "peakBytes": 7875284
+        }
+      }
+    },
+    {
+      "mode": "tab-close",
+      "browser": "Edg/155.0.4283.45",
+      "os": "win32",
+      "architecture": "x64",
+      "checkedBase": "14b9c6e",
+      "sourceRevision": "14b9c6e948d37bc0a6f2c3499f224904e02b4abc",
+      "productionBackground": true,
+      "productionResolver": true,
+      "diagnosticSourceChanges": false,
+      "expectedBytes": 33554449,
+      "actualBytes": 0,
+      "state": "waiting_user",
+      "sha256": null,
+      "source_generation": 1,
+      "claim_generation": 1,
+      "originResponseRequests": 0,
+      "originRequests": [
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "browser": true
+        },
+        {
+          "method": "GET",
+          "path": "/favicon.ico",
+          "browser": true
+        }
+      ],
+      "limitations": [
+        "Local fixtures; live providers and permission prompt pending",
+        "No Firefox ESR or unavailable OS qualification from this run"
+      ],
+      "observations": {
+        "nativeVersion": "downloader-cli 0.12.12",
+        "bytesAtInterruption": 196608,
+        "durationMs": 73160,
+        "transferElapsedMs": 10130,
+        "firstDurableProgressMs": 6586,
+        "progressSamples": [
+          {
+            "elapsedMs": 6586,
+            "bytes": 196608
+          }
+        ],
+        "measuredBytesPerSecond": null,
+        "originalClicks": null,
+        "interruptionApplied": true,
+        "captureStates": [],
+        "workerHeap": {
+          "samples": 115,
+          "baselineBytes": 1400376,
+          "peakBytes": 8073156
+        }
+      }
+    }
+  ]
+}
