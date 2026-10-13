@@ -2,7 +2,7 @@ import { createServer } from 'node:http';
 import { createHash } from 'node:crypto';
 import { spawn, execFileSync } from 'node:child_process';
 import { mkdir, writeFile, readFile, realpath } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { resolve, dirname, relative, isAbsolute } from 'node:path';
 import { createRequire } from 'node:module';
 import assert from 'node:assert/strict';
 const require = createRequire(new URL('../../../apps/extension/package.json', import.meta.url));
@@ -94,8 +94,14 @@ async function fixtureSource(path) {
   return source;
 }
 // Build the production entry points. The only source substitution is the isolated native host name.
-await build({
-  entryPoints: ['apps/extension/src/background.ts', 'apps/extension/src/resolver.ts'],
+const sourceRoot = process.cwd();
+const compilation = await build({
+  absWorkingDir: sourceRoot,
+  metafile: true,
+  entryPoints: [
+    resolve(sourceRoot, 'apps/extension/src/background.ts'),
+    resolve(sourceRoot, 'apps/extension/src/resolver.ts'),
+  ],
   outdir: ext,
   nodePaths: [resolve(runnerCwd, process.env.NAV_NODE_MODULES ?? 'apps/extension/node_modules')],
   bundle: true,
@@ -124,6 +130,18 @@ await build({
                     .replace(
                       'filter.resume();',
                       'filter.resume(); (globalThis.__fixtureFilterEvents ??= []).push({event:"resumed",at:Date.now(),status:filter.status});',
+                    )
+                    .replaceAll(
+                      '.catch(abort);',
+                      '.catch(error => { (globalThis.__fixtureFilterEvents ??= []).push({event:"pipeline_error",at:Date.now(),error:String(error),status:filter.status}); abort(); });',
+                    )
+                    .replace(
+                      'this.open().postMessage(frame);',
+                      '(globalThis.__fixtureStreamOperations ??= []).push({event:"operation",at:Date.now(),operation:operation.operation,offset:operation.operation==="chunk"?operation.offset:null}); this.open().postMessage(frame);',
+                    )
+                    .replace(
+                      'const waiter = this.pending.get(response.id);',
+                      '(globalThis.__fixtureStreamOperations ??= []).push({event:"ack",at:Date.now(),ok:response.ok,error:response.error?.message??null,offset:response.data?.accepted_offset,terminal:response.data?.terminal}); const waiter = this.pending.get(response.id);',
                     )
                     .replace(
                       'filter.onstop = () => {',
@@ -155,12 +173,64 @@ await build({
                     )
                 : (await fixtureSource(path)).replaceAll('org.downloader.native', host),
             loader: 'ts',
+            resolveDir: dirname(path),
           }),
         );
       },
     },
   ],
 });
+const compilerInputPaths = Object.keys(compilation.metafile.inputs);
+for (const input of compilerInputPaths) {
+  const actual = resolve(sourceRoot, input);
+  const local = relative(sourceRoot, actual);
+  const external =
+    local === '..' || local.startsWith('..\\') || local.startsWith('../') || isAbsolute(local);
+  assert.ok(
+    !external || actual.replaceAll('\\', '/').includes('/node_modules/'),
+    'Production module escaped intended source root: ' + input,
+  );
+}
+const requiredSourceInputs = [
+  'apps/extension/src/background.ts',
+  'apps/extension/src/resolver.ts',
+  'apps/extension/src/navigation/streams/capture.ts',
+];
+for (const path of requiredSourceInputs)
+  assert.ok(
+    compilerInputPaths.some((input) => resolve(sourceRoot, input) === resolve(sourceRoot, path)),
+    'Intended production module not compiled: ' + path,
+  );
+const captureSource = await readFile(
+  resolve(sourceRoot, 'apps/extension/src/navigation/streams/capture.ts'),
+  'utf8',
+);
+if (captureSource.includes('let inputEnded = false'))
+  assert.ok(
+    (await readFile(resolve(ext, 'background.js'), 'utf8')).includes('inputEnded'),
+    'Checked EOF guard missing from emitted worker',
+  );
+const compiledProductionInputs = compilerInputPaths
+  .filter((input) => !input.replaceAll('\\', '/').includes('node_modules/'))
+  .map((input) => relative(sourceRoot, resolve(sourceRoot, input)).replaceAll('\\', '/'));
+await writeFile(
+  resolve(dir, 'build-provenance.json'),
+  JSON.stringify(
+    {
+      requestedSourceRevision: sourceRevision,
+      compiledSourceRevision: sourceRevision,
+      explicitAbsWorkingDir: true,
+      absoluteEntryPoints: true,
+      verifiedProductionInputs: compiledProductionInputs,
+    },
+    null,
+    2,
+  ),
+);
+if (process.env.NAV_BUILD_ONLY === '1') {
+  console.log('PASS intended production source inputs and emitted EOF guard');
+  process.exit(0);
+}
 if (process.env.NAV_RPC_TRACE === '1')
   assert.ok(
     (await readFile(resolve(ext, 'background.js'), 'utf8')).includes('__fixtureNativeReplies'),
@@ -588,7 +658,7 @@ try {
       const transient=browser.storage.session?await browser.storage.session.get():{};
       const records=Object.entries({...local,...transient}).filter(([key])=>key.startsWith('resolver-')).map(([key,value])=>({key,tabId:value.tabId,scope:value.scope,sourceGeneration:value.sourceGeneration,documentGeneration:value.documentGeneration,sessionEpoch:value.sessionEpoch}));
       const pages=await Promise.all(tabs.filter(tab=>tab.url?.startsWith(${JSON.stringify(base)})).map(async tab=>({id:tab.id,status:tab.status,incognito:tab.incognito,cookieStoreId:tab.cookieStoreId,marker:await browser.tabs.executeScript(tab.id,{frameId:0,code:'({nonce:globalThis.__downloaderDocumentNonce??null,resolver:!!globalThis.__downloaderResolver,errors:globalThis.__fixtureErrors})'}).catch(error=>({error:String(error)}))})));
-      return JSON.stringify({sessionStorageAvailable:!!browser.storage.session,records,pages,cookieStores:await browser.cookies.getAllCookieStores(),filterEvents:browser.extension.getBackgroundPage()?.__fixtureFilterEvents,errors:browser.extension.getBackgroundPage()?.__fixtureErrors});
+      return JSON.stringify({sessionStorageAvailable:!!browser.storage.session,records,pages,cookieStores:await browser.cookies.getAllCookieStores(),filterEvents:browser.extension.getBackgroundPage()?.__fixtureFilterEvents,streamOperations:browser.extension.getBackgroundPage()?.__fixtureStreamOperations,nativeReplies:browser.extension.getBackgroundPage()?.__fixtureNativeReplies,nativeErrors:browser.extension.getBackgroundPage()?.__fixtureNativeErrors,errors:browser.extension.getBackgroundPage()?.__fixtureErrors});
     })()`);
         await writeFile(resolve(dir, 'observation.json'), observation);
       }
@@ -620,6 +690,19 @@ try {
           'Unexpected HTTP payload request',
         );
       }
+      assert.equal(
+        httpRequests.filter((r) => r.path === pagePath && r.method === 'GET').length,
+        1,
+        'Original page was refetched',
+      );
+      assert.ok(
+        httpRequests.every(
+          (r) =>
+            (r.method === 'GET' && [pagePath, '/favicon.ico'].includes(r.path)) ||
+            (scenario !== 'blob' && r.method === 'POST' && r.path === '/one-use'),
+        ),
+        'Unexpected HTTP request or payload refetch',
+      );
       const bytes = await readFile(resolve(dir, 'downloads', filename));
       assert.equal(bytes.length, payload.length);
       assert.equal(digest(bytes), digest(payload));
@@ -631,6 +714,7 @@ try {
         'apps/extension/src/background.ts',
         'apps/extension/src/resolver.ts',
         'apps/extension/src/navigation/streams/blob.ts',
+        'apps/extension/src/navigation/streams/capture.ts',
         'apps/extension/src/navigation/streams/transport.ts',
       ];
       const sourceHashes = Object.fromEntries(
@@ -650,6 +734,12 @@ try {
           platform: nativeDiagnostics.platform,
         },
         sourceRevision,
+        compiledSourceRevision: sourceRevision,
+        buildProvenance: {
+          explicitAbsWorkingDir: true,
+          absoluteEntryPoints: true,
+          verifiedProductionInputs: compiledProductionInputs,
+        },
         sourceHashes,
         extensionBundleHashes: {
           background: digest(await readFile(resolve(ext, 'background.js'))),
@@ -671,6 +761,8 @@ try {
         productionResolver: true,
         submissions: requests.length,
         originalPageOwnedXhr: scenario === 'xhr',
+        pageOwnedConsumer:
+          scenario === 'xhr' ? 'bounded response.body.getReader drain/discard' : null,
         ordinaryNavigationPostRewritten: false,
         httpRequests,
         httpPayloadRequests: requests.length,
@@ -678,7 +770,7 @@ try {
         sha256: digest(bytes),
         nativeVerifiedSha256: job.verified_sha256,
         state: job.state,
-        claimGeneration: job.navigation_claim?.generation,
+        claimGeneration: job.navigation_scope?.claim_generation ?? job.navigation_claim?.generation,
         sourceGeneration: job.source_generation,
         limitations: [
           'Local fixtures; live hosts/accounts pending',

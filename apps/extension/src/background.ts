@@ -1640,6 +1640,8 @@ async function resolverStep(message: any, tabId: number, currentUrl: string, doc
     job = snapshot.jobs.find((j: any) => j.id === id);
   if (!job || !['waiting_browser', 'waiting_user'].includes(job.state) || record.downloadId)
     return { click: false, repeat: false };
+  if (record.scope && directOwners.owns(tabId, id, record.scope, record.sourceGeneration!))
+    return { click: false, repeat: false };
   const capture = storage['capture-' + id];
   if (capture?.scope && record.scope && sameScope(capture.scope, record.scope)
       && capture.sourceGeneration === record.sourceGeneration

@@ -998,6 +998,22 @@ impl Engine {
                     {
                         bail!("Job is not controlled by browser navigation");
                     }
+                    if state != JobState::WaitingUser
+                        && self
+                            .store
+                            .lock()
+                            .unwrap()
+                            .all::<crate::browser_stream::Checkpoint>("browser_stream")?
+                            .iter()
+                            .any(|stream| {
+                                !stream.terminal
+                                    && stream.job_id == j.id
+                                    && Some(&stream.identity.scope) == j.navigation_scope.as_ref()
+                                    && stream.identity.source_generation == j.source_generation
+                            })
+                    {
+                        bail!("Original response stream owns progress; explicitly interrupt capture before changing navigation state");
+                    }
                     let preserve_partial =
                         j.browser_source && j.partial_created && state == JobState::WaitingUser;
                     j.state = state;

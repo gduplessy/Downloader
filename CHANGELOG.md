@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.16.1
+
+- Refuse renderer status changes that would reset acknowledged progress while the exact original response stream owns the native job; explicit interruption keeps durable progress.
+- Stop repeated resolver decisions during an owned capture. A regression reproduces the former zero-byte reset and verifies the final native hash/publication path.
+- Keep final Firefox XHR qualification pending until the corrected fixture verifies its actual compiled source and desktop hash.
+
 ## 0.16.0
 
 - Add ephemeral, one-use desktop-to-browser session handoff tickets with explicit destination acceptance, observed cookie-store/container/partition scope, and source/claim invalidation.
