@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.18.1<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.18.2<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -283,3 +283,5 @@ NAV-07 supported Firefox page-owned XHR passes its installed Windows stable157 e
 NAV-11 desktop handoff controls (0.18.0) complete native/recipient wiring and handle live pending projections without discarding a legitimate reply. Fifty desktop transfer regressions cover authority, expiry and cancellation. Installed cross-profile/container qualification is still in progress.
 
 NAV-07 Edge qualification (0.18.1) completes one original binary attachment POST through installed Edge 155 and the production native sink, with 8,388,625 hash-verified bytes. Other POST/lifecycle rows remain separate; see [installed evidence](evidence/nav-integration/production-edge-post.json).
+
+NAV-04 production clock integration (0.18.2) uses monotonic alarm/poll rechecks during a live worker and durable UTC recovery after restart. Repeated observations remain bounded and generation-fenced; every wake still requires fresh page/server readiness. Installed wait/alarm qualification remains pending.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.18.2
+
+- Use monotonic wait clocks in the production browser scheduler, including poll-based rechecks after wall-clock jumps, bounded observation intervals, restart recovery and wait-generation replacement.
+- Add production scheduler regressions proving clock jumps only request fresh observation; they never claim server readiness or emit a readiness notification.
+
 ## 0.18.1
 
 - Record installed Edge 155 original binary attachment POST acceptance on checked integration 312a6dd: one submission, 8,388,625 bytes, and matching native and independent desktop SHA-256.

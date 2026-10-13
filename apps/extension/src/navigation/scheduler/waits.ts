@@ -27,7 +27,12 @@ export class WaitClock {
     return recovered + Math.max(0, this.clock.monotonic() - start.monotonic);
   }
   due(key: string, wait: DurableWait): boolean {
-    return this.elapsed(key, wait) >= wait.observed_duration_ms || this.clock.utc() >= wait.next_recheck_ms;
+    return this.recheckDelay(key, wait) === 0;
+  }
+  recheckDelay(key: string, wait: DurableWait): number {
+    const interval = Math.max(0, Math.min(wait.observed_duration_ms || 30000,
+      wait.next_recheck_ms - wait.observed_at_ms));
+    return Math.max(0, interval - this.elapsed(key, wait));
   }
   forget(key: string) { this.starts.delete(key); }
 }
