@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.10.7<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.10.8<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -300,3 +300,9 @@ Challenge integration 0.10.6: adapter actions and grants now require the verifie
 Shared integration 0.12.0: queued metadata writes reject older native source/claim counters, including private ephemeral records. Chromium restart reconciliation verifies actual cookie-store membership. Extension regressions, types and browser builds pass; the broader installed acceptance matrix remains pending.
 
 Challenge 0.10.7: image revalidation uses the same canvas readback path as initial capture; twelve stale/cancel/session/occlusion DOM cases submit nothing. Installed original form POST and fresh links pass; final desktop handoff is pending the shared observer fix.
+
+Shared integration 0.12.1: removal events carry the original owner, private lane and exact claim. Scoped subscriptions exclude foreign and historical unqualified tombstones; a real engine regression covers regular/private and replaced-claim cases.
+
+Shared integration 0.12.2: active direct streams fence legacy download observers by exact tab/job/scope/source identity. Installed Chrome original POST requalification passes one submission and 262,161 verified bytes; Firefox response-filter qualification is still pending.
+
+Challenge integration 0.10.8 adopts source-bound direct-stream ownership and removal-event isolation. 108 extension and 6 desktop tests plus the full native suite and desktop compilation pass; installed final GET hashes remain pending.

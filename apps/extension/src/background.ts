@@ -9,6 +9,7 @@ import { scopeForTab, sameScope, sessionKey, type ScopedRequest } from './naviga
 import { navigationStorage, memoryStorage } from './navigation/session/store';
 import { classifyReplay } from './navigation/streams/replay';
 import { DurableStreamSink, NativeStreamPort } from './navigation/streams/transport';
+import { DirectCaptureOwners } from './navigation/streams/ownership';
 import { armChromium, takeFirefox, originalResponseMetadata } from './navigation/streams/capture';
 import { readOwnedBlob } from './navigation/streams/blob';
 import { applyEvents } from '../../../packages/shared/src/events';
@@ -146,6 +147,7 @@ function requestFor(url: string, privateSession?: boolean) {
   return values.length === 1 ? values[0] : undefined;
 }
 const captureCancels = new Map<number, () => Promise<void>>();
+const directOwners = new DirectCaptureOwners();
 const blobReaders = new Map<
   string,
   {
@@ -199,6 +201,7 @@ async function newSink(
   };
   const sink = new DurableStreamSink(identity, new NativeStreamPort(), () =>
     verifyStreamOwner(id, record.tabId, identity.scope, identity.source_generation),
+    () => directOwners.release(record.tabId, identity.stream_id),
   );
   if (!deferred) await sink.begin({ kind: 'job', id }, filename, total);
   return sink;
@@ -213,6 +216,8 @@ async function armDirect(
   await captureCancels.get(record.tabId)?.();
   captureCancels.delete(record.tabId);
   const sink = await newSink(id, record, filename, null, !request.url.startsWith('blob:'));
+  directOwners.assign(record.tabId, id, sink.identity);
+  try {
   if (request.url.startsWith('blob:')) {
     const tab = await browser.tabs.get(record.tabId);
     if (new URL(request.url).origin !== new URL(tab.url!).origin) {
@@ -311,6 +316,7 @@ async function armDirect(
         (/attachment/i.test(values['content-disposition'] ?? '') ||
           !/(?:text\/html|json)/i.test(values['content-type'] ?? ''));
       if (!file) {
+        directOwners.release(record.tabId, sink.identity.stream_id);
         admit(false);
         void native('browser_status', {
           id,
@@ -324,7 +330,10 @@ async function armDirect(
       const metadata = originalResponseMetadata(values);
       void sink.begin({ kind: 'job', id }, metadata.filename ?? filename, metadata.total).then(
         () => admit(true),
-        () => admit(false),
+        () => {
+          directOwners.release(record.tabId, sink.identity.stream_id);
+          admit(false);
+        },
       );
     };
     const listen = (details: any) => {
@@ -366,6 +375,10 @@ async function armDirect(
     }, 60000);
   }
   return false;
+  } catch (error) {
+    directOwners.release(record.tabId, sink.identity.stream_id);
+    throw error;
+  }
 }
 const ongoing = new Set<number>();
 let settings: CaptureSettings = { ...defaults };
@@ -752,6 +765,7 @@ async function resolveDownload(item: browser.Downloads.DownloadItem) {
   }
   if (entry) {
     const id = entry[0].slice('resolver-'.length);
+    if (directOwners.owns(entry[1].tabId, id, entry[1].scope, entry[1].sourceGeneration ?? 1)) return;
     await navigationStore.set({
       [entry[0]]: { ...entry[1], downloadId: item.id },
     });
