@@ -102,6 +102,69 @@ fn original_bytes_publish_without_any_origin_probe() {
     assert_eq!(engine.snapshot().jobs[0].state, JobState::Complete);
 }
 #[test]
+fn desktop_source_replacement_leaves_actionable_recovery_and_fences_old_bytes() {
+    let (dir, engine, id, identity) = setup(false);
+    frame(
+        &engine,
+        StreamOperation::Begin {
+            identity: identity.clone(),
+            target: NavigationTarget::Job { id: id.clone() },
+            filename: "replacement.bin".into(),
+            total: Some(6),
+        },
+    )
+    .unwrap();
+    frame(
+        &engine,
+        StreamOperation::Chunk {
+            identity: identity.clone(),
+            offset: 0,
+            data_base64: "AQID".into(),
+        },
+    )
+    .unwrap();
+    engine
+        .command(Command::Refresh {
+            id: id.clone(),
+            url: "http://127.0.0.1:9/fresh-action".into(),
+            context: RequestContext::default(),
+        })
+        .unwrap();
+    let current = engine
+        .snapshot()
+        .jobs
+        .into_iter()
+        .find(|job| job.id == id)
+        .unwrap();
+    assert_eq!(current.state, JobState::WaitingUser);
+    assert_eq!(current.source_generation, 2);
+    assert_eq!(current.navigation_scope.unwrap().claim_generation, 2);
+    assert!(current
+        .error
+        .unwrap()
+        .starts_with("browser_source_replaced:"));
+    assert!(frame(
+        &engine,
+        StreamOperation::Chunk {
+            identity: identity.clone(),
+            offset: 3,
+            data_base64: "BAUG".into(),
+        }
+    )
+    .is_err());
+    assert!(frame(
+        &engine,
+        StreamOperation::End {
+            identity,
+            total: 3,
+            expected_sha256: None,
+        }
+    )
+    .is_err());
+    assert!(!dir.path().join("output/replacement.bin").exists());
+    assert_eq!(engine.snapshot().jobs[0].state, JobState::WaitingUser);
+}
+#[test]
 fn eof_and_offsets_cannot_falsely_complete() {
     let (_, engine, id, identity) = setup(false);
     assert!(frame(

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.12.8
+
+- Replacing a browser source now moves the desktop job to actionable recovery immediately, while advancing source and claim counters to reject old stream frames and EOF.
+- Verify replacement after durable partial ingress against the native engine; installed replacement qualification remains in progress.
+
 ## 0.12.7
 
 - Coalesce automatic startup in an already running live resolver document, preserving selection previews while retaining explicit Continue and replacement recovery.
