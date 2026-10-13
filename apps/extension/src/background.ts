@@ -240,6 +240,7 @@ async function armDirect(
       state, tabId: record.tabId, scope: record.scope,
       sourceGeneration: record.sourceGeneration, streamId: sink.identity.stream_id,
       documentNonce: record.documentNonce,
+      kind: request.url.startsWith('blob:') ? 'blob' : 'response',
     } });
   };
   try {
@@ -1714,6 +1715,20 @@ browser.tabs.onUpdated.addListener((tabId, change) => {
       for (const [key, value] of Object.entries(records)) {
         const record = value as ResolverRecord;
         if (key.startsWith('resolver-') && record.tabId === tabId) {
+          const id = key.slice(9);
+          const capture = records['capture-' + id];
+          if (capture?.kind === 'blob' && capture.scope && record.scope
+              && sameScope(capture.scope, record.scope)
+              && capture.sourceGeneration === record.sourceGeneration
+              && ['armed', 'streaming'].includes(capture.state)) {
+            await captureCancels.get(tabId)?.();
+            captureCancels.delete(tabId);
+            await native('browser_status', {
+              id, state: 'waiting_user',
+              message: 'browser_document_replaced: request a fresh Blob action in the owning browser',
+              bytes: 0, total: null,
+            }).catch(() => {});
+          }
           record.documentGeneration = 0;
           delete record.documentId;
           delete record.documentNonce;
@@ -1779,7 +1794,6 @@ browser.tabs.onRemoved.addListener(
           r.tabId === tabId &&
           r.sessionEpoch === (await browserEpoch)
         ) {
-          await navigationStore.remove(key);
           if (!r.downloadId)
             await native('browser_status', {
               id: key.slice(9),
@@ -1788,6 +1802,7 @@ browser.tabs.onRemoved.addListener(
               bytes: 0,
               total: null,
             }).catch(() => {});
+          await navigationStore.remove(key);
         }
       }
     })(),

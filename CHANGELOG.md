@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.12
+
+- Abort scoped Blob capture when its document starts loading a replacement, and retain actionable browser recovery before clearing the old document marker.
+- Report closed-tab recovery while the exact native scope/source fence is still available; remove the resolver record afterward.
+- Installed document-loss and tab-close qualification remain pending.
+
 ## 0.12.11
 
 - Serialize cancellation after a dispatched native stream admission so a late checkpoint receives its matching abort.
