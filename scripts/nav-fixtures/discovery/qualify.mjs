@@ -1,13 +1,14 @@
 import { createServer } from 'node:http';
 import { createHash, generateKeyPairSync } from 'node:crypto';
 import { spawn, execFileSync } from 'node:child_process';
-import { mkdir, writeFile, readFile, cp } from 'node:fs/promises';
+import { mkdir, writeFile, readFile, cp, unlink } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import assert from 'node:assert/strict';
 const crossOrigin = process.env.NAV_CROSS_ORIGIN === '1';
 const restartWorker = process.env.NAV_RESTART_WORKER === '1';
 const restartService = process.env.NAV_RESTART_SERVICE === '1';
+const restartBrowser = process.env.NAV_RESTART_BROWSER === '1';
 const require = createRequire(new URL('../../../apps/extension/package.json', import.meta.url));
 const { build } = require('esbuild');
 const executable =
@@ -23,7 +24,9 @@ let extId = [...createHash('sha256').update(Buffer.from(key, 'base64')).digest()
   .map((n) => String.fromCharCode(97 + (n >> 4), 97 + (n & 15)))
   .join('');
 const host = 'org.downloader.fixture_' + crypto.randomUUID().replaceAll('-', '');
-const nativeBinary = resolve('target/debug/downloader-service.exe');
+const nativeSource = resolve('target/debug/downloader-service.exe');
+const nativeBinary = resolve(dir,'downloader-service.exe');
+await cp(nativeSource,nativeBinary);
 const cli = resolve('target/debug/downloader.exe');
 const nativeManifest = resolve(dir, 'native.json');
 await writeFile(
@@ -122,14 +125,14 @@ const server = createServer((req, res) => {
         '<!doctype html><meta charset="utf-8"><div aria-busy="true" id="loading">Loading</div><script>setTimeout(()=>{const a=document.createElement("a");a.href=' +
           JSON.stringify(crossBase + '/nav-adapters/gofile/rendered') +
           ';a.textContent="Next rendered page";document.body.append(a);document.querySelector("#loading").remove()},' +
-          (restartService || restartWorker ? 5000 : 900) +
+          (restartService || restartWorker || restartBrowser ? 5000 : 900) +
           ')</script>',
       );
       return;
     }
     res.end(
       '<!doctype html><meta charset="utf-8"><title>Rendered discovery fixture</title><div aria-busy="true" id="loading">Loading</div><script>setTimeout(()=>{const a=document.createElement("a");a.href="/nav-adapters/gofile/authenticated.bin";a.textContent="T\u00e9l\u00e9charger";document.body.append(a);document.querySelector("#loading").remove();const loop=document.createElement("a");loop.href="/nav-adapters/gofile/rendered#loop";loop.textContent="Loop";document.body.append(loop)},' +
-        (restartService || restartWorker ? 5000 : 900) +
+        (restartService || restartWorker || restartBrowser ? 5000 : 900) +
         ')</script>',
     );
     return;
@@ -249,7 +252,8 @@ function command(method, params = {}, sessionId) {
     ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
   });
 }
-try {
+async function launchBrowser() {
+  await unlink(resolve(dir, 'profile', 'DevToolsActivePort')).catch(() => {});
   browserProc = spawn(
     executable,
     [
@@ -311,6 +315,9 @@ try {
     pending.delete(event.id);
     event.error ? waiter?.reject(Error(event.error.message)) : waiter?.resolve(event.result);
   };
+}
+try {
+  await launchBrowser();
   const version = await command('Browser.getVersion');
   let loadResult;
   try {
@@ -335,34 +342,38 @@ try {
       }),
     );
   }
-  const fixturePage = await command('Target.createTarget', {
-    url: 'chrome-extension://' + extId + '/fixture.html',
-  });
-  const fixtureSession = (
-    await command('Target.attachToTarget', { targetId: fixturePage.targetId, flatten: true })
-  ).sessionId;
-  await command('ServiceWorker.enable', {}, fixtureSession);
-  let worker;
-  for (let i = 0; i < 100; i++) {
-    const targets = await command('Target.getTargets');
-    worker = targets.targetInfos.find(
-      (t) =>
-        t.type === 'service_worker' && t.url === 'chrome-extension://' + extId + '/background.js',
-    );
-    if (worker) break;
-    await new Promise((r) => setTimeout(r, 100));
+  async function connectWorker() {
+    const fixturePage = await command('Target.createTarget', {
+      url: 'chrome-extension://' + extId + '/fixture.html',
+    });
+    const fixtureSession = (
+      await command('Target.attachToTarget', { targetId: fixturePage.targetId, flatten: true })
+    ).sessionId;
+    await command('ServiceWorker.enable', {}, fixtureSession);
+    let worker;
+    for (let i = 0; i < 100; i++) {
+      const targets = await command('Target.getTargets');
+      worker = targets.targetInfos.find(
+        (t) =>
+          t.type === 'service_worker' && t.url === 'chrome-extension://' + extId + '/background.js',
+      );
+      if (worker) break;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    if (!worker)
+      throw Error(
+        'Actual extension could not load in ' +
+          version.product +
+          ': ' +
+          JSON.stringify({ extId, loadResult, targets: await command('Target.getTargets') }),
+      );
+    const { sessionId } = await command('Target.attachToTarget', {
+      targetId: worker.targetId,
+      flatten: true,
+    });
+    return { fixtureSession, worker, sessionId };
   }
-  if (!worker)
-    throw Error(
-      'Actual extension could not load in ' +
-        version.product +
-        ': ' +
-        JSON.stringify({ extId, loadResult, targets: await command('Target.getTargets') }),
-    );
-  let { sessionId } = await command('Target.attachToTarget', {
-    targetId: worker.targetId,
-    flatten: true,
-  });
+  let { fixtureSession, worker, sessionId } = await connectWorker();
   const evaluate = async (expression, session = sessionId) => {
     const result = await command(
       'Runtime.evaluate',
@@ -387,7 +398,7 @@ try {
       ')',
   );
   let state, record;
-  if (restartService || restartWorker) {
+  if (restartService || restartWorker || restartBrowser) {
     record = await evaluate('Array.from(fixture.discovery.records.values())[0]');
     state = await evaluate(
       'fixture.native("discovery_status",{id:' +
@@ -404,6 +415,60 @@ try {
       0,
       'Fixture has not extracted the delayed resource before restart',
     );
+    if (restartBrowser) {
+      const previousEpoch = record.sessionEpoch;
+      const oldClaim = record.scope.claim_generation;
+      await command('Browser.close').catch(() => {});
+      ws.close();
+      if (browserProc.exitCode === null)
+        await new Promise((resolve) => browserProc.once('exit', resolve));
+      assert.equal(requests.length, 0, 'Browser absence cannot trigger resource probes');
+      assert.equal(
+        (
+          JSON.parse(
+            execFileSync(cli, ['--json', 'list'], { env, windowsHide: true, encoding: 'utf8' }),
+          ).jobs ?? []
+        ).length,
+        0,
+      );
+      await launchBrowser();
+      await command('Extensions.loadUnpacked', { path: ext }).catch(() => {});
+      ({ fixtureSession, worker, sessionId } = await connectWorker());
+      for (let i = 0; i < 100; i++) {
+        if ((await evaluate('typeof fixture')) === 'object') break;
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      await evaluate('fixture.discovery.poll()');
+      assert.equal(
+        await evaluate('fixture.discovery.records.size'),
+        0,
+        'New browser epoch cannot automatically adopt stale project ownership',
+      );
+      await evaluate(
+        'fixture.setup(' +
+          JSON.stringify(base) +
+          ',' +
+          JSON.stringify(projectId) +
+          ',' +
+          JSON.stringify(crossBase ?? null) +
+          ')',
+      );
+      record = await evaluate('Array.from(fixture.discovery.records.values())[0]');
+      assert.notEqual(
+        record.sessionEpoch,
+        previousEpoch,
+        'Actual browser process restart renews browser epoch',
+      );
+      assert.ok(
+        record.scope.claim_generation > oldClaim,
+        'Explicit original-session resume renews native claim',
+      );
+      state = await evaluate(
+        'fixture.native("discovery_status",{id:' +
+          JSON.stringify(projectId) +
+          ',scope:Array.from(fixture.discovery.records.values())[0].scope,generation:1,action:"snapshot"})',
+      );
+    }
     const savedResources = state.resources.map((resource) => ({
       url: resource.url,
       page_url: resource.page_url,
@@ -413,6 +478,9 @@ try {
     if (restartService) {
       const exited = new Promise((resolve) => daemon.once('exit', resolve));
       daemon.kill();
+  // Native messaging can auto-launch a replacement daemon during the restart window.
+  // The executable is unique to this fixture, so cleanup cannot touch another service.
+  execFileSync('powershell.exe',['-NoProfile','-Command',"$fixturePath='"+nativeBinary.replaceAll("'","''")+"'; Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $fixturePath } | ForEach-Object { Stop-Process -Id $_.ProcessId -ErrorAction SilentlyContinue }"],{windowsHide:true,stdio:'ignore'});
       await exited;
       daemon = spawn(nativeBinary, ['daemon'], {
         env,
@@ -481,7 +549,7 @@ try {
       }
       await evaluate('fixture.discovery.poll()');
     }
-    if (restartService || restartWorker) {
+    if (restartService || restartWorker || restartBrowser) {
       record = await evaluate('Array.from(fixture.discovery.records.values())[0]');
       assert.equal(
         record.sessionEpoch,
@@ -687,9 +755,19 @@ try {
         failure: job.failure,
         requests,
         lastError: (await evaluate('chrome.storage.local.get("lastError")')).lastError,
-          capture: await evaluate('chrome.storage.local.get("capture-'+selected.jobs[0]+'")'),
-          owner: await evaluate('chrome.storage.local.get("resolver-'+selected.jobs[0]+'").then(rows=>{const r=rows["resolver-'+selected.jobs[0]+'"];return r?{tabId:r.tabId,scope:r.scope,sourceGeneration:r.sourceGeneration,documentGeneration:r.documentGeneration,hasDocument:!!r.documentNonce}:null})'),
-          preview: await evaluate('chrome.scripting.executeScript({target:{tabId:'+resolverTab+'},func:()=>document.querySelector("#__downloader_adapter_preview")?.shadowRoot?.textContent}).then(rows=>rows[0]?.result)').catch(()=>null),
+        capture: await evaluate('chrome.storage.local.get("capture-' + selected.jobs[0] + '")'),
+        owner: await evaluate(
+          'chrome.storage.local.get("resolver-' +
+            selected.jobs[0] +
+            '").then(rows=>{const r=rows["resolver-' +
+            selected.jobs[0] +
+            '"];return r?{tabId:r.tabId,scope:r.scope,sourceGeneration:r.sourceGeneration,documentGeneration:r.documentGeneration,hasDocument:!!r.documentNonce}:null})',
+        ),
+        preview: await evaluate(
+          'chrome.scripting.executeScript({target:{tabId:' +
+            resolverTab +
+            '},func:()=>document.querySelector("#__downloader_adapter_preview")?.shadowRoot?.textContent}).then(rows=>rows[0]?.result)',
+        ).catch(() => null),
       }),
     );
   assert.equal(job.state, 'complete');
@@ -720,6 +798,7 @@ try {
     crossOrigin,
     restartWorker,
     restartService,
+    restartBrowser,
     bytes: bytes.length,
     sha256: digest(bytes),
     requests,
@@ -728,6 +807,11 @@ try {
       'delayed JavaScript resource discovered without a probe',
       'loop deduplicated',
       'scoped selected resource reopened provenance page',
+      ...(restartBrowser
+        ? [
+            'actual browser closed and reopened; stale epoch refused until explicit original-session reauthorization',
+          ]
+        : []),
       ...(restartWorker
         ? [
             'actual extension service worker stopped and restarted; saved discovery ownership recovered',
@@ -754,6 +838,9 @@ try {
   }
   browserProc?.kill();
   daemon.kill();
+  // Native messaging can auto-launch a replacement daemon during the restart window.
+  // The executable is unique to this fixture, so cleanup cannot touch another service.
+  execFileSync('powershell.exe',['-NoProfile','-Command',"$fixturePath='"+nativeBinary.replaceAll("'","''")+"'; Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $fixturePath } | ForEach-Object { Stop-Process -Id $_.ProcessId -ErrorAction SilentlyContinue }"],{windowsHide:true,stdio:'ignore'});
   server.close();
   second?.close();
   // Remove only the unique fixture-created registration; user host registrations are never modified.

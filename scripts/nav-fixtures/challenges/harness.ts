@@ -38,7 +38,7 @@ async function run() {
         browser: 'chromium',
         profile,
         private: false,
-        cookie_store_id: null,
+        cookie_store_id: '0',
         container_id: null,
         partition_key: null,
         claim_generation: 1,
@@ -124,6 +124,8 @@ async function run() {
     'claim',
     'source',
     'document_nonce',
+    'session',
+    'occlusion',
   ]) {
     const iframe = await load('g4u'),
       doc = iframe.contentDocument!;
@@ -155,12 +157,14 @@ async function run() {
         browser: 'chromium',
         profile,
         private: false,
-        cookie_store_id: null,
+        cookie_store_id: '0',
         container_id: null,
         partition_key: null,
         claim_generation: 1,
       },
       sourceGeneration: 1,
+      documentGeneration: 1,
+      documentNonce: profile,
       selectedHost: 'gofile.io',
       locale: 'en',
     };
@@ -203,6 +207,8 @@ async function run() {
     if (scenario === 'claim') ctx.scope = { ...ctx.scope, claim_generation: 2 };
     if (scenario === 'source') ctx.sourceGeneration = 2;
     if (scenario === 'document_nonce') ctx.documentNonce = '019b0c41-8226-477f-8f3f-bc9f8eeb079d';
+    if (scenario === 'session') ctx.scope = {...ctx.scope,cookie_store_id:'other-store'};
+    if (scenario === 'occlusion') { const mask=doc.createElement('div');mask.style.cssText='position:fixed;inset:0;background:transparent;z-index:2147483646';doc.documentElement.append(mask); }
     authorizeResolve(true);
     await new Promise((resolve) => setTimeout(resolve, 100));
     if (attempts) throw Error('Stale submission occurred:' + scenario);
@@ -210,6 +216,18 @@ async function run() {
     handle!.close();
     iframe.remove();
   }
+  const chooserFrame = await load('g4u'), chooserDoc = chooserFrame.contentDocument!;
+  let chooserShadow: ShadowRoot | undefined, finishChoice: (v: boolean)=>void = ()=>{}, choicePending=false, lateObservations=0;
+  const chooserCreate=chooserDoc.createElement.bind(chooserDoc);
+  chooserDoc.createElement=((tag:string,options:any)=>{const el=chooserCreate(tag,options);if(tag==='div'){const attach=el.attachShadow.bind(el);el.attachShadow=(init)=>{const root=attach(init);if(init.mode==='closed')chooserShadow=root;return root;};}return el;}) as typeof chooserDoc.createElement;
+  const choiceContext:any={tabId:1,frameId:0,scope:{browser:'chromium',profile,private:false,cookie_store_id:'0',container_id:null,partition_key:null,claim_generation:1},sourceGeneration:1,documentGeneration:1,documentNonce:profile,selectedHost:null,locale:'en'};
+  const choiceHandle=await showChallenge(chooserDoc,{context:async()=>choiceContext,chooseHost:async()=>new Promise(resolve=>{choicePending=true;finishChoice=resolve;}),authorize:async()=>false,paid:async()=>{throw Error('zero');}},1,()=>{lateObservations++;});
+  chooserShadow!.querySelector<HTMLButtonElement>('button')!.click();
+  if(!choicePending)throw Error('Host choice did not begin');
+  choiceHandle!.close(); finishChoice(true); await new Promise(resolve=>setTimeout(resolve,100));
+  if(lateObservations||chooserDoc.getElementById('downloader-challenge'))throw Error('Cancelled host choice reopened');
+  staleRows.push({scenario:'host_choice_cancel',submissions:0});
+  chooserFrame.remove();
   return {
     fixture: 'synthetic-challenge-dom-v1',
     rows,

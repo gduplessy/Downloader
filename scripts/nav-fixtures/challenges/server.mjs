@@ -107,7 +107,7 @@ export async function startChallengeServer() {
         '/submit"><input type="hidden" name="csrf" value="public-fixture-csrf-v1"><input type="hidden" name="selected_host" value="gofile.io"><input type="hidden" name="captcha_x"><input type="hidden" name="captcha_y"><img src="/nav-challenges/' +
         provider +
         '/image.svg" data-downloader-challenge="open-circle-v1" data-instruction="Click the open circle" data-expires-at="' +
-        (Date.now() + 60000) +
+        (Date.now() + 300000) +
         '" style="width:240px;height:120px;border:4px solid blue"><button type="submit">Submit challenge</button></form></body></html>',
     );
   });

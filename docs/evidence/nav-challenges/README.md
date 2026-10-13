@@ -1,6 +1,6 @@
 # Challenge qualification
 
-Base: coordinator d6354c2. Live g4u, ddownload, Rapidgator and Gofile rows remain pending. Paid budget is $0; tests inject a mock transport and never upload a challenge.
+Base: checked coordinator c8ac54d with challenge increment 0.10.9. Live g4u, ddownload, Rapidgator and Gofile rows remain pending. Paid budget is $0; tests inject a mock transport and never upload a challenge.
 
 The local solver supports a qualified dark open-circle image contract. It uses connected components, radial consistency and one bounded gap. Multiple targets, edge components and unsupported variants abstain. An explicit user action is required. Synthetic images are generated in memory; challenge payloads are not retained.
 
@@ -16,10 +16,13 @@ Service reconciliation resumes durable task IDs after worker or daemon restart. 
 - [Fresh-link desktop](fresh-link-desktop-windows-x64.json): HeadlessChrome 145.0.7632.6, production page module with mocked worker authorization. Each of the four synthetic provider pages submitted once, produced fresh links for gofile.io, and completed a separate real CLI desktop transfer of 253,952 bytes with SHA256 3956ab3c089f6def510fd6fafb24e11c5a6a0ddc8a521c99994746ee3756bc51.
 - Six native provider mock tests and seven existing FlareSolverr native lifecycle fixtures passed. Solver cases cover disable, cancellation, changed page, cleanup failure, restart, secret nonpersistence, and final hash.
 
-Installed worker/native-port challenge acceptance, visible production desktop/extension controls, true browser-challenge clearance, live host/account acceptance, and paid-provider acceptance remain pending. The DOM harness plus separate CLI transfer does not close the installed navigation path.
+- [Installed Chrome](installed-chrome-windows-x64.json): stable Chrome 155.0.8059.39 runs the production worker/resolver and native stream port against four local provider pages. Four original CAPTCHA POSTs return fresh gofile.io links; each completes a 253,952-byte desktop file matching SHA256 3956ab3c089f6def510fd6fafb24e11c5a6a0ddc8a521c99994746ee3756bc51. Original page provenance and selected-host metadata are asserted. Native service 0.10.9 and its binary hash are recorded. Diagnostic source tracing is disabled, and paid calls are zero.
+- The installed driver resumes the fresh HTML page through the trusted extension Continue action. Its final actual preview element click is scheduled after the page CDP driver detaches, preserving exclusive production chrome.debugger ownership. File bytes travel through the production native port, never the driver. Automatic fresh-page preview without explicit Continue remains outside this qualification.
+
+Visible native desktop-window acceptance, true browser-challenge clearance, live host/account acceptance, paid-provider acceptance, installed Firefox/Edge challenge flows and unavailable OS rows remain pending. The earlier DOM/CLI report remains separate evidence.
 
 - [Production solver controls](solver-controls-windows-x64.json): actual React controls backed by an isolated native CLI/service. Enable/save, fake-local-health test, stale-setting invalidation, disable/save and daemon restart pass. A fake readiness result is not challenge clearance.
-- Eight DOM cases produce zero stale submissions: cancellation, CSRF change, hidden host change, form action change, image replacement, expiry, claim change, and source change.
+- [Twelve stale DOM cases](stale-dom-windows-x64.json) produce zero submissions: cancellation, CSRF, hidden host, form action, image replacement, expiry, claim, source, document nonce, session, occlusion and cancelled host choice. This real-renderer harness uses mocked worker authorization; installed invalidation scenarios remain separate gates.
 - Official [CoordinatesTask documentation](https://2captcha.com/api-docs/coordinates) rechecked through gstack on 2026-10-11 confirms image limits, create/poll, click bounds and cost fields. No live API request was made.
 
 ## Reproduce
@@ -33,3 +36,8 @@ Installed worker/native-port challenge acceptance, visible production desktop/ex
 For production settings, keep node scripts/nav-fixtures/challenges/controls-server.mjs running, navigate through gstack to its printed loopback URL and evaluate window.runSolverControls().
 
 Run focused tests with pnpm --filter @downloader/extension test -- challenges and cargo test -p downloader-core captcha::.
+
+
+For the installed path, build the CLI/service and run node scripts/nav-fixtures/challenges/installed.mjs. It creates isolated native registration, profile, state, ports and destinations, then removes its own registration and stops its own processes. The fixture grants only loopback host access and substitutes extension/native host identities. Keep the page driver detached during production debugger byte capture.
+
+Checks for 0.10.9: 121 extension tests, 6 desktop tests, both client typechecks/builds, 113 native tests (4 ignored subprocess helper entrypoints), Rustfmt, strict Clippy, desktop Rust compilation and synchronized version artifacts passed. Six provider mocks and seven FlareSolverr lifecycle cases are included in the native suite.

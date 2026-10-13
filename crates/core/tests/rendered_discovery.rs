@@ -300,3 +300,62 @@ fn preparation_binds_known_resource_provenance_and_cancellation_releases_its_slo
     )
     .is_err());
 }
+
+#[test]
+fn explicit_original_session_resume_releases_only_the_old_owned_frontier_lease() {
+    for firefox in [false, true] {
+        let dir = tempfile::tempdir().unwrap();
+        let engine = Engine::open(dir.path()).unwrap();
+        initialize(&engine, dir.path(), false);
+        let mut old = scope(false);
+        if firefox {
+            old["browser"] = json!("firefox");
+            old["cookie_store_id"] = json!("firefox-container-1");
+            old["container_id"] = json!("1");
+        } else {
+            old["partition_key"] = json!({"top_level_site":"http://127.0.0.1"});
+        }
+        call(
+            &engine,
+            "discovery_claim",
+            json!({"id":"rendered-project","scope":old,"generation":1,"tab_id":42}),
+        );
+        let mut renewed = old.clone();
+        renewed["claim_generation"] = json!(2);
+        let resume = json!({"id":"rendered-project","scope":renewed,"generation":1,"source_tab_id":100,"tab_id":null,"observed_url":"http://127.0.0.1:18782/","resume":true});
+        let mut foreign = resume.clone();
+        foreign["scope"]["cookie_store_id"] = json!("foreign");
+        assert!(downloader_core::rendered_grabber::claim(
+            &engine,
+            serde_json::from_value(foreign).unwrap()
+        )
+        .is_err());
+        call(&engine, "discovery_claim", resume);
+        call(
+            &engine,
+            "discovery_claim",
+            json!({"id":"rendered-project","scope":renewed,"generation":1,"tab_id":101}),
+        );
+        let queue = call(
+            &engine,
+            "navigation_scheduler",
+            json!({"owner":renewed["profile"],"private_lane":false,"request":{"action":"snapshot"}}),
+        );
+        let task = queue["tasks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|task| task["id"] == "discovery:rendered-project")
+            .unwrap();
+        assert_eq!(task["lease"]["tab_id"], 101);
+        assert_eq!(task["scope"], renewed);
+        assert!(downloader_core::rendered_grabber::status(
+            &engine,
+            serde_json::from_value(
+                json!({"id":"rendered-project","scope":old,"generation":1,"action":"snapshot"})
+            )
+            .unwrap()
+        )
+        .is_err());
+    }
+}

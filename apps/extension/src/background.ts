@@ -1,6 +1,5 @@
 import { RenderedDiscovery } from './navigation/discovery/runtime';
-
-import { verifyLiveDocument, type DocumentClaim } from './navigation/session/document';
+import { hasLiveResolver, verifyLiveDocument, type DocumentClaim } from './navigation/session/document';
 import { NavigationStarts } from './navigation/session/start';
 import { PremiumAuthorizations } from './navigation/accounts/premium';
 import { accountRequest, validateAccountRequest } from './navigation/accounts/worker';
@@ -181,6 +180,7 @@ const blobReaders = new Map<
     sink: DurableStreamSink;
     jobId: string;
     sourceGeneration: number;
+    captureState: (state: string) => Promise<void>;
   }
 >();
 async function verifyStreamOwner(
@@ -216,15 +216,19 @@ async function newSink(
   deferred = false,
 ) {
   if (!record.scope) throw Error('Direct capture needs an explicit browser scope');
+  if (!Number.isSafeInteger(record.sourceGeneration) || record.sourceGeneration! < 1)
+    throw Error('Direct capture needs a current source generation');
   if (record.scope.private && !browser.storage.session)
     throw Error('Private capture requires ephemeral browser session storage');
   const identity: StreamIdentity = {
     stream_id: crypto.randomUUID(),
     scope: record.scope,
-    source_generation: record.sourceGeneration ?? 1,
+    source_generation: record.sourceGeneration!,
   };
-  const sink = new DurableStreamSink(identity, new NativeStreamPort(), () =>
-    verifyStreamOwner(id, record.tabId, identity.scope, identity.source_generation),
+  const sink = new DurableStreamSink(
+    identity,
+    new NativeStreamPort(() => browser.runtime.connectNative(HOST)),
+    () => verifyStreamOwner(id, record.tabId, identity.scope, identity.source_generation),
     () => directOwners.release(record.tabId, identity.stream_id),
   );
   if (!deferred) await sink.begin({ kind: 'job', id }, filename, total);
@@ -241,6 +245,17 @@ async function armDirect(
   captureCancels.delete(record.tabId);
   const sink = await newSink(id, record, filename, null, !request.url.startsWith('blob:'));
   directOwners.assign(record.tabId, id, sink.identity);
+  let terminal = false;
+  let lastState: string | undefined;
+  const captureState = async (state: string) => {
+    if (terminal || state === lastState) return;
+    lastState = state;
+    if (['complete', 'interrupted', 'detached'].includes(state)) terminal = true;
+    await navigationStore.set({ ['capture-' + id]: {
+      state, tabId: record.tabId, scope: record.scope,
+      sourceGeneration: record.sourceGeneration, streamId: sink.identity.stream_id,
+    } });
+  };
   try {
   if (request.url.startsWith('blob:')) {
     const tab = await browser.tabs.get(record.tabId);
@@ -249,9 +264,11 @@ async function armDirect(
       throw Error('Blob frame origin mismatch');
     }
     const capability = crypto.randomUUID();
+    await captureState('armed');
     const cancelBlob = async () => {
       await sink.abort('cancelled').catch(() => {});
       blobReaders.delete(capability);
+      await captureState('interrupted');
     };
     captureCancels.set(record.tabId, cancelBlob);
     blobReaders.set(capability, {
@@ -260,8 +277,13 @@ async function armDirect(
       scope: record.scope,
       sink,
       jobId: id,
-      sourceGeneration: record.sourceGeneration ?? 1,
+      sourceGeneration: record.sourceGeneration!,
+      captureState,
     });
+    const failedBlob = async () => {
+      await sink.abort().catch(() => {});
+      await captureState('interrupted');
+    };
     if (BROWSER === 'chromium')
       void browser.scripting
         .executeScript({
@@ -269,7 +291,7 @@ async function armDirect(
           func: readOwnedBlob,
           args: [request.url, capability, 192 * 1024],
         })
-        .catch(() => sink.abort())
+        .catch(failedBlob)
         .finally(() => blobReaders.delete(capability));
     else
       void browser.tabs
@@ -284,7 +306,7 @@ async function armDirect(
             JSON.stringify(capability) +
             ',196608)',
         })
-        .catch(() => sink.abort())
+        .catch(failedBlob)
         .finally(() => blobReaders.delete(capability));
     return true;
   }
@@ -296,7 +318,7 @@ async function armDirect(
       request,
       sink,
       async (state) => {
-        await navigationStore.set({ ['capture-' + id]: { state, tabId: record.tabId } });
+        await captureState(state);
         if (['interrupted', 'detached'].includes(state))
           await native('browser_status', {
             id,
@@ -927,6 +949,7 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
           throw Error('Unknown page stream capability');
         await verifyStreamOwner(reader.jobId, reader.tabId, reader.scope, reader.sourceGeneration);
         if (message.operation === 'chunk') {
+          await reader.captureState('streaming');
           if (typeof message.data_base64 !== 'string' || message.data_base64.length > 262144)
             throw Error('Page chunk exceeds bound');
           await reader.sink.chunk(
@@ -934,9 +957,11 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
           );
         } else if (message.operation === 'end') {
           await reader.sink.end();
+          await reader.captureState('complete');
           blobReaders.delete(message.capability);
         } else if (message.operation === 'abort') {
           await reader.sink.abort();
+          await reader.captureState('interrupted');
           blobReaders.delete(message.capability);
         } else throw Error('Unknown page stream operation');
         return true;
@@ -1199,6 +1224,12 @@ async function startOwnedResolver(job: any, force = false, sourceTabId?: number)
       if (!(await ownsCurrentTab(record)))
         throw Error('Original navigation tab context unavailable');
       await renewAuthority(key, record);
+      if (!force && await hasLiveResolver(browser, BROWSER, record.tabId, {
+        nonce: record.documentNonce, documentId: record.documentId,
+      })) {
+        await scheduler.heartbeat(job.id, record.tabId);
+        return;
+      }
       await browser.tabs.update(record.tabId, { active: true });
       const proposed = await scopeForTab(
         browser as any,

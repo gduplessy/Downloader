@@ -424,7 +424,9 @@ pub fn claim(engine: &crate::Engine, request: Claim) -> Result<serde_json::Value
                     .scope
                     .partition_key
                     .as_ref()
-                    .is_none_or(|key| key.top_level_site.trim_end_matches('/') != origin)
+                    .map_or(request.scope.browser != "firefox", |key| {
+                        key.top_level_site.trim_end_matches('/') != origin
+                    })
             {
                 bail!("Unauthorized discovery partition transition");
             }
@@ -432,6 +434,22 @@ pub fn claim(engine: &crate::Engine, request: Claim) -> Result<serde_json::Value
         }
     }
     if request.resume {
+        for task_id in [
+            format!("discovery:{}", request.id),
+            format!("discovery-resource:{}", request.id),
+        ] {
+            if scheduler.tasks.iter().any(|task| task.id == task_id) {
+                scheduler.apply(
+                    &request.scope.profile,
+                    crate::navigation_scheduler::SchedulerRequest::Release {
+                        id: task_id,
+                        generation: state.generation,
+                    },
+                    now,
+                )?;
+            }
+        }
+        state.preparation = None;
         state.control("resume")?;
     }
     state.claim(request.scope.clone(), now)?;

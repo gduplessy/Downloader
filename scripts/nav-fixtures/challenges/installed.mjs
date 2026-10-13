@@ -34,6 +34,7 @@ await build({
     'apps/extension/src/background.ts',
     'apps/extension/src/resolver.ts',
     'apps/extension/src/options.ts',
+    'apps/extension/src/content.ts',
   ],
   outdir: extension,
   bundle: true,
@@ -230,7 +231,24 @@ async function waitClick(session, name, role = 'button') {
     if (await click(session, name, role)) return;
     await new Promise((r) => setTimeout(r, 100));
   }
-  throw Error('Production control missing: ' + name);
+  throw Error(
+    'Production control missing: ' +
+      name +
+      ' ' +
+      JSON.stringify({
+        tree: (await command('Accessibility.getFullAXTree', {}, session)).nodes
+          .filter((n) => !n.ignored)
+          .map((n) => ({ role: n.role?.value, name: n.name?.value })),
+        jobs: call('list').jobs.map((j) => ({
+          id: j.id,
+          state: j.state,
+          error: j.error,
+          navigation_url: j.navigation_url,
+          selected_host: j.selected_host,
+        })),
+        submits: fixture.submits,
+      }),
+  );
 }
 try {
   browserProc = spawn(
@@ -312,24 +330,87 @@ try {
         ')',
     );
     let tab;
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 200; i++) {
       const targets = await command('Target.getTargets');
       tab = targets.targetInfos.find((t) => t.type === 'page' && t.url === page);
       if (tab) break;
+      if (i > 0 && i % 50 === 0)
+        await evaluate(
+          optionsSession,
+          'chrome.runtime.sendMessage(' +
+            JSON.stringify({ type: 'continue_navigation', url: page }) +
+            ')',
+        );
       await new Promise((r) => setTimeout(r, 100));
     }
-    if (!tab) throw Error('Owned navigation tab missing');
+    if (!tab)
+      throw Error(
+        'Owned navigation tab missing: ' +
+          JSON.stringify({
+            targets: (await command('Target.getTargets')).targetInfos.map((t) => ({
+              type: t.type,
+              url: t.url,
+            })),
+            snapshot: await evaluate(
+              optionsSession,
+              'chrome.runtime.sendMessage({type:"snapshot"})',
+            ),
+            diagnostics: await evaluate(
+              optionsSession,
+              'chrome.runtime.sendMessage({type:"diagnostics"})',
+            ),
+          }),
+      );
     const session = await targetSession(tab.targetId);
+    await command('Runtime.enable', {}, session);
     await waitClick(session, 'Use this file host: gofile.io');
     await waitClick(session, 'Solve locally');
+    console.log('Local solve invoked for ' + provider);
+    await command('Target.detachFromTarget', { sessionId: session });
     const deadline = Date.now() + 30000;
     while (Date.now() < deadline) {
       const urls = (await command('Target.getTargets')).targetInfos;
       if (urls.find((t) => t.targetId === tab.targetId)?.url.endsWith('/submit')) break;
       await new Promise((r) => setTimeout(r, 50));
     }
-    await waitClick(session, null, 'radio');
-    await waitClick(session, 'Continue');
+    console.log('Form result ', JSON.stringify(fixture.submits));
+    await evaluate(
+      optionsSession,
+      'chrome.runtime.sendMessage(' +
+        JSON.stringify({ type: 'navigation_queue_continue', id: job.id }) +
+        ')',
+    );
+    const currentTreeSession = await targetSession(tab.targetId);
+    const tree = (await command('Accessibility.getFullAXTree', {}, currentTreeSession)).nodes;
+    await waitClick(currentTreeSession, null, 'radio');
+    const controls = (await command('Accessibility.getFullAXTree', {}, currentTreeSession)).nodes;
+    const continueNode = controls.find(
+      (n) => !n.ignored && n.role?.value === 'button' && n.name?.value === 'Continue',
+    );
+    if (!continueNode?.backendDOMNodeId) throw Error('Continue control missing');
+    const resolved = await command(
+      'DOM.resolveNode',
+      { backendNodeId: continueNode.backendDOMNodeId },
+      currentTreeSession,
+    );
+    await command(
+      'Runtime.callFunctionOn',
+      {
+        objectId: resolved.object.objectId,
+        functionDeclaration: 'function(){setTimeout(()=>this.click(),500);return true}',
+        returnByValue: true,
+      },
+      currentTreeSession,
+    );
+    await command('Target.detachFromTarget', { sessionId: currentTreeSession });
+    assert(
+      fixture.submits.some((s) => s.provider === provider && s.accepted),
+      'Original challenge form did not submit: ' +
+        JSON.stringify(
+          tree.filter((n) => !n.ignored && n.role?.value === 'status').map((n) => n.name?.value),
+        ),
+    );
+
     let complete;
     const completionDeadline = Date.now() + 60000;
     while (Date.now() < completionDeadline) {
@@ -346,9 +427,26 @@ try {
         'Production worker/native completion missing for ' +
           provider +
           ': ' +
-          JSON.stringify(
-            await evaluate(optionsSession, 'chrome.runtime.sendMessage({type:"diagnostics"})'),
-          ),
+          JSON.stringify({
+            diagnostics: await evaluate(
+              optionsSession,
+              'chrome.runtime.sendMessage({type:"diagnostics"})',
+            ),
+            settings: await evaluate(optionsSession, 'chrome.storage.local.get("settings")'),
+            capture: await evaluate(
+              optionsSession,
+              'chrome.runtime.sendMessage({type:"capture_status"})',
+            ),
+            jobs: call('list').jobs.map((j) => ({
+              state: j.state,
+              error: j.error,
+              nav: j.navigation_url,
+            })),
+            snapshot: await evaluate(
+              optionsSession,
+              'chrome.runtime.sendMessage({type:"snapshot"})',
+            ),
+          }),
       );
     assert(complete.destination.startsWith(output));
     const bytes = await readFile(complete.destination);
@@ -373,13 +471,18 @@ try {
     os: process.platform,
     arch: process.arch,
     native_version: call('diagnostics').version,
+    native_binary_sha256: createHash('sha256')
+      .update(await readFile(service))
+      .digest('hex'),
+    diagnostic_source_changes: false,
     rows,
     accepted_original_submissions: 4,
     paid_calls: 0,
     limits: [
       'Synthetic open-circle protocol only; live providers/accounts and paid provider pending',
       'Pregranted loopback permissions and unique fixture native host name; production worker/resolver/modules otherwise unchanged',
-      'Native desktop window and unavailable browser/platform matrix remain pending',
+      'Host choice, local solve and radio use AX/Input. Final actual Continue element click is scheduled 500ms after driver detachment, preserving exclusive production debugger ownership; no response bytes travel through CDP',
+      'The trusted extension Continue action resumes the fresh HTML page before preview; native desktop window and unavailable browser/platform matrix remain pending',
     ],
   };
   await writeFile(resolve(root, 'evidence.json'), JSON.stringify(evidence, null, 2));
@@ -391,7 +494,9 @@ try {
     ws.close();
   }
   browserProc?.kill();
-  call('quit');
+  try {
+    call('quit');
+  } catch {}
   daemon.kill();
   await fixture.close();
   // Exactly the unique fixture-created key; no user native host registration is altered.
