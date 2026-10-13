@@ -89,4 +89,4 @@ Commit the planning package before branching. Dependent work may use a coordinat
 - [Verified browser/provider API constraints](SOURCES.md) were checked through gstack `/browse` on 2026-10-11.
 - Planning validation checks local Markdown links, coverage of NAV-01 through NAV-13, and product-version synchronization. Runtime tests listed in each plan belong to implementation acceptance.
 
-Status: plans complete and ready for implementation dispatch. Live host/account and paid-provider acceptance remain separate gates as selected by the owner.
+Status: plans complete and all six implementation batches dispatched with PRs. Shared integration and local acceptance continue; see the [implementation audit](IMPLEMENTATION-AUDIT.md). Live host/account and paid-provider acceptance remain separate gates as selected by the owner.

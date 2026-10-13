@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.18.3
+
+- Record the thirteen-plan implementation acceptance audit, separating checked behavior, required remaining local browser/UI gates, and owner-selected pending release rows.
+
 ## 0.18.2
 
 - Use monotonic wait clocks in the production browser scheduler, including poll-based rechecks after wall-clock jumps, bounded observation intervals, restart recovery and wait-generation replacement.
