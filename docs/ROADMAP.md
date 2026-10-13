@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.13.1<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.13.2<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -15,6 +15,12 @@ Detailed [NAV plans and execution batches](plans/nav/README.md) cover the remain
 Shared navigation contracts are defined for the feature batches; all unfinished NAV implementation and qualification statuses remain open until their stated acceptance criteria pass.
 
 Automatic startup coalesces against the actual isolated resolver document; explicit Continue still refreshes its claim. Blob capture states carry the exact session scope and source generation. Installed cancellation, replacement and private-session qualification remain active integration gates.
+
+Desktop browser-source replacement now enters `WaitingUser` immediately and fences old stream frames/EOF. A native regression verifies durable partial ingress, counter advancement and no publication; installed replacement qualification remains pending.
+
+Firefox response-filter queues are bounded across all outstanding events during admission and durable acknowledgement. The installed POST filter failure is still being investigated; this regression does not establish Firefox transfer acceptance.
+
+Latest main is reconciled through its adapter/scheduler merge. Shared three-digit countdown boundaries and resolver wait/authorization regressions are preserved under the current document nonce, source and claim protocol.
 
 Coordinator staging combines versioned adapters, validated countdowns, the durable scheduler and bounded browser-stream storage while preserving separate batch PRs. Queue enrollment follows persisted job scope/source generations and validates per-tab recovery reports. Installed worker transport, preview cancellation and browser lifecycle acceptance remain pending integration checks.
 
@@ -255,3 +261,5 @@ Account response ownership (0.9.10) adopts checked direct-stream ownership and r
 NAV-13 0.10.9: canonical native HOST used by control and byte ports; invalid source counters refuse capture. Installed Chrome 155 passes four original local CAPTCHA POSTs, fresh selected-host links and 253,952-byte desktop hashes with diagnostics off and zero paid calls. Twelve stale/cancelled DOM cases submit zero times. Live, paid and broader browser/platform gates remain pending; see [challenge evidence](evidence/nav-challenges/README.md).
 
 NAV-12 0.13.1 preserves explicit original-session ownership across a complete browser-process restart. New epochs refuse automatic adoption; explicit resume renews the old scheduler lease before reopening approved provenance. Checked shared base 91d0553 keeps live resolver previews stable.
+
+NAV-12 0.13.2 reconciles checked root 7e44b00/latest main. Clean committed-source Chrome 155 and Edge 155 both pass cross-origin authenticated discovery with full browser/service/worker restart and expected native hash. Live provider, Firefox/ESR, other OS and owner UI acceptance remain pending.

@@ -1138,6 +1138,13 @@ impl Engine {
                             .context("Claim generation exhausted")?;
                     }
                     job.credential_id = context.credential_id.clone();
+                    if job.browser_source {
+                        job.state = JobState::WaitingUser;
+                        job.error = Some(
+                            "browser_source_replaced: request a fresh action in the owning browser"
+                                .into(),
+                        );
+                    }
                 }
                 self.contexts.lock().unwrap().insert(id, context);
                 self.persist(&j)?;

@@ -27,9 +27,15 @@ The restart mode delays rendering, stops/restarts the real service database owne
 ## Acceptance boundaries
 
 - Local stable Windows Chrome: actual cross-origin authenticated direct GET and active-frontier service/worker restart passed; retained source/resource scope, one GET, zero HEAD, 262,161 bytes and SHA-256 `ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862`.
-- Local stable Windows Edge: final qualification in progress.
+- Local stable Windows Edge: actual cross-origin, browser-process, active-frontier service and worker restart passed with the same one-request hash.
 - Native real-engine tests cover stale reports/documents, private-at-creation ephemerality, explicit cross-origin permission, foreign cookie stores, scheduler capacity, preparation cancellation and idempotent restart selection.
-- Browser absent/new browser epoch requires explicit session reauthorization; automatic enrollment into a default session is refused. Actual Chrome browser-process close/reopen followed by explicit original-session reauthorization passes with the expected original-GET hash; committed Chrome/Edge evidence is being refreshed.
+- Browser absent/new browser epoch requires explicit session reauthorization; automatic enrollment into a default session is refused. Actual Chrome browser-process close/reopen followed by explicit original-session reauthorization passes with the expected original-GET hash; clean committed Chrome/Edge evidence is recorded below.
 - Firefox stable/ESR and macOS/Linux installed browser rows remain pending. Shared Firefox response-capture qualification is owned by the integration batch; unavailable targets require native CI/owner evidence.
 - Live g4u, ddownload, Rapidgator and Gofile hosts/accounts remain pending. Paid-provider spending stays $0. Local fixtures do not qualify live providers.
 - Keyboard/locale controls are implemented in six dictionaries; native-language and owner UI acceptance remain pending.
+
+## Committed-source evidence
+
+- [Chrome 155 Windows x64](committed-chrome-windows-x64.json) and [Edge 155 Windows x64](committed-edge-windows-x64.json) qualify committed 6296339 (0.13.1), sourceDirty=false. Both use copied native executable SHA-256 and the exact resolver bundle SHA-256 recorded in JSON.
+- One earlier Edge pre-integration attempt stopped before any resource request (WaitingBrowser, zero bytes); the repeat and clean committed rows completed. Same-live-document startup coalescing is included in the checked shared base; no fallback or ownership gate was weakened to obtain acceptance.
+- The final 0.13.2 integration delta adopts checked main/shared WaitingUser/countdown recovery and is separately validated; browser evidence never silently relabels its source revision.

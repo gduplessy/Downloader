@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.13.1<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.13.2<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -17,6 +17,12 @@
 ## Downloads you can trust
 
 Automatic navigation startup preserves an existing live selection preview. Blob capture progress and cancellation are visible in the extension; installed browser lifecycle qualification remains in progress.
+
+Replacing a browser source requires a fresh action in the owning browser and prevents stale bytes from publishing a completed file.
+
+Firefox response-filter queues have a fixed aggregate memory bound; installed Firefox POST capture qualification remains open.
+
+The integration branch retains main's shared countdown boundary handling and expands resolver regressions for delayed authorization and document/session replacement.
 
 Downloader is an original, GPL-3.0 alternative to Internet Download Manager. It keeps transfers local and makes recovery visible: downloading, verification, assembly, scanning, and completion have distinct states. Browser downloads stay recoverable if a desktop handoff fails.
 
@@ -354,3 +360,5 @@ Account fixture qualification (0.9.10) uses the combined checked integration, ex
 Challenge increment 0.10.9 qualifies four local installed Chrome 155 original CAPTCHA POSTs through fresh gofile.io links to matching 253,952-byte native files. Controls and byte streams use the same native HOST; invalid source counters are refused. Twelve stale/cancelled DOM scenarios submit zero times. The explicit Continue recovery path is qualified; live host/account, paid-provider, automatic fresh-page preview and unavailable browser/platform acceptance remain pending. See [challenge evidence](docs/evidence/nav-challenges/README.md).
 
 NAV-12 0.13.1 preserves explicit original-session ownership across a complete browser-process restart. New epochs refuse automatic adoption; explicit resume renews the old scheduler lease before reopening approved provenance. Checked shared base 91d0553 keeps live resolver previews stable.
+
+NAV-12 0.13.2 reconciles checked root 7e44b00/latest main. Clean committed-source Chrome 155 and Edge 155 both pass cross-origin authenticated discovery with full browser/service/worker restart and expected native hash. Live provider, Firefox/ESR, other OS and owner UI acceptance remain pending.

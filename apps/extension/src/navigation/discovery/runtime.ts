@@ -272,9 +272,8 @@ export class RenderedDiscovery {
       proof.tabId,
       generation,
     ).catch(() => null);
-    return record.provenance === proof && record.sessionEpoch === (await this.epoch())
-      ? actual
-      : null;
+    const currentEpoch = await this.epoch();
+    return record.provenance === proof && record.sessionEpoch === currentEpoch ? actual : null;
   }
   async scopeForJob(id: string) {
     for (const record of this.records.values()) {

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.2
+
+- Reconcile checked coordinator base 7e44b00 and latest main, preserving resolver/countdown regressions and explicit WaitingUser recovery after source replacement.
+- Record clean committed-source Chrome 155 and Edge 155 cross-origin acceptance with complete browser, service and worker restart. Both publish one authenticated original GET, zero HEAD and 262,161 bytes with the expected native SHA-256.
+- Keep retained provenance identity checks after asynchronous epoch reads; localize extension state labels and correct empty resource paging. Verify 141 extension, six desktop and 125 native tests (one subprocess fixture ignored), strict Clippy, formatting, types/builds and version checks. Remaining live provider, Firefox/ESR, other OS and owner UI acceptance rows stay explicit.
+
 ## 0.13.1
 
 - Adopt checked coordinator base 91d0553, preserving same-document resolver previews and scoped capture ownership.
@@ -13,6 +19,21 @@
 - Reserve bounded service-owned preparation leases before reopening explicitly approved cross-origin HTML provenance in the selected original browser session. Enroll actual partition and document proofs before starting only the known selected resource.
 - Preserve selected-resource metadata across worker recovery, fence concurrent provenance replacement, and close verified preparation tabs on cancellation.
 - Qualify installed Chrome cross-origin authenticated discovery with actual service and worker restart during an active frontier: one original GET, zero HEAD, 262,161 bytes and matching native SHA-256. Edge acceptance and final checks are tracked in discovery evidence; live hosts/accounts, Firefox/ESR and other OS rows remain separate.
+
+## 0.12.10
+
+- Reconcile latest merged main, retaining three-digit countdown clocks within the shared seven-day limit.
+- Adapt its resolver regression suite to current nonce/source/claim and two-phase authorization, covering waits, cancellation, replacement, page loss and successful selection.
+
+## 0.12.9
+
+- Bound total queued Firefox response-filter bytes while native admission or durable acknowledgement is pending, instead of bounding individual events only.
+- Regression verifies excess queued data interrupts capture before any bytes enter the sink. Installed Firefox POST qualification remains open.
+
+## 0.12.8
+
+- Replacing a browser source now moves the desktop job to actionable recovery immediately, while advancing source and claim counters to reject old stream frames and EOF.
+- Verify replacement after durable partial ingress against the native engine; installed replacement qualification remains in progress.
 
 ## 0.12.7
 
