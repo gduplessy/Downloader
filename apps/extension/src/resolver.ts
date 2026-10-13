@@ -1,3 +1,9 @@
+import { observeAccount } from './navigation/accounts/observe';
+import { accountDecision } from './navigation/accounts/policy';
+import { showAccountPanel } from './navigation/accounts/panel';
+import { accountLabel } from './navigation/accounts/labels';
+import type { AccountAction, AccountBinding, Selection } from './navigation/accounts/types';
+import { matchAdapter } from './navigation/adapters/policy';
 import browser from 'webextension-polyfill';
 import { showChallenge, type ChallengeBridge } from './navigation/challenges/page';
 import { decide, classifyBlocker } from './resolver-policy';
@@ -27,17 +33,46 @@ import { scopeKey, type ResolverContext } from './navigation/adapters/context';
 const documentRoot = globalThis as typeof globalThis & { __downloaderDocumentNonce?: string };
 const documentNonce = (documentRoot.__downloaderDocumentNonce ??= crypto.randomUUID());
 let documentGeneration = 1;
+const documentClaim = () => ({ nonce: documentNonce, generation: documentGeneration });
+let documentActive = true;
 let challengeHandle: { close(): void } | undefined;
 let previewHandle: PreviewHandle | undefined;
 let running = false;
+let accountPanel: { close: () => void } | undefined;
 const submissions = new SubmissionGate();
 async function context(): Promise<ResolverContext | null> {
-  return (await browser.runtime
-    .sendMessage({
-      type: 'resolver_context',
-      document: { nonce: documentNonce, generation: documentGeneration },
-    })
+  if (!documentActive) return null;
+  const result = (await browser.runtime
+    .sendMessage({ type: 'resolver_context', document: documentClaim() })
     .catch(() => null)) as ResolverContext | null;
+  return documentActive ? result : null;
+}
+function accountBinding(ctx: ResolverContext): AccountBinding {
+  const adapter = matchAdapter(location.href, ctx.disabledAdapters);
+  return {
+    tabId: ctx.tabId,
+    frameId: ctx.frameId,
+    scope: ctx.scope,
+    sourceGeneration: ctx.sourceGeneration,
+    documentGeneration,
+    documentNonce,
+    documentId: ctx.documentId ?? null,
+    page: location.href,
+    adapterId: adapter.id,
+    adapterVersion: adapter.version,
+  };
+}
+async function accountAction(request: AccountAction, bound: AccountBinding): Promise<any> {
+  return browser.runtime.sendMessage({
+    type: 'resolver_account',
+    request,
+    binding: bound,
+    document: documentClaim(),
+  });
+}
+async function currentAccountBinding(): Promise<AccountBinding | null> {
+  const ctx = await context();
+  return ctx ? accountBinding(ctx) : null;
 }
 function blockers(elements: Element[]) {
   const captcha = elements.some(
@@ -77,6 +112,7 @@ function binding(
     claimGeneration: ctx.scope.claim_generation,
     sourceGeneration: ctx.sourceGeneration,
     documentGeneration,
+    documentNonce,
     page: location.href,
     adapterId: inspection.adapter.id,
     adapterVersion: inspection.adapter.version,
@@ -84,16 +120,49 @@ function binding(
   };
 }
 async function observe(ctx: ResolverContext | null) {
+  let account: Selection | null = null;
+  if (ctx && ctx.sourceGeneration) {
+    const selected = (await accountAction({ action: 'selection' }, accountBinding(ctx)).catch(
+      () => null,
+    )) as Selection | null;
+    if (selected)
+      account = await observeAccount(
+        document,
+        accountBinding(ctx),
+        { ...selected, selected_host: ctx.selectedHost ?? selected.selected_host },
+        accountAction,
+      ).catch(() => ({
+        ...selected,
+        auth: 'unknown' as const,
+        entitlement: 'unknown' as const,
+        observed_at: null,
+      }));
+  }
+  const accountState = accountDecision(account);
   const collected = collectControls(document),
     signals = blockers(allElements(document));
   const inspection = inspectCandidates(location.href, collected.controls, {
     disabledAdapters: ctx?.disabledAdapters,
     selectedHost: ctx?.selectedHost,
     allowPageBlob: ctx?.capabilities?.pageBlob === true,
-    blocked: !!signals.blocker && signals.blocker !== 'countdown',
+    allowPremium: accountState.premium,
+    blocked:
+      (!!signals.blocker && signals.blocker !== 'countdown') ||
+      (account?.mode === 'premium' && !accountState.premium),
     countdown: signals.countdown,
   });
-  return { collected, signals, inspection, fingerprint: await domFingerprint(collected) };
+  if (account?.mode === 'premium' && !accountState.premium) {
+    signals.blocker = 'authentication';
+    inspection.reason = accountLabel(
+      ctx?.locale ?? 'en',
+      accountState.reason === 'free'
+        ? 'existing'
+        : accountState.reason === 'premium'
+          ? 'premium'
+          : accountState.reason,
+    );
+  }
+  return { collected, signals, inspection, account, fingerprint: await domFingerprint(collected) };
 }
 async function submit(
   ctx: ResolverContext,
@@ -112,13 +181,18 @@ async function submit(
   let token: string | undefined;
   let completed = false;
   const abort = () => {
-    if (token) void browser.runtime.sendMessage({ type: 'resolver_abort', token });
+    if (token)
+      void browser.runtime.sendMessage({
+        type: 'resolver_abort',
+        token,
+        document: documentClaim(),
+      });
   };
   signal?.addEventListener('abort', abort, { once: true });
   try {
     reply = await browser.runtime.sendMessage({
       type: 'resolver_step',
-      document: { nonce: documentNonce, generation: documentGeneration },
+      document: documentClaim(),
       url: location.href,
       decision: {
         kind: 'click',
@@ -131,6 +205,7 @@ async function submit(
       selected_host: chosen.panelHost ?? ctx.selectedHost ?? null,
       adapter_id: observed.inspection.adapter.id,
       adapter_version: observed.inspection.adapter.version,
+      premium: chosen.premium === true,
     });
     token = reply?.authorization;
     if (signal?.aborted) throw Error('adapter_selection_cancelled');
@@ -147,7 +222,7 @@ async function submit(
     if (signal?.aborted) throw Error('adapter_selection_cancelled');
     reply = await browser.runtime.sendMessage({
       type: 'resolver_commit',
-      document: { nonce: documentNonce, generation: documentGeneration },
+      document: documentClaim(),
       token,
       binding: binding(freshContext, fresh.inspection, fresh.fingerprint),
       fingerprint: fresh.fingerprint,
@@ -178,9 +253,11 @@ async function submit(
   if (reply?.repeat) setTimeout(() => void step(), 1000);
 }
 async function step() {
-  if (running) return;
+  if (running || !documentActive) return;
   running = true;
   try {
+    accountPanel?.close();
+    accountPanel = undefined;
     challengeHandle?.close();
     challengeHandle = undefined;
     previewHandle?.close();
@@ -224,6 +301,15 @@ async function step() {
       if (challengeHandle) return;
     }
     const observed = await observe(ctx);
+    if (ctx && observed.account)
+      accountPanel = await showAccountPanel(
+        document,
+        observed.account,
+        accountBinding(ctx),
+        ctx.locale,
+        currentAccountBinding,
+        accountAction,
+      );
     if (ctx && observed.inspection.kind === 'click' && observed.inspection.selected) {
       await submit(ctx, observed, observed.inspection.selected);
       return;
@@ -239,7 +325,7 @@ async function step() {
       );
       await browser.runtime.sendMessage({
         type: 'resolver_step',
-        document: { nonce: documentNonce, generation: documentGeneration },
+        document: documentClaim(),
         url: location.href,
         decision: {
           kind: 'user',
@@ -273,7 +359,7 @@ async function step() {
         async () => {
           const disabled = await browser.runtime.sendMessage({
             type: 'resolver_disable_adapter',
-            document: { nonce: documentNonce, generation: documentGeneration },
+            document: documentClaim(),
             adapterId: preview.binding.adapterId,
           });
           if (disabled !== true) throw Error('adapter_disable_rejected');
@@ -300,7 +386,7 @@ async function step() {
     const element = chosen ? observed.collected.elements.get(chosen.localId) : undefined;
     const reply: any = await browser.runtime.sendMessage({
       type: 'resolver_step',
-      document: { nonce: documentNonce, generation: documentGeneration },
+      document: documentClaim(),
       url: location.href,
       decision: {
         ...decision,
@@ -326,6 +412,15 @@ async function step() {
 const root = globalThis as typeof globalThis & { __downloaderResolver?: boolean };
 if (!root.__downloaderResolver) {
   root.__downloaderResolver = true;
+  window.addEventListener(
+    'pagehide',
+    () => {
+      documentActive = false;
+      accountPanel?.close();
+      previewHandle?.close();
+    },
+    { once: true },
+  );
   browser.runtime.onMessage.addListener((message: any) => {
     if (message.type === 'resolver_continue') {
       documentGeneration++;

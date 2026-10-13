@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.4
+
+- Integrate the checked account batch: desktop OS-keyring metadata, explicit saved fills, existing-session premium controls, purpose-separated grants and live document proof.
+- Preserve shared challenge, direct-stream and recovery hooks; renew scheduler authority from the actual owned tab and invalidate grants before intentional claim replacement.
+- Verify 121 extension tests, six desktop tests, desktop/extension types/builds, the full native suite, strict Clippy and CLI/service builds. Installed combined browser acceptance remains in progress; live provider/account and paid-provider rows stay pending.
+
 ## 0.12.3
 
 - Adopt the checked per-job startup serializer and persist renewed claims before scheduler heartbeat.
@@ -18,6 +24,12 @@
 - Preserve owner, private lane and exact navigation claim on removal events; scoped subscriptions reject foreign or historical unqualified tombstones.
 - Add a real engine regression for regular/private removal isolation and stale claims.
 - Make the scheduler assertion compatible with both installed Vitest mock type variants.
+
+## 0.9.9 — Integrate monotonic navigation record ownership
+
+- Adopt checked shared record write fencing and actual Chromium cookie-store reconciliation.
+- Preserve account, challenge and adapter document claims with distinct expiring credential/capture purposes.
+- Keep live hosts/accounts, paid-provider calls and unavailable browser/OS acceptance pending.
 
 ## 0.12.0
 
@@ -63,6 +75,60 @@
 
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
+
+## 0.9.8 — Bind account and capture authority to the actual document
+
+- Verify the live isolated document nonce before account observation, credential grant/consume and adapter authorization; native credential proof includes the exact nonce.
+- Preserve Chromium document IDs when supported and provide explicit nonce proof for Firefox same-URL replacement.
+- Record corrected installed Edge 155 saved-fill/premium acceptance separately from the earlier failed row; unavailable targets and live accounts remain pending.
+
+## 0.9.7 — Integrate checked production browser projection
+
+- Include authority-qualified incremental snapshot cursor and null projection fixes from the checked staging base.
+- Add isolated production Chrome account/premium qualification using actual extension/native transports, both saved-fill and existing-session paths, verified desktop bytes and test-account cleanup.
+- Serialize startup per native job, persist fresh claimed scope before heartbeat, and renew live scheduler authority without relaxing request generations.
+- Record the failed Edge continuation row separately; live accounts, Firefox and other OS targets remain pending.
+
+## 0.9.6 — Keep selected accounts through explicit same-session recovery
+
+- Successful same-session claim continuation and scoped source refresh retain the selected nonsecret account association at the new source/claim fence.
+- Clear previous authentication/entitlement observations and revoke older credential grants; Continue does not reset the once-per-source/account-revision login limit.
+- Retain exact browser/profile/private/store/container/partition checks and require fresh document observations before premium capture.
+
+## 0.9.5 — Canonical account session authority and private queue lane
+
+- Merge coordinator `093a447`, compare account/browser session partitions canonically, and carry the exact private scheduler lane.
+- Keep actual Chrome document checks, typed account recovery and separate premium commit checks intact. Installed auth/premium source-to-desktop qualification remains in progress.
+
+## 0.9.4 — Adopt intentional account changes in the original browser context
+
+- Merge verified coordinator `d6594d3` readonly authority renewal and preserve the exact owning tab/profile/container/private session while old readers and capture authorizations are invalidated.
+- Explicit account selection/removal waits for visible user action, keeping the existing admitted navigation lifecycle. Typed login/MFA/entitlement states remain account observations; no automatic login retry loop or replay permission expansion.
+- Saved account revisions fence concurrent credential edits; installed browser/native publication qualification follows this integration.
+
+## 0.9.3 — Preserve account checks through two-phase capture authorization
+
+- Merge coordinator `dc63865`, bind adapter actions to source generation, and retain credential grants as a separate scoped authorization purpose.
+- Keep account observations and premium checks in the production resolver while fresh prepare/commit/cancel controls fence browser capture.
+- Readonly authority adoption and full installed-worker qualification remain the next integration gate.
+
+## 0.9.2 — Integrate accounts with scoped browser streams and adapters
+
+- Merge verified coordinator prerequisite `1da6fa6` and retain adapter cancellation, scoped native streams, scheduler qualification and selected downstream provenance.
+- Wire account observations, explicit credential-fill controls and typed authentication/entitlement recovery into the actual owned resolver and worker. Premium actions receive a fresh native selected-account check before authorization.
+- Installed worker publication and coordinator two-phase/authority adoption qualification remain in progress; local/native evidence keeps each transport boundary explicit.
+
+## 0.9.1 — Harden account grants and qualify Windows credential lifecycle
+
+- Reject submitter request overrides and revalidate context/form identity after input events; cancellation immediately clears transient fields and returned credentials.
+- Add MFA, expiry, competing-store, document-replacement, terminal-removal and diagnostic redaction regressions; localize actionable account errors across all six locales.
+- Qualify the actual Engine save/select/grant/consume/remove path against Windows Credential Manager, including duplicate-consume rejection and fixture credential cleanup. Real browser DOM checks and HTTP file hashes retain their separate mocked-grant/HTTP evidence boundaries.
+
+## 0.9.0 — Scoped browser account foundation
+
+- Add desktop-selected site accounts keyed by exact origin and browser session, OS-keyring credential references, ephemeral private session metadata, typed authentication/entitlement observations and expiring one-use form grants.
+- Add six-language desktop account controls and browser form/cancellation modules. Qualified premium controls require the explicitly selected active session; purchase, advertisements and unqualified live layouts remain excluded.
+- Browser worker integration and native keyring/file acceptance remain in progress; local fixtures do not qualify live accounts or provider APIs.
 
 ## 0.8.13
 

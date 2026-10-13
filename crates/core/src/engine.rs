@@ -11,6 +11,7 @@ use std::{
 };
 
 pub struct Engine {
+    pub(crate) site_accounts: Mutex<crate::site_accounts::Runtime>,
     pub store: Arc<Mutex<Store>>,
     pub jobs: Mutex<HashMap<String, transfer::SharedJob>>,
     pub settings: Mutex<Settings>,
@@ -111,6 +112,7 @@ impl Engine {
             captcha_lock: Mutex::new(()),
             solver_tasks: Mutex::new(HashMap::new()),
             browser_stream_locks: Mutex::new(HashMap::new()),
+            site_accounts: Mutex::default(),
             stopping: AtomicBool::new(false),
         });
         engine.cleanup_solver_sessions();
@@ -585,6 +587,8 @@ impl Engine {
     }
     pub fn command(self: &Arc<Self>, command: Command) -> Result<serde_json::Value> {
         match command {
+            Command::SiteAccount(request) => crate::site_accounts::desktop(self, request),
+            Command::BrowserAccount(request) => crate::site_accounts::browser(self, request),
             Command::Captcha {
                 id,
                 owner,
@@ -785,6 +789,7 @@ impl Engine {
                 }
                 self.persist(&job)?;
                 let claimed = job.lock().unwrap().clone();
+                crate::site_accounts::renew_association(self, &claimed)?;
                 Ok(
                     serde_json::json!({"id":id,"scope":claimed.navigation_scope,"source_generation":claimed.source_generation}),
                 )
@@ -1069,7 +1074,9 @@ impl Engine {
                         );
                     }
                     self.persist(&shared)?;
-                    return Ok(serde_json::to_value(shared.lock().unwrap().clone())?);
+                    let renewed = shared.lock().unwrap().clone();
+                    crate::site_accounts::renew_association(self, &renewed)?;
+                    return Ok(serde_json::to_value(renewed)?);
                 }
                 Ok(result)
             }

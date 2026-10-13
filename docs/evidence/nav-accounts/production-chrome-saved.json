@@ -1,0 +1,41 @@
+{
+  "browser": "Chrome/155.0.8059.39",
+  "os": "win32",
+  "architecture": "x64",
+  "extensionAPI": "Production saved-fill/native keyring grant and entitled-session direct stream",
+  "transport": "persistent chrome.runtime.connectNative",
+  "submissions": 1,
+  "debuggerHandoff": "Driver page session detached immediately after explicit fill dispatch; production chrome.debugger owns capture",
+  "fixtureRequests": {
+    "login": 1,
+    "file": 1,
+    "purchase": 0
+  },
+  "sha256": "de16d381af1835e9fb8fcf379da3f439db796cf46f4668fd2fcb778ff4f43cee",
+  "expectedSha256": "de16d381af1835e9fb8fcf379da3f439db796cf46f4668fd2fcb778ff4f43cee",
+  "productionBackground": true,
+  "productionResolver": true,
+  "limitations": [
+    "Local fixtures; live hosts/accounts pending",
+    "No stable/ESR Firefox or other OS qualification from this run",
+    "Fixture manifest grants loopback optional permissions; runtime permission prompt is not qualified",
+    "One authenticated premium fixture accepted; live account/provider API and other browser/OS rows pending"
+  ],
+  "fixture": "nav-account-production-v1",
+  "browserName": "Chrome",
+  "serviceVersion": "0.9.7",
+  "sourceBase": "b706761 + 4001f58 with account claim heartbeat ordering fix",
+  "acceptedJob": {
+    "state": "complete",
+    "bytes": 311296,
+    "verified_sha256": "de16d381af1835e9fb8fcf379da3f439db796cf46f4668fd2fcb778ff4f43cee",
+    "adapter": {
+      "id": "local-fixture",
+      "version": "1.0.0"
+    },
+    "originalPath": "/nav-adapters/ddownload/login",
+    "currentPath": "/nav-adapters/ddownload/account",
+    "selected_host": null
+  },
+  "credentialBoundary": "Test-only credential removed by native account remove before browser closure; existing-session run stores no credential"
+}
