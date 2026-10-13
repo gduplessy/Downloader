@@ -1,4 +1,5 @@
-import { beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import type { ResolverContext } from './navigation/adapters/context';
 import type { Control } from './navigation/adapters/policy';
 
 const fixture = vi.hoisted(() => ({
@@ -18,9 +19,11 @@ vi.mock('./navigation/adapters/dom', async (original) => ({
     elements: fixture.elements,
     secretsFingerprint: '',
   }),
-  domFingerprint: async () => 'opaque-fixture-fingerprint',
+  domFingerprint: async () => 'f'.repeat(64),
 }));
 vi.mock('./navigation/adapters/selection-ui', () => ({ showPreview: fixture.preview }));
+// These cases have no challenge/account selection; keep unrelated UI out of the DOM shim.
+vi.mock('./navigation/challenges/page', () => ({ showChallenge: async () => null }));
 
 const scope = {
   browser: 'chromium',
@@ -31,7 +34,19 @@ const scope = {
   partition_key: null,
   claim_generation: 1,
 };
-const context = { tabId: 7, frameId: 0, scope, locale: 'en' };
+const documentNonce = '31eb8f66-ad71-4897-a797-5b0344e9aa84';
+const context: ResolverContext = {
+  tabId: 7,
+  frameId: 0,
+  scope,
+  sourceGeneration: 1,
+  documentNonce,
+  documentGeneration: 1,
+  documentId: 'fixture-document',
+  locale: 'en',
+};
+const authorization = '41504025-8925-46b3-927f-bda4381c537f';
+let windowListeners: Map<string, () => void>;
 let timers: Element[];
 let documentFixture: Document;
 function timer(
@@ -85,6 +100,11 @@ beforeEach(() => {
   fixture.controls = [];
   fixture.elements = new Map();
   timers = [];
+  windowListeners = new Map();
+  vi.stubGlobal('window', {
+    addEventListener: (event: string, listener: () => void) => windowListeners.set(event, listener),
+  });
+  vi.stubGlobal('__downloaderDocumentNonce', documentNonce);
   documentFixture = {
     body: { innerText: '' },
     defaultView: { getComputedStyle: () => ({ visibility: 'visible', display: 'block' }) },
@@ -94,9 +114,18 @@ beforeEach(() => {
   vi.stubGlobal('location', { href: 'http://127.0.0.1/nav-adapters/g4u/wait' });
   delete (globalThis as { __downloaderResolver?: boolean }).__downloaderResolver;
   fixture.send.mockImplementation(async (message) =>
-    message.type === 'resolver_context' ? context : { click: false },
+    message.type === 'resolver_context'
+      ? context
+      : message.type === 'resolver_account'
+        ? null
+        : { click: false },
   );
   fixture.preview.mockReturnValue({ close: vi.fn() });
+});
+afterEach(() => {
+  windowListeners.get('pagehide')?.();
+  delete (globalThis as { __downloaderResolver?: boolean }).__downloaderResolver;
+  vi.unstubAllGlobals();
 });
 
 it.each([true, false])(
@@ -109,7 +138,13 @@ it.each([true, false])(
       timer('900', { hidden: true }),
     ];
     fixture.send.mockImplementation(async (message) =>
-      message.type === 'resolver_context' ? (owned ? context : null) : { click: false },
+      message.type === 'resolver_context'
+        ? owned
+          ? context
+          : null
+        : message.type === 'resolver_account'
+          ? null
+          : { click: false },
     );
     await import('./resolver');
     await vi.waitFor(() =>
@@ -122,6 +157,10 @@ it.each([true, false])(
       wait: { duration_ms: 90000, expires_at_ms: expiry },
     });
     expect(message.decision.wait.fingerprint).toMatch(/^countdown:/);
+    expect(message.document).toEqual({ nonce: documentNonce, generation: 1 });
+    if (owned) expect(message.binding).toMatchObject({ sourceGeneration: 1, documentNonce });
+    else expect(message.binding).toBeUndefined();
+    expect(fixture.send.mock.calls.filter(([m]) => m.type === 'resolver_commit')).toHaveLength(0);
     expect(click).not.toHaveBeenCalled();
     expect(fixture.preview).not.toHaveBeenCalled();
   },
@@ -144,19 +183,40 @@ it('treats disabled download countdown attributes as waits through the merged re
   expect(click).not.toHaveBeenCalled();
 });
 
-it.each(['cancel', 'claim-change', 'continue'])(
-  'fences delayed preview authorization on %s',
-  async (action) => {
+// Delay each phase independently: prepare must burn a late token; commit must
+// revalidate current authority before performing a browser action.
+const actions = [
+  'cancel',
+  'claim-change',
+  'source-change',
+  'document-change',
+  'pagehide',
+  'continue',
+] as const;
+const phases = ['prepare', 'commit'] as const;
+const delayedCases = phases.flatMap((phase) => actions.map((action) => ({ phase, action })));
+it.each(delayedCases)(
+  'fences delayed preview $phase authorization on $action',
+  async ({ phase, action }) => {
     const click = control('first');
     control('second');
-    let release!: (value: { click: boolean }) => void;
+    let release!: (value: { authorization?: string; click?: boolean }) => void;
     let currentContext = context;
     fixture.send.mockImplementation((message) => {
       if (message.type === 'resolver_context') return Promise.resolve(currentContext);
-      if (message.decision.kind === 'click')
-        return new Promise((resolve) => {
-          release = resolve;
-        });
+      if (message.type === 'resolver_account') return Promise.resolve(null);
+      if (message.type === 'resolver_step' && message.decision.kind === 'click')
+        return phase === 'prepare'
+          ? new Promise((resolve) => {
+              release = resolve;
+            })
+          : Promise.resolve({ authorization });
+      if (message.type === 'resolver_commit')
+        return phase === 'commit'
+          ? new Promise((resolve) => {
+              release = resolve;
+            })
+          : Promise.resolve({ click: true });
       return Promise.resolve({ click: false });
     });
     await import('./resolver');
@@ -177,9 +237,37 @@ it.each(['cancel', 'claim-change', 'continue'])(
     if (action === 'cancel') cancellation.abort();
     if (action === 'claim-change')
       currentContext = { ...context, scope: { ...scope, claim_generation: 2 } };
-    release({ click: true });
+    if (action === 'source-change') currentContext = { ...context, sourceGeneration: 2 };
+    if (action === 'document-change') {
+      const listener = fixture.listener.mock.calls[0][0] as (message: unknown) => unknown;
+      await listener({ type: 'resolver_continue' });
+    }
+    if (action === 'pagehide') windowListeners.get('pagehide')!();
+    release(phase === 'prepare' ? { authorization } : { click: true });
     await outcome;
     expect(click).toHaveBeenCalledTimes(action === 'continue' ? 1 : 0);
     expect(fixture.elements.get('first')!.style.outline).toBe('');
+    const prepare = fixture.send.mock.calls.find(
+      ([m]) => m.type === 'resolver_step' && m.decision.kind === 'click',
+    )![0];
+    expect(prepare.document).toEqual({ nonce: documentNonce, generation: 1 });
+    expect(prepare.binding).toMatchObject({
+      documentNonce,
+      documentGeneration: 1,
+      sourceGeneration: 1,
+      claimGeneration: 1,
+    });
+    const commits = fixture.send.mock.calls.filter(([m]) => m.type === 'resolver_commit');
+    expect(commits).toHaveLength(phase === 'commit' || action === 'continue' ? 1 : 0);
+    for (const [commit] of commits) {
+      expect(commit).toMatchObject({
+        token: authorization,
+        document: { nonce: documentNonce, generation: 1 },
+        binding: { documentNonce, documentGeneration: 1, sourceGeneration: 1, claimGeneration: 1 },
+      });
+    }
+    const aborts = fixture.send.mock.calls.filter(([m]) => m.type === 'resolver_abort');
+    if (action === 'continue') expect(aborts).toHaveLength(0);
+    else expect(aborts.some(([m]) => m.token === authorization)).toBe(true);
   },
 );

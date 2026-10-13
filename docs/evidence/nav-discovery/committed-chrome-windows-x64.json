@@ -1,0 +1,42 @@
+{
+  "browser": "Chrome/155.0.8059.39",
+  "productVersion": "0.13.2",
+  "sourceCommit": "7f752d3c4e2f0260369d718371a1094194ce416a",
+  "sourceDirty": false,
+  "serviceSha256": "d552383475489fe598444a306f7942aebdf57965db5b4612587013bd3531f35a",
+  "resolverSha256": "5ffb493994bdbc6263ac1160f6b67d1aa094e2ee23bd63f771fceb9a720b8e22",
+  "diagnosticBundleChanges": false,
+  "os": "win32",
+  "architecture": "x64",
+  "transport": "Production discovery worker/content and resolver, actual native messaging, original response direct streaming",
+  "resources": 1,
+  "visited": 2,
+  "crossOrigin": true,
+  "restartWorker": true,
+  "restartService": true,
+  "restartBrowser": true,
+  "bytes": 262161,
+  "sha256": "ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862",
+  "requests": [
+    {
+      "method": "GET",
+      "authenticated": true
+    }
+  ],
+  "pageRequests": 7,
+  "assertions": [
+    "delayed JavaScript resource discovered without a probe",
+    "loop deduplicated",
+    "scoped selected resource reopened provenance page",
+    "actual browser closed and reopened; stale epoch refused until explicit original-session reauthorization",
+    "actual extension service worker stopped and restarted; saved discovery ownership recovered",
+    "actual service process restarted its persisted discovery record",
+    "authenticated original resource GET consumed once",
+    "native storage completed matching SHA-256",
+    "driver detached before preview submission; production chrome.debugger exclusively owned response bytes"
+  ],
+  "limitations": [
+    "Local fixtures only; live hosts/accounts pending",
+    "Firefox/ESR and other OS rows require separate qualification"
+  ]
+}

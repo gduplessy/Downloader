@@ -143,6 +143,16 @@ pub struct Job {
     #[serde(default)]
     pub navigation_owner: Option<String>,
     #[serde(default)]
+    pub navigation_scope: Option<crate::navigation::SessionScope>,
+    #[serde(default)]
+    pub selected_host: Option<String>,
+    #[serde(default)]
+    pub navigation_adapter: Option<crate::navigation_selection::AdapterIdentity>,
+    #[serde(default = "source_generation_default")]
+    pub source_generation: u64,
+    #[serde(default)]
+    pub replay_decision: Option<crate::navigation::ReplayDecision>,
+    #[serde(default)]
     pub navigation_url: Option<String>,
     #[serde(default)]
     pub solver_attempted: bool,
@@ -196,6 +206,8 @@ pub struct Scanner {
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
+    #[serde(default)]
+    pub captcha: crate::captcha::ProviderSettings,
     #[serde(default)]
     pub solver: crate::solver::SolverSettings,
     #[serde(default)]
@@ -257,6 +269,7 @@ impl Default for Settings {
         .collect();
         Self {
             solver: Default::default(),
+            captcha: Default::default(),
             network: Default::default(),
             directory,
             max_jobs: 3,
@@ -313,7 +326,35 @@ pub struct ComponentStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "command", content = "args", rename_all = "snake_case")]
 pub enum Command {
+    SiteAccount(crate::site_accounts::DesktopRequest),
+    BrowserAccount(crate::site_accounts::BrowserRequest),
+    BrowserStream(crate::navigation::StreamOperation),
+    Captcha {
+        id: String,
+        owner: String,
+        scope: crate::navigation::SessionScope,
+        source_generation: u64,
+        request: crate::captcha::ProviderRequest,
+    },
     Snapshot,
+    CaptchaBudget,
+    BrowserSnapshot {
+        owner: String,
+        #[serde(default)]
+        private: bool,
+        #[serde(default)]
+        scopes: Vec<crate::navigation::SessionScope>,
+    },
+    BrowserSubscribe {
+        owner: String,
+        #[serde(default)]
+        private: bool,
+        #[serde(default)]
+        scopes: Vec<crate::navigation::SessionScope>,
+        after_sequence: Option<u64>,
+        #[serde(default = "event_limit")]
+        limit: usize,
+    },
     Negotiate {
         minimum: u32,
         maximum: u32,
@@ -328,14 +369,26 @@ pub enum Command {
     NavigationScheduler {
         owner: String,
         #[serde(default)]
+        private_lane: bool,
+        #[serde(default)]
         scope: Option<crate::navigation::SessionScope>,
         request: crate::navigation_scheduler::SchedulerRequest,
+    },
+    NavigationSelection(crate::navigation_selection::SelectionRequest),
+    NavigationAuthority {
+        id: String,
+        owner: String,
+        scope: crate::navigation::SessionScope,
     },
     ClaimNavigation {
         id: String,
         owner: String,
         #[serde(default)]
         force: bool,
+        #[serde(default)]
+        scope: Option<crate::navigation::SessionScope>,
+        #[serde(default)]
+        source_generation: Option<u64>,
     },
     Resolve {
         id: String,
@@ -344,6 +397,10 @@ pub enum Command {
         filename: Option<String>,
         #[serde(default)]
         context: RequestContext,
+        #[serde(default)]
+        scope: Option<crate::navigation::SessionScope>,
+        #[serde(default)]
+        source_generation: Option<u64>,
     },
     BrowserStatus {
         id: String,
@@ -355,6 +412,10 @@ pub enum Command {
         total: Option<u64>,
         #[serde(default)]
         url: Option<String>,
+        #[serde(default)]
+        scope: Option<crate::navigation::SessionScope>,
+        #[serde(default)]
+        source_generation: Option<u64>,
     },
     SolveChallenge {
         id: String,
@@ -364,6 +425,10 @@ pub enum Command {
         url: Option<String>,
         #[serde(default)]
         automatic: bool,
+        #[serde(default)]
+        scope: Option<crate::navigation::SessionScope>,
+        #[serde(default)]
+        source_generation: Option<u64>,
     },
     TestSolver {
         settings: crate::solver::SolverSettings,
@@ -374,6 +439,10 @@ pub enum Command {
         url: String,
         #[serde(default)]
         context: RequestContext,
+        #[serde(default)]
+        scope: Option<crate::navigation::SessionScope>,
+        #[serde(default)]
+        source_generation: Option<u64>,
     },
     Pause {
         id: String,
@@ -419,6 +488,23 @@ pub enum Command {
     },
     Grabber(GrabberProject),
     GrabberList,
+    DiscoveryList {
+        scope: crate::navigation::SessionScope,
+    },
+    DiscoveryClaim(crate::rendered_grabber::Claim),
+    DiscoverySelect(crate::rendered_grabber::Select),
+    DiscoveryPrepare(crate::rendered_grabber::Prepare),
+    GrabberResults {
+        id: String,
+        offset: usize,
+        limit: usize,
+    },
+    GrabberControl {
+        id: String,
+        action: String,
+    },
+    DiscoveryPageResult(crate::rendered_grabber::PageResult),
+    DiscoveryStatus(crate::rendered_grabber::Status),
     GrabberRun {
         id: String,
     },
@@ -483,6 +569,8 @@ impl Response {
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GrabberProject {
+    #[serde(default)]
+    pub private: bool,
     pub id: String,
     pub name: String,
     pub url: String,
@@ -531,6 +619,12 @@ pub enum EventPayload {
         id: String,
         browser_source: bool,
         page_url: Option<String>,
+        #[serde(default)]
+        private: Option<bool>,
+        #[serde(default)]
+        navigation_owner: Option<String>,
+        #[serde(default)]
+        navigation_scope: Option<Box<crate::navigation::SessionScope>>,
     },
     SettingsChanged,
     QueuesChanged,
@@ -557,4 +651,8 @@ pub struct TransferMetrics {
     pub verification_seconds: f64,
     pub publication_seconds: f64,
     pub scan_seconds: f64,
+}
+
+fn source_generation_default() -> u64 {
+    1
 }

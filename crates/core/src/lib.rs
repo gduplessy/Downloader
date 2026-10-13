@@ -6,6 +6,7 @@ pub mod grabber;
 pub mod media;
 pub mod model;
 pub mod navigation;
+pub mod navigation_selection;
 pub mod security;
 pub mod solver;
 pub mod storage;
@@ -24,4 +25,9 @@ mod process;
 #[cfg(not(windows))]
 mod system_proxy;
 
+pub mod browser_stream;
 pub mod navigation_scheduler;
+
+pub mod captcha;
+pub mod rendered_grabber;
+pub mod site_accounts;

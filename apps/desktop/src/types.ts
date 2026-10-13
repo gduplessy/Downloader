@@ -1,4 +1,7 @@
+import type {SessionScope} from '../../../packages/shared/src/navigation';
 export type Job = {
+  navigation_scope?: SessionScope | null;
+  source_generation?: number;
   id: string;
   request_id: string;
   credential_id?: string | null;
@@ -24,6 +27,8 @@ export type Job = {
   viable: boolean;
   page_url?: string | null;
   navigation_url?: string | null;
+  selected_host?: string | null;
+  navigation_adapter?: { id: string; version: string } | null;
   solver_outcome?: string | null;
 };
 export type Category = {
@@ -47,6 +52,13 @@ export type NetworkSettings = {
   checkpoint_milliseconds: number;
 };
 export type Settings = {
+  captcha: {
+    enabled: boolean;
+    external_opt_in: boolean;
+    key_ref: string;
+    total_budget_microusd: number;
+    task_ceiling_microusd: number;
+  };
   solver: { enabled: boolean; endpoint: string; timeout_seconds: number };
   network: NetworkSettings;
   directory: string;

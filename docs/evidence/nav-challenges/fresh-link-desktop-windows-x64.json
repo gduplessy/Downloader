@@ -1,0 +1,72 @@
+{
+  "fixture": "challenge-fresh-link-desktop-v1",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "native_product_version": "0.10.2",
+  "cli_sha256": "222422963a84086e446b891fff3baf7f5b3416bc10fe7214c0052026e9091eb9",
+  "rows": [
+    {
+      "provider": "g4u",
+      "selected_host": "gofile.io",
+      "bytes": 253952,
+      "sha256": "3956ab3c089f6def510fd6fafb24e11c5a6a0ddc8a521c99994746ee3756bc51",
+      "native_desktop_state": "complete"
+    },
+    {
+      "provider": "ddownload",
+      "selected_host": "gofile.io",
+      "bytes": 253952,
+      "sha256": "3956ab3c089f6def510fd6fafb24e11c5a6a0ddc8a521c99994746ee3756bc51",
+      "native_desktop_state": "complete"
+    },
+    {
+      "provider": "rapidgator",
+      "selected_host": "gofile.io",
+      "bytes": 253952,
+      "sha256": "3956ab3c089f6def510fd6fafb24e11c5a6a0ddc8a521c99994746ee3756bc51",
+      "native_desktop_state": "complete"
+    },
+    {
+      "provider": "gofile",
+      "selected_host": "gofile.io",
+      "bytes": 253952,
+      "sha256": "3956ab3c089f6def510fd6fafb24e11c5a6a0ddc8a521c99994746ee3756bc51",
+      "native_desktop_state": "complete"
+    }
+  ],
+  "cancelled_submissions": 0,
+  "stale_rows": [
+    {
+      "scenario": "cancel",
+      "submissions": 0
+    },
+    {
+      "scenario": "csrf",
+      "submissions": 0
+    },
+    {
+      "scenario": "host",
+      "submissions": 0
+    },
+    {
+      "scenario": "form_action",
+      "submissions": 0
+    },
+    {
+      "scenario": "image_replacement",
+      "submissions": 0
+    },
+    {
+      "scenario": "expiry",
+      "submissions": 0
+    },
+    {
+      "scenario": "claim",
+      "submissions": 0
+    },
+    {
+      "scenario": "source",
+      "submissions": 0
+    }
+  ],
+  "qualification": "Production page module with mocked worker; extracted fresh links then real CLI desktop transfer. Installed worker/navigation path still pending."
+}

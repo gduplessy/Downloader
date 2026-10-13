@@ -189,6 +189,7 @@ fn waiting_recovery_and_server_readiness_not_clock_readiness() {
                 id: "j0".into(),
                 generation: 1,
                 tab_id: 7,
+                scope: None,
             }],
         },
         200_000,

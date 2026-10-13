@@ -1,1 +1,48 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"><title>Downloader settings</title></head><body class="options"><header><h1>Downloader</h1><span data-i18n="integration"></span></header><section><h2 data-i18n="health"></h2><p data-i18n="nativeHelp"></p><label data-i18n="extensionId"></label><code id="extension-id"></code><button id="test" data-i18n="diagnostics"></button></section><form><section><h2 data-i18n="settings"></h2><label data-i18n="language" for="locale"></label><select id="locale"></select><label class="check"><input type="checkbox" id="automatic"><span data-i18n="automatic"></span></label><label class="check"><input type="checkbox" id="overlay"><span data-i18n="downloadMedia"></span></label><label data-i18n="siteScope" for="site-scope"></label><input id="site-scope" type="url" placeholder="https://example.com"><label class="check"><input id="all-sites" type="checkbox"><span data-i18n="allSites"></span></label><button type="button" id="enable" data-i18n="permission"></button><label data-i18n="fileTypes" for="extensions"></label><input id="extensions"><label data-i18n="exclusions" for="excluded"></label><textarea id="excluded" rows="5"></textarea><button class="primary" data-i18n="save"></button></section></form><pre id="result" role="status"></pre><script src="options.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Downloader settings</title>
+  </head>
+  <body class="options">
+    <header>
+      <h1>Downloader</h1>
+      <span data-i18n="integration"></span>
+    </header>
+    <section>
+      <h2 data-i18n="health"></h2>
+      <p data-i18n="nativeHelp"></p>
+      <label data-i18n="extensionId"></label><code id="extension-id"></code
+      ><button id="test" data-i18n="diagnostics"></button>
+    </section>
+    <form>
+      <section>
+        <h2 data-i18n="settings"></h2>
+        <label data-i18n="language" for="locale"></label
+        ><select id="locale"></select
+        ><label class="check"
+          ><input type="checkbox" id="automatic" /><span data-i18n="automatic"></span></label
+        ><label class="check"
+          ><input type="checkbox" id="direct-capture" /><span data-stream-i18n="enable"></span
+        ></label>
+        <p data-stream-i18n="permission"></p>
+        <p data-stream-i18n="takeover"></p>
+        <label class="check"
+          ><input type="checkbox" id="overlay" /><span data-i18n="downloadMedia"></span></label
+        ><label data-i18n="siteScope" for="site-scope"></label
+        ><input id="site-scope" type="url" placeholder="https://example.com" /><label class="check"
+          ><input id="all-sites" type="checkbox" /><span data-i18n="allSites"></span></label
+        ><button type="button" id="enable" data-i18n="permission"></button
+        ><label data-i18n="fileTypes" for="extensions"></label><input id="extensions" /><label
+          data-i18n="exclusions"
+          for="excluded"
+        ></label
+        ><textarea id="excluded" rows="5"></textarea
+        ><button class="primary" data-i18n="save"></button>
+      </section>
+    </form>
+    <pre id="result" role="status"></pre>
+    <script src="options.js"></script>
+  </body>
+</html>

@@ -1,10 +1,342 @@
 # Changelog
 
-## 0.8.4 — Stack scheduler on owned adapter selection
+## 0.13.6
 
-- Merge the adapter prerequisite into the scheduler branch, preserving preview lifetime cancellation, session-bound selection, durable waits, configurable admission, and every prior release entry.
-- Use the scheduler countdown validator in adapter observation so visible timers, invalid clocks, and disabled download controls retain consistent wait metadata and submission blocking.
-- Preserve both adapter and scheduler qualification boundaries; installed-extension/native ownership and live-host acceptance remain pending.
+- Namespace private ephemeral navigation metadata so primitive browser-download IDs cannot cross into regular storage views or removal operations.
+- Use marked browser-download envelopes, refuse regular overwrites of private metadata, and omit unqualified legacy primitive mappings without deleting them.
+- Keep private capture diagnostics out of durable local storage. Installed primitive-fencing qualification remains pending.
+
+## 0.13.5
+
+- Recover current owned stream markers after worker loss by terminating their exact stream identity and requiring a fresh browser action, without inventing a new reader or replaying a request.
+- Preserve durable partial bytes and totals through browser recovery status; include authoritative browser-source status in scoped projections.
+- Record controlled Firefox response-filter lane evidence. The owner explicitly keeps binary form-navigation/download capture pending while supported direct-stream lanes are completed.
+
+## 0.13.4
+
+- Integrate checked rendered discovery with bounded provenance preparation and explicit original-session restart recovery.
+- Preserve account/CAPTCHA flows and scoped capture admission, document-loss and source-replacement recovery. Clean batch Chrome/Edge cross-origin restart evidence remains distinct from pending Firefox and private/container qualification.
+
+## 0.13.3
+
+- Record final clean committed-source 7f752d3 (0.13.2) Chrome/Edge cross-origin authenticated discovery after complete browser, service and worker restart. Both complete exactly one original GET and the expected native hash with diagnostics off.
+- Preserve explicit live provider/account, Firefox/ESR, private/container installed, other OS and owner UI qualification boundaries. This increment changes documentation and synchronized versions only.
+
+## 0.13.2
+
+- Reconcile checked coordinator base 7e44b00 and latest main, preserving resolver/countdown regressions and explicit WaitingUser recovery after source replacement.
+- Record clean committed-source Chrome 155 and Edge 155 cross-origin acceptance with complete browser, service and worker restart. Both publish one authenticated original GET, zero HEAD and 262,161 bytes with the expected native SHA-256.
+- Keep retained provenance identity checks after asynchronous epoch reads; localize extension state labels and correct empty resource paging. Verify 141 extension, six desktop and 125 native tests (one subprocess fixture ignored), strict Clippy, formatting, types/builds and version checks. Remaining live provider, Firefox/ESR, other OS and owner UI acceptance rows stay explicit.
+
+## 0.13.1
+
+- Adopt checked coordinator base 91d0553, preserving same-document resolver previews and scoped capture ownership.
+- Explicit original-session discovery resume releases its earlier frontier/preparation lease before opening a newly owned tab; Chromium actual partition and Firefox actual container identity remain fenced.
+- Add full installed browser-process close/reopen qualification: a new epoch refuses historical discovery ownership until explicit reauthorization. Use per-run copied native executables so restart auto-launch and cleanup cannot affect another service.
+- Verify eight discovery Engine regressions, 124 extension and six desktop tests, full native tests, strict Clippy, types and builds. Actual Chrome cross-origin browser/service/worker restart publishes one authenticated original GET with the expected native hash; final committed Chrome/Edge evidence follows.
+
+## 0.13.0
+
+- Integrate checked account and shared navigation ownership updates from coordinator base c8ac54d.
+- Reserve bounded service-owned preparation leases before reopening explicitly approved cross-origin HTML provenance in the selected original browser session. Enroll actual partition and document proofs before starting only the known selected resource.
+- Preserve selected-resource metadata across worker recovery, fence concurrent provenance replacement, and close verified preparation tabs on cancellation.
+- Qualify installed Chrome cross-origin authenticated discovery with actual service and worker restart during an active frontier: one original GET, zero HEAD, 262,161 bytes and matching native SHA-256. Edge acceptance and final checks are tracked in discovery evidence; live hosts/accounts, Firefox/ESR and other OS rows remain separate.
+
+## 0.12.12
+
+- Abort scoped Blob capture when its document starts loading a replacement, and retain actionable browser recovery before clearing the old document marker.
+- Report closed-tab recovery while the exact native scope/source fence is still available; remove the resolver record afterward.
+- Installed document-loss and tab-close qualification remain pending.
+
+## 0.12.11
+
+- Serialize cancellation after a dispatched native stream admission so a late checkpoint receives its matching abort.
+- Failed Firefox filters retain native recovery even when disconnect itself throws. Capture status distinguishes refused admission from verified completion.
+- Preserve a runnable installed Firefox original-POST fixture; current form-navigation capture qualification remains unresolved.
+- Installed candidate failure recovery retains one POST, zero desktop bytes/publication and `WaitingUser`; transfer acceptance still fails with `Invalid request ID`.
+
+## 0.12.10
+
+- Reconcile latest merged main, retaining three-digit countdown clocks within the shared seven-day limit.
+- Adapt its resolver regression suite to current nonce/source/claim and two-phase authorization, covering waits, cancellation, replacement, page loss and successful selection.
+
+## 0.12.9
+
+- Bound total queued Firefox response-filter bytes while native admission or durable acknowledgement is pending, instead of bounding individual events only.
+- Regression verifies excess queued data interrupts capture before any bytes enter the sink. Installed Firefox POST qualification remains open.
+
+## 0.12.8
+
+- Replacing a browser source now moves the desktop job to actionable recovery immediately, while advancing source and claim counters to reject old stream frames and EOF.
+- Verify replacement after durable partial ingress against the native engine; installed replacement qualification remains in progress.
+
+## 0.12.7
+
+- Coalesce automatic startup in an already running live resolver document, preserving selection previews while retaining explicit Continue and replacement recovery.
+- Expose scoped Blob capture progress and cancellation states; terminal callbacks cannot overwrite completion. Installed lifecycle qualification remains in progress.
+
+## 0.12.6
+
+- Integrate checked CAPTCHA qualification, canvas readback handling and a shared native endpoint for control and direct byte streams.
+- Require a valid current source generation before capture. Four installed Chrome fixture downloads pass native hash verification; paid calls remain zero and live host acceptance remains pending.
+
+## 0.12.5
+
+- Integrate final account batch evidence and provider/provenance assertions: actual Chrome saved-fill, Edge saved-fill and Chrome existing-session downloads publish verified bytes with one login/file request and no purchases.
+- Preserve the recorded live-provider/API, Firefox-account, other-platform, permission-prompt and private/container acceptance boundaries.
+
+## 0.9.10 — Qualify integrated scoped accounts
+
+- Adopt the checked combined account/challenge/stream lifecycle and removal-event privacy contracts.
+- Assert selected downstream provider and original provenance through authenticated redirect, original-response capture and native publication.
+- Qualify installed Chrome/Edge saved-fill and Chrome existing-session hashes; preserve pending live provider, permission-prompt, Firefox and non-Windows acceptance.
+- Verify 127 client and 113 native tests, strict Clippy/fmt, frontend types/builds, native Tauri compilation and actual Windows generated-keyring cleanup.
+
+## 0.10.9
+
+- Route native control messages and original-response byte streams through the same canonical HOST; reject absent or invalid source counters before capture.
+- Adopt checked account/scheduler integration while preserving strict challenge document, scope, source, frame and selected-host proof.
+- Qualify four installed Chrome 155 local CAPTCHA POST-to-fresh-link desktop hashes, diagnostics off and paid calls zero. Record twelve stale/cancelled DOM cases with zero submissions.
+- Verify 121 extension, 6 desktop and 113 native tests, client types/builds, Rustfmt, strict Clippy, desktop Rust compilation and version artifacts. Live/paid, automatic fresh-page preview and broader browser/platform rows remain pending.
+
+## 0.12.4
+
+- Integrate the checked account batch: desktop OS-keyring metadata, explicit saved fills, existing-session premium controls, purpose-separated grants and live document proof.
+- Preserve shared challenge, direct-stream and recovery hooks; renew scheduler authority from the actual owned tab and invalidate grants before intentional claim replacement.
+- Verify 121 extension tests, six desktop tests, desktop/extension types/builds, the full native suite, strict Clippy and CLI/service builds. Installed combined browser acceptance remains in progress; live provider/account and paid-provider rows stay pending.
+
+## 0.12.3
+
+- Adopt the checked per-job startup serializer and persist renewed claims before scheduler heartbeat.
+- Retain Firefox blocking request observation until filter completion/refusal, with explicit listener cleanup.
+- Reject late admission, chunks and EOF after stream cancellation; terminal callbacks remain idempotent.
+- Verify 33 session/stream regressions and extension types/builds. Actual Firefox qualification remains pending.
+
+## 0.12.2
+
+- Prevent legacy browser-download observers from pausing, replaying or changing the status of jobs owned by an active original-response stream.
+- Bind direct ownership to tab, job, exact scope/source and stream identity; terminal and failed admissions release only their own stream.
+- Verify 13 stream regressions, extension types/builds and an installed production Chrome POST with one submission and a matching 262,161-byte native hash. Firefox remains under qualification.
+
+## 0.12.1
+
+- Preserve owner, private lane and exact navigation claim on removal events; scoped subscriptions reject foreign or historical unqualified tombstones.
+- Add a real engine regression for regular/private removal isolation and stale claims.
+- Make the scheduler assertion compatible with both installed Vitest mock type variants.
+
+## 0.9.9 — Integrate monotonic navigation record ownership
+
+- Adopt checked shared record write fencing and actual Chromium cookie-store reconciliation.
+- Preserve account, challenge and adapter document claims with distinct expiring credential/capture purposes.
+- Keep live hosts/accounts, paid-provider calls and unavailable browser/OS acceptance pending.
+
+## 0.12.0
+
+- Integrate live document nonce authorization with shared navigation recovery.
+- Serialize navigation metadata writes and reject delayed records with older native source or claim counters; private records remain ephemeral.
+- Reconcile Chromium tab ownership against actual cookie-store membership when the Tab API omits cookieStoreId.
+- Verify 106 extension regressions, extension types and both browser builds. Installed Firefox and broader integrated acceptance remain pending.
+
+## 0.10.5
+
+- Adopt canonical scope ordering and validated CLI navigation ownership from coordinator integration.
+- Normalize image binding scope identity and stop cancelled host-choice callbacks from reopening the solver.
+
+
+## 0.10.4
+
+- Integrate coordinator two-phase capture and read-only authority adoption while retaining live-document and challenge form fences.
+- Add an isolated actual-installed production worker/resolver qualification driver; final native hash acceptance remains pending until its checks pass.
+
+
+## 0.10.3
+
+- Integrate the verified coordinator capture/session/scheduler base and wire owner-fenced image challenge selection, local/manual/paid controls, and HTML-form fresh-link continuation.
+- Verify live isolated-world document identities before resolver contexts and challenge actions; enforce service admission before paid task creation.
+
+
+## 0.10.2
+
+- Bind image challenge submissions to complete form state and selected-host fields, reject occluded targets, and preserve immutable session snapshots.
+- Qualify production React FlareSolverr settings against isolated native state, including save/test/stale result/disable/restart; eight stale browser lifecycle cases submit zero forms.
+
+
+## 0.10.1
+
+- Add service restart/late-result reconciliation with source/claim-bound paid tasks, actual image dimension checks, translated budget controls and strict worker authorization.
+- Qualify 120 unique held-out images plus 80 negative images and four synthetic fresh-link desktop hashes. Installed worker/live host acceptance remains pending.
+
+
+## 0.10.0
+
+- Add qualified local open-circle geometry, stale-answer fencing, six-locale challenge controls, and service-owned optional CoordinatesTask reservations tested entirely against mocks.
+- Paid solving remains disabled with zero budget; live challenge and downstream browser acceptance remain pending.
+
+
+Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
+
+## 0.11.9
+
+- Preserve production direct-stream ownership across legacy download observers and integrate latest session startup fences.
+- Keep scoped rendered selection and paged resource controls intact; refresh installed Chrome/Edge evidence on the final combined base.
+
+## 0.11.8
+
+- Adopt monotonic navigation metadata writes and actual Chromium cookie-store reconciliation.
+- Keep rendered resource pages current as discovery progresses; refresh final installed Chrome/Edge qualification against the combined base.
+
+## 0.11.7
+
+- Integrate the live document nonce contract and challenge handoff while preserving exact rendered-resource selection.
+- Installed Chrome155 qualified discovery and one original authenticated GET with matching native SHA-256 on the prior integration base; final combined-base qualification is in progress.
+
+## 0.11.6
+
+- Integrate scope-aware native subscription cursors and preserve discovery admission/document fences.
+- Use fresh scoped snapshots for newly selected jobs and wait for the exact delayed resource before resolver submission. Local streaming qualification remains in progress.
+
+## 0.11.5
+
+- Integrate private-lane scheduler admission with fresh original source-tab authority for selected discovery jobs.
+- Bind rendered reports to the current document nonce and generation; add bounded resource paging and desktop selection controls.
+- Native frontier and Engine regressions pass. Installed authenticated original-stream qualification remains in progress.
+
+## 0.11.4
+
+- Bound delayed/open-shadow DOM extraction and add a reproducible installed Chrome/Edge discovery/native qualification fixture.
+- Add real Engine tests for global admission, cross-origin permission/partition renewal, scoped selection/restart and ephemeral private projects. Installed-browser fixture execution remains pending.
+
+## 0.11.3
+
+- Add explicitly permitted cross-origin partition renewal and per-resource observed session provenance.
+- Fence discovery worker recovery by the current browser session epoch; never reuse a stale browser instance as an owned discovery tab.
+
+## 0.11.2
+
+- Integrate rendered discovery with the production native bridge, worker/tab lifecycle and shared scheduler recovery.
+- Preserve provenance before one-use capture and restrict resolver candidates to the selected rendered resource. Real Engine restart/idempotent selection/private storage regressions pass; installed browser acceptance remains in progress.
+
+## 0.11.1
+
+- Add bounded DOM extraction, owned-tab discovery runtime, explicit browser-session controls and six-locale project resume/cancel/private controls.
+- Stage selected rendered resources as scoped navigation jobs without anonymous inspection; serialize selection against cancellation. Production browser wiring and native hash acceptance remain in progress.
+
+## 0.11.0
+
+- Add atomically persisted rendered discovery frontiers, provenance, bounded results, scoped command fences, duplicate-report fingerprints, and shared navigation admission.
+- Keep new private projects and frontier metadata ephemeral. Local backend qualification is in progress; browser/native rendered fixture qualification is pending.
+## 0.9.8 — Bind account and capture authority to the actual document
+
+- Verify the live isolated document nonce before account observation, credential grant/consume and adapter authorization; native credential proof includes the exact nonce.
+- Preserve Chromium document IDs when supported and provide explicit nonce proof for Firefox same-URL replacement.
+- Record corrected installed Edge 155 saved-fill/premium acceptance separately from the earlier failed row; unavailable targets and live accounts remain pending.
+
+## 0.9.7 — Integrate checked production browser projection
+
+- Include authority-qualified incremental snapshot cursor and null projection fixes from the checked staging base.
+- Add isolated production Chrome account/premium qualification using actual extension/native transports, both saved-fill and existing-session paths, verified desktop bytes and test-account cleanup.
+- Serialize startup per native job, persist fresh claimed scope before heartbeat, and renew live scheduler authority without relaxing request generations.
+- Record the failed Edge continuation row separately; live accounts, Firefox and other OS targets remain pending.
+
+## 0.9.6 — Keep selected accounts through explicit same-session recovery
+
+- Successful same-session claim continuation and scoped source refresh retain the selected nonsecret account association at the new source/claim fence.
+- Clear previous authentication/entitlement observations and revoke older credential grants; Continue does not reset the once-per-source/account-revision login limit.
+- Retain exact browser/profile/private/store/container/partition checks and require fresh document observations before premium capture.
+
+## 0.9.5 — Canonical account session authority and private queue lane
+
+- Merge coordinator `093a447`, compare account/browser session partitions canonically, and carry the exact private scheduler lane.
+- Keep actual Chrome document checks, typed account recovery and separate premium commit checks intact. Installed auth/premium source-to-desktop qualification remains in progress.
+
+## 0.9.4 — Adopt intentional account changes in the original browser context
+
+- Merge verified coordinator `d6594d3` readonly authority renewal and preserve the exact owning tab/profile/container/private session while old readers and capture authorizations are invalidated.
+- Explicit account selection/removal waits for visible user action, keeping the existing admitted navigation lifecycle. Typed login/MFA/entitlement states remain account observations; no automatic login retry loop or replay permission expansion.
+- Saved account revisions fence concurrent credential edits; installed browser/native publication qualification follows this integration.
+
+## 0.9.3 — Preserve account checks through two-phase capture authorization
+
+- Merge coordinator `dc63865`, bind adapter actions to source generation, and retain credential grants as a separate scoped authorization purpose.
+- Keep account observations and premium checks in the production resolver while fresh prepare/commit/cancel controls fence browser capture.
+- Readonly authority adoption and full installed-worker qualification remain the next integration gate.
+
+## 0.9.2 — Integrate accounts with scoped browser streams and adapters
+
+- Merge verified coordinator prerequisite `1da6fa6` and retain adapter cancellation, scoped native streams, scheduler qualification and selected downstream provenance.
+- Wire account observations, explicit credential-fill controls and typed authentication/entitlement recovery into the actual owned resolver and worker. Premium actions receive a fresh native selected-account check before authorization.
+- Installed worker publication and coordinator two-phase/authority adoption qualification remain in progress; local/native evidence keeps each transport boundary explicit.
+
+## 0.9.1 — Harden account grants and qualify Windows credential lifecycle
+
+- Reject submitter request overrides and revalidate context/form identity after input events; cancellation immediately clears transient fields and returned credentials.
+- Add MFA, expiry, competing-store, document-replacement, terminal-removal and diagnostic redaction regressions; localize actionable account errors across all six locales.
+- Qualify the actual Engine save/select/grant/consume/remove path against Windows Credential Manager, including duplicate-consume rejection and fixture credential cleanup. Real browser DOM checks and HTTP file hashes retain their separate mocked-grant/HTTP evidence boundaries.
+
+## 0.9.0 — Scoped browser account foundation
+
+- Add desktop-selected site accounts keyed by exact origin and browser session, OS-keyring credential references, ephemeral private session metadata, typed authentication/entitlement observations and expiring one-use form grants.
+- Add six-language desktop account controls and browser form/cancellation modules. Qualified premium controls require the explicitly selected active session; purchase, advertisements and unqualified live layouts remain excluded.
+- Browser worker integration and native keyring/file acceptance remain in progress; local fixtures do not qualify live accounts or provider APIs.
+
+## 0.8.13
+
+- Preserve null snapshots in scoped incremental subscriptions; prevent cached event cursors from surviving visible authority changes.
+- Add six native selection/subscription regressions and three authority-cursor tests; 90 extension tests and type checks pass.
+- Qualify the production Chrome 155 worker/resolver POST flow: one original submission, 262,161 bytes and matching native SHA-256, with diagnostic source changes disabled.
+- Broader installed-flow acceptance remains pending; preserve prior failures and qualification boundaries in evidence.
+
+## 0.8.12
+
+- Isolate regular/private scheduler projections, mutation authority and recovery while retaining shared service capacity and host locks.
+- Add a native mixed-lane regression proving regular recovery cannot release private leases or expose private task identifiers.
+- Canonicalize native/browser partition-key comparison and mark validated scoped claims as browser sources for desktop-created navigation jobs.
+- Add a production background/resolver installed POST fixture runner. Initial runs remain waiting before submission; full-worker acceptance is pending despite passing module/native regressions.
+
+## 0.8.11
+
+- Add narrowly scoped read-only claim/source renewal without exposing URLs or weakening stale-write fences.
+- Require current browser epoch and actual original tab context for recovery, heartbeat and closure; invalidate old authorization/capture when source authority changes.
+- Keep scoped refreshed sources awaiting browser qualification and prevent unknown-source resume from starting native probes.
+- Five native selection/renewal/refresh regressions cover generation replacement, unrelated sessions, durable metadata, private persistence and unqualified replay.
+
+## 0.8.10
+
+- Wire one-use prepare/commit/abort for adapter actions; fence source generation, document, bundled adapter and actual top-level sender before capture.
+- Persist prepared provider selection through scoped native metadata; support owned adapter disable and selected-resource navigation with original provenance retained.
+- Full installed-worker acceptance remains pending; local module checks do not establish complete browser flows.
+
+## 0.8.9 — Integrate original-response capture and scoped recovery
+
+- Combine Chromium/Firefox response capture, page-owned blob reads and persistent native byte transport with scheduler admission, wait recovery and adapter previews.
+- Preserve nonsecret regular resolver references and normalized waits, fence reused browser-session tab IDs, prevent regular views from reading private overlays and keep private recovery/errors transient.
+- Include stable Chrome/Edge local original-response hash evidence; installed full-worker preview/session acceptance and actual Firefox capture remain separate qualification gates.
+
+## 0.8.8 — Persist scoped downstream-host selection
+
+- Record bundled adapter identity and explicit downstream host under exact owner/session/source fences while retaining the original hosted page.
+- Preserve normal selections across service reopen, reject stale/foreign authority and unsupported host/adapter metadata, and keep private selections transient. Worker dispatch wiring remains an integration check.
+
+## 0.8.7 — Define one-use navigation authorization lifecycle
+
+- Add bounded, expiring grants tied to the exact session, source, claim, document, adapter and inspected fingerprint; preparation has no capture or request side effects.
+- Verify replay, cancellation, tab replacement, changed authority and unsafe destinations. Worker prepare/commit/cancel wiring remains the next integration increment.
+
+## 0.8.6 — Integrate adapter preview cancellation and qualification
+
+- Preserve preview lifetime cancellation across asynchronous worker authorization, keyboard recovery and control highlight restoration alongside durable scheduler waits.
+- Include final synthetic adapter evidence and its explicit pending installed-worker/live-provider acceptance boundaries.
+
+## 0.8.5 — Integrate final scheduler lifecycle checks
+
+- Preserve generation-qualified alarms, explicit current-wait observations, opaque fingerprints and unresolved-task readmission alongside exact recovered session scopes.
+- Include real-engine renderer resource/lifecycle fixtures and retain their explicit installed-extension and live-host evidence boundaries.
+
+## 0.8.4 — Fence combined stream and scheduler recovery
+
+- Integrate the durable browser stream receiver with adapter/scheduler work and reconcile native dispatch/module registrations.
+- Derive queue ownership and generation from persisted jobs, carry each recovered tab's exact scope, reject stale/container-mismatched reports and revalidate source fences after inspection.
+- Keep the installed transport, preview cancellation and final browser lifecycle qualification dependencies open; retain ephemeral new private records and separately approved legacy cleanup.
 
 ## 0.8.3
 
@@ -12,36 +344,37 @@
 - Re-admit unresolved released navigation without reviving cancelled jobs; hash durable wait fingerprints into opaque bounded values.
 - Add isolated real Engine/browser queue and lifecycle fixtures, resource observations and explicit ownership/browser/live-host qualification boundaries.
 
+## 0.8.2 — Integrate adapters with durable waits
+
+- Combine service-owned scheduling with versioned adapter previews and use one validated visible countdown parser for observations and blockers.
+- Preserve both batch histories and queue controls. Installed browser acceptance and stream-batch source/session generation reconciliation remain pending.
+
 ## 0.8.1
 
 - Integrate service-owned navigation admission and extension queue controls, durable alarms with fresh readiness observations, opt-in notifications, session-aware recovery, and cancellation.
 - Add profile/restart/private-state service fixtures and browser alarm/clock/timer regressions.
 
-
 ## 0.8.0
 
 - Add durable navigation queue admission, conservative host locks, fenced tab leases and restart-safe wait metadata with deterministic regression fixtures.
 
+## 0.7.1 — Direct browser stream runtime and recovery fences
 
-Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
+- Add default-off Chromium debugger capture, Firefox response metadata admission, isolated page Blob streaming and persistent bounded native transport with localized capture state/cancel controls.
+- Qualify original POST and Blob hashes on installed stable Chrome and Edge using isolated native fixtures; keep integrated preview cancellation, Firefox/browser-context matrices, live providers and large-file performance explicit pending gates.
+- Atomically commit durable stream progress, job metadata and quota; repair concurrent EOF and publication-checkpoint crash replay. Fence challenge/claim/source refresh, profile/private/container projections and browser-session restart.
+- Retain regular nonsecret task references while keeping private/session secrets ephemeral. Detect existing private history without deleting or claiming to sanitize it.
 
-## 0.6.5 — Reconcile adapters with shared navigation contracts
+## 0.7.0 — Owner-fenced browser stream foundations
 
-- Merge the shared navigation prerequisite into the adapter branch while preserving owned selection, preview cancellation, and all prior roadmap and release entries.
-- Keep installed-extension/native binding and live-provider qualification pending; the adapter PR remains a draft.
+- Add direct-response begin/chunk/end/abort storage with strict bounded framing, durable acknowledgements, quotas, EOF verification, scanning and no-overwrite publication.
+- Classify replay risk before probing and fence scoped navigation status/resolve operations by profile, cookie store, partition and generation.
+- Keep new private task/stream metadata and event payloads in memory; existing private history cleanup remains a separate approval gate. Browser runtime/live-provider qualification remains pending.
 
-## 0.6.4 — Cancel pending preview authorization safely
+## 0.6.2 — Stage adapter and shared-contract integration
 
-- Abort preview lifetime on Cancel, Refresh or replacement; check that lifetime before and after async worker authorization so a closed dialog cannot submit later.
-- Restore control highlighting even on worker failure and focus the first recovery button when no safe candidates exist.
-- Verify the real resolver bundle against a scoped mock worker: ordinary selection hashes the intended file; delayed authorization after Cancel or claim takeover produces no clicks; keyboard generic recovery disables only its adapter.
-- Combined installed-extension/native worker binding acceptance is transferred to the integration coordinator and remains pending separately.
-
-## 0.6.3 — Complete adapter recovery and local qualification evidence
-
-- Offer localized manual/generic recovery when layout changes leave no safe candidate; preserve independent adapter disable and session-bound refresh.
-- Expand synthetic browser request/hash checks to 120, covering submitter overrides, hidden controls, scripts, token replacement and closed shadow roots. Publish exact tested source hashes and explicit live/native acceptance limits.
-- Keep separate provider matrix rows unqualified and preserve all selected-host provenance/one-use fixtures.
+- Integrate the verified adapter increments with the shared navigation contracts on the coordinator staging branch, preserving their individual commits and qualification boundaries.
+- Reconcile product-version surfaces and documentation; installed extension/native stream binding acceptance remains dependent on the browser-stream batch.
 
 ## 0.6.1 — Qualify local adapter layouts and request outcomes
 
@@ -109,11 +442,6 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Preserve temporary cookies and the matching User-Agent in ranged transfers; reject hosted HTML before publication, including pages labeled as binary.
 - Desktop controls and live qualification remain in progress.
 
-## 0.3.0 — Local challenge adapter foundation (solver branch)
-
-- Add a bounded loopback FlareSolverr client, conservative GET page resolution, temporary cookie/User-Agent context, and deterministic response/policy regressions.
-- Browser navigation integration and live host qualification remain in progress.
-
 ## 0.3.4 — Published qualification records (qualification branch)
 
 - Publish sanitized three-platform PAC/network and NTFS/HFS+/ext4 filesystem results with their exact source revisions and CI runs.
@@ -145,6 +473,11 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Advance metadata, range reads and download workers only after pre-response connection failures; keep TLS, authentication, source and partial-body failures on their original recovery path.
 - Isolate pooled handles by their selected route and use cancellable Windows PAC discovery. Explicit PAC refuses WinHTTP's implicit loopback bypass rather than silently selecting direct access.
 - Verify actual proxy traversal with named loopback fixtures, exhausted-route failures, TLS/authentication rejection and route-order regressions. Disposable CI runners receive a fixture-only hostname; developer host settings stay untouched.
+
+## 0.3.0 — Local challenge adapter foundation (solver branch)
+
+- Add a bounded loopback FlareSolverr client, conservative GET page resolution, temporary cookie/User-Agent context, and deterministic response/policy regressions.
+- Browser navigation integration and live host qualification remain in progress.
 
 ## 0.2.7 — Clarify remaining proxy work
 
@@ -195,3 +528,16 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 ## 0.1.0 — Initial development preview
 
 - Original GPL-3.0 desktop, CLI and extension foundation, hosted-page navigation fixtures, media/grabber adapters and public roadmap.
+
+### 0.10.6
+- Integrated native scoped incremental projection and cursor fixes from coordinator 0.8.13 for actual challenge qualification.
+
+- Bind all adapter actions to the verified live document nonce, burn stale tokens, and read resolver ownership after native projection renewal.
+
+### 0.10.7
+- Align initial/revalidated image pixels, preserve cancelled host choices, and add wrong-session/occlusion/cancel fixtures.
+- Adopt serialized navigation storage and repair the inherited mock predicate typing; retain installed GET handoff as pending.
+
+### 0.10.8
+- Adopt exact direct-stream ownership and removal-event privacy fixes.
+- Keep pending installed GET qualification distinct from accepted CAPTCHA POST/fresh links; extend only the synthetic fixture lifetime for concurrent builds.

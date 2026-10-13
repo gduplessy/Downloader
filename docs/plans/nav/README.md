@@ -82,6 +82,7 @@ Commit the planning package before branching. Dependent work may use a coordinat
 - Implement and qualify local fixtures now. Live host/account acceptance for all four hosts stays pending until permitted URLs/accounts are available. Do not block fixture-backed implementation or pretend local fixtures qualify live providers.
 - Preserve the current browser release matrix. Present exact lane failures from the feasibility matrix rather than silently reducing the required direct-stream scope.
 - Live paid solver qualification remains deferred at the owner-selected $0 budget.
+- On 2026-10-13 the owner explicitly chose to keep the tested Firefox 157 binary form-navigation/download capture lane pending while finishing supported direct-stream lanes and PRs. Controlled local response-filter evidence distinguishes ASCII document responses, binary MIME sniffing, page-owned fetch, and unsuccessful attachment-header normalization. This boundary does not waive supported Firefox Blob or other available local lifecycle qualification.
 
 ## Verification and references
 

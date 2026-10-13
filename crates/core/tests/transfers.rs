@@ -376,13 +376,17 @@ fn hosted_page_is_never_downloaded_as_the_file() {
         id: j.id.clone(),
         owner: first.clone(),
         force: false,
+        scope: None,
+        source_generation: None,
     })
     .unwrap();
     assert!(e
         .command(Command::ClaimNavigation {
             id: j.id.clone(),
             owner: second.clone(),
-            force: false
+            force: false,
+            scope: None,
+            source_generation: None,
         })
         .is_err());
     assert!(e
@@ -393,7 +397,9 @@ fn hosted_page_is_never_downloaded_as_the_file() {
             state: JobState::BrowserComplete,
             message: None,
             bytes: 1,
-            total: Some(1)
+            total: Some(1),
+            scope: None,
+            source_generation: None,
         })
         .is_err());
     assert_eq!(
@@ -432,6 +438,8 @@ fn hosted_page_is_never_downloaded_as_the_file() {
             id: j.id.clone(),
             owner: second,
             force: true,
+            scope: None,
+            source_generation: None,
         })
         .unwrap();
 }
@@ -495,6 +503,8 @@ fn browser_resolved_source_uses_server_filename_and_complete_hash() {
         id: j.id.clone(),
         owner: owner.clone(),
         force: false,
+        scope: None,
+        source_generation: None,
     })
     .unwrap();
     let resolved: Job = serde_json::from_value(
@@ -504,6 +514,8 @@ fn browser_resolved_source_uses_server_filename_and_complete_hash() {
             url: format!("{}/file", server.url),
             filename: None,
             context: RequestContext::default(),
+            scope: None,
+            source_generation: None,
         })
         .unwrap(),
     )

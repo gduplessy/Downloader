@@ -1,0 +1,15 @@
+{
+  "browser": "Edg/155.0.4283.45",
+  "version": "0.9.7",
+  "fixture": "nav-account-production-v1",
+  "accountPath": "saved-fill",
+  "error": "Production explicit saved-fill control unavailable after selected-account continuation; zero file bytes",
+  "fixtureRequests": {
+    "login": 0,
+    "file": 0,
+    "purchase": 0
+  },
+  "qualification": "Failed; no acceptance claimed",
+  "browserName": "Edge",
+  "sourceBase": "0.9.7 integration with serialized startup and scheduler authority renewal"
+}

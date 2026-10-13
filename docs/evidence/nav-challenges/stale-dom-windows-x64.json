@@ -1,0 +1,91 @@
+{
+  "fixture": "synthetic-challenge-dom-v1",
+  "rows": [
+    {
+      "provider": "g4u",
+      "authorized": 1,
+      "submitted": 1,
+      "selected_host": "gofile.io",
+      "hash": "3956ab3c089f6def510fd6fafb24e11c5a6a0ddc8a521c99994746ee3756bc51",
+      "inspection": "preview"
+    },
+    {
+      "provider": "ddownload",
+      "authorized": 1,
+      "submitted": 1,
+      "selected_host": "gofile.io",
+      "hash": "3956ab3c089f6def510fd6fafb24e11c5a6a0ddc8a521c99994746ee3756bc51",
+      "inspection": "preview"
+    },
+    {
+      "provider": "rapidgator",
+      "authorized": 1,
+      "submitted": 1,
+      "selected_host": "gofile.io",
+      "hash": "3956ab3c089f6def510fd6fafb24e11c5a6a0ddc8a521c99994746ee3756bc51",
+      "inspection": "preview"
+    },
+    {
+      "provider": "gofile",
+      "authorized": 1,
+      "submitted": 1,
+      "selected_host": "gofile.io",
+      "hash": "3956ab3c089f6def510fd6fafb24e11c5a6a0ddc8a521c99994746ee3756bc51",
+      "inspection": "preview"
+    }
+  ],
+  "cancelled_submissions": 0,
+  "stale_rows": [
+    {
+      "scenario": "cancel",
+      "submissions": 0
+    },
+    {
+      "scenario": "csrf",
+      "submissions": 0
+    },
+    {
+      "scenario": "host",
+      "submissions": 0
+    },
+    {
+      "scenario": "form_action",
+      "submissions": 0
+    },
+    {
+      "scenario": "image_replacement",
+      "submissions": 0
+    },
+    {
+      "scenario": "expiry",
+      "submissions": 0
+    },
+    {
+      "scenario": "claim",
+      "submissions": 0
+    },
+    {
+      "scenario": "source",
+      "submissions": 0
+    },
+    {
+      "scenario": "document_nonce",
+      "submissions": 0
+    },
+    {
+      "scenario": "session",
+      "submissions": 0
+    },
+    {
+      "scenario": "occlusion",
+      "submissions": 0
+    },
+    {
+      "scenario": "host_choice_cancel",
+      "submissions": 0
+    }
+  ],
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "qualification": "DOM production module; mocked worker authorization; fetch bytes are not native desktop acceptance",
+  "transient_link_urls_omitted": true
+}

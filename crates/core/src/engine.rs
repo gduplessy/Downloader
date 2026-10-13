@@ -11,14 +11,18 @@ use std::{
 };
 
 pub struct Engine {
+    pub(crate) site_accounts: Mutex<crate::site_accounts::Runtime>,
     pub store: Arc<Mutex<Store>>,
     pub jobs: Mutex<HashMap<String, transfer::SharedJob>>,
     pub settings: Mutex<Settings>,
-    navigation_scheduler: Mutex<crate::navigation_scheduler::Scheduler>,
+    pub(crate) navigation_scheduler: Mutex<crate::navigation_scheduler::Scheduler>,
     pub queues: Mutex<Vec<Queue>>,
+    pub(crate) discovery_operations: Mutex<()>,
     contexts: Mutex<HashMap<String, RequestContext>>,
-    controls: Mutex<HashMap<String, Arc<AtomicU8>>>,
+    pub(crate) controls: Mutex<HashMap<String, Arc<AtomicU8>>>,
+    captcha_lock: Mutex<()>,
     solver_tasks: Mutex<HashMap<String, Arc<AtomicU8>>>,
+    pub(crate) browser_stream_locks: Mutex<HashMap<String, Arc<Mutex<()>>>>,
     pub stopping: AtomicBool,
 }
 impl Engine {
@@ -103,16 +107,47 @@ impl Engine {
             jobs: Mutex::new(jobs),
             settings: Mutex::new(settings),
             navigation_scheduler: Mutex::new(navigation_scheduler),
+            discovery_operations: Mutex::new(()),
             queues: Mutex::new(queues),
             contexts: Mutex::new(contexts),
             controls: Mutex::new(HashMap::new()),
+            captcha_lock: Mutex::new(()),
             solver_tasks: Mutex::new(HashMap::new()),
+            browser_stream_locks: Mutex::new(HashMap::new()),
+            site_accounts: Mutex::default(),
             stopping: AtomicBool::new(false),
         });
         engine.cleanup_solver_sessions();
         Ok(engine)
     }
     pub fn start(self: &Arc<Self>) {
+        let provider_engine = self.clone();
+        std::thread::spawn(move || {
+            while !provider_engine.stopping.load(Ordering::Relaxed) {
+                {
+                    let _lock = provider_engine.captcha_lock.lock().unwrap();
+                    let settings = provider_engine.settings.lock().unwrap().captcha.clone();
+                    let available = provider_engine
+                        .jobs
+                        .lock()
+                        .unwrap()
+                        .values()
+                        .filter_map(|job| crate::captcha::ownership(&job.lock().unwrap()))
+                        .collect::<Vec<_>>();
+                    let _ = crate::captcha::cancel_unavailable(
+                        &provider_engine.store.lock().unwrap(),
+                        &available,
+                    );
+                    let _ = crate::captcha::reconcile(
+                        &provider_engine.store.lock().unwrap(),
+                        &settings,
+                        chrono::Utc::now().timestamp_millis(),
+                        &crate::captcha::HttpTransport,
+                    );
+                }
+                std::thread::sleep(Duration::from_secs(5));
+            }
+        });
         let engine = self.clone();
         std::thread::spawn(move || {
             while !engine.stopping.load(Ordering::Relaxed) {
@@ -336,6 +371,11 @@ impl Engine {
             viable: false,
             page_url: None,
             navigation_owner: request.context.profile.clone(),
+            navigation_scope: None,
+            selected_host: None,
+            navigation_adapter: None,
+            source_generation: 1,
+            replay_decision: None,
             navigation_url: None,
             solver_attempted: false,
             solver_outcome: None,
@@ -352,6 +392,7 @@ impl Engine {
     fn schedule_navigation(
         &self,
         owner: &str,
+        private_lane: bool,
         scope: Option<crate::navigation::SessionScope>,
         request: crate::navigation_scheduler::SchedulerRequest,
     ) -> Result<serde_json::Value> {
@@ -359,7 +400,7 @@ impl Engine {
         uuid::Uuid::parse_str(owner).context("Invalid browser profile identifier")?;
         if let Some(scope) = &scope {
             scope.validate()?;
-            if scope.profile != owner {
+            if scope.profile != owner || scope.private != private_lane {
                 bail!("Scheduler scope owner mismatch");
             }
         }
@@ -373,9 +414,10 @@ impl Engine {
             .collect();
         jobs.sort_by_key(|job| job.created);
         let mut scheduler = self.navigation_scheduler.lock().unwrap();
-        scheduler
-            .tasks
-            .retain(|task| jobs.iter().any(|job| job.id == task.id));
+        scheduler.tasks.retain(|task| {
+            (task.id.starts_with("discovery:") || task.id.starts_with("discovery-resource:"))
+                || jobs.iter().any(|job| job.id == task.id)
+        });
         for job in &jobs {
             if job.page_url.is_none() {
                 continue;
@@ -415,9 +457,10 @@ impl Engine {
                 .navigation_owner
                 .as_deref()
                 .is_some_and(|assigned| assigned != owner)
-                || context_owner
-                    .as_deref()
-                    .is_some_and(|assigned| assigned != owner)
+                || (job.navigation_owner.is_none()
+                    && context_owner
+                        .as_deref()
+                        .is_some_and(|assigned| assigned != owner))
             {
                 continue;
             }
@@ -436,6 +479,25 @@ impl Engine {
                 }
             }
             if let Some(task) = scheduler.tasks.iter_mut().find(|t| t.id == job.id) {
+                let authority_changed = task.owner != owner
+                    || task.generation != job.source_generation
+                    || task.scope != job.navigation_scope;
+                if authority_changed {
+                    task.wait = None;
+                    if task.owner != owner {
+                        task.lease = None;
+                        task.status = QueueStatus::Queued;
+                    } else if let Some(lease) = &mut task.lease {
+                        lease.generation = job.source_generation;
+                        task.status = QueueStatus::Active;
+                    }
+                    task.reason = "session_changed_revalidate_page".into();
+                }
+                task.owner = owner.into();
+                task.generation = job.source_generation;
+                task.scope = job.navigation_scope.clone();
+                task.private = job.private;
+
                 if task.status == QueueStatus::Finished {
                     task.status = QueueStatus::Queued;
                     task.reason = "queued".into();
@@ -447,8 +509,10 @@ impl Engine {
                     }
                 }
             } else {
-                scheduler.enqueue(job.id.clone(), 1, owner.into(), hosts)?;
-                scheduler.tasks.last_mut().unwrap().private = job.private;
+                scheduler.enqueue(job.id.clone(), job.source_generation, owner.into(), hosts)?;
+                let task = scheduler.tasks.last_mut().unwrap();
+                task.private = job.private;
+                task.scope = job.navigation_scope.clone();
             }
         }
         let request_id = match &request {
@@ -463,14 +527,59 @@ impl Engine {
             crate::navigation_scheduler::SchedulerRequest::Control { id, .. } => id.as_ref(),
             _ => None,
         };
+        if let crate::navigation_scheduler::SchedulerRequest::Reconcile { live } = &request {
+            for lease in live {
+                if let Some(id) = lease.id.strip_prefix("discovery-resource:") {
+                    let state = crate::rendered_grabber::load(&self.store.lock().unwrap(), id)?;
+                    let proof = state
+                        .preparation
+                        .as_ref()
+                        .context("Missing provenance preparation")?;
+                    let scope = lease.scope.as_ref().context("Missing provenance scope")?;
+                    if state.generation != lease.generation
+                        || proof.scope != *scope
+                        || proof.tab_id != Some(lease.tab_id)
+                        || scope.profile != owner
+                        || scope.private != private_lane
+                        || proof.document.is_none()
+                    {
+                        bail!("Stale or foreign provenance preparation");
+                    }
+                    continue;
+                }
+                if let Some(id) = lease.id.strip_prefix("discovery:") {
+                    let state = crate::rendered_grabber::load(&self.store.lock().unwrap(), id)?;
+                    let scope = lease.scope.as_ref().context("Missing discovery scope")?;
+                    state.authorize(scope, lease.generation)?;
+                    if scope.profile != owner
+                        || scope.private != private_lane
+                        || state.lease.is_none()
+                    {
+                        bail!("Reconciled discovery scope is stale or foreign");
+                    }
+                    continue;
+                }
+                let job = jobs
+                    .iter()
+                    .find(|job| job.id == lease.id)
+                    .context("Unknown reconciled navigation job")?;
+                if job.private != private_lane
+                    || job.navigation_owner.as_deref() != Some(owner)
+                    || job.source_generation != lease.generation
+                    || job.navigation_scope != lease.scope
+                {
+                    bail!("Reconciled navigation scope is stale or foreign");
+                }
+            }
+        }
         if let Some(id) = request_id {
             let task = scheduler
                 .tasks
                 .iter_mut()
                 .find(|t| &t.id == id)
                 .context("Unknown navigation task")?;
-            if task.owner != owner {
-                bail!("Scheduler task owner mismatch");
+            if task.owner != owner || task.private != private_lane {
+                bail!("Scheduler task owner or private lane mismatch");
             }
             if let Some(existing) = &task.scope {
                 if scope.as_ref() != Some(existing) {
@@ -484,23 +593,123 @@ impl Engine {
             }
         }
         let now = chrono::Utc::now().timestamp_millis();
-        let result = scheduler.apply(owner, request, now)?;
+        let result = scheduler.apply_for_lane(owner, request, now, Some(private_lane))?;
         scheduler.persist(&self.store.lock().unwrap())?;
         let mut result = result;
-        result.tasks.retain(|t| t.owner == owner);
+        result
+            .tasks
+            .retain(|t| t.owner == owner && t.private == private_lane);
         // Host lock identities are service internal. Browser UI needs only the typed reason.
         for task in &mut result.tasks {
             task.host_keys.clear();
         }
         Ok(serde_json::to_value(result)?)
     }
+    fn check_navigation_fence(
+        &self,
+        job: &Job,
+        scope: Option<&crate::navigation::SessionScope>,
+        generation: Option<u64>,
+    ) -> Result<()> {
+        if let Some(expected) = &job.navigation_scope {
+            if scope != Some(expected) || generation != Some(job.source_generation) {
+                bail!("Stale or missing navigation session fence");
+            }
+        }
+        Ok(())
+    }
     pub fn command(self: &Arc<Self>, command: Command) -> Result<serde_json::Value> {
         match command {
-            Command::NavigationScheduler {
+            Command::SiteAccount(request) => crate::site_accounts::desktop(self, request),
+            Command::BrowserAccount(request) => crate::site_accounts::browser(self, request),
+            Command::Captcha {
+                id,
                 owner,
                 scope,
+                source_generation,
                 request,
-            } => self.schedule_navigation(&owner, scope, request),
+            } => {
+                let _lock = self.captcha_lock.lock().unwrap();
+                let job = self.job(&id)?;
+                {
+                    let j = job.lock().unwrap();
+                    scope.validate()?;
+                    if j.navigation_scope.as_ref() != Some(&scope)
+                        || j.source_generation != source_generation
+                        || j.navigation_owner.as_ref() != Some(&owner)
+                        || scope.profile != owner
+                        || j.private
+                        || !matches!(j.state, JobState::WaitingBrowser | JobState::WaitingUser)
+                    {
+                        bail!("captcha_session_rejected");
+                    }
+                }
+                let ownership = crate::captcha::ownership(&job.lock().unwrap())
+                    .context("captcha_session_rejected")?;
+                let settings = self.settings.lock().unwrap().captcha.clone();
+                if matches!(&request, crate::captcha::ProviderRequest::Start { .. })
+                    && settings.enabled
+                    && settings.external_opt_in
+                    && settings.total_budget_microusd > 0
+                {
+                    let scheduler = self.navigation_scheduler.lock().unwrap();
+                    if !scheduler.tasks.iter().any(|task| {
+                        task.id == id
+                            && task.owner == owner
+                            && task.scope.as_ref() == Some(&scope)
+                            && task.generation == source_generation
+                            && task.status == crate::navigation_scheduler::QueueStatus::Active
+                            && task.lease.as_ref().is_some_and(|lease| {
+                                lease.owner == owner
+                                    && lease.generation == source_generation
+                                    && lease.expires_at_ms > chrono::Utc::now().timestamp_millis()
+                            })
+                    }) {
+                        bail!("captcha_site_busy");
+                    }
+                }
+                crate::captcha::handle(
+                    &self.store.lock().unwrap(),
+                    &settings,
+                    &ownership,
+                    request,
+                    chrono::Utc::now().timestamp_millis(),
+                    &crate::captcha::HttpTransport,
+                )
+            }
+            Command::NavigationAuthority { id, owner, scope } => {
+                scope.validate()?;
+                let shared = self.job(&id)?;
+                let job = shared.lock().unwrap();
+                let current = job
+                    .navigation_scope
+                    .as_ref()
+                    .ok_or_else(|| anyhow::anyhow!("Navigation task is not scoped"))?;
+                let mut comparable = scope.clone();
+                comparable.claim_generation = current.claim_generation;
+                if job.navigation_owner.as_ref() != Some(&owner)
+                    || owner != scope.profile
+                    || comparable != *current
+                    || scope.claim_generation > current.claim_generation
+                {
+                    bail!("Navigation authority context mismatch");
+                }
+                // Read-only renewal metadata contains no URL, credential or task mutation.
+                Ok(serde_json::json!({ "scope": current,
+                    "source_generation": job.source_generation, "state": job.state }))
+            }
+            Command::NavigationSelection(request) => {
+                crate::navigation_selection::record(self, request)
+            }
+            Command::BrowserStream(operation) => Ok(serde_json::to_value(
+                crate::browser_stream::operation(self, operation)?,
+            )?),
+            Command::NavigationScheduler {
+                owner,
+                private_lane,
+                scope,
+                request,
+            } => self.schedule_navigation(&owner, private_lane, scope, request),
             Command::TestSolver { settings } => {
                 let result = crate::solver::test(&settings)?;
                 self.cleanup_solver_sessions();
@@ -511,7 +720,17 @@ impl Engine {
                 owner,
                 url,
                 automatic,
-            } => self.solve_challenge(id, owner, url, automatic),
+                scope,
+                source_generation,
+            } => {
+                let job = self.job(&id)?;
+                self.check_navigation_fence(
+                    &job.lock().unwrap(),
+                    scope.as_ref(),
+                    source_generation,
+                )?;
+                self.solve_challenge(id, owner, url, automatic)
+            }
             Command::Negotiate { minimum, maximum } => {
                 if minimum > PROTOCOL_VERSION || maximum < PROTOCOL_VERSION || minimum > maximum {
                     bail!("protocol_mismatch: Supported protocol is 1");
@@ -548,7 +767,13 @@ impl Engine {
                 let value = serde_json::to_value(job.lock().unwrap().clone())?;
                 Ok(value)
             }
-            Command::ClaimNavigation { id, owner, force } => {
+            Command::ClaimNavigation {
+                id,
+                owner,
+                force,
+                scope,
+                source_generation,
+            } => {
                 uuid::Uuid::parse_str(&owner).context("Invalid browser profile identifier")?;
                 let job = self.job(&id)?;
                 {
@@ -565,10 +790,42 @@ impl Engine {
                     {
                         bail!("Navigation is assigned to another browser profile");
                     }
+                    if j.navigation_scope.is_some()
+                        && source_generation != Some(j.source_generation)
+                    {
+                        bail!("Stale or missing claim source generation");
+                    }
+                    if let Some(mut scope) = scope {
+                        scope.validate()?;
+                        if scope.profile != owner || scope.private != j.private {
+                            bail!("Browser claim scope does not match job");
+                        }
+                        if let Some(old) = &j.navigation_scope {
+                            let mut proposed = scope.clone();
+                            proposed.claim_generation = old.claim_generation;
+                            if &proposed != old || scope.claim_generation != old.claim_generation {
+                                bail!("Claim session changed; explicit owner-authorized transfer required");
+                            }
+                        }
+                        if force || j.navigation_scope.as_ref() != Some(&scope) {
+                            scope.claim_generation = j
+                                .navigation_scope
+                                .as_ref()
+                                .map_or(1, |old| old.claim_generation.saturating_add(1));
+                        }
+                        j.navigation_scope = Some(scope);
+                        j.browser_source = true;
+                    } else if j.navigation_scope.is_some() {
+                        bail!("Scoped navigation requires a fenced claim");
+                    }
                     j.navigation_owner = Some(owner);
                 }
                 self.persist(&job)?;
-                Ok(serde_json::json!({"id":id}))
+                let claimed = job.lock().unwrap().clone();
+                crate::site_accounts::renew_association(self, &claimed)?;
+                Ok(
+                    serde_json::json!({"id":id,"scope":claimed.navigation_scope,"source_generation":claimed.source_generation}),
+                )
             }
             Command::Resolve {
                 id,
@@ -576,6 +833,8 @@ impl Engine {
                 url,
                 filename,
                 context,
+                scope,
+                source_generation,
             } => {
                 security::validate_url(&url)?;
                 security::validate_context(&context)?;
@@ -583,6 +842,18 @@ impl Engine {
                     bail!("Download is already running");
                 }
                 let job = self.job(&id)?;
+                {
+                    let j = job.lock().unwrap();
+                    self.check_navigation_fence(&j, scope.as_ref(), source_generation)?;
+                    if j.navigation_scope.is_some()
+                        && !j.replay_decision.as_ref().is_some_and(|r| {
+                            r.disposition == crate::navigation::ReplayDisposition::Replayable
+                                && r.source_generation == j.source_generation
+                        })
+                    {
+                        bail!("Source is not qualified for replay; use direct browser streaming");
+                    }
+                }
                 let filename = match filename {
                     Some(name) => Some(name),
                     None => {
@@ -591,6 +862,7 @@ impl Engine {
                     }
                 };
                 let mut j = job.lock().unwrap();
+                self.check_navigation_fence(&j, scope.as_ref(), source_generation)?;
                 if j.navigation_owner.as_ref() != Some(&owner) {
                     bail!("Navigation belongs to another browser profile");
                 }
@@ -633,6 +905,8 @@ impl Engine {
                 bytes,
                 total,
                 url,
+                scope,
+                source_generation,
             } => {
                 if let Some(ref url) = url {
                     let parsed = security::validate_url(url)?;
@@ -654,6 +928,7 @@ impl Engine {
                 let solver_control = self.solver_tasks.lock().unwrap().get(&id).cloned();
                 {
                     let mut j = job.lock().unwrap();
+                    self.check_navigation_fence(&j, scope.as_ref(), source_generation)?;
                     if j.navigation_owner.as_ref() != Some(&owner) {
                         bail!("Navigation belongs to another browser profile");
                     }
@@ -681,18 +956,54 @@ impl Engine {
                     {
                         bail!("Job is not controlled by browser navigation");
                     }
+                    let preserve_partial =
+                        j.browser_source && j.partial_created && state == JobState::WaitingUser;
                     j.state = state;
                     if let Some(url) = url {
                         j.navigation_url = Some(url);
                     }
                     j.error = message
                         .map(|s| security::redact(&s.chars().take(1024).collect::<String>()));
-                    j.bytes = bytes;
-                    j.total = total;
+                    j.bytes = if preserve_partial {
+                        j.bytes.max(bytes)
+                    } else {
+                        bytes
+                    };
+                    j.total = if preserve_partial {
+                        total.or(j.total)
+                    } else {
+                        total
+                    };
                 }
                 self.persist(&job)?;
                 Ok(serde_json::json!({"id":id}))
             }
+            Command::BrowserSnapshot {
+                owner,
+                private,
+                scopes,
+            } => {
+                validate_browser_projection(&owner, private, &scopes)?;
+                let mut value = serde_json::to_value(self.snapshot())?;
+                filter_browser_projection(&mut value, &owner, private, &scopes);
+                Ok(value)
+            }
+            Command::BrowserSubscribe {
+                owner,
+                private,
+                scopes,
+                after_sequence,
+                limit,
+            } => {
+                validate_browser_projection(&owner, private, &scopes)?;
+                let mut value = serde_json::to_value(self.subscribe(after_sequence, limit)?)?;
+                filter_browser_projection(&mut value["snapshot"], &owner, private, &scopes);
+                if let Some(events) = value["events"].as_array_mut() {
+                    events.retain(|e| browser_event_visible(e, &owner, private, &scopes));
+                }
+                Ok(value)
+            }
+            Command::CaptchaBudget => crate::captcha::budget(&self.store.lock().unwrap()),
             Command::Snapshot => Ok(serde_json::to_value(self.snapshot())?),
             Command::Add(add) => Ok(serde_json::to_value(self.add(add)?)?),
             Command::Pause { id } => {
@@ -730,6 +1041,22 @@ impl Engine {
                 if job.state == JobState::Complete {
                     bail!("Download is already complete");
                 }
+                if job.navigation_scope.is_some()
+                    && !job.replay_decision.as_ref().is_some_and(|decision| {
+                        decision.source_generation == job.source_generation
+                            && matches!(
+                                decision.disposition,
+                                crate::navigation::ReplayDisposition::Replayable
+                            )
+                    })
+                {
+                    job.state = JobState::WaitingBrowser;
+                    job.error =
+                        Some("Fresh browser action required before replay qualification".into());
+                    drop(job);
+                    self.persist(&j)?;
+                    return Ok(serde_json::json!({"id": id}));
+                }
                 if job.page_url.as_ref() == Some(&job.url) {
                     job.state = JobState::WaitingBrowser;
                     job.error = Some("Continue page navigation from the browser extension".into());
@@ -763,14 +1090,38 @@ impl Engine {
                 owner,
                 url,
                 mut context,
+                scope,
+                source_generation,
             } => {
                 let job = self.job(&id)?.lock().unwrap().clone();
+                self.check_navigation_fence(&job, scope.as_ref(), source_generation)?;
                 if !job.browser_source || job.navigation_owner.as_deref() != Some(&owner) {
                     bail!("Browser profile cannot refresh this job");
                 }
                 context.browser = Some("extension".into());
                 context.profile = Some(owner);
-                self.command(Command::Refresh { id, url, context })
+                let scoped = scope.is_some();
+                let result = self.command(Command::Refresh {
+                    id: id.clone(),
+                    url: url.clone(),
+                    context,
+                })?;
+                if scoped {
+                    let shared = self.job(&id)?;
+                    {
+                        let mut job = shared.lock().unwrap();
+                        job.navigation_url = Some(url);
+                        job.state = JobState::WaitingBrowser;
+                        job.error = Some(
+                            "Fresh browser action required before replay qualification".into(),
+                        );
+                    }
+                    self.persist(&shared)?;
+                    let renewed = shared.lock().unwrap().clone();
+                    crate::site_accounts::renew_association(self, &renewed)?;
+                    return Ok(serde_json::to_value(renewed)?);
+                }
+                Ok(result)
             }
             Command::Refresh { id, url, context } => {
                 security::validate_url(&url)?;
@@ -785,7 +1136,25 @@ impl Engine {
                         bail!("Finished jobs cannot refresh their source");
                     }
                     job.url = url;
+                    job.source_generation = job
+                        .source_generation
+                        .checked_add(1)
+                        .context("Source generation exhausted")?;
+                    job.replay_decision = None;
+                    if let Some(scope) = &mut job.navigation_scope {
+                        scope.claim_generation = scope
+                            .claim_generation
+                            .checked_add(1)
+                            .context("Claim generation exhausted")?;
+                    }
                     job.credential_id = context.credential_id.clone();
+                    if job.browser_source {
+                        job.state = JobState::WaitingUser;
+                        job.error = Some(
+                            "browser_source_replaced: request a fresh action in the owning browser"
+                                .into(),
+                        );
+                    }
                 }
                 self.contexts.lock().unwrap().insert(id, context);
                 self.persist(&j)?;
@@ -812,6 +1181,7 @@ impl Engine {
             Command::Settings(settings) => {
                 settings.network.validate()?;
                 settings.solver.validate()?;
+                settings.captcha.validate()?;
                 if settings.max_jobs == 0
                     || settings.max_jobs > 32
                     || settings.connections == 0
@@ -894,8 +1264,35 @@ impl Engine {
             Command::ZipPreview { url, context } => {
                 archive::preview(&url, &context, &self.settings.lock().unwrap().clone())
             }
+            Command::DiscoveryList { scope } => crate::rendered_grabber::list(self, &scope),
+            Command::DiscoverySelect(request) => crate::rendered_grabber::select(self, request),
+            Command::DiscoveryPrepare(request) => crate::rendered_grabber::prepare(self, request),
+            Command::GrabberResults { id, offset, limit } => {
+                crate::rendered_grabber::results(self, &id, offset, limit)
+            }
+            Command::GrabberControl { id, action } => {
+                crate::rendered_grabber::control(self, &id, &action)
+            }
+            Command::DiscoveryClaim(request) => crate::rendered_grabber::claim(self, request),
+            Command::DiscoveryPageResult(request) => crate::rendered_grabber::report(self, request),
+            Command::DiscoveryStatus(request) => crate::rendered_grabber::status(self, request),
             Command::Grabber(project) => {
                 security::validate_url(&project.url)?;
+                if self
+                    .store
+                    .lock()
+                    .unwrap()
+                    .all::<GrabberProject>("grabber")?
+                    .iter()
+                    .any(|existing| {
+                        existing.id == project.id && existing.private != project.private
+                    })
+                {
+                    bail!("Create a new project for a different privacy lane");
+                }
+                if project.private && !project.rendered {
+                    bail!("Private projects require an explicit rendered browser session");
+                }
                 if project.depth > 20
                     || project.max_pages == 0
                     || project.max_pages > 10000
@@ -909,12 +1306,7 @@ impl Engine {
                     .put("grabber", &project.id, &project)?;
                 Ok(serde_json::to_value(project)?)
             }
-            Command::GrabberList => Ok(serde_json::to_value(
-                self.store
-                    .lock()
-                    .unwrap()
-                    .all::<GrabberProject>("grabber")?,
-            )?),
+            Command::GrabberList => crate::rendered_grabber::projects(self),
             Command::GrabberRun { id } => {
                 let p = self
                     .store
@@ -957,7 +1349,7 @@ impl Engine {
             Command::Diagnostics => {
                 let s = self.snapshot();
                 Ok(
-                    serde_json::json!({"version":env!("CARGO_PKG_VERSION"),"protocol":PROTOCOL_VERSION,"platform":std::env::consts::OS,"curl":curl::Version::get().version(),"http2":curl::Version::get().feature_http2(),"capabilities":crate::network::capabilities(),"connections":crate::pool::diagnostics(),"components":s.components,"jobs":s.jobs.iter().map(|j|serde_json::json!({"id":j.id,"state":j.state,"bytes":j.bytes,"error":j.error.as_ref().map(|e|security::redact(e))})).collect::<Vec<_>>()}),
+                    serde_json::json!({"version":env!("CARGO_PKG_VERSION"),"protocol":PROTOCOL_VERSION,"platform":std::env::consts::OS,"curl":curl::Version::get().version(),"http2":curl::Version::get().feature_http2(),"capabilities":crate::network::capabilities(),"connections":crate::pool::diagnostics(),"privacy":{"legacy_private_records":self.store.lock().unwrap().legacy_private_records()?,"legacy_cleanup":"Separate owner-approved cleanup required; existing history is preserved"},"components":s.components,"jobs":s.jobs.iter().map(|j|serde_json::json!({"id":j.id,"state":j.state,"bytes":j.bytes,"error":j.error.as_ref().map(|e|security::redact(e))})).collect::<Vec<_>>()}),
                 )
             }
             Command::Quit => {
@@ -1365,9 +1757,146 @@ impl Engine {
     }
 }
 
+fn validate_browser_projection(
+    owner: &str,
+    private: bool,
+    scopes: &[crate::navigation::SessionScope],
+) -> Result<()> {
+    uuid::Uuid::parse_str(owner)?;
+    for scope in scopes {
+        scope.validate()?;
+        if scope.profile != owner || scope.private != private {
+            bail!("Projection scope does not match browser lane");
+        }
+    }
+    Ok(())
+}
+fn browser_job_visible(
+    job: &serde_json::Value,
+    owner: &str,
+    private: bool,
+    scopes: &[crate::navigation::SessionScope],
+) -> bool {
+    if job["private"].as_bool().unwrap_or(false) != private {
+        return false;
+    }
+    if let Ok(scope) =
+        serde_json::from_value::<crate::navigation::SessionScope>(job["navigation_scope"].clone())
+    {
+        return job["navigation_owner"] == owner && scopes.contains(&scope);
+    }
+    if private {
+        return false;
+    }
+    job["navigation_owner"].is_null() || job["navigation_owner"] == owner
+}
+fn browser_event_visible(
+    event: &serde_json::Value,
+    owner: &str,
+    private: bool,
+    scopes: &[crate::navigation::SessionScope],
+) -> bool {
+    if event["type"] == "job_removed" {
+        // Historical tombstones have no lane/claim proof. A fresh snapshot
+        // recovers removals without exposing unknown private or foreign IDs.
+        return event["private"].is_boolean() && browser_job_visible(event, owner, private, scopes);
+    }
+    event["job"].is_null() || browser_job_visible(&event["job"], owner, private, scopes)
+}
+fn filter_browser_projection(
+    value: &mut serde_json::Value,
+    owner: &str,
+    private: bool,
+    scopes: &[crate::navigation::SessionScope],
+) {
+    // Incremental subscriptions have a null snapshot. Mutable indexing would
+    // otherwise turn null into {"jobs": null}, breaking the native event bridge.
+    if !value.is_object() {
+        return;
+    }
+    if let Some(jobs) = value["jobs"].as_array_mut() {
+        jobs.retain(|job| browser_job_visible(job, owner, private, scopes));
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn removal_events_preserve_exact_browser_lane_and_claim() {
+        let directory = tempfile::tempdir().unwrap();
+        let e = Engine::open(directory.path()).unwrap();
+        let owner = uuid::Uuid::new_v4().to_string();
+        for private in [false, true] {
+            let scope = crate::navigation::SessionScope {
+                browser: "firefox".into(),
+                profile: owner.clone(),
+                private,
+                cookie_store_id: Some("firefox-default".into()),
+                container_id: None,
+                partition_key: None,
+                claim_generation: 1,
+            };
+            let before = e.snapshot().sequence;
+            let mut ids = Vec::new();
+            for foreign in [false, true] {
+                let mut r = request(directory.path());
+                r.request_id = uuid::Uuid::new_v4().to_string();
+                let job = e.add(r).unwrap();
+                let shared = e.job(&job.id).unwrap();
+                {
+                    let mut j = shared.lock().unwrap();
+                    let mut claim = scope.clone();
+                    if foreign {
+                        claim.profile = uuid::Uuid::new_v4().to_string();
+                    }
+                    j.private = private;
+                    j.browser_source = true;
+                    j.navigation_owner = Some(claim.profile.clone());
+                    j.navigation_scope = Some(claim);
+                }
+                e.persist(&shared).unwrap();
+                e.command(Command::Remove {
+                    id: job.id.clone(),
+                    delete_file: false,
+                })
+                .unwrap();
+                ids.push(job.id);
+            }
+            let batch = e
+                .command(Command::BrowserSubscribe {
+                    owner: owner.clone(),
+                    private,
+                    scopes: vec![scope.clone()],
+                    after_sequence: Some(before),
+                    limit: 100,
+                })
+                .unwrap();
+            let removals: Vec<_> = batch["events"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter(|event| event["type"] == "job_removed")
+                .collect();
+            assert_eq!(removals.len(), 1);
+            assert_eq!(removals[0]["id"], ids[0]);
+            let mut replaced = scope;
+            replaced.claim_generation += 1;
+            assert!(!browser_event_visible(
+                removals[0],
+                &owner,
+                private,
+                &[replaced]
+            ));
+            assert!(!browser_event_visible(removals[0], &owner, !private, &[]));
+        }
+        assert!(!browser_event_visible(
+            &serde_json::json!({"type":"job_removed","id":"legacy"}),
+            &owner,
+            false,
+            &[]
+        ));
+    }
     fn request(directory: &Path) -> AddJob {
         AddJob {
             request_id: "same-request".into(),
@@ -1484,7 +2013,9 @@ mod tests {
                 id: j.id.clone(),
                 owner: uuid::Uuid::new_v4().to_string(),
                 url: "https://example.com/refreshed".into(),
-                context: RequestContext::default()
+                context: RequestContext::default(),
+                scope: None,
+                source_generation: None,
             })
             .is_err());
         e.command(Command::RefreshBrowser {
@@ -1492,6 +2023,8 @@ mod tests {
             owner,
             url: "https://example.com/refreshed".into(),
             context: RequestContext::default(),
+            scope: None,
+            source_generation: None,
         })
         .unwrap();
         let refreshed = e.job(&j.id).unwrap().lock().unwrap().clone();

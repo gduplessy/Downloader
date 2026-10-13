@@ -355,16 +355,33 @@ pub fn native(args: &[String]) -> Result<()> {
                     call(downloader_core::Command::Navigate(add)).map(|job| browser_job(&job))
                 }
                 c @ downloader_core::Command::NavigationScheduler { .. } => call(c),
+
+                c @ downloader_core::Command::BrowserStream(_) => call(c),
+                c @ downloader_core::Command::BrowserAccount(_) => call(c),
+                c @ downloader_core::Command::Captcha { .. } => call(c),
+                c @ downloader_core::Command::NavigationSelection(_) => call(c),
+                c @ downloader_core::Command::DiscoveryList { .. } => call(c),
+                c @ downloader_core::Command::DiscoveryClaim(_) => call(c),
+                c @ downloader_core::Command::DiscoverySelect(_) => call(c),
+                c @ downloader_core::Command::DiscoveryPrepare(_) => call(c),
+                c @ downloader_core::Command::DiscoveryPageResult(_) => call(c),
+                c @ downloader_core::Command::DiscoveryStatus(_) => Ok(
+                    downloader_core::rendered_grabber::browser_projection(call(c)?),
+                ),
+
+                c @ downloader_core::Command::NavigationAuthority { .. } => call(c),
+                c @ downloader_core::Command::BrowserSnapshot { .. } => browser_snapshot(call(c)?),
+                c @ downloader_core::Command::BrowserSubscribe { .. } => browser_events(call(c)?),
                 c @ downloader_core::Command::Negotiate { .. } => call(c),
                 downloader_core::Command::Subscribe {
                     after_sequence,
                     limit,
-                } => browser_events(call(downloader_core::Command::Subscribe {
+                } => legacy_browser_events(call(downloader_core::Command::Subscribe {
                     after_sequence,
                     limit: limit.min(50),
                 })?),
                 downloader_core::Command::Snapshot => {
-                    browser_snapshot(call(downloader_core::Command::Snapshot)?)
+                    legacy_browser_snapshot(call(downloader_core::Command::Snapshot)?)
                 }
                 c @ (downloader_core::Command::Pause { .. }
                 | downloader_core::Command::Resume { restart: false, .. }
@@ -397,6 +414,17 @@ pub fn native(args: &[String]) -> Result<()> {
                             .any(|j| j["id"].as_str() == Some(id) && browser_visible(j))
                     }) {
                         bail!("Browser cannot control this job");
+                    }
+                    if matches!(
+                        &c,
+                        downloader_core::Command::Pause { .. }
+                            | downloader_core::Command::Resume { .. }
+                            | downloader_core::Command::Cancel { .. }
+                    ) && snapshot["jobs"].as_array().is_some_and(|jobs| {
+                        jobs.iter()
+                            .any(|j| j["id"] == id.as_str() && !j["navigation_scope"].is_null())
+                    }) {
+                        bail!("Scoped browser controls require the active session fence");
                     }
                     let returns_job = matches!(
                         c,
@@ -442,11 +470,29 @@ pub fn native(args: &[String]) -> Result<()> {
     }
     Ok(())
 }
+fn legacy_browser_snapshot(mut data: serde_json::Value) -> Result<serde_json::Value> {
+    if let Some(jobs) = data["jobs"].as_array_mut() {
+        jobs.retain(|j| j["private"] != true && j["navigation_owner"].is_null());
+    }
+    browser_snapshot(data)
+}
+fn legacy_browser_events(mut data: serde_json::Value) -> Result<serde_json::Value> {
+    if data["snapshot"].is_object() {
+        data["snapshot"] = legacy_browser_snapshot(data["snapshot"].take())?;
+    }
+    if let Some(events) = data["events"].as_array_mut() {
+        events.retain(|e| {
+            e["job"].is_null()
+                || (e["job"]["private"] != true && e["job"]["navigation_owner"].is_null())
+        });
+    }
+    browser_events(data)
+}
 fn browser_visible(job: &serde_json::Value) -> bool {
     job["browser_source"] == true || job["page_url"].is_string()
 }
 fn browser_job(j: &serde_json::Value) -> serde_json::Value {
-    serde_json::json!({"id":j["id"],"request_id":j["request_id"],"url":j["url"],"page_url":j["page_url"],"navigation_url":j["navigation_url"],"navigation_owner":j["navigation_owner"],"solver_outcome":j["solver_outcome"],"solver_attempted":j["solver_attempted"],"filename":j["filename"],"state":j["state"],"bytes":j["bytes"],"total":j["total"],"viable":j["viable"],"private":j["private"],"error":j["failure"]["code"],"failure":{"code":j["failure"]["code"],"retryable":j["failure"]["retryable"],"recovery":j["failure"]["recovery"]}})
+    serde_json::json!({"id":j["id"],"browser_source":j["browser_source"],"request_id":j["request_id"],"url":j["url"],"page_url":j["page_url"],"navigation_url":j["navigation_url"],"navigation_owner":j["navigation_owner"],"navigation_scope":j["navigation_scope"],"selected_host":j["selected_host"],"navigation_adapter":j["navigation_adapter"],"source_generation":j["source_generation"],"replay_decision":j["replay_decision"],"solver_outcome":j["solver_outcome"],"solver_attempted":j["solver_attempted"],"filename":j["filename"],"state":j["state"],"bytes":j["bytes"],"total":j["total"],"viable":j["viable"],"private":j["private"],"error":j["failure"]["code"],"failure":{"code":j["failure"]["code"],"retryable":j["failure"]["retryable"],"recovery":j["failure"]["recovery"]}})
 }
 fn browser_snapshot(data: serde_json::Value) -> Result<serde_json::Value> {
     let jobs = data["jobs"]
@@ -524,10 +570,10 @@ mod tests {
     #[test]
     fn bounded_binary_framing() {
         let mut out = Vec::new();
-        write_frame(&mut out, "العربية".as_bytes(), 1024).unwrap();
+        write_frame(&mut out, "Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©".as_bytes(), 1024).unwrap();
         assert_eq!(
             read_frame(&mut out.as_slice(), 1024).unwrap().unwrap(),
-            "العربية".as_bytes()
+            "Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©".as_bytes()
         );
         assert!(read_frame(&mut (2048u32.to_ne_bytes().as_slice()), 1024).is_err());
     }

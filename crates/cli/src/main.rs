@@ -91,6 +91,11 @@ enum Action {
     GrabberRun {
         id: String,
     },
+    /// Stage project resources; rendered resources require their chosen live browser session.
+    GrabberDownload {
+        id: String,
+        urls: Vec<String>,
+    },
     Register {
         #[arg(long)]
         chrome_id: Vec<String>,
@@ -229,6 +234,8 @@ fn run() -> Result<()> {
             owner: None,
             url: None,
             automatic: false,
+            scope: None,
+            source_generation: None,
         },
         Action::Settings => Command::Snapshot,
         Action::Set { file } => Command::Settings(serde_json::from_slice(&std::fs::read(file)?)?),
@@ -237,6 +244,7 @@ fn run() -> Result<()> {
             Command::Grabber(serde_json::from_slice(&std::fs::read(file)?)?)
         }
         Action::GrabberRun { id } => Command::GrabberRun { id },
+        Action::GrabberDownload { id, urls } => Command::GrabberDownload { id, urls },
         Action::Quit => Command::Quit,
         _ => bail!("Unsupported command"),
     };

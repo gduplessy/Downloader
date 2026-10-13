@@ -27,6 +27,7 @@ const fakeBinding = (
   frameId: 0,
   sessionKey: 'fixture-profile',
   claimGeneration: 1,
+  sourceGeneration: 1,
   documentGeneration: 1,
   page,
   adapterId: inspection.adapter.id,

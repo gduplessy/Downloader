@@ -1,4 +1,11 @@
+import { observeAccount } from './navigation/accounts/observe';
+import { accountDecision } from './navigation/accounts/policy';
+import { showAccountPanel } from './navigation/accounts/panel';
+import { accountLabel } from './navigation/accounts/labels';
+import type { AccountAction, AccountBinding, Selection } from './navigation/accounts/types';
+import { matchAdapter } from './navigation/adapters/policy';
 import browser from 'webextension-polyfill';
+import { showChallenge, type ChallengeBridge } from './navigation/challenges/page';
 import { decide, classifyBlocker } from './resolver-policy';
 import {
   collectControls,
@@ -23,14 +30,49 @@ import { showPreview, type PreviewHandle } from './navigation/adapters/selection
 
 // Runs only in the top-level tab assigned to an explicit navigation job.
 import { scopeKey, type ResolverContext } from './navigation/adapters/context';
+const documentRoot = globalThis as typeof globalThis & { __downloaderDocumentNonce?: string };
+const documentNonce = (documentRoot.__downloaderDocumentNonce ??= crypto.randomUUID());
 let documentGeneration = 1;
+const documentClaim = () => ({ nonce: documentNonce, generation: documentGeneration });
+let documentActive = true;
+let challengeHandle: { close(): void } | undefined;
 let previewHandle: PreviewHandle | undefined;
 let running = false;
+let accountPanel: { close: () => void } | undefined;
 const submissions = new SubmissionGate();
 async function context(): Promise<ResolverContext | null> {
-  return (await browser.runtime
-    .sendMessage({ type: 'resolver_context' })
+  if (!documentActive) return null;
+  const result = (await browser.runtime
+    .sendMessage({ type: 'resolver_context', document: documentClaim() })
     .catch(() => null)) as ResolverContext | null;
+  return documentActive ? result : null;
+}
+function accountBinding(ctx: ResolverContext): AccountBinding {
+  const adapter = matchAdapter(location.href, ctx.disabledAdapters);
+  return {
+    tabId: ctx.tabId,
+    frameId: ctx.frameId,
+    scope: ctx.scope,
+    sourceGeneration: ctx.sourceGeneration,
+    documentGeneration,
+    documentNonce,
+    documentId: ctx.documentId ?? null,
+    page: location.href,
+    adapterId: adapter.id,
+    adapterVersion: adapter.version,
+  };
+}
+async function accountAction(request: AccountAction, bound: AccountBinding): Promise<any> {
+  return browser.runtime.sendMessage({
+    type: 'resolver_account',
+    request,
+    binding: bound,
+    document: documentClaim(),
+  });
+}
+async function currentAccountBinding(): Promise<AccountBinding | null> {
+  const ctx = await context();
+  return ctx ? accountBinding(ctx) : null;
 }
 function blockers(elements: Element[]) {
   const captcha = elements.some(
@@ -68,7 +110,9 @@ function binding(
     frameId: ctx.frameId,
     sessionKey: scopeKey(ctx.scope),
     claimGeneration: ctx.scope.claim_generation,
+    sourceGeneration: ctx.sourceGeneration,
     documentGeneration,
+    documentNonce,
     page: location.href,
     adapterId: inspection.adapter.id,
     adapterVersion: inspection.adapter.version,
@@ -76,16 +120,49 @@ function binding(
   };
 }
 async function observe(ctx: ResolverContext | null) {
+  let account: Selection | null = null;
+  if (ctx && ctx.sourceGeneration) {
+    const selected = (await accountAction({ action: 'selection' }, accountBinding(ctx)).catch(
+      () => null,
+    )) as Selection | null;
+    if (selected)
+      account = await observeAccount(
+        document,
+        accountBinding(ctx),
+        { ...selected, selected_host: ctx.selectedHost ?? selected.selected_host },
+        accountAction,
+      ).catch(() => ({
+        ...selected,
+        auth: 'unknown' as const,
+        entitlement: 'unknown' as const,
+        observed_at: null,
+      }));
+  }
+  const accountState = accountDecision(account);
   const collected = collectControls(document),
     signals = blockers(allElements(document));
-  const inspection = inspectCandidates(location.href, collected.controls, {
+  const inspection = inspectCandidates(location.href, ctx?.selectedResource ? collected.controls.filter((c) => c.target === ctx.selectedResource) : collected.controls, {
     disabledAdapters: ctx?.disabledAdapters,
     selectedHost: ctx?.selectedHost,
     allowPageBlob: ctx?.capabilities?.pageBlob === true,
-    blocked: !!signals.blocker && signals.blocker !== 'countdown',
+    allowPremium: accountState.premium,
+    blocked:
+      (!!signals.blocker && signals.blocker !== 'countdown') ||
+      (account?.mode === 'premium' && !accountState.premium),
     countdown: signals.countdown,
   });
-  return { collected, signals, inspection, fingerprint: await domFingerprint(collected) };
+  if (account?.mode === 'premium' && !accountState.premium) {
+    signals.blocker = 'authentication';
+    inspection.reason = accountLabel(
+      ctx?.locale ?? 'en',
+      accountState.reason === 'free'
+        ? 'existing'
+        : accountState.reason === 'premium'
+          ? 'premium'
+          : accountState.reason,
+    );
+  }
+  return { collected, signals, inspection, account, fingerprint: await domFingerprint(collected) };
 }
 async function submit(
   ctx: ResolverContext,
@@ -101,9 +178,21 @@ async function submit(
   const originalOutline = element.style.outline;
   element.style.outline = '3px solid #185ac5';
   let reply: any;
+  let token: string | undefined;
+  let completed = false;
+  const abort = () => {
+    if (token)
+      void browser.runtime.sendMessage({
+        type: 'resolver_abort',
+        token,
+        document: documentClaim(),
+      });
+  };
+  signal?.addEventListener('abort', abort, { once: true });
   try {
     reply = await browser.runtime.sendMessage({
       type: 'resolver_step',
+      document: documentClaim(),
       url: location.href,
       decision: {
         kind: 'click',
@@ -116,13 +205,11 @@ async function submit(
       selected_host: chosen.panelHost ?? ctx.selectedHost ?? null,
       adapter_id: observed.inspection.adapter.id,
       adapter_version: observed.inspection.adapter.version,
+      premium: chosen.premium === true,
     });
+    token = reply?.authorization;
     if (signal?.aborted) throw Error('adapter_selection_cancelled');
-    if (reply?.direct === true) {
-      submissions.consume(bound, chosen.localId);
-      return;
-    }
-    if (!reply?.click) throw Error('adapter_authorization_rejected');
+    if (!token) throw Error('adapter_authorization_rejected');
     const freshContext = await context();
     if (!freshContext) throw Error('adapter_preview_stale');
     const fresh = await observe(freshContext);
@@ -133,21 +220,103 @@ async function submit(
       chosen.localId,
     );
     if (signal?.aborted) throw Error('adapter_selection_cancelled');
-    submissions.consume(bound, chosen.localId);
-    element.click();
+    reply = await browser.runtime.sendMessage({
+      type: 'resolver_commit',
+      document: documentClaim(),
+      token,
+      binding: binding(freshContext, fresh.inspection, fresh.fingerprint),
+      fingerprint: fresh.fingerprint,
+      selected_host: chosen.panelHost ?? ctx.selectedHost ?? null,
+    });
+    if (signal?.aborted) throw Error('adapter_selection_cancelled');
+    if (reply?.direct !== true) {
+      const committedContext = await context();
+      if (!committedContext) throw Error('adapter_preview_stale');
+      const committed = await observe(committedContext);
+      validateSelection(
+        createPreview(bound, observed.inspection),
+        binding(committedContext, committed.inspection, committed.fingerprint),
+        committed.inspection,
+        chosen.localId,
+      );
+      if (signal?.aborted) throw Error('adapter_selection_cancelled');
+      if (!reply?.click) throw Error('adapter_authorization_rejected');
+      submissions.consume(bound, chosen.localId);
+      element.click();
+    } else submissions.consume(bound, chosen.localId);
+    completed = true;
   } finally {
+    signal?.removeEventListener('abort', abort);
+    if (!completed) abort();
     element.style.outline = originalOutline;
   }
   if (reply?.repeat) setTimeout(() => void step(), 1000);
 }
 async function step() {
-  if (running) return;
+  if (running || !documentActive) return;
   running = true;
   try {
+    accountPanel?.close();
+    accountPanel = undefined;
+    challengeHandle?.close();
+    challengeHandle = undefined;
     previewHandle?.close();
     previewHandle = undefined;
-    const ctx = await context();
-    const observed = await observe(ctx);
+    let ctx = await context();
+    if (ctx) {
+      challengeHandle =
+        (await showChallenge(
+          document,
+          {
+            context,
+            chooseHost: async (host: string) =>
+              browser.runtime.sendMessage({
+                type: 'resolver_challenge_select',
+                selectedHost: host,
+                document: { nonce: documentNonce, generation: documentGeneration },
+              }),
+            authorize: async (bound, signal) => {
+              if (signal.aborted) return false;
+              const reply = await browser.runtime.sendMessage({
+                type: 'resolver_challenge_authorize',
+                binding: bound,
+                document: { nonce: documentNonce, generation: documentGeneration },
+              });
+              return !signal.aborted && reply === true;
+            },
+            paid: async (action, bound, image) =>
+              browser.runtime.sendMessage({
+                type: 'resolver_challenge_paid',
+                binding: bound,
+                action,
+                image,
+                document: { nonce: documentNonce, generation: documentGeneration },
+              }),
+          } as ChallengeBridge,
+          documentGeneration,
+          () => {
+            setTimeout(() => void step().catch(() => {}), 500);
+          },
+        )) ?? undefined;
+      if (challengeHandle) return;
+    }
+    let observed = await observe(ctx);
+    const deadline = Date.now() + 10000;
+    while (ctx?.selectedResource && !observed.inspection.candidates.length && !observed.signals.blocker && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      ctx = await context();
+      if (!ctx) return;
+      observed = await observe(ctx);
+    }
+    if (ctx && observed.account)
+      accountPanel = await showAccountPanel(
+        document,
+        observed.account,
+        accountBinding(ctx),
+        ctx.locale,
+        currentAccountBinding,
+        accountAction,
+      );
     if (ctx && observed.inspection.kind === 'click' && observed.inspection.selected) {
       await submit(ctx, observed, observed.inspection.selected);
       return;
@@ -163,6 +332,7 @@ async function step() {
       );
       await browser.runtime.sendMessage({
         type: 'resolver_step',
+        document: documentClaim(),
         url: location.href,
         decision: {
           kind: 'user',
@@ -196,6 +366,7 @@ async function step() {
         async () => {
           const disabled = await browser.runtime.sendMessage({
             type: 'resolver_disable_adapter',
+            document: documentClaim(),
             adapterId: preview.binding.adapterId,
           });
           if (disabled !== true) throw Error('adapter_disable_rejected');
@@ -222,6 +393,7 @@ async function step() {
     const element = chosen ? observed.collected.elements.get(chosen.localId) : undefined;
     const reply: any = await browser.runtime.sendMessage({
       type: 'resolver_step',
+      document: documentClaim(),
       url: location.href,
       decision: {
         ...decision,
@@ -247,6 +419,15 @@ async function step() {
 const root = globalThis as typeof globalThis & { __downloaderResolver?: boolean };
 if (!root.__downloaderResolver) {
   root.__downloaderResolver = true;
+  window.addEventListener(
+    'pagehide',
+    () => {
+      documentActive = false;
+      accountPanel?.close();
+      previewHandle?.close();
+    },
+    { once: true },
+  );
   browser.runtime.onMessage.addListener((message: any) => {
     if (message.type === 'resolver_continue') {
       documentGeneration++;
