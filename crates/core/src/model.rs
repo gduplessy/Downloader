@@ -600,6 +600,12 @@ pub enum EventPayload {
         id: String,
         browser_source: bool,
         page_url: Option<String>,
+        #[serde(default)]
+        private: Option<bool>,
+        #[serde(default)]
+        navigation_owner: Option<String>,
+        #[serde(default)]
+        navigation_scope: Option<Box<crate::navigation::SessionScope>>,
     },
     SettingsChanged,
     QueuesChanged,

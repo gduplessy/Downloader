@@ -1,0 +1,45 @@
+{
+  "productVersion": "0.9.10",
+  "integrationBase": "c8ac54d",
+  "accountImplementation": "c7d569f",
+  "verifiedAt": "2026-10-13T00:20:51.498015+00:00",
+  "client": {
+    "extensionTests": 121,
+    "desktopTests": 6,
+    "typescript": "passed desktop and extension",
+    "builds": "passed desktop and Chromium/Firefox extension outputs"
+  },
+  "native": {
+    "faultInjectionSuite": {
+      "passed": 113,
+      "ignored": 4,
+      "ignoredReason": "subprocess fixture entries; recovery parents invoke required children"
+    },
+    "format": "cargo fmt --all -- --check passed",
+    "clippy": "core/service/CLI all-targets fault-injection -D warnings passed",
+    "binaries": "isolated CLI/service and account fixture helper built",
+    "desktopCompilation": "cargo check --manifest-path apps/desktop/src-tauri/Cargo.toml passed; not native GUI visual acceptance",
+    "windowsKeyring": "actual generated test credential create/read/delete and Engine grant/consume/remove passed; removed"
+  },
+  "fixtureHTTP": {
+    "assertions": 52,
+    "verifiedFiles": 4,
+    "qualified": "synthetic HTTP contracts only"
+  },
+  "installedAccountRows": [
+    "production-integrated-chrome-saved.json",
+    "production-integrated-edge-saved.json",
+    "production-integrated-chrome-session.json"
+  ],
+  "versionCheck": "passed including generated extension manifest versions",
+  "diffCheck": "passed",
+  "pending": [
+    "Firefox stable/ESR installed account flow",
+    "macOS/Linux keyring/account acceptance",
+    "native GUI visual acceptance",
+    "permission prompt/install UX",
+    "installed private/container account flows",
+    "live g4u/ddownload/Rapidgator/Gofile accounts/layouts",
+    "provider APIs and premium bypass feasibility"
+  ]
+}

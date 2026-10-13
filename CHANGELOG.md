@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.9.10 — Qualify integrated scoped accounts
+
+- Adopt the checked combined account/challenge/stream lifecycle and removal-event privacy contracts.
+- Assert selected downstream provider and original provenance through authenticated redirect, original-response capture and native publication.
+- Qualify installed Chrome/Edge saved-fill and Chrome existing-session hashes; preserve pending live provider, permission-prompt, Firefox and non-Windows acceptance.
+- Verify 127 client and 113 native tests, strict Clippy/fmt, frontend types/builds, native Tauri compilation and actual Windows generated-keyring cleanup.
+
+## 0.12.4
+
+- Integrate the checked account batch: desktop OS-keyring metadata, explicit saved fills, existing-session premium controls, purpose-separated grants and live document proof.
+- Preserve shared challenge, direct-stream and recovery hooks; renew scheduler authority from the actual owned tab and invalidate grants before intentional claim replacement.
+- Verify 121 extension tests, six desktop tests, desktop/extension types/builds, the full native suite, strict Clippy and CLI/service builds. Installed combined browser acceptance remains in progress; live provider/account and paid-provider rows stay pending.
+
+## 0.12.3
+
+- Adopt the checked per-job startup serializer and persist renewed claims before scheduler heartbeat.
+- Retain Firefox blocking request observation until filter completion/refusal, with explicit listener cleanup.
+- Reject late admission, chunks and EOF after stream cancellation; terminal callbacks remain idempotent.
+- Verify 33 session/stream regressions and extension types/builds. Actual Firefox qualification remains pending.
+
+## 0.12.2
+
+- Prevent legacy browser-download observers from pausing, replaying or changing the status of jobs owned by an active original-response stream.
+- Bind direct ownership to tab, job, exact scope/source and stream identity; terminal and failed admissions release only their own stream.
+- Verify 13 stream regressions, extension types/builds and an installed production Chrome POST with one submission and a matching 262,161-byte native hash. Firefox remains under qualification.
+
+## 0.12.1
+
+- Preserve owner, private lane and exact navigation claim on removal events; scoped subscriptions reject foreign or historical unqualified tombstones.
+- Add a real engine regression for regular/private removal isolation and stale claims.
+- Make the scheduler assertion compatible with both installed Vitest mock type variants.
+
 ## 0.9.9 — Integrate monotonic navigation record ownership
 
 - Adopt checked shared record write fencing and actual Chromium cookie-store reconciliation.

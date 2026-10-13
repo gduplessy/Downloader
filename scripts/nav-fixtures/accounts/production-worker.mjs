@@ -8,6 +8,20 @@ import assert from 'node:assert/strict';
 const require = createRequire(new URL('../../../apps/extension/package.json', import.meta.url));
 const { build } = require('esbuild');
 const existingSession = process.env.NAV_EXISTING_SESSION === '1';
+const productVersion = JSON.parse(await readFile('package.json', 'utf8')).version;
+const sourceCommit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+const sourceHashes = Object.fromEntries(
+  await Promise.all(
+    [
+      'apps/extension/src/background.ts',
+      'apps/extension/src/resolver.ts',
+      'scripts/nav-fixtures/accounts/server.mjs',
+    ].map(async (path) => [
+      path,
+      createHash('sha256').update(await readFile(path)).digest('hex'),
+    ]),
+  ),
+);
 const executable =
   process.env.NAV_BROWSER || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const dir = resolve('.fixture-streams', 'production-accounts-' + Date.now());
@@ -500,6 +514,16 @@ try {
   assert.equal(requests.login, 1, 'Login must submit once');
   assert.equal(requests.file, 1, 'Premium file must be transferred once');
   assert.equal(requests.purchase, 0, 'No purchase or advertisement requests permitted');
+  assert.equal(
+    job.selected_host,
+    'ddownload.com',
+    'Selected downstream provider must survive authenticated redirect and native capture',
+  );
+  assert.equal(
+    job.page_url,
+    base + '/nav-adapters/ddownload/login',
+    'Original provenance must be preserved',
+  );
   for (const file of ['account-fixture.bin']) {
     const bytes = await readFile(resolve(dir, 'downloads', file));
     assert.equal(bytes.length, payload.length);
@@ -508,6 +532,9 @@ try {
   assert.ok(run.result.value.jobs.every((job) => job.state === 'complete'));
   const evidence = {
     browser: version.product,
+    productVersion,
+    sourceCommit,
+    sourceHashes,
     os: process.platform,
     architecture: process.arch,
     extensionAPI: 'Production saved-fill/native keyring grant and entitled-session direct stream',
@@ -537,7 +564,8 @@ try {
     JSON.stringify(
       {
         browser: observedBrowserVersion,
-        version: '0.9.7',
+        version: productVersion,
+        sourceCommit,
         fixture: 'nav-account-production-v1',
         accountPath: existingSession ? 'existing-session' : 'saved-fill',
         error: String(error),

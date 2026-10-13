@@ -87,6 +87,7 @@ export class DurableStreamSink {
     readonly identity: StreamIdentity,
     private port: NativeStreamPort,
     private verifyOwner: () => Promise<void>,
+    private onTerminal: () => void = () => {},
   ) {}
   private validate(ack: StreamAck, expected: number) {
     if (
@@ -97,8 +98,13 @@ export class DurableStreamSink {
     )
       throw Error('Stale or invalid durable acknowledgement');
   }
+  private assertOpen() {
+    if (this.terminal) throw Error('Stream is terminal');
+  }
   async begin(target: NavigationTarget, filename: string, total: number | null) {
+    this.assertOpen();
     await this.verifyOwner();
+    this.assertOpen();
     const ack = await this.port.operation({
       ...this.identity,
       operation: 'begin',
@@ -112,9 +118,11 @@ export class DurableStreamSink {
   async chunk(bytes: Uint8Array) {
     // A single outstanding frame bounds transport memory and propagates durable backpressure.
     for (let index = 0; index < bytes.length; index += STREAM_CHUNK_BYTES) {
+      this.assertOpen();
       const part = bytes.subarray(index, index + STREAM_CHUNK_BYTES);
       this.peakBufferedBytes = Math.max(this.peakBufferedBytes, part.byteLength);
       await this.verifyOwner();
+      this.assertOpen();
       const operation: StreamOperation = {
         ...this.identity,
         operation: 'chunk',
@@ -128,6 +136,7 @@ export class DurableStreamSink {
         if (!String(error).includes('disconnected')) throw error;
         // Only retransmit retained bytes after a lost ACK; service compares existing bytes.
         await this.verifyOwner();
+        this.assertOpen();
         ack = await this.port.operation(operation);
       }
       this.validate(ack, this.offset + part.length);
@@ -135,7 +144,9 @@ export class DurableStreamSink {
     }
   }
   async end() {
+    this.assertOpen();
     await this.verifyOwner();
+    this.assertOpen();
     const ack = await this.port.operation({
       ...this.identity,
       operation: 'end',
@@ -146,14 +157,17 @@ export class DurableStreamSink {
     if (!ack.terminal) throw Error('Stream verification did not complete');
     this.terminal = true;
     this.port.close();
+    this.onTerminal();
   }
   async abort(reason = 'interrupted') {
+    if (this.terminal) return;
+    this.terminal = true;
     try {
       await this.verifyOwner();
       await this.port.operation({ ...this.identity, operation: 'abort', reason });
     } finally {
-      this.terminal = true;
       this.port.close();
+      this.onTerminal();
     }
   }
 }

@@ -956,10 +956,7 @@ impl Engine {
                 let mut value = serde_json::to_value(self.subscribe(after_sequence, limit)?)?;
                 filter_browser_projection(&mut value["snapshot"], &owner, private, &scopes);
                 if let Some(events) = value["events"].as_array_mut() {
-                    events.retain(|e| {
-                        e["job"].is_null()
-                            || browser_job_visible(&e["job"], &owner, private, &scopes)
-                    });
+                    events.retain(|e| browser_event_visible(e, &owner, private, &scopes));
                 }
                 Ok(value)
             }
@@ -1721,6 +1718,19 @@ fn browser_job_visible(
     }
     job["navigation_owner"].is_null() || job["navigation_owner"] == owner
 }
+fn browser_event_visible(
+    event: &serde_json::Value,
+    owner: &str,
+    private: bool,
+    scopes: &[crate::navigation::SessionScope],
+) -> bool {
+    if event["type"] == "job_removed" {
+        // Historical tombstones have no lane/claim proof. A fresh snapshot
+        // recovers removals without exposing unknown private or foreign IDs.
+        return event["private"].is_boolean() && browser_job_visible(event, owner, private, scopes);
+    }
+    event["job"].is_null() || browser_job_visible(&event["job"], owner, private, scopes)
+}
 fn filter_browser_projection(
     value: &mut serde_json::Value,
     owner: &str,
@@ -1740,6 +1750,81 @@ fn filter_browser_projection(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn removal_events_preserve_exact_browser_lane_and_claim() {
+        let directory = tempfile::tempdir().unwrap();
+        let e = Engine::open(directory.path()).unwrap();
+        let owner = uuid::Uuid::new_v4().to_string();
+        for private in [false, true] {
+            let scope = crate::navigation::SessionScope {
+                browser: "firefox".into(),
+                profile: owner.clone(),
+                private,
+                cookie_store_id: Some("firefox-default".into()),
+                container_id: None,
+                partition_key: None,
+                claim_generation: 1,
+            };
+            let before = e.snapshot().sequence;
+            let mut ids = Vec::new();
+            for foreign in [false, true] {
+                let mut r = request(directory.path());
+                r.request_id = uuid::Uuid::new_v4().to_string();
+                let job = e.add(r).unwrap();
+                let shared = e.job(&job.id).unwrap();
+                {
+                    let mut j = shared.lock().unwrap();
+                    let mut claim = scope.clone();
+                    if foreign {
+                        claim.profile = uuid::Uuid::new_v4().to_string();
+                    }
+                    j.private = private;
+                    j.browser_source = true;
+                    j.navigation_owner = Some(claim.profile.clone());
+                    j.navigation_scope = Some(claim);
+                }
+                e.persist(&shared).unwrap();
+                e.command(Command::Remove {
+                    id: job.id.clone(),
+                    delete_file: false,
+                })
+                .unwrap();
+                ids.push(job.id);
+            }
+            let batch = e
+                .command(Command::BrowserSubscribe {
+                    owner: owner.clone(),
+                    private,
+                    scopes: vec![scope.clone()],
+                    after_sequence: Some(before),
+                    limit: 100,
+                })
+                .unwrap();
+            let removals: Vec<_> = batch["events"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter(|event| event["type"] == "job_removed")
+                .collect();
+            assert_eq!(removals.len(), 1);
+            assert_eq!(removals[0]["id"], ids[0]);
+            let mut replaced = scope;
+            replaced.claim_generation += 1;
+            assert!(!browser_event_visible(
+                removals[0],
+                &owner,
+                private,
+                &[replaced]
+            ));
+            assert!(!browser_event_visible(removals[0], &owner, !private, &[]));
+        }
+        assert!(!browser_event_visible(
+            &serde_json::json!({"type":"job_removed","id":"legacy"}),
+            &owner,
+            false,
+            &[]
+        ));
+    }
     fn request(directory: &Path) -> AddJob {
         AddJob {
             request_id: "same-request".into(),

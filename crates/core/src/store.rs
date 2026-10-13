@@ -277,6 +277,9 @@ impl Store {
                         id: id.into(),
                         browser_source: job.browser_source,
                         page_url: job.page_url,
+                        private: Some(job.private),
+                        navigation_owner: job.navigation_owner,
+                        navigation_scope: job.navigation_scope.map(Box::new),
                     },
                 );
             }
@@ -296,6 +299,9 @@ impl Store {
                     id: id.into(),
                     browser_source: job.browser_source,
                     page_url: job.page_url,
+                    private: Some(job.private),
+                    navigation_owner: job.navigation_owner,
+                    navigation_scope: job.navigation_scope.map(Box::new),
                 },
             )?;
         } else if kind == "queue" {
