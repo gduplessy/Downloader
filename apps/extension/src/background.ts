@@ -1,3 +1,10 @@
+import { verifyLiveDocument, type DocumentClaim } from './navigation/session/document';
+import { NavigationStarts } from './navigation/session/start';
+import { PremiumAuthorizations } from './navigation/accounts/premium';
+import { accountRequest, validateAccountRequest } from './navigation/accounts/worker';
+import { validateAccountDocument } from './navigation/accounts/document';
+import { accountDecision } from './navigation/accounts/policy';
+import type { AccountAction, AccountBinding, Selection } from './navigation/accounts/types';
 import { ProjectionCursor, type ProjectionTicket } from './navigation/session/projection';
 import {
   NavigationAuthorizations,
@@ -14,7 +21,6 @@ import { armChromium, takeFirefox, originalResponseMetadata } from './navigation
 import { readOwnedBlob } from './navigation/streams/blob';
 import { applyEvents } from '../../../packages/shared/src/events';
 import browser from 'webextension-polyfill';
-import { verifyLiveDocument, type DocumentClaim } from './navigation/session/document';
 import { challengeHandler } from './navigation/challenges/worker';
 import { shouldSolve } from './resolver-policy';
 import { NavigationScheduler, WAIT_ALARM_PREFIX } from './navigation/scheduler/runtime';
@@ -47,6 +53,7 @@ const scheduler = new NavigationScheduler(
 let schedulerRecovered = false;
 const resolverSteps = new Map<number, Promise<unknown>>();
 const navigationAuthorizations = new NavigationAuthorizations();
+const premiumAuthorizations = new PremiumAuthorizations();
 const subscriptionCursor = new ProjectionCursor();
 const committedAuthorizations = new Map<string, number>();
 
@@ -91,6 +98,7 @@ async function renewAuthority(key: string, record: ResolverRecord) {
     authority.scope.claim_generation !== record.scope.claim_generation
   ) {
     navigationAuthorizations.invalidateTab(record.tabId);
+    premiumAuthorizations.invalidateTab(record.tabId);
     await captureCancels.get(record.tabId)?.();
     captureCancels.delete(record.tabId);
     record.scope = authority.scope;
@@ -192,15 +200,19 @@ async function newSink(
   deferred = false,
 ) {
   if (!record.scope) throw Error('Direct capture needs an explicit browser scope');
+  if (!Number.isSafeInteger(record.sourceGeneration) || record.sourceGeneration! < 1)
+    throw Error('Direct capture needs a current source generation');
   if (record.scope.private && !browser.storage.session)
     throw Error('Private capture requires ephemeral browser session storage');
   const identity: StreamIdentity = {
     stream_id: crypto.randomUUID(),
     scope: record.scope,
-    source_generation: record.sourceGeneration ?? 1,
+    source_generation: record.sourceGeneration!,
   };
-  const sink = new DurableStreamSink(identity, new NativeStreamPort(), () =>
-    verifyStreamOwner(id, record.tabId, identity.scope, identity.source_generation),
+  const sink = new DurableStreamSink(
+    identity,
+    new NativeStreamPort(() => browser.runtime.connectNative(HOST)),
+    () => verifyStreamOwner(id, record.tabId, identity.scope, identity.source_generation),
     () => directOwners.release(record.tabId, identity.stream_id),
   );
   if (!deferred) await sink.begin({ kind: 'job', id }, filename, total);
@@ -236,7 +248,7 @@ async function armDirect(
       scope: record.scope,
       sink,
       jobId: id,
-      sourceGeneration: record.sourceGeneration ?? 1,
+      sourceGeneration: record.sourceGeneration!,
     });
     if (BROWSER === 'chromium')
       void browser.scripting
@@ -347,12 +359,18 @@ async function armDirect(
         return;
       taken = true;
       requestId = details.requestId;
-      browser.webRequest.onBeforeRequest.removeListener(listen);
       takeFirefox(
         (browser.webRequest as any).filterResponseData(details.requestId),
         sink,
-        () => {},
+        () => {
+          browser.webRequest.onBeforeRequest.removeListener(listen);
+          browser.webRequest.onHeadersReceived.removeListener(headers);
+        },
         ready,
+        () => {
+          browser.webRequest.onBeforeRequest.removeListener(listen);
+          browser.webRequest.onHeadersReceived.removeListener(headers);
+        },
       );
     };
     browser.webRequest.onHeadersReceived.addListener(
@@ -413,7 +431,13 @@ async function native(command: string, args?: unknown): Promise<any> {
     const record = (await navigationStore.get('resolver-' + (args as any).request.id))[
       'resolver-' + (args as any).request.id
     ] as ResolverRecord | undefined;
-    if (record?.scope) args = { ...(args as object), scope: record.scope };
+    if (record?.scope) {
+      const cleanup = (args as any).request.action === 'release';
+      if (cleanup ? record.sessionEpoch !== (await browserEpoch) : !(await ownsCurrentTab(record)))
+        throw Error('Scheduler tab authority changed');
+      await renewAuthority('resolver-' + (args as any).request.id, record);
+      args = { ...(args as object), scope: record.scope };
+    }
   }
   if (['add', 'navigate'].includes(command))
     args = { ...(args as any), context: { ...(args as any)?.context, profile: await profile } };
@@ -890,6 +914,13 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
         } else throw Error('Unknown page stream operation');
         return true;
       })();
+    if (message.type === 'resolver_account')
+      return resolverAccount(
+        message,
+        sender.tab.id!,
+        sender.frameId ?? 0,
+        (sender as any).documentId,
+      );
     if (message.type === 'resolver_context')
       return resolverContext(
         sender.tab.id!,
@@ -1113,7 +1144,11 @@ async function injectResolver(tabId: number) {
       runAt: 'document_idle',
     });
 }
+const resolverStarts = new NavigationStarts();
 async function startResolver(job: any, force = false, sourceTabId?: number) {
+  return resolverStarts.run(job.id, () => startOwnedResolver(job, force, sourceTabId));
+}
+async function startOwnedResolver(job: any, force = false, sourceTabId?: number) {
   const startUrl = job.navigation_url ?? job.page_url;
   if (!/^https?:\/\//.test(startUrl)) throw Error('Page navigation requires HTTP or HTTPS');
   if (force)
@@ -1143,6 +1178,17 @@ async function startResolver(job: any, force = false, sourceTabId?: number) {
       );
       if (record.scope && !sameScope(record.scope, proposed))
         throw Error('Task session changed; explicit transfer required');
+      if (force) {
+        navigationAuthorizations.invalidateTab(record.tabId);
+        premiumAuthorizations.invalidateTab(record.tabId);
+        await captureCancels.get(record.tabId)?.();
+        captureCancels.delete(record.tabId);
+        for (const [readerKey, reader] of blobReaders)
+          if (reader.jobId === job.id) {
+            await reader.sink.abort('navigation_scope_replaced');
+            blobReaders.delete(readerKey);
+          }
+      }
       const claim = await native('claim_navigation', {
         id: job.id,
         force,
@@ -1152,10 +1198,11 @@ async function startResolver(job: any, force = false, sourceTabId?: number) {
       record.scope = claim.scope;
       record.sourceGeneration = claim.source_generation;
       record.generation = claim.source_generation;
-      await scheduler.heartbeat(job.id, record.tabId);
       record.started = Date.now();
       record.steps = 0;
+      // Scheduler native requests read their exact scope from the stored record.
       await navigationStore.set({ [key]: record });
+      await scheduler.heartbeat(job.id, record.tabId);
       await injectResolver(record.tabId);
       await browser.tabs.sendMessage(record.tabId, {
         type: 'resolver_continue',
@@ -1331,6 +1378,7 @@ function authorizationBinding(
     binding.claimGeneration !== record.scope.claim_generation ||
     binding.sourceGeneration !== record.sourceGeneration ||
     binding.documentGeneration !== record.documentGeneration ||
+    binding.documentNonce !== record.documentNonce ||
     message.document?.nonce !== record.documentNonce ||
     binding.adapterId !== adapter.id ||
     binding.adapterVersion !== adapter.version ||
@@ -1355,6 +1403,7 @@ function authorizationBinding(
 async function resolverAction(message: any, tabId: number, page: string, documentId?: string) {
   if (message.type === 'resolver_abort') {
     navigationAuthorizations.cancel(message.token);
+    premiumAuthorizations.cancel(message.token);
     if (committedAuthorizations.get(message.token) === tabId) {
       committedAuthorizations.delete(message.token);
       await captureCancels.get(tabId)?.();
@@ -1364,10 +1413,13 @@ async function resolverAction(message: any, tabId: number, page: string, documen
   }
   const ctx = await resolverContext(tabId, 0, documentId, message.document);
   if (!ctx) {
-    if (message.token) navigationAuthorizations.cancel(message.token);
+    if (message.token) {
+      navigationAuthorizations.cancel(message.token);
+      premiumAuthorizations.cancel(message.token);
+    }
     throw Error('navigation_authorization_stale');
   }
-  if (message.type === 'resolver_step') return resolverStep(message, tabId, page, documentId);
+  if (message.type === 'resolver_step') return resolverStep(message, tabId, page, ctx.documentId);
   if (message.type === 'resolver_disable_adapter') {
     const adapter = matchAdapter(page);
     if (adapter.id === 'generic' || adapter.id !== message.adapterId)
@@ -1375,6 +1427,7 @@ async function resolverAction(message: any, tabId: number, page: string, documen
     settings.disabledAdapters = [...new Set([...(settings.disabledAdapters ?? []), adapter.id])];
     await browser.storage.local.set({ settings });
     navigationAuthorizations.invalidateTab(tabId);
+    premiumAuthorizations.invalidateTab(tabId);
     return true;
   }
   const entries = await navigationStore.get(null);
@@ -1385,7 +1438,20 @@ async function resolverAction(message: any, tabId: number, page: string, documen
   const record = entry[1] as ResolverRecord,
     id = entry[0].slice(9);
   const bound = authorizationBinding(message, record, tabId, page, documentId);
+  const premium = premiumAuthorizations.has(message.token);
   const action = navigationAuthorizations.consume(message.token, bound);
+  if (premium) {
+    const selection = (await native('browser_account', {
+      job_id: id,
+      owner: await profile,
+      scope: bound.scope,
+      source_generation: bound.sourceGeneration,
+      request: { action: 'selection' },
+    })) as Selection | null;
+    premiumAuthorizations.consume(message.token, tabId, selection);
+    if (selection?.account.origin !== new URL(page).origin) throw Error('account_premium_stale');
+  }
+
   const job = (await browserSnapshot()).jobs.find((job: any) => job.id === id);
   if (!job || !['waiting_browser', 'waiting_user'].includes(job.state))
     throw Error('navigation_authorization_stale');
@@ -1413,6 +1479,7 @@ async function resolverAction(message: any, tabId: number, page: string, documen
   return { click: !direct, direct, repeat: true };
 }
 async function resolverStep(message: any, tabId: number, currentUrl: string, documentId?: string) {
+  const snapshot = await browserSnapshot();
   const storage: Record<string, any> = await navigationStore.get(null);
   const entry = Object.entries(storage).find(
     ([key, r]) => key.startsWith('resolver-') && r.tabId === tabId,
@@ -1420,11 +1487,27 @@ async function resolverStep(message: any, tabId: number, currentUrl: string, doc
   if (!entry || message.url !== currentUrl) return { click: false, repeat: false };
   const id = entry[0].slice(9),
     record = entry[1] as ResolverRecord,
-    snapshot = await browserSnapshot(),
     job = snapshot.jobs.find((j: any) => j.id === id);
   if (!job || !['waiting_browser', 'waiting_user'].includes(job.state) || record.downloadId)
     return { click: false, repeat: false };
   record.lastOrigin = new URL(currentUrl).origin;
+  let premiumSelection: Selection | null = null;
+  if (message.premium === true) {
+    if (!record.scope || !record.sourceGeneration) return { click: false, repeat: false };
+    const selection = (await native('browser_account', {
+      job_id: id,
+      owner: await profile,
+      scope: record.scope,
+      source_generation: record.sourceGeneration,
+      request: { action: 'selection' },
+    })) as Selection | null;
+    if (
+      !accountDecision(selection).premium ||
+      selection?.account.origin !== new URL(currentUrl).origin
+    )
+      return { click: false, repeat: false };
+    premiumSelection = selection;
+  }
 
   if (record.scope) {
     if (record.documentId && record.documentId !== documentId)
@@ -1438,6 +1521,7 @@ async function resolverStep(message: any, tabId: number, currentUrl: string, doc
       binding.sessionKey !== sessionKey(record.scope) ||
       binding.claimGeneration !== record.scope.claim_generation ||
       binding.sourceGeneration !== record.sourceGeneration ||
+      binding.documentNonce !== record.documentNonce ||
       !Number.isSafeInteger(binding.documentGeneration) ||
       binding.documentGeneration < (record.documentGeneration ?? 0)
     )
@@ -1561,6 +1645,7 @@ async function resolverStep(message: any, tabId: number, currentUrl: string, doc
       ...message.request,
       selectedHost: message.selected_host ?? null,
     });
+    if (premiumSelection) premiumAuthorizations.issue(token, tabId, premiumSelection);
     await navigationStore.set({ [entry[0]]: record });
     return { authorization: token, click: false, repeat: false };
   }
@@ -1577,6 +1662,7 @@ async function resolverStep(message: any, tabId: number, currentUrl: string, doc
 browser.tabs.onUpdated.addListener((tabId, change) => {
   if (change.status === 'loading') {
     navigationAuthorizations.invalidateTab(tabId);
+    premiumAuthorizations.invalidateTab(tabId);
   }
   if (change.status === 'loading')
     void (async () => {
@@ -1638,6 +1724,7 @@ browser.tabs.onRemoved.addListener(
   (tabId) =>
     void (async () => {
       navigationAuthorizations.invalidateTab(tabId);
+      premiumAuthorizations.invalidateTab(tabId);
       await captureCancels.get(tabId)?.();
       captureCancels.delete(tabId);
       for (const [key, r] of requests) if (r.tabId === tabId) requests.delete(key);
@@ -1689,6 +1776,60 @@ async function browserSnapshot(): Promise<any> {
   }
 }
 
+async function resolverAccount(
+  message: { request: AccountAction; binding: AccountBinding; document: DocumentClaim },
+  tabId: number,
+  frameId: number,
+  documentId?: string,
+) {
+  if (
+    message.document?.nonce !== message.binding?.documentNonce ||
+    message.document?.generation !== message.binding?.documentGeneration
+  )
+    throw Error('account_document_stale');
+  const currentPage = await validateAccountDocument(
+    browser,
+    BROWSER,
+    tabId,
+    documentId,
+    message.document,
+  );
+  const ctx = await resolverContext(tabId, frameId, documentId, message.document);
+  if (!ctx || !ctx.sourceGeneration || !message.binding || frameId !== 0)
+    throw Error('account_binding_stale');
+  const records = await navigationStore.get(null);
+  const entry = Object.entries(records).find(
+    ([key, value]: any) => key.startsWith('resolver-') && value.tabId === tabId,
+  );
+  if (!entry) throw Error('account_owned_tab_required');
+  const record = entry[1] as ResolverRecord;
+  if (
+    !Number.isSafeInteger(message.binding.documentGeneration) ||
+    message.binding.documentGeneration < 1 ||
+    message.binding.documentGeneration < (record.documentGeneration ?? 0) ||
+    (message.request.action === 'consume' &&
+      message.binding.documentGeneration !== record.documentGeneration)
+  )
+    throw Error('account_document_stale');
+  const owned = {
+    jobId: entry[0].slice(9),
+    owner: await profile,
+    scope: ctx.scope,
+    sourceGeneration: ctx.sourceGeneration,
+    tabId,
+    frameId,
+    documentId: ctx.documentId ?? null,
+    documentNonce: ctx.documentNonce,
+    page: currentPage,
+  };
+  validateAccountRequest(message.request, message.binding, owned);
+  record.documentGeneration = message.binding.documentGeneration;
+  await navigationStore.set({ [entry[0]]: record });
+  const tab = await browser.tabs.get(tabId);
+  if (!tab.url || tab.status !== 'complete' || Boolean(tab.incognito) !== privateWorker)
+    throw Error('account_owned_tab_required');
+  return accountRequest(message.request, message.binding, owned, native);
+}
 async function resolverContext(
   tabId: number,
   frameId: number,
@@ -1726,6 +1867,10 @@ async function resolverContext(
   if (!live) return null;
   if (record.documentNonce === live.nonce && document.generation < (record.documentGeneration ?? 0))
     return null;
+  if (record.documentNonce !== live.nonce) {
+    navigationAuthorizations.invalidateTab(tabId);
+    premiumAuthorizations.invalidateTab(tabId);
+  }
   record.documentNonce = live.nonce;
   record.documentGeneration = document.generation;
   if (
@@ -1741,6 +1886,7 @@ async function resolverContext(
     frameId,
     scope: record.scope,
     sourceGeneration: record.sourceGeneration!,
+    documentId: record.documentId,
     documentGeneration: document.generation,
     documentNonce: live.nonce,
     selectedHost: job.selected_host,

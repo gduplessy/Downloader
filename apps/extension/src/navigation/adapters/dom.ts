@@ -27,7 +27,8 @@ export function allElements(root: Document | ShadowRoot): Element[] {
   const result: Element[] = [];
   for (const element of root.querySelectorAll('*')) {
     // Ignore the extension's own isolated preview UI.
-    if (element.id === '__downloader_adapter_preview') continue;
+    if (element.id === '__downloader_adapter_preview' || element.closest('[data-downloader-ui]'))
+      continue;
     result.push(element);
     if (element.shadowRoot) result.push(...allElements(element.shadowRoot));
   }
@@ -101,6 +102,7 @@ export function collectControls(document: Document): CollectedControls {
       group: panel ? identity(panel) : undefined,
       order: controls.length,
       fixture: element.hasAttribute('data-nav-fixture-control'),
+      premium: element.hasAttribute('data-nav-premium-control'),
       contextualText: ad ? 'advertisement sponsor' : undefined,
     });
   }

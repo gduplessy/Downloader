@@ -19,6 +19,26 @@ const identity = {
   source_generation: 1,
 };
 describe('persistent bounded durable native transport', () => {
+  it('a filter cancellation cannot be followed by a late header admission or chunk', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    let first = true;
+    const verify = async () => { if (first) { first = false; await gate; } };
+    const operation = vi.fn(async (_operation: StreamOperation) => ({...identity, claim_generation: 1, accepted_offset: 0, terminal: true}));
+    const close = vi.fn(), terminal = vi.fn();
+    const sink = new DurableStreamSink(identity, {operation, close} as unknown as NativeStreamPort, verify, terminal);
+    const admission = sink.begin({kind:'job', id:'owned'}, 'x', 1);
+    await sink.abort('filter_interrupted');
+    release();
+    await expect(admission).rejects.toThrow('terminal');
+    await expect(sink.chunk(Uint8Array.of(42))).rejects.toThrow('terminal');
+    await expect(sink.end()).rejects.toThrow('terminal');
+    await sink.abort('cancelled');
+    expect(operation).toHaveBeenCalledOnce();
+    expect(operation.mock.calls[0][0]).toMatchObject({operation:'abort'});
+    expect(close).toHaveBeenCalledOnce();
+    expect(terminal).toHaveBeenCalledOnce();
+  });
   it('never reads another chunk before durable acknowledgement and bounds frames', async () => {
     const operations: StreamOperation[] = [];
     let offset = 0;

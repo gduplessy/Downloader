@@ -326,6 +326,8 @@ pub struct ComponentStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "command", content = "args", rename_all = "snake_case")]
 pub enum Command {
+    SiteAccount(crate::site_accounts::DesktopRequest),
+    BrowserAccount(crate::site_accounts::BrowserRequest),
     BrowserStream(crate::navigation::StreamOperation),
     Captcha {
         id: String,
