@@ -1,16 +1,27 @@
 import { createServer } from 'node:http';
 import { createHash } from 'node:crypto';
 import { spawn, execFileSync } from 'node:child_process';
-import { mkdir, writeFile, readFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile, realpath } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import assert from 'node:assert/strict';
 const require = createRequire(new URL('../../../apps/extension/package.json', import.meta.url));
 const { build } = require('esbuild');
+const runnerCwd = process.cwd();
+if (process.env.NAV_SOURCE_ROOT) process.chdir(await realpath(process.env.NAV_SOURCE_ROOT));
+const sourceRevision =
+  process.env.NAV_SOURCE_REVISION ??
+  execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+assert.match(sourceRevision, /^[a-f0-9]{40}$/, 'Record exact checked extension source revision');
 const scenario = process.env.NAV_SCENARIO ?? 'post';
-assert.ok(['post', 'blob'].includes(scenario), 'Select post or blob');
+assert.ok(['post', 'blob', 'xhr'].includes(scenario), 'Select post, blob or xhr');
 const filename =
-  process.env.NAV_FILENAME ?? (scenario === 'blob' ? 'original-blob.bin' : 'original-post.bin');
+  process.env.NAV_FILENAME ??
+  (scenario === 'blob'
+    ? 'original-blob.bin'
+    : scenario === 'xhr'
+      ? 'original-xhr.bin'
+      : 'original-post.bin');
 const pagePath = '/nav-adapters/g4u/' + scenario;
 const executable = process.env.NAV_BROWSER || 'C:/Program Files/Mozilla Firefox/firefox.exe';
 const dir = resolve('.fixture-streams', 'firefox-production-' + Date.now());
@@ -21,15 +32,42 @@ await mkdir(data, { recursive: true });
 const extId = 'downloader-nav-fixture-' + crypto.randomUUID() + '@local';
 const extensionUuid = crypto.randomUUID();
 const host = 'org.downloader.fixture_' + crypto.randomUUID().replaceAll('-', '');
-const nativeBinary = resolve('target/debug/downloader-service.exe');
-const cli = resolve('target/debug/downloader.exe');
+assert.ok(
+  process.env.NAV_NATIVE_BINARY,
+  'NAV_NATIVE_BINARY must name the checked service executable',
+);
+assert.ok(process.env.NAV_CLI_BINARY, 'NAV_CLI_BINARY must name the checked CLI executable');
+const nativeBinary = await realpath(resolve(runnerCwd, process.env.NAV_NATIVE_BINARY));
+const cli = await realpath(resolve(runnerCwd, process.env.NAV_CLI_BINARY));
+const nativeBuildRevision = process.env.NAV_NATIVE_REVISION ?? null;
+if (nativeBuildRevision)
+  assert.match(nativeBuildRevision, /^[a-f0-9]{40}$/, 'Record exact native build source revision');
 const nativeManifest = resolve(dir, 'native.json');
+let nativeHostPath = nativeBinary;
+if (process.env.NAV_NATIVE_STDERR === '1') {
+  assert.equal(process.platform, 'win32', 'Diagnostic stderr wrapper is Windows only');
+  const wrapperSource = resolve(dir, 'native-stderr.cs'),
+    wrapperExe = resolve(dir, 'native-stderr.exe');
+  const wrapperLog = resolve(dir, 'owned-native-host-stderr.log');
+  const compiler = 'C:/Windows/Microsoft.NET/Framework64/v4.0.30319/csc.exe';
+  const code =
+    "using System;\nusing System.Diagnostics;\nusing System.IO;\nusing System.Text;\nclass NativeStderrFixture {\n  static string Quote(string s) {\n    var b=new StringBuilder(\"\\\"\");int n=0;\n    foreach(char c in s){if(c=='\\\\')n++;else if(c=='\"'){b.Append('\\\\',n*2+1).Append(c);n=0;}else{b.Append('\\\\',n).Append(c);n=0;}}\n    return b.Append('\\\\',n*2).Append('\"').ToString();\n  }\n  static int Main(string[] args) {\n    var info=new ProcessStartInfo(__BINARY__);\n    info.UseShellExecute=false;info.CreateNoWindow=true;\n    info.RedirectStandardInput=false;info.RedirectStandardOutput=false;info.RedirectStandardError=true;\n    info.WorkingDirectory=Path.GetDirectoryName(info.FileName);\n    var quoted=new string[args.Length];for(int i=0;i<args.Length;i++)quoted[i]=Quote(args[i]);\n    info.Arguments=String.Join(\" \",quoted);\n    try {\n      using(var p=Process.Start(info)){string error=p.StandardError.ReadToEnd();p.WaitForExit();File.AppendAllText(__LOG__,error+\"\\nexit=\"+p.ExitCode+\"\\n\");return p.ExitCode;}\n    }catch(Exception e){File.AppendAllText(__LOG__,e.ToString());return 111;}\n  }\n}\n"
+      .replaceAll('__BINARY__', JSON.stringify(nativeBinary))
+      .replaceAll('__LOG__', JSON.stringify(wrapperLog));
+  await writeFile(wrapperSource, code);
+  execFileSync(compiler, ['/nologo', '/target:exe', '/out:' + wrapperExe, wrapperSource], {
+    windowsHide: true,
+    stdio: 'pipe',
+  });
+  nativeHostPath = wrapperExe;
+}
+
 await writeFile(
   nativeManifest,
   JSON.stringify({
     name: host,
     description: 'Isolated Downloader stream fixture',
-    path: nativeBinary,
+    path: nativeHostPath,
     type: 'stdio',
     allowed_extensions: [extId],
   }),
@@ -38,11 +76,28 @@ await writeFile(
   resolve(data, 'native-allowlist.json'),
   JSON.stringify({ chrome_ids: [], firefox_ids: [extId] }),
 );
+async function fixtureSource(path) {
+  let source = await readFile(path, 'utf8');
+  if (process.env.NAV_RPC_TRACE !== '1' || !/[\\/]background\.ts$/.test(path)) return source;
+  source = source.replace(
+    'async function native(command: string, args?: unknown): Promise<any> {',
+    'async function native(command: string, args?: unknown): Promise<any> { try {',
+  );
+  source = source.replace(
+    'if (response?.id !== requestId || response?.version !== 1)',
+    '(globalThis as any).__fixtureNativeReplies ??= []; (globalThis as any).__fixtureNativeReplies.push({command,ok:response?.ok,error:response?.error?.message??null,version:response?.version,dataKeys:Object.keys(response?.data??{})}); if (response?.id !== requestId || response?.version !== 1)',
+  );
+  source = source.replace(
+    'return response.data;',
+    'return response.data; } catch(error) { (globalThis as any).__fixtureNativeErrors ??= []; (globalThis as any).__fixtureNativeErrors.push({command,error:String(error),stack:(error as any)?.stack}); throw error; }',
+  );
+  return source;
+}
 // Build the production entry points. The only source substitution is the isolated native host name.
 await build({
   entryPoints: ['apps/extension/src/background.ts', 'apps/extension/src/resolver.ts'],
   outdir: ext,
-  nodePaths: [resolve('apps/extension/node_modules')],
+  nodePaths: [resolve(runnerCwd, process.env.NAV_NODE_MODULES ?? 'apps/extension/node_modules')],
   bundle: true,
   format: 'iife',
   target: 'es2022',
@@ -56,15 +111,23 @@ await build({
           async ({ path }) => ({
             contents:
               process.env.NAV_TRACE === '1'
-                ? (await readFile(path, 'utf8'))
+                ? (await fixtureSource(path))
                     .replaceAll('org.downloader.native', host)
                     .replace(
                       'filter.ondata = (event) => {',
-                      `filter.onstart = () => { (globalThis.__fixtureFilterEvents ??= []).push({event:'start',status:filter.status}); }; filter.ondata = (event) => { (globalThis.__fixtureFilterEvents ??= []).push({event:'data',bytes:event.data.byteLength,status:filter.status});`,
+                      `filter.onstart = () => { (globalThis.__fixtureFilterEvents ??= []).push({event:'start',at:Date.now(),status:filter.status}); }; filter.ondata = (event) => { (globalThis.__fixtureFilterEvents ??= []).push({event:'data',at:Date.now(),bytes:event.data.byteLength,status:filter.status});`,
+                    )
+                    .replace(
+                      'await sink.chunk(new Uint8Array(event.data));',
+                      'await sink.chunk(new Uint8Array(event.data)); (globalThis.__fixtureFilterEvents ??= []).push({event:"chunk_ack",at:Date.now(),offset:sink.offset,status:filter.status});',
+                    )
+                    .replace(
+                      'filter.resume();',
+                      'filter.resume(); (globalThis.__fixtureFilterEvents ??= []).push({event:"resumed",at:Date.now(),status:filter.status});',
                     )
                     .replace(
                       'filter.onstop = () => {',
-                      `filter.onstop = () => { (globalThis.__fixtureFilterEvents ??= []).push({event:'stop',status:filter.status});`,
+                      `filter.onstop = () => { (globalThis.__fixtureFilterEvents ??= []).push({event:'stop',at:Date.now(),status:filter.status});`,
                     )
                     .replace(
                       'filter.onerror = abort;',
@@ -90,7 +153,7 @@ await build({
                       '.catch(() => {})',
                       '.catch(error => { (globalThis.__fixtureErrors ??= []).push(String(error)); console.error("fixture resolver error",String(error)); })',
                     )
-                : (await readFile(path, 'utf8')).replaceAll('org.downloader.native', host),
+                : (await fixtureSource(path)).replaceAll('org.downloader.native', host),
             loader: 'ts',
           }),
         );
@@ -98,6 +161,11 @@ await build({
     },
   ],
 });
+if (process.env.NAV_RPC_TRACE === '1')
+  assert.ok(
+    (await readFile(resolve(ext, 'background.js'), 'utf8')).includes('__fixtureNativeReplies'),
+    'Native diagnostic hook missing',
+  );
 await writeFile(resolve(ext, 'options.html'), '<script src="wake.js"></script>');
 await writeFile(
   resolve(ext, 'wake.js'),
@@ -127,7 +195,7 @@ await writeFile(
   }),
 );
 const payload = Buffer.alloc(
-  Number(process.env.NAV_BYTES ?? (scenario === 'blob' ? 262161 : 8 * 1024 * 1024 + 17)),
+  Number(process.env.NAV_BYTES ?? (scenario === 'post' ? 8 * 1024 * 1024 + 17 : 262161)),
 );
 for (let i = 0; i < payload.length; i++) payload[i] = (i * 31 + 7) % 251;
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
@@ -146,6 +214,13 @@ const server = createServer(async (req, res) => {
     );
     return;
   }
+  if (req.url === '/nav-adapters/g4u/xhr') {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.end(
+      '<!doctype html><meta charset="utf-8"><title>Page-owned XHR form</title><form method="POST" action="/one-use"><input name="token" value="fixture-token"><button data-nav-fixture-control>Download</button></form><script>document.querySelector("form").addEventListener("submit",event=>{event.preventDefault();const form=event.currentTarget;void fetch(form.action,{method:form.method.toUpperCase(),body:new URLSearchParams(new FormData(form))}).then(async response=>{const reader=response.body.getReader();let received=0;try{for(;;){const chunk=await reader.read();if(chunk.done)break;received+=chunk.value.byteLength;}}finally{reader.releaseLock();}document.body.dataset.receivedBytes=String(received);}).catch(error=>{document.body.dataset.fetchError=String(error);});});</script>',
+    );
+    return;
+  }
   if (req.url === '/nav-adapters/g4u/post') {
     res.setHeader('Content-Type', 'text/html');
     res.end(
@@ -161,7 +236,7 @@ const server = createServer(async (req, res) => {
       return;
     }
     res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('Content-Disposition', 'attachment; filename="original-post.bin"');
+    res.setHeader('Content-Disposition', 'attachment; filename=' + JSON.stringify(filename));
     res.setHeader('Content-Length', payload.length);
     res.end(payload);
   } else {
@@ -232,7 +307,8 @@ await writeFile(
       ');',
   ].join('\n'),
 );
-let browserProc, ws;
+let browserProc, ws, options;
+let firefoxError = '';
 let seq = 0;
 let fixtureStage = 'startup';
 const pending = new Map();
@@ -327,7 +403,7 @@ try {
     { env, windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] },
   );
   let stderr = '';
-  browserProc.stderr.on('data', (data) => (stderr += data));
+  browserProc.stderr.on('data', (data) => ((stderr += data), (firefoxError += data)));
   for (let i = 0; i < 200; i++) {
     ws = new WebSocket('ws://127.0.0.1:' + driverPort + '/session');
     try {
@@ -360,7 +436,6 @@ try {
     capabilities: { alwaysMatch: { browserName: 'firefox', acceptInsecureCerts: false } },
   });
   await send('webExtension.install', { extensionData: { type: 'path', path: ext } });
-  let options;
   for (let attempt = 0; attempt < 200; attempt++) {
     const tree = await send('browsingContext.getTree', {});
     options = tree.contexts.find((item) =>
@@ -384,69 +459,130 @@ try {
     `browser.storage.local.set({settings:{automatic:false,directCapture:true,extensions:[],excluded:[],bypassUntil:0,locale:'en',overlay:false}})`,
   );
   await evaluate(`browser.runtime.sendMessage({type:'settings_changed'})`);
-  const added = JSON.parse(
-    execFileSync(
-      cli,
-      ['--json', 'add', base + pagePath, '--navigate', '--paused', '--filename', filename],
-      { env, windowsHide: true, encoding: 'utf8' },
+  const nativeProbe = JSON.parse(
+    await evaluate(
+      '(async()=>{try{const reply=await browser.runtime.sendNativeMessage(' +
+        JSON.stringify(host) +
+        ",{version:1,id:crypto.randomUUID(),command:'negotiate',args:{minimum:1,maximum:1}});return JSON.stringify({transportSucceeded:true,replyKeys:Object.keys(reply??{}),version:reply?.version,ok:reply?.ok,error:reply?.error??null,dataKeys:Object.keys(reply?.data??{})})}catch(error){return JSON.stringify({transportSucceeded:false,error:String(error),name:error?.name})}})()",
     ),
   );
-  const jobId = (added.job ?? added).id;
-  assert.ok(jobId, JSON.stringify(added));
-  await evaluate(
-    `browser.runtime.sendMessage({type:'navigation_queue_continue',id:${JSON.stringify(jobId)}})`,
+  await writeFile(resolve(dir, 'native-probe.json'), JSON.stringify(nativeProbe, null, 2));
+  console.log('Native negotiation probe', JSON.stringify(nativeProbe));
+  assert.equal(
+    nativeProbe.transportSucceeded,
+    true,
+    'Selected native host negotiation transport failed',
   );
-  if (scenario === 'blob') {
-    let pageContext;
-    for (let attempt = 0; attempt < 200; attempt++) {
-      const tree = await send('browsingContext.getTree', {});
-      pageContext = tree.contexts.find((item) => item.url === base + pagePath);
-      if (pageContext) {
-        const ready = await send('script.evaluate', {
-          expression: '!!document.getElementById("__downloader_adapter_preview")',
-          target: { context: pageContext.context },
-          awaitPromise: false,
-          resultOwnership: 'none',
-        });
-        if (ready.result?.value === true) break;
-      }
-      if (attempt === 199) throw Error('Production Blob preview unavailable');
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-    rememberTree();
-    await send('browsingContext.activate', { context: pageContext.context });
-    await send('input.performActions', {
-      context: pageContext.context,
-      actions: [
-        {
-          type: 'key',
-          id: 'blob-preview-keyboard',
-          actions: [
-            { type: 'keyDown', value: ' ' },
-            { type: 'keyUp', value: ' ' },
-            { type: 'keyDown', value: '\uE004' },
-            { type: 'keyUp', value: '\uE004' },
-            { type: 'keyDown', value: '\uE007' },
-            { type: 'keyUp', value: '\uE007' },
-          ],
+  assert.equal(nativeProbe.ok, true, 'Selected native host negotiation failed');
+  const hostDiagnostics = JSON.parse(
+    await evaluate(
+      `browser.runtime.sendNativeMessage(${JSON.stringify(host)},{version:1,id:crypto.randomUUID(),command:'diagnostics'}).then(reply=>{if(!reply.ok)throw Error(reply.error?.message);return JSON.stringify({version:reply.data?.version,protocol:reply.data?.protocol,platform:reply.data?.platform})})`,
+    ),
+  );
+  const daemonDiagnostics = JSON.parse(
+    execFileSync(cli, ['--json', 'diagnostics'], { env, windowsHide: true, encoding: 'utf8' }),
+  );
+  assert.equal(
+    hostDiagnostics.version,
+    daemonDiagnostics.version,
+    'Selected native host and isolated daemon versions differ',
+  );
+  await writeFile(
+    resolve(dir, 'native-readiness.json'),
+    JSON.stringify(
+      {
+        hostDiagnostics,
+        daemonDiagnostics: {
+          version: daemonDiagnostics.version,
+          protocol: daemonDiagnostics.protocol,
+          platform: daemonDiagnostics.platform,
         },
-      ],
-    });
-  }
-  const deadline = Date.now() + Number(process.env.NAV_DEADLINE_MS ?? 90000);
-  let job;
-  while (Date.now() < deadline) {
-    const listed = JSON.parse(
-      execFileSync(cli, ['--json', 'list'], { env, windowsHide: true, encoding: 'utf8' }),
+        nativeBinarySha256: digest(await readFile(nativeBinary)),
+        cliBinarySha256: digest(await readFile(cli)),
+      },
+      null,
+      2,
+    ),
+  );
+  if (process.env.NAV_PROBE_ONLY === '1') {
+    await send('session.end', {});
+  } else {
+    const added = JSON.parse(
+      execFileSync(
+        cli,
+        ['--json', 'add', base + pagePath, '--navigate', '--paused', '--filename', filename],
+        { env, windowsHide: true, encoding: 'utf8' },
+      ),
     );
-    job = (listed.jobs ?? listed).find((item) => item.id === jobId);
-    if (job?.state === 'complete') break;
-    if (['failed', 'cancelled'].includes(job?.state))
-      throw Error(JSON.stringify({ job, requests }));
-    await new Promise((resolve) => setTimeout(resolve, 200));
-  }
-  if (job?.state !== 'complete') {
-    const observation = await evaluate(`(async()=>{
+    const jobId = (added.job ?? added).id;
+    assert.ok(jobId, JSON.stringify(added));
+    if (process.env.NAV_DIRECT_SUBSCRIBE_PROBE === '1') {
+      const direct = JSON.parse(
+        await evaluate(
+          "(async()=>{const local=await browser.storage.local.get();const temporary=browser.storage.session?await browser.storage.session.get():{};const records=Object.keys({...local,...temporary}).filter(k=>k.startsWith('resolver-')||k.startsWith('discovery-'));if(records.length)throw Error('Live records exist; empty scopes would not be actual');if(typeof local.profileId!=='string')throw Error('Actual profile unavailable');try{const reply=await browser.runtime.sendNativeMessage(" +
+            JSON.stringify(host) +
+            ",{version:1,id:crypto.randomUUID(),command:'browser_subscribe',args:{owner:local.profileId,private:Boolean(browser.extension.inIncognitoContext),scopes:[],after_sequence:null,limit:50}});return JSON.stringify({transportSucceeded:true,version:reply?.version,ok:reply?.ok,error:reply?.error??null,dataKeys:Object.keys(reply?.data??{}),snapshotJobs:reply?.data?.snapshot?.jobs?.length,liveRecordCount:records.length,private:Boolean(browser.extension.inIncognitoContext)})}catch(error){return JSON.stringify({transportSucceeded:false,error:String(error),name:error?.name,liveRecordCount:records.length,private:Boolean(browser.extension.inIncognitoContext)})}})()",
+        ),
+      );
+      await writeFile(resolve(dir, 'direct-subscribe-probe.json'), JSON.stringify(direct, null, 2));
+      console.log('Actual-owner direct subscribe probe', JSON.stringify(direct));
+      await send('session.end', {});
+    } else {
+      await evaluate(`browser.runtime.sendMessage({type:'snapshot'})`);
+      await evaluate(
+        `browser.runtime.sendMessage({type:'navigation_queue_continue',id:${JSON.stringify(jobId)}})`,
+      );
+      if (scenario === 'blob') {
+        let pageContext;
+        for (let attempt = 0; attempt < 200; attempt++) {
+          const tree = await send('browsingContext.getTree', {});
+          pageContext = tree.contexts.find((item) => item.url === base + pagePath);
+          if (pageContext) {
+            const ready = await send('script.evaluate', {
+              expression: '!!document.getElementById("__downloader_adapter_preview")',
+              target: { context: pageContext.context },
+              awaitPromise: false,
+              resultOwnership: 'none',
+            });
+            if (ready.result?.value === true) break;
+          }
+          if (attempt === 199) throw Error('Production Blob preview unavailable');
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+        rememberTree();
+        await send('browsingContext.activate', { context: pageContext.context });
+        await send('input.performActions', {
+          context: pageContext.context,
+          actions: [
+            {
+              type: 'key',
+              id: 'blob-preview-keyboard',
+              actions: [
+                { type: 'keyDown', value: ' ' },
+                { type: 'keyUp', value: ' ' },
+                { type: 'keyDown', value: '\uE004' },
+                { type: 'keyUp', value: '\uE004' },
+                { type: 'keyDown', value: '\uE007' },
+                { type: 'keyUp', value: '\uE007' },
+              ],
+            },
+          ],
+        });
+      }
+      const deadline = Date.now() + Number(process.env.NAV_DEADLINE_MS ?? 90000);
+      let job;
+      while (Date.now() < deadline) {
+        const listed = JSON.parse(
+          execFileSync(cli, ['--json', 'list'], { env, windowsHide: true, encoding: 'utf8' }),
+        );
+        job = (listed.jobs ?? listed).find((item) => item.id === jobId);
+        if (job?.state === 'complete') break;
+        if (['failed', 'cancelled'].includes(job?.state))
+          throw Error(JSON.stringify({ job, requests }));
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+      if (job?.state !== 'complete') {
+        const observation = await evaluate(`(async()=>{
       const tabs=await browser.tabs.query({});
       const local=await browser.storage.local.get();
       const transient=browser.storage.session?await browser.storage.session.get():{};
@@ -454,95 +590,124 @@ try {
       const pages=await Promise.all(tabs.filter(tab=>tab.url?.startsWith(${JSON.stringify(base)})).map(async tab=>({id:tab.id,status:tab.status,incognito:tab.incognito,cookieStoreId:tab.cookieStoreId,marker:await browser.tabs.executeScript(tab.id,{frameId:0,code:'({nonce:globalThis.__downloaderDocumentNonce??null,resolver:!!globalThis.__downloaderResolver,errors:globalThis.__fixtureErrors})'}).catch(error=>({error:String(error)}))})));
       return JSON.stringify({sessionStorageAvailable:!!browser.storage.session,records,pages,cookieStores:await browser.cookies.getAllCookieStores(),filterEvents:browser.extension.getBackgroundPage()?.__fixtureFilterEvents,errors:browser.extension.getBackgroundPage()?.__fixtureErrors});
     })()`);
-    await writeFile(resolve(dir, 'observation.json'), observation);
+        await writeFile(resolve(dir, 'observation.json'), observation);
+      }
+      assert.equal(
+        job?.state,
+        'complete',
+        JSON.stringify({
+          job,
+          requests,
+          extensionSnapshot: await evaluate(
+            `browser.runtime.sendMessage({type:'snapshot'}).then(JSON.stringify)`,
+          ),
+        }),
+      );
+      assert.deepEqual(
+        requests,
+        scenario === 'blob' ? [] : [{ method: 'POST', body: 'token=fixture-token' }],
+      );
+      if (scenario === 'blob') {
+        assert.equal(
+          httpRequests.filter((r) => r.path === pagePath && r.method === 'GET').length,
+          1,
+          'Blob page was refetched',
+        );
+        assert.ok(
+          httpRequests.every(
+            (r) => r.method === 'GET' && [pagePath, '/favicon.ico'].includes(r.path),
+          ),
+          'Unexpected HTTP payload request',
+        );
+      }
+      const bytes = await readFile(resolve(dir, 'downloads', filename));
+      assert.equal(bytes.length, payload.length);
+      assert.equal(digest(bytes), digest(payload));
+      assert.equal(job.verified_sha256, digest(payload));
+      const nativeDiagnostics = JSON.parse(
+        execFileSync(cli, ['--json', 'diagnostics'], { env, windowsHide: true, encoding: 'utf8' }),
+      );
+      const sourceFiles = [
+        'apps/extension/src/background.ts',
+        'apps/extension/src/resolver.ts',
+        'apps/extension/src/navigation/streams/blob.ts',
+        'apps/extension/src/navigation/streams/transport.ts',
+      ];
+      const sourceHashes = Object.fromEntries(
+        await Promise.all(sourceFiles.map(async (path) => [path, digest(await readFile(path))])),
+      );
+      const evidence = {
+        browser: 'Firefox/' + session.capabilities.browserVersion,
+        os: process.platform,
+        architecture: process.arch,
+        version: JSON.parse(await readFile('package.json', 'utf8')).version,
+        nativeVersion: nativeDiagnostics.version,
+        nativeBuildRevision,
+        nativeHostDiagnostics: hostDiagnostics,
+        daemonDiagnostics: {
+          version: nativeDiagnostics.version,
+          protocol: nativeDiagnostics.protocol,
+          platform: nativeDiagnostics.platform,
+        },
+        sourceRevision,
+        sourceHashes,
+        extensionBundleHashes: {
+          background: digest(await readFile(resolve(ext, 'background.js'))),
+          resolver: digest(await readFile(resolve(ext, 'resolver.js'))),
+        },
+        nativeBinarySha256: digest(await readFile(nativeBinary)),
+        cliBinarySha256: digest(await readFile(cli)),
+        scenario,
+        filename,
+        extensionAPI:
+          scenario === 'blob'
+            ? 'page-owned Blob reader -> owned_blob_stream'
+            : 'browser.webRequest.filterResponseData',
+        transport: 'persistent browser.runtime.connectNative',
+        driver: 'WebDriver BiDi for addon installation and controls; no byte relay',
+        diagnosticNativeWrapper: process.env.NAV_NATIVE_STDERR === '1',
+        diagnosticSourceChanges: process.env.NAV_TRACE === '1' || process.env.NAV_RPC_TRACE === '1',
+        productionBackground: true,
+        productionResolver: true,
+        submissions: requests.length,
+        originalPageOwnedXhr: scenario === 'xhr',
+        ordinaryNavigationPostRewritten: false,
+        httpRequests,
+        httpPayloadRequests: requests.length,
+        bytes: bytes.length,
+        sha256: digest(bytes),
+        nativeVerifiedSha256: job.verified_sha256,
+        state: job.state,
+        claimGeneration: job.navigation_claim?.generation,
+        sourceGeneration: job.source_generation,
+        limitations: [
+          'Local fixtures; live hosts/accounts pending',
+          'Firefox stable only; ESR and other OS rows are separate',
+          'Fixture permissions granted in isolated manifest; user permission prompts unqualified',
+          'Ordinary binary POST download lane remains pending; Blob cancellation/private/container are separate qualification gates',
+        ],
+      };
+      await writeFile(resolve(dir, 'evidence.json'), JSON.stringify(evidence, null, 2));
+      console.log(JSON.stringify(evidence, null, 2));
+      await send('session.end', {});
+    }
   }
-  assert.equal(
-    job?.state,
-    'complete',
-    JSON.stringify({
-      job,
-      requests,
-      extensionSnapshot: await evaluate(
-        `browser.runtime.sendMessage({type:'snapshot'}).then(JSON.stringify)`,
-      ),
-    }),
-  );
-  assert.deepEqual(
-    requests,
-    scenario === 'blob' ? [] : [{ method: 'POST', body: 'token=fixture-token' }],
-  );
-  if (scenario === 'blob') {
-    assert.equal(
-      httpRequests.filter((r) => r.path === pagePath && r.method === 'GET').length,
-      1,
-      'Blob page was refetched',
-    );
-    assert.ok(
-      httpRequests.every((r) => r.method === 'GET' && [pagePath, '/favicon.ico'].includes(r.path)),
-      'Unexpected HTTP payload request',
-    );
-  }
-  const bytes = await readFile(resolve(dir, 'downloads', filename));
-  assert.equal(bytes.length, payload.length);
-  assert.equal(digest(bytes), digest(payload));
-  assert.equal(job.verified_sha256, digest(payload));
-  const nativeDiagnostics = JSON.parse(
-    execFileSync(cli, ['--json', 'diagnostics'], { env, windowsHide: true, encoding: 'utf8' }),
-  );
-  const sourceFiles = [
-    'apps/extension/src/background.ts',
-    'apps/extension/src/resolver.ts',
-    'apps/extension/src/navigation/streams/blob.ts',
-    'apps/extension/src/navigation/streams/transport.ts',
-  ];
-  const sourceHashes = Object.fromEntries(
-    await Promise.all(sourceFiles.map(async (path) => [path, digest(await readFile(path))])),
-  );
-  const evidence = {
-    browser: 'Firefox/' + session.capabilities.browserVersion,
-    os: process.platform,
-    architecture: process.arch,
-    version: JSON.parse(await readFile('package.json', 'utf8')).version,
-    nativeVersion: nativeDiagnostics.version ?? nativeDiagnostics.diagnostics?.version,
-    sourceRevision: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
-    sourceHashes,
-    extensionBundleHashes: {
-      background: digest(await readFile(resolve(ext, 'background.js'))),
-      resolver: digest(await readFile(resolve(ext, 'resolver.js'))),
-    },
-    nativeBinarySha256: digest(await readFile(nativeBinary)),
-    cliBinarySha256: digest(await readFile(cli)),
-    scenario,
-    filename,
-    extensionAPI:
-      scenario === 'blob'
-        ? 'page-owned Blob reader -> owned_blob_stream'
-        : 'browser.webRequest.filterResponseData',
-    transport: 'persistent browser.runtime.connectNative',
-    driver: 'WebDriver BiDi for addon installation and controls; no byte relay',
-    diagnosticSourceChanges: process.env.NAV_TRACE === '1',
-    productionBackground: true,
-    productionResolver: true,
-    submissions: requests.length,
-    httpRequests,
-    httpPayloadRequests: requests.length,
-    bytes: bytes.length,
-    sha256: digest(bytes),
-    nativeVerifiedSha256: job.verified_sha256,
-    state: job.state,
-    claimGeneration: job.navigation_claim?.generation,
-    sourceGeneration: job.source_generation,
-    limitations: [
-      'Local fixtures; live hosts/accounts pending',
-      'Firefox stable only; ESR and other OS rows are separate',
-      'Fixture permissions granted in isolated manifest; user permission prompts unqualified',
-      'Ordinary binary POST download lane remains pending; Blob cancellation/private/container are separate qualification gates',
-    ],
-  };
-  await writeFile(resolve(dir, 'evidence.json'), JSON.stringify(evidence, null, 2));
-  console.log(JSON.stringify(evidence, null, 2));
-  await send('session.end', {});
 } catch (error) {
+  if (options?.context && process.env.NAV_RPC_TRACE === '1') {
+    try {
+      const diagnostic = await send('script.evaluate', {
+        expression:
+          'JSON.stringify({nativeReplies:browser.extension.getBackgroundPage()?.__fixtureNativeReplies,nativeErrors:browser.extension.getBackgroundPage()?.__fixtureNativeErrors})',
+        target: { context: options.context },
+        awaitPromise: false,
+        resultOwnership: 'none',
+      });
+      await writeFile(
+        resolve(dir, 'native-rpc-diagnostic.json'),
+        diagnostic.result?.value ?? 'null',
+      );
+    } catch {}
+  }
   await writeFile(
     resolve(dir, 'failure.json'),
     JSON.stringify({ stage: fixtureStage, error: String(error), requests }, null, 2),
@@ -552,6 +717,8 @@ try {
   for (const waiter of pending.values()) waiter.reject(Error('Firefox fixture finished'));
   pending.clear();
   ws?.close();
+  await writeFile(resolve(dir, 'owned-firefox-stderr.log'), firefoxError);
+  await writeFile(resolve(dir, 'owned-daemon-stderr.log'), daemonError);
   stopOwnedTree();
   browserProc?.kill();
   browserProc?.stderr.destroy();

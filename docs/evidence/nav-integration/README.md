@@ -28,6 +28,18 @@ This additional packaged probe has no native admission step and does not qualify
 
 Only the original page GET and favicon request reach the local HTTP server. Payload refetches and driver byte relays are zero. The report includes exact service/CLI, source and extension-bundle hashes; source tracing is off. This supports the Blob lane while ordinary binary navigation POST/download filtering remains pending.
 
-Run `NAV_SCENARIO=blob node scripts/nav-fixtures/streams/production-firefox.mjs` from the intended production checkout after building matching CLI/service binaries. `NAV_FILENAME` optionally sets a Unicode destination. The runner creates isolated state, native registration, profile, ports and output and cleans up only its own process tree. Native diagnostics supply the actual binary version.
+Set explicit `NAV_NATIVE_BINARY` and `NAV_CLI_BINARY` to canonical checked executable paths, then run `NAV_SCENARIO=blob node scripts/nav-fixtures/streams/production-firefox.mjs` from the intended production checkout. The runner refuses implicit target/debug paths and checks selected native-host/daemon diagnostics before actions. `NAV_FILENAME` optionally sets a Unicode destination. The runner creates isolated state, native registration, profile, ports and output and cleans up only its own process tree. Native diagnostics supply the actual binary version.
 
 Live hosts/accounts, Firefox ESR, other OS/browser versions, private/container scope, Blob cancellation/worker-loss and user permission prompts remain separate pending gates. Local permissions are pregranted in the isolated fixture manifest.
+
+## Installed Firefox page-owned XHR diagnostics
+
+[Controlled native diagnostics](production-firefox-xhr-diagnostic.json) use immutable extension source9fa692a (0.13.6) and copied checked native binaries fromc310942 (0.14.1). The release-version difference is explicit; native crate sources are identical between those revisions. Trusted-options native diagnostics and CLI daemon diagnostics independently report0.14.1/protocol1. Exact executable SHA values preserve build provenance.
+
+The original fixture page owns a submit handler that issues one POST to its original form action/body; the extension selects the original control. This distinct fetch/XMLHttpRequest lane does not rewrite an ordinary navigation POST. The final fixture drains/discards response chunks through its own bounded getReader loop. No response bytes reach the driver.
+
+Unread-response and consumed-response controls both leave all262,161 bytes as unpublished native partials. The traced bounded-consumer row records onstop/finishedtransferringdata before the final durable chunk ACK. The subsequent unconditional filter.resume prevents queued native completion. These are diagnostic rows, not native-transfer acceptance; the production fix and a trace-off native/external SHA run remain required. The45s traced row ran during other native builds, so elapsed time alone does not establish failure.
+
+Earlier native RPC rejection came from a hardcoded legacy target/debug service (SHA0ed6cc85...00ba1, Oct10 modification time), whose decoder lacks browser_subscribe. This diagnosis does not change the prior checked Blob pass, which captured a different exact executable SHA.
+
+For an immutable exported source tree, set NAV_SOURCE_ROOT/NAV_SOURCE_REVISION and NAV_NODE_MODULES explicitly. NAV_NATIVE_REVISION records the verified native build revision. Optional NAV_TRACE, NAV_RPC_TRACE and NAV_NATIVE_STDERR flags are metadata-only diagnostics; acceptance requires tracing and the stderr wrapper disabled. The diagnostic wrapper inherits stdin/stdout unchanged and records only its own child stderr/exit. NAV_DIRECT_SUBSCRIBE_PROBE requires zero live resolver/discovery records and uses the actual local owner; it performs no page action.

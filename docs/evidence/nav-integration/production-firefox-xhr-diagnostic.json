@@ -1,0 +1,155 @@
+{
+  "browser": "Firefox/157.0.1",
+  "os": "win32",
+  "architecture": "x64",
+  "extensionVersion": "0.13.6",
+  "extensionSourceRevision": "9fa692a49dc849a382048c28635a826fe8ce8547",
+  "nativeVersion": "0.14.1",
+  "nativeBuildRevision": "c310942469eb30148d19273d149c8563cb99a56f",
+  "nativeBuildProvenance": "Build owner confirmed successful cargo build immediately after this revision; preserved executable copies match SHA before launch.",
+  "nativeBinarySha256": "91f3ab4f16b7fc79f92c1a9fbca9774e2ad0dc2b371cb450744b54ca523c5531",
+  "cliBinarySha256": "f3f90851fe831ffa916c2c790d74fcd2406dc4ce943c42bbad731a5a1dfd0812",
+  "nativeReadiness": {
+    "hostDiagnostics": {
+      "version": "0.14.1",
+      "protocol": 1,
+      "platform": "windows"
+    },
+    "daemonDiagnostics": {
+      "version": "0.14.1",
+      "protocol": 1,
+      "platform": "windows"
+    },
+    "nativeBinarySha256": "91f3ab4f16b7fc79f92c1a9fbca9774e2ad0dc2b371cb450744b54ca523c5531",
+    "cliBinarySha256": "f3f90851fe831ffa916c2c790d74fcd2406dc4ce943c42bbad731a5a1dfd0812"
+  },
+  "versionDifference": "Extension0.13.6/native0.14.1 explicitly distinct; git diff c310942..9fa692a under crates/core/service/cli is empty. Workspace release metadata differs.",
+  "expectedBytes": 262161,
+  "expectedSha256": "ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862",
+  "driverByteRelay": false,
+  "ordinaryNavigationPostRewritten": false,
+  "rows": [
+    {
+      "scenario": "original page-owned fetch POST",
+      "pageConsumer": "unread",
+      "deadlineMilliseconds": 90000,
+      "diagnosticSourceChanges": false,
+      "submissions": 1,
+      "bodyMetadata": [
+        {
+          "method": "POST",
+          "formEncoding": "token=fixture-token"
+        }
+      ],
+      "state": "waiting_browser",
+      "nativeVerifiedSha256": null,
+      "published": false,
+      "partialBytes": [192491],
+      "filterEvents": null,
+      "errors": null
+    },
+    {
+      "scenario": "original page-owned fetch POST",
+      "pageConsumer": "arrayBuffer consumed on original page",
+      "deadlineMilliseconds": 90000,
+      "diagnosticSourceChanges": false,
+      "submissions": 1,
+      "bodyMetadata": [
+        {
+          "method": "POST",
+          "formEncoding": "token=fixture-token"
+        }
+      ],
+      "state": "waiting_browser",
+      "nativeVerifiedSha256": null,
+      "published": false,
+      "partialBytes": [262161],
+      "filterEvents": null,
+      "errors": null
+    },
+    {
+      "scenario": "original page-owned fetch POST",
+      "pageConsumer": "bounded getReader drain/discard on original page",
+      "deadlineMilliseconds": 45000,
+      "diagnosticSourceChanges": true,
+      "submissions": 1,
+      "bodyMetadata": [
+        {
+          "method": "POST",
+          "formEncoding": "token=fixture-token"
+        }
+      ],
+      "state": "waiting_browser",
+      "nativeVerifiedSha256": null,
+      "published": false,
+      "partialBytes": [262161],
+      "filterEvents": [
+        {
+          "event": "start",
+          "status": "transferringdata"
+        },
+        {
+          "event": "data",
+          "bytes": 40651,
+          "status": "transferringdata"
+        },
+        {
+          "event": "chunk_ack",
+          "offset": 40651,
+          "status": "suspended"
+        },
+        {
+          "event": "resumed",
+          "status": "transferringdata"
+        },
+        {
+          "event": "data",
+          "bytes": 131072,
+          "status": "transferringdata"
+        },
+        {
+          "event": "chunk_ack",
+          "offset": 171723,
+          "status": "suspended"
+        },
+        {
+          "event": "data",
+          "bytes": 90438,
+          "status": "transferringdata"
+        },
+        {
+          "event": "resumed",
+          "status": "suspended"
+        },
+        {
+          "event": "stop",
+          "status": "finishedtransferringdata"
+        },
+        {
+          "event": "chunk_ack",
+          "offset": 262161,
+          "status": "finishedtransferringdata"
+        }
+      ],
+      "errors": ["Error: An unexpected error occurred"]
+    }
+  ],
+  "observedTerminalRace": "onstop sets finishedtransferringdata before final chunk ACK; unconditional filter.resume after that ACK fails before queued sink.end. Final resume marker absent; all bytes remain unpublished partial.",
+  "qualification": "Incomplete diagnostic rows, not supported-lane acceptance. Requires production fix plus trace-off native/external SHA qualification.",
+  "staleBinaryDiagnosis": {
+    "serviceSha256": "0ed6cc856227cbc2e2e29a4361daf4493d354ae9a655dd81df12b04d42700ba1",
+    "lastWriteLocal": "2026-10-10 21:49:16",
+    "failure": "Decoder rejects browser_subscribe before native envelope and before page action.",
+    "rootCause": "Fixture hardcoded target/debug service selected legacy binary; explicit canonical paths now required.",
+    "previousBlobPassUnchanged": true
+  },
+  "pending": [
+    "Ordinary binary form-navigation/download response lane",
+    "Live hosts/accounts",
+    "Firefox ESR",
+    "Private/container scope",
+    "Other operating systems",
+    "Permission prompts",
+    "XHR native completion until verified fix"
+  ]
+}
