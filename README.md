@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.16.1<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.16.2<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -376,3 +376,5 @@ NAV-12 0.13.3 records final clean committed-source 7f752d3 Chrome/Edge cross-ori
 Session-transfer integration (0.16.0) adds ephemeral one-use handoff tickets and explicit recipient acceptance in an observed browser session. Pending or interrupted handoffs block automated navigation; desktop controls and installed cross-session acceptance remain in progress.
 
 Original-response progress (0.16.1) remains authoritative while capture is owned: late renderer status cannot reset durable stream bytes before verification. Final Firefox XHR qualification uses explicit executable and compiled-source provenance checks.
+
+Firefox page-owned XHR qualification (0.16.2 evidence) passes on stable157 with exact compiled source52b037b/native0.16.1: one original POST and262,161 matching native/external hash bytes. Ordinary binary form-navigation/download remains explicitly pending. Handoff recovery now retries durable failures without reviving expired tickets.

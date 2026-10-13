@@ -314,5 +314,20 @@
     "resolver.ts": "081e1547514c11fe2ef97de0b663e18642441021095202f87c7baa10dfaae7c5",
     "navigation/streams/capture.ts": "a64c64ee5d6a2b9337445523594497dc09fc35e552492cd7a8896c3e3d63f006",
     "navigation/streams/transport.ts": "20522d9788df16d41a5b835685421f6845549a8cdb628a07ac5d35fe332345de"
+  },
+  "resolution": {
+    "sourceRevision": "52b037baa324b7090a377a02c57254807be7e2fe",
+    "version": "0.16.1",
+    "evidence": "production-firefox-xhr.json",
+    "state": "complete",
+    "bytes": 262161,
+    "submissions": 1,
+    "sha256": "ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862",
+    "changes": [
+      "Explicit esbuild working directory, absolute entry points, module metafile provenance",
+      "Firefox EOF flag prevents resume after input completion",
+      "Native active checkpoints own progress; renderer telemetry cannot reset byte count"
+    ],
+    "ordinaryNavigationLaneStillPending": true
   }
 }

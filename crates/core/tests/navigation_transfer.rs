@@ -14,13 +14,13 @@ use downloader_core::{
 use std::sync::Arc;
 
 struct Fixture {
-    dir: tempfile::TempDir,
+    dir: Arc<tempfile::TempDir>,
     engine: Arc<Engine>,
     id: String,
     scope: SessionScope,
 }
 fn setup(private: bool) -> Fixture {
-    let dir = tempfile::tempdir().unwrap();
+    let dir = Arc::new(tempfile::tempdir().unwrap());
     let engine = Engine::open(dir.path()).unwrap();
     let owner = uuid::Uuid::new_v4().to_string();
     let page = "http://127.0.0.1:9/nav-adapters/g4u/transfer";
@@ -542,4 +542,208 @@ fn bounded_runtime_expiry_debug_and_missing_cookie_scope_are_fail_closed() {
     assert_eq!(runtime.expire(1000 + TICKET_TTL_MS).len(), MAX_TICKETS);
     assert!(runtime.is_empty());
     assert!(runtime.fence(&tickets[0].token, 1000).is_err());
+}
+
+fn fail_job_writes(f: &Fixture) -> rusqlite::Connection {
+    let connection = rusqlite::Connection::open(f.dir.path().join("downloader.db")).unwrap();
+    let id = uuid::Uuid::parse_str(&f.id).unwrap().to_string();
+    connection.execute_batch(&format!("CREATE TRIGGER transfer_fixture_write_failure BEFORE INSERT ON records WHEN NEW.kind='job' AND NEW.id='{id}' BEGIN SELECT RAISE(FAIL, 'permitted fixture write failure'); END;")).unwrap();
+    connection
+}
+fn allow_job_writes(connection: &rusqlite::Connection) {
+    connection
+        .execute_batch("DROP TRIGGER transfer_fixture_write_failure;")
+        .unwrap();
+}
+fn persisted_job(f: &Fixture) -> Job {
+    f.engine.store.lock().unwrap().get("job", &f.id).unwrap()
+}
+#[test]
+fn failed_expiry_persistence_retries_the_manual_gate_without_replay() {
+    let f = setup(false);
+    let p = prepare(&f);
+    let connection = fail_job_writes(&f);
+    assert!(navigation_transfer::sweep_at(&f.engine, p.expires_at_ms).is_err());
+    assert!(job(&f).navigation_transfer_recovery);
+    assert!(persisted_job(&f).navigation_transfer_pending);
+    assert_browser_fenced(&f, &p.scope, p.source_generation);
+    allow_job_writes(&connection);
+    // Use the actual clock now; the expired ticket's retained work must retry even
+    // though this deterministic fixture's first sweep used a future wall clock.
+    navigation_transfer::sweep(&f.engine).unwrap();
+    let durable = persisted_job(&f);
+    assert!(!durable.navigation_transfer_pending);
+    assert!(durable.navigation_transfer_recovery);
+    assert_eq!(durable.state, JobState::WaitingUser);
+    assert!(preview(&f, &p, &recipient(false)).is_err());
+    continue_job(&f, &p, true).unwrap();
+    navigation_transfer::sweep(&f.engine).unwrap();
+    assert_eq!(job(&f).state, JobState::WaitingBrowser);
+    assert!(!job(&f).navigation_transfer_recovery);
+}
+#[test]
+fn failed_cancel_persistence_keeps_token_burned_and_retries_recovery() {
+    let f = setup(false);
+    let p = prepare(&f);
+    let connection = fail_job_writes(&f);
+    assert!(f
+        .engine
+        .command(Command::NavigationTransfer(DesktopRequest::Cancel {
+            id: f.id.clone(),
+            expected_scope: p.scope.clone(),
+            expected_source_generation: p.source_generation,
+        }))
+        .is_err());
+    assert!(job(&f).navigation_transfer_recovery);
+    allow_job_writes(&connection);
+    navigation_transfer::sweep(&f.engine).unwrap();
+    assert!(!persisted_job(&f).navigation_transfer_pending);
+    assert!(persisted_job(&f).navigation_transfer_recovery);
+    assert!(preview(&f, &p, &recipient(false)).is_err());
+}
+#[test]
+fn failed_acceptance_restores_original_frozen_owner_and_retries_manual_persistence() {
+    let f = setup(false);
+    let p = prepare(&f);
+    let target = recipient(false);
+    preview(&f, &p, &target).unwrap();
+    let connection = fail_job_writes(&f);
+    assert!(accept(&f, &p, &target, true).is_err());
+    assert_eq!(
+        job(&f).navigation_owner.as_deref(),
+        Some(f.scope.profile.as_str())
+    );
+    assert_eq!(job(&f).navigation_scope.as_ref(), Some(&p.scope));
+    assert!(job(&f).navigation_transfer_recovery);
+    allow_job_writes(&connection);
+    navigation_transfer::sweep(&f.engine).unwrap();
+    let durable = persisted_job(&f);
+    assert_eq!(durable.navigation_scope.as_ref(), Some(&p.scope));
+    assert!(!durable.navigation_transfer_pending);
+    assert!(durable.navigation_transfer_recovery);
+    assert!(accept(&f, &p, &target, true).is_err());
+}
+#[test]
+fn expiry_failure_does_not_discard_other_jobs_recovery() {
+    let f = setup(false);
+    let first = prepare(&f);
+    let scope = recipient(false);
+    let added = f
+        .engine
+        .command(Command::Navigate(AddJob {
+            request_id: uuid::Uuid::new_v4().to_string(),
+            url: "http://127.0.0.1:9/nav-adapters/g4u/other".into(),
+            filename: None,
+            directory: Some(f.dir.path().join("output")),
+            queue: None,
+            checksum: None,
+            paused: true,
+            media: None,
+            description: String::new(),
+            context: RequestContext {
+                profile: Some(scope.profile.clone()),
+                ..Default::default()
+            },
+        }))
+        .unwrap();
+    let id = added["id"].as_str().unwrap().to_string();
+    f.engine
+        .command(Command::ClaimNavigation {
+            id: id.clone(),
+            owner: scope.profile.clone(),
+            force: false,
+            scope: Some(scope.clone()),
+            source_generation: Some(1),
+        })
+        .unwrap();
+    let other = Fixture {
+        dir: f.dir.clone(),
+        engine: f.engine.clone(),
+        id,
+        scope,
+    };
+    let second = prepare(&other);
+    let connection = fail_job_writes(&f);
+    let deadline = first.expires_at_ms.max(second.expires_at_ms);
+    assert!(navigation_transfer::sweep_at(&f.engine, deadline).is_err());
+    // Both tickets expire in one runtime. A write failure for one job must not
+    // drop or prevent successful persistence of the other recovery record.
+    assert!(persisted_job(&other).navigation_transfer_recovery);
+    assert!(!persisted_job(&other).navigation_transfer_pending);
+    allow_job_writes(&connection);
+    navigation_transfer::sweep(&f.engine).unwrap();
+    assert!(persisted_job(&f).navigation_transfer_recovery);
+}
+
+#[test]
+fn failed_terminal_marker_persistence_retries_without_reviving_cancelled_job() {
+    let f = setup(false);
+    let p = prepare(&f);
+    f.engine
+        .command(Command::Cancel { id: f.id.clone() })
+        .unwrap();
+    let connection = fail_job_writes(&f);
+    assert!(navigation_transfer::sweep_at(&f.engine, p.expires_at_ms).is_err());
+    assert_eq!(job(&f).state, JobState::Cancelled);
+    assert!(persisted_job(&f).navigation_transfer_pending);
+    allow_job_writes(&connection);
+    navigation_transfer::sweep(&f.engine).unwrap();
+    let durable = persisted_job(&f);
+    assert_eq!(durable.state, JobState::Cancelled);
+    assert!(!durable.navigation_transfer_pending);
+    assert!(!durable.navigation_transfer_recovery);
+}
+#[test]
+fn failed_explicit_continue_restores_manual_gate_and_requires_a_new_intent() {
+    let f = setup(false);
+    let p = prepare(&f);
+    cancel(&f, &p);
+    let connection = fail_job_writes(&f);
+    assert!(continue_job(&f, &p, true).is_err());
+    assert_eq!(job(&f).state, JobState::WaitingUser);
+    assert!(job(&f).navigation_transfer_recovery);
+    assert!(persisted_job(&f).navigation_transfer_recovery);
+    allow_job_writes(&connection);
+    navigation_transfer::sweep(&f.engine).unwrap();
+    assert!(job(&f).navigation_transfer_recovery);
+    assert_browser_fenced(&f, &p.scope, p.source_generation);
+    continue_job(&f, &p, true).unwrap();
+    assert_eq!(job(&f).state, JobState::WaitingBrowser);
+}
+
+#[test]
+fn failed_prepare_never_returns_ticket_and_retries_cleared_refs_with_frozen_manual_authority() {
+    let f = setup(false);
+    let original = job(&f);
+    let connection = fail_job_writes(&f);
+    let result = f
+        .engine
+        .command(Command::NavigationTransfer(DesktopRequest::Prepare {
+            id: f.id.clone(),
+            expected_scope: f.scope.clone(),
+            expected_source_generation: 1,
+            consent: true,
+        }));
+    assert!(result.is_err());
+    let failed = job(&f);
+    assert_eq!(failed.source_generation, original.source_generation + 1);
+    assert_eq!(
+        failed.navigation_scope.as_ref().unwrap().claim_generation,
+        f.scope.claim_generation + 1
+    );
+    assert!(!failed.navigation_transfer_pending);
+    assert!(failed.navigation_transfer_recovery);
+    assert!(failed.credential_id.is_none());
+    allow_job_writes(&connection);
+    navigation_transfer::sweep(&f.engine).unwrap();
+    let durable = persisted_job(&f);
+    assert_eq!(durable.source_generation, failed.source_generation);
+    assert!(!durable.navigation_transfer_pending);
+    assert!(durable.navigation_transfer_recovery);
+    assert!(durable.credential_id.is_none());
+    assert_browser_fenced(
+        &f,
+        durable.navigation_scope.as_ref().unwrap(),
+        durable.source_generation,
+    );
 }
