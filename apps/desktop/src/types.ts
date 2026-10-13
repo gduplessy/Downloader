@@ -1,6 +1,8 @@
 import type {SessionScope} from '../../../packages/shared/src/navigation';
 export type Job = {
   navigation_scope?: SessionScope | null;
+  navigation_transfer_pending?: boolean;
+  navigation_transfer_recovery?: boolean;
   source_generation?: number;
   id: string;
   request_id: string;

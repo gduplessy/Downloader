@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.13.6<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.16.1<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -273,3 +273,7 @@ NAV-12 0.13.1 preserves explicit original-session ownership across a complete br
 NAV-12 0.13.2 reconciles checked root 7e44b00/latest main. Clean committed-source Chrome 155 and Edge 155 both pass cross-origin authenticated discovery with full browser/service/worker restart and expected native hash. Live provider, Firefox/ESR, other OS and owner UI acceptance remain pending.
 
 NAV-12 0.13.3 records final clean committed-source 7f752d3 Chrome/Edge cross-origin and complete restart evidence. Both finish one authenticated original GET, zero HEAD and 262,161 hash-verified native bytes. Documentation/version-only increment; remaining release acceptance rows stay explicit.
+
+NAV-11 session-transfer integration (0.16.0) adds native pending/manual-recovery gates, transient one-use tickets, and explicit recipient acceptance using the destination tab's actual cookie/container/partition scope. Native compilation and focused recipient tests pass; desktop controls and installed cross-session qualification remain in progress.
+
+NAV-07 original-response progress (0.16.1) rejects late renderer status resets during an exact owned stream and suppresses repeated resolver decisions. Fifteen native stream and nine handoff regressions pass; corrected installed Firefox XHR source/hash qualification is pending.

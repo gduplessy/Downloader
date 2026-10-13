@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.16.1
+
+- Refuse renderer status changes that would reset acknowledged progress while the exact original response stream owns the native job; explicit interruption keeps durable progress.
+- Stop repeated resolver decisions during an owned capture. A regression reproduces the former zero-byte reset and verifies the final native hash/publication path.
+- Keep final Firefox XHR qualification pending until the corrected fixture verifies its actual compiled source and desktop hash.
+
+## 0.16.0
+
+- Add ephemeral, one-use desktop-to-browser session handoff tickets with explicit destination acceptance, observed cookie-store/container/partition scope, and source/claim invalidation.
+- Freeze browser actions during handoff and require intentional recovery after cancellation, expiry, or native restart. Clear inherited account grants, request contexts, replay decisions, and solver references.
+- Verify nine real-engine transfer/recovery cases, preserving partial files and terminal jobs while refusing stale authority, private-lane mismatch, and reused tickets.
+- Add recipient extension controls in six locales and focused session-change, expiry, duplicate-acceptance, and partition tests. Desktop handoff controls and installed two-session qualification are still being completed.
+- Preserve checked Firefox Blob qualification and the original XHR failure trace; fix the final-ACK/EOF filter race and cover finished-filter resume refusal. Installed XHR hash qualification follows the checked fix.
+
 ## 0.13.6
 
 - Namespace private ephemeral navigation metadata so primitive browser-download IDs cannot cross into regular storage views or removal operations.

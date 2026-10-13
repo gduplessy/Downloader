@@ -144,6 +144,12 @@ pub struct Runtime {
     grants: HashMap<String, Grant>,
     attempts: HashMap<(String, u64, u64), usize>,
 }
+impl Runtime {
+    pub(crate) fn invalidate_job(&mut self, id: &str) {
+        self.grants.retain(|_, grant| grant.job_id != id);
+        self.attempts.retain(|(job, _, _), _| job != id);
+    }
+}
 pub trait Vault {
     fn write(&self, id: &str, username: &str, password: &str) -> Result<()>;
     fn read(&self, id: &str) -> Result<(String, String)>;
@@ -356,6 +362,8 @@ pub fn desktop(engine: &Arc<Engine>, request: DesktopRequest) -> Result<serde_js
             let job = engine.job(&job_id)?;
             let mut job = job.lock().unwrap();
             if job.page_url.is_none()
+                || job.navigation_transfer_pending
+                || job.navigation_transfer_recovery
                 || job.state.active()
                 || matches!(
                     job.state,
@@ -455,6 +463,8 @@ pub fn browser(engine: &Arc<Engine>, request: BrowserRequest) -> Result<serde_js
     let job = engine.job(&request.job_id)?;
     let mut job = job.lock().unwrap();
     if job.navigation_owner.as_deref() != Some(&request.owner)
+        || job.navigation_transfer_pending
+        || job.navigation_transfer_recovery
         || job.navigation_scope.as_ref() != Some(&request.scope)
         || job.source_generation != request.source_generation
         || matches!(

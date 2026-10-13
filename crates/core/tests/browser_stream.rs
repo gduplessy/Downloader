@@ -63,6 +63,66 @@ fn frame(
     engine.command(Command::BrowserStream(op))
 }
 #[test]
+fn renderer_status_cannot_reset_owned_stream_progress_before_eof() {
+    let (_dir, engine, id, identity) = setup(false);
+    frame(
+        &engine,
+        StreamOperation::Begin {
+            identity: identity.clone(),
+            target: NavigationTarget::Job { id: id.clone() },
+            filename: "status-race.bin".into(),
+            total: Some(3),
+        },
+    )
+    .unwrap();
+    frame(
+        &engine,
+        StreamOperation::Chunk {
+            identity: identity.clone(),
+            offset: 0,
+            data_base64: "YWJj".into(),
+        },
+    )
+    .unwrap();
+    for state in [
+        JobState::WaitingBrowser,
+        JobState::BrowserDownloading,
+        JobState::BrowserComplete,
+        JobState::Failed,
+    ] {
+        assert!(engine
+            .command(Command::BrowserStatus {
+                id: id.clone(),
+                owner: identity.scope.profile.clone(),
+                state,
+                message: None,
+                bytes: 0,
+                total: None,
+                url: None,
+                scope: Some(identity.scope.clone()),
+                source_generation: Some(identity.source_generation),
+            })
+            .is_err());
+    }
+    assert_eq!(engine.job(&id).unwrap().lock().unwrap().bytes, 3);
+    frame(
+        &engine,
+        StreamOperation::End {
+            identity,
+            total: 3,
+            expected_sha256: None,
+        },
+    )
+    .unwrap();
+    let published = engine.job(&id).unwrap().lock().unwrap().clone();
+    assert_eq!(published.state, JobState::Complete);
+    assert_eq!(
+        published.verified_sha256.as_deref(),
+        Some("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+    );
+    assert_eq!(std::fs::read(published.destination).unwrap(), b"abc");
+}
+#[test]
 fn original_bytes_publish_without_any_origin_probe() {
     let (dir, engine, id, identity) = setup(false);
     frame(

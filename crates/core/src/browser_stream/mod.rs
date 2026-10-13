@@ -161,6 +161,8 @@ pub fn operation(engine: &Arc<Engine>, operation: StreamOperation) -> Result<Str
         bail!("Browser stream finalization was cancelled");
     }
     if !job.browser_source
+        || job.navigation_transfer_pending
+        || job.navigation_transfer_recovery
         || job.page_url.is_none()
         || job.navigation_scope.as_ref() != Some(&identity.scope)
         || job.source_generation != identity.source_generation

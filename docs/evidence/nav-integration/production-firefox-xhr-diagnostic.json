@@ -1,0 +1,318 @@
+{
+  "browser": "Firefox/157.0.1",
+  "os": "win32",
+  "architecture": "x64",
+  "nativeVersion": "0.14.1",
+  "nativeBuildRevision": "c310942469eb30148d19273d149c8563cb99a56f",
+  "nativeBuildProvenance": "Build owner confirmed successful cargo build immediately after this revision; preserved executable copies match SHA before launch.",
+  "nativeBinarySha256": "91f3ab4f16b7fc79f92c1a9fbca9774e2ad0dc2b371cb450744b54ca523c5531",
+  "cliBinarySha256": "f3f90851fe831ffa916c2c790d74fcd2406dc4ce943c42bbad731a5a1dfd0812",
+  "nativeReadiness": {
+    "hostDiagnostics": {
+      "version": "0.14.1",
+      "protocol": 1,
+      "platform": "windows"
+    },
+    "daemonDiagnostics": {
+      "version": "0.14.1",
+      "protocol": 1,
+      "platform": "windows"
+    },
+    "nativeBinarySha256": "91f3ab4f16b7fc79f92c1a9fbca9774e2ad0dc2b371cb450744b54ca523c5531",
+    "cliBinarySha256": "f3f90851fe831ffa916c2c790d74fcd2406dc4ce943c42bbad731a5a1dfd0812"
+  },
+  "versionDifference": "Extension0.13.6/native0.14.1 explicitly distinct; git diff c310942..9fa692a under crates/core/service/cli is empty. Workspace release metadata differs.",
+  "expectedBytes": 262161,
+  "expectedSha256": "ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862",
+  "driverByteRelay": false,
+  "ordinaryNavigationPostRewritten": false,
+  "rows": [
+    {
+      "scenario": "original page-owned fetch POST",
+      "pageConsumer": "unread",
+      "deadlineMilliseconds": 90000,
+      "diagnosticSourceChanges": false,
+      "submissions": 1,
+      "bodyMetadata": [
+        {
+          "method": "POST",
+          "formEncoding": "token=fixture-token"
+        }
+      ],
+      "state": "waiting_browser",
+      "nativeVerifiedSha256": null,
+      "published": false,
+      "partialBytes": [192491],
+      "filterEvents": null,
+      "errors": null,
+      "requestedSourceMismatch": true
+    },
+    {
+      "scenario": "original page-owned fetch POST",
+      "pageConsumer": "arrayBuffer consumed on original page",
+      "deadlineMilliseconds": 90000,
+      "diagnosticSourceChanges": false,
+      "submissions": 1,
+      "bodyMetadata": [
+        {
+          "method": "POST",
+          "formEncoding": "token=fixture-token"
+        }
+      ],
+      "state": "waiting_browser",
+      "nativeVerifiedSha256": null,
+      "published": false,
+      "partialBytes": [262161],
+      "filterEvents": null,
+      "errors": null,
+      "requestedSourceMismatch": true
+    },
+    {
+      "scenario": "original page-owned fetch POST",
+      "pageConsumer": "bounded getReader drain/discard on original page",
+      "deadlineMilliseconds": 45000,
+      "diagnosticSourceChanges": true,
+      "submissions": 1,
+      "bodyMetadata": [
+        {
+          "method": "POST",
+          "formEncoding": "token=fixture-token"
+        }
+      ],
+      "state": "waiting_browser",
+      "nativeVerifiedSha256": null,
+      "published": false,
+      "partialBytes": [262161],
+      "filterEvents": [
+        {
+          "event": "start",
+          "status": "transferringdata"
+        },
+        {
+          "event": "data",
+          "bytes": 40651,
+          "status": "transferringdata"
+        },
+        {
+          "event": "chunk_ack",
+          "offset": 40651,
+          "status": "suspended"
+        },
+        {
+          "event": "resumed",
+          "status": "transferringdata"
+        },
+        {
+          "event": "data",
+          "bytes": 131072,
+          "status": "transferringdata"
+        },
+        {
+          "event": "chunk_ack",
+          "offset": 171723,
+          "status": "suspended"
+        },
+        {
+          "event": "data",
+          "bytes": 90438,
+          "status": "transferringdata"
+        },
+        {
+          "event": "resumed",
+          "status": "suspended"
+        },
+        {
+          "event": "stop",
+          "status": "finishedtransferringdata"
+        },
+        {
+          "event": "chunk_ack",
+          "offset": 262161,
+          "status": "finishedtransferringdata"
+        }
+      ],
+      "errors": ["Error: An unexpected error occurred"],
+      "requestedSourceMismatch": true
+    },
+    {
+      "scenario": "original page-owned fetch POST",
+      "pageConsumer": "bounded getReader drain/discard on original page",
+      "requestedExtensionSourceRevision": "11ca22979e180208e2bcfb70bd18a491761722ce",
+      "requestedExtensionVersion": "0.16.0",
+      "actualCompiledSourceBase": "26ce2a5836636d4ea5a06cd89436712597611eb7",
+      "requestedSourceMismatch": true,
+      "nativeVersion": "0.16.0",
+      "nativeBinarySha256": "5e38d995f4fb8e01d64ebb8613c6674149a2d87a06c69a4da959f2aea21c9ab5",
+      "cliBinarySha256": "7cbd24973632b4a1273991f1d9e6b1f9ad18ca0412dff5d623674f334602584a",
+      "deadlineMilliseconds": 120000,
+      "diagnosticSourceChanges": false,
+      "submissions": 1,
+      "state": "waiting_browser",
+      "nativeVerifiedSha256": null,
+      "published": false,
+      "partialBytes": [262161],
+      "filterEvents": [],
+      "streamOperations": null,
+      "nativeRpcFailures": []
+    },
+    {
+      "scenario": "original page-owned fetch POST",
+      "pageConsumer": "bounded getReader drain/discard on original page",
+      "requestedExtensionSourceRevision": "11ca22979e180208e2bcfb70bd18a491761722ce",
+      "requestedExtensionVersion": "0.16.0",
+      "actualCompiledSourceBase": "26ce2a5836636d4ea5a06cd89436712597611eb7",
+      "requestedSourceMismatch": true,
+      "nativeVersion": "0.16.0",
+      "nativeBinarySha256": "5e38d995f4fb8e01d64ebb8613c6674149a2d87a06c69a4da959f2aea21c9ab5",
+      "cliBinarySha256": "7cbd24973632b4a1273991f1d9e6b1f9ad18ca0412dff5d623674f334602584a",
+      "deadlineMilliseconds": 120000,
+      "diagnosticSourceChanges": true,
+      "submissions": 1,
+      "state": "waiting_browser",
+      "nativeVerifiedSha256": null,
+      "published": false,
+      "partialBytes": [262144],
+      "filterEvents": [
+        {
+          "event": "start",
+          "at": 1791914649916,
+          "status": "transferringdata"
+        },
+        {
+          "event": "data",
+          "at": 1791914649920,
+          "bytes": 131072,
+          "status": "transferringdata"
+        },
+        {
+          "event": "chunk_ack",
+          "at": 1791914650092,
+          "offset": 131072,
+          "status": "suspended"
+        },
+        {
+          "event": "data",
+          "at": 1791914650092,
+          "bytes": 131072,
+          "status": "transferringdata"
+        },
+        {
+          "event": "data",
+          "at": 1791914650092,
+          "bytes": 17,
+          "status": "suspended"
+        },
+        {
+          "event": "resumed",
+          "at": 1791914650092,
+          "status": "suspended"
+        },
+        {
+          "event": "stop",
+          "at": 1791914650092,
+          "status": "finishedtransferringdata"
+        },
+        {
+          "event": "chunk_ack",
+          "at": 1791914650187,
+          "offset": 262144,
+          "status": "finishedtransferringdata"
+        },
+        {
+          "event": "pipeline_error",
+          "at": 1791914650187,
+          "error": "[Exception... \"Failure\"  nsresult: \"0x80004005 (NS_ERROR_FAILURE)\"  location: \"JS frame :: moz-extension://<fixture-extension>/background.js :: takeFirefox/filter.ondata/queue< :: line 1717\"  data: no]",
+          "status": "finishedtransferringdata"
+        }
+      ],
+      "streamOperations": [
+        {
+          "event": "operation",
+          "at": 1791914649921,
+          "operation": "begin",
+          "offset": null
+        },
+        {
+          "event": "ack",
+          "at": 1791914649993,
+          "ok": true,
+          "error": null,
+          "offset": 0,
+          "terminal": false
+        },
+        {
+          "event": "operation",
+          "at": 1791914650004,
+          "operation": "chunk",
+          "offset": 0
+        },
+        {
+          "event": "ack",
+          "at": 1791914650092,
+          "ok": true,
+          "error": null,
+          "offset": 131072,
+          "terminal": false
+        },
+        {
+          "event": "operation",
+          "at": 1791914650102,
+          "operation": "chunk",
+          "offset": 131072
+        },
+        {
+          "event": "ack",
+          "at": 1791914650187,
+          "ok": true,
+          "error": null,
+          "offset": 262144,
+          "terminal": false
+        },
+        {
+          "event": "operation",
+          "at": 1791914650189,
+          "operation": "abort",
+          "offset": null
+        },
+        {
+          "event": "ack",
+          "at": 1791914650196,
+          "ok": true,
+          "error": null,
+          "offset": 262144,
+          "terminal": true
+        }
+      ],
+      "nativeRpcFailures": []
+    }
+  ],
+  "observedTerminalRace": "onstop sets finishedtransferringdata before final chunk ACK; unconditional filter.resume after that ACK fails before queued sink.end. Final resume marker absent; all bytes remain unpublished partial.",
+  "qualification": "Source-mismatch diagnostic rows only; no actual9fa/11ca compiled-checkout acceptance. Explicit absWorkingDir/metafile provenance fix and matching checked finalsource native/external SHA proof required.",
+  "staleBinaryDiagnosis": {
+    "serviceSha256": "0ed6cc856227cbc2e2e29a4361daf4493d354ae9a655dd81df12b04d42700ba1",
+    "lastWriteLocal": "2026-10-10 21:49:16",
+    "failure": "Decoder rejects browser_subscribe before native envelope and before page action.",
+    "rootCause": "Fixture hardcoded target/debug service selected legacy binary; explicit canonical paths now required.",
+    "previousBlobPassUnchanged": true
+  },
+  "pending": [
+    "Ordinary binary form-navigation/download response lane",
+    "Live hosts/accounts",
+    "Firefox ESR",
+    "Private/container scope",
+    "Other operating systems",
+    "Permission prompts",
+    "XHR native completion until verified fix"
+  ],
+  "requestedExtensionVersion": "0.13.6",
+  "requestedExtensionSourceRevision": "9fa692a49dc849a382048c28635a826fe8ce8547",
+  "actualCompiledSourceBase": "26ce2a5836636d4ea5a06cd89436712597611eb7",
+  "actualCompiledSourceVersion": "0.10.9",
+  "compilationProvenanceCorrection": "esbuild was imported before source-root chdir and used its cached initial E-worktree directory. Source hashes requested from exported tree did not identify compiled modules. All source-root-option runs before explicit absWorkingDir correction are requested-source-mismatch diagnostics, not requested-checkout acceptance.",
+  "actualCompiledSourceHashes": {
+    "background.ts": "8c5f1de9da6ab5433e76e49ce7189c8b7fc1c3372764f3ef543a0b02f32b85fd",
+    "resolver.ts": "081e1547514c11fe2ef97de0b663e18642441021095202f87c7baa10dfaae7c5",
+    "navigation/streams/capture.ts": "a64c64ee5d6a2b9337445523594497dc09fc35e552492cd7a8896c3e3d63f006",
+    "navigation/streams/transport.ts": "20522d9788df16d41a5b835685421f6845549a8cdb628a07ac5d35fe332345de"
+  }
+}

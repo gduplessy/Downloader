@@ -171,6 +171,7 @@ export function takeFirefox(
     }
   });
   let failed = false;
+  let inputEnded = false;
   let queuedBytes = 0;
   const abort = () => {
     if (failed) return;
@@ -193,7 +194,9 @@ export function takeFirefox(
         try {
           if (failed) return;
           await sink.chunk(new Uint8Array(event.data));
-          filter.resume();
+          // onstop may arrive while the final durable ACK is outstanding.
+          // Resuming a finished Firefox filter throws and would discard EOF.
+          if (!inputEnded) filter.resume();
         } finally {
           queuedBytes -= event.data.byteLength;
         }
@@ -201,6 +204,7 @@ export function takeFirefox(
       .catch(abort);
   };
   filter.onstop = () => {
+    inputEnded = true;
     void queue
       .then(async () => {
         if (failed) return;
