@@ -360,6 +360,15 @@ pub fn native(args: &[String]) -> Result<()> {
                 c @ downloader_core::Command::BrowserAccount(_) => call(c),
                 c @ downloader_core::Command::Captcha { .. } => call(c),
                 c @ downloader_core::Command::NavigationSelection(_) => call(c),
+                c @ downloader_core::Command::DiscoveryList { .. } => call(c),
+                c @ downloader_core::Command::DiscoveryClaim(_) => call(c),
+                c @ downloader_core::Command::DiscoverySelect(_) => call(c),
+                c @ downloader_core::Command::DiscoveryPrepare(_) => call(c),
+                c @ downloader_core::Command::DiscoveryPageResult(_) => call(c),
+                c @ downloader_core::Command::DiscoveryStatus(_) => Ok(
+                    downloader_core::rendered_grabber::browser_projection(call(c)?),
+                ),
+
                 c @ downloader_core::Command::NavigationAuthority { .. } => call(c),
                 c @ downloader_core::Command::BrowserSnapshot { .. } => browser_snapshot(call(c)?),
                 c @ downloader_core::Command::BrowserSubscribe { .. } => browser_events(call(c)?),

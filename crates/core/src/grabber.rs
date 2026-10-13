@@ -8,13 +8,7 @@ use std::{
 
 pub fn run(mut project: GrabberProject, engine: &Arc<Engine>) -> Result<()> {
     if project.rendered {
-        project.status = "waiting_browser".into();
-        engine
-            .store
-            .lock()
-            .unwrap()
-            .put("grabber", &project.id, &project)?;
-        return Ok(());
+        return crate::rendered_grabber::start(engine, project);
     }
     project.status = "exploring".into();
     engine
@@ -165,6 +159,9 @@ pub fn download(engine: &Arc<Engine>, id: &str, urls: &[String]) -> Result<serde
         .into_iter()
         .find(|p| p.id == id)
         .context("Unknown project")?;
+    if project.rendered {
+        return crate::rendered_grabber::stage_selection(engine, id, urls);
+    }
     let mut jobs = vec![];
     for url in urls {
         let file = project

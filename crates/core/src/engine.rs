@@ -15,8 +15,9 @@ pub struct Engine {
     pub store: Arc<Mutex<Store>>,
     pub jobs: Mutex<HashMap<String, transfer::SharedJob>>,
     pub settings: Mutex<Settings>,
-    navigation_scheduler: Mutex<crate::navigation_scheduler::Scheduler>,
+    pub(crate) navigation_scheduler: Mutex<crate::navigation_scheduler::Scheduler>,
     pub queues: Mutex<Vec<Queue>>,
+    pub(crate) discovery_operations: Mutex<()>,
     contexts: Mutex<HashMap<String, RequestContext>>,
     pub(crate) controls: Mutex<HashMap<String, Arc<AtomicU8>>>,
     captcha_lock: Mutex<()>,
@@ -106,6 +107,7 @@ impl Engine {
             jobs: Mutex::new(jobs),
             settings: Mutex::new(settings),
             navigation_scheduler: Mutex::new(navigation_scheduler),
+            discovery_operations: Mutex::new(()),
             queues: Mutex::new(queues),
             contexts: Mutex::new(contexts),
             controls: Mutex::new(HashMap::new()),
@@ -412,9 +414,10 @@ impl Engine {
             .collect();
         jobs.sort_by_key(|job| job.created);
         let mut scheduler = self.navigation_scheduler.lock().unwrap();
-        scheduler
-            .tasks
-            .retain(|task| jobs.iter().any(|job| job.id == task.id));
+        scheduler.tasks.retain(|task| {
+            (task.id.starts_with("discovery:") || task.id.starts_with("discovery-resource:"))
+                || jobs.iter().any(|job| job.id == task.id)
+        });
         for job in &jobs {
             if job.page_url.is_none() {
                 continue;
@@ -526,6 +529,36 @@ impl Engine {
         };
         if let crate::navigation_scheduler::SchedulerRequest::Reconcile { live } = &request {
             for lease in live {
+                if let Some(id) = lease.id.strip_prefix("discovery-resource:") {
+                    let state = crate::rendered_grabber::load(&self.store.lock().unwrap(), id)?;
+                    let proof = state
+                        .preparation
+                        .as_ref()
+                        .context("Missing provenance preparation")?;
+                    let scope = lease.scope.as_ref().context("Missing provenance scope")?;
+                    if state.generation != lease.generation
+                        || proof.scope != *scope
+                        || proof.tab_id != Some(lease.tab_id)
+                        || scope.profile != owner
+                        || scope.private != private_lane
+                        || proof.document.is_none()
+                    {
+                        bail!("Stale or foreign provenance preparation");
+                    }
+                    continue;
+                }
+                if let Some(id) = lease.id.strip_prefix("discovery:") {
+                    let state = crate::rendered_grabber::load(&self.store.lock().unwrap(), id)?;
+                    let scope = lease.scope.as_ref().context("Missing discovery scope")?;
+                    state.authorize(scope, lease.generation)?;
+                    if scope.profile != owner
+                        || scope.private != private_lane
+                        || state.lease.is_none()
+                    {
+                        bail!("Reconciled discovery scope is stale or foreign");
+                    }
+                    continue;
+                }
                 let job = jobs
                     .iter()
                     .find(|job| job.id == lease.id)
@@ -1221,8 +1254,35 @@ impl Engine {
             Command::ZipPreview { url, context } => {
                 archive::preview(&url, &context, &self.settings.lock().unwrap().clone())
             }
+            Command::DiscoveryList { scope } => crate::rendered_grabber::list(self, &scope),
+            Command::DiscoverySelect(request) => crate::rendered_grabber::select(self, request),
+            Command::DiscoveryPrepare(request) => crate::rendered_grabber::prepare(self, request),
+            Command::GrabberResults { id, offset, limit } => {
+                crate::rendered_grabber::results(self, &id, offset, limit)
+            }
+            Command::GrabberControl { id, action } => {
+                crate::rendered_grabber::control(self, &id, &action)
+            }
+            Command::DiscoveryClaim(request) => crate::rendered_grabber::claim(self, request),
+            Command::DiscoveryPageResult(request) => crate::rendered_grabber::report(self, request),
+            Command::DiscoveryStatus(request) => crate::rendered_grabber::status(self, request),
             Command::Grabber(project) => {
                 security::validate_url(&project.url)?;
+                if self
+                    .store
+                    .lock()
+                    .unwrap()
+                    .all::<GrabberProject>("grabber")?
+                    .iter()
+                    .any(|existing| {
+                        existing.id == project.id && existing.private != project.private
+                    })
+                {
+                    bail!("Create a new project for a different privacy lane");
+                }
+                if project.private && !project.rendered {
+                    bail!("Private projects require an explicit rendered browser session");
+                }
                 if project.depth > 20
                     || project.max_pages == 0
                     || project.max_pages > 10000
@@ -1236,12 +1296,7 @@ impl Engine {
                     .put("grabber", &project.id, &project)?;
                 Ok(serde_json::to_value(project)?)
             }
-            Command::GrabberList => Ok(serde_json::to_value(
-                self.store
-                    .lock()
-                    .unwrap()
-                    .all::<GrabberProject>("grabber")?,
-            )?),
+            Command::GrabberList => crate::rendered_grabber::projects(self),
             Command::GrabberRun { id } => {
                 let p = self
                     .store

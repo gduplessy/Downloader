@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.12.12<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.13.4<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -51,8 +51,8 @@ Original-response capture modules and persistent native transport are integrated
 | NAV-09 | One-use and session-bound requests may require browser ownership     | Detect replay risk before cancellation, preserve the browser transfer, and add provider-specific refresh/session recovery. Test token consumption, redirects, expired URLs, and transfer failure.                                                                                                                                                                                   | Planned / qualification |
 | NAV-10 | Navigation is capped at three pages and one page per host            | Add configurable, host-aware navigation queues and transparent wait reasons. Preserve cookie/session integrity; qualify higher limits before allowing concurrent steps on the same host.                                                                                                                                                                                            | Planned                 |
 | NAV-11 | Profile claims lack comprehensive privacy/container qualification    | Test private browsing, separate profiles, Firefox containers, partitioned cookies, competing workers, claim transfer, and extension-worker restart. Navigation context must never cross an unintended session boundary.                                                                                                                                                             | Qualification           |
-| NAV-12 | Browser-driven rendered discovery is unfinished                      | Add extension-controlled discovery tabs, user-visible navigation state, and resume when a browser becomes available. Keep rendered discovery and final download handoff under the same session ownership rules.                                                                                                                                                                     | Planned                 |
-| NAV-13 | **Custom/image CAPTCHA adapters**                                   | Qualified local open-circle geometry and explicit selected-host submission with live document, CSRF, form, expiry and cancellation fences. Four synthetic installed Chrome POST-to-fresh-link native hashes pass. Optional 2Captcha uses OS-keyring references, explicit external opt-in and durable spend accounting; disabled by default and tested only with mocks. Unknown live variants, live accounts, paid calls and broader browser/platform acceptance remain pending. | Qualification |
+| NAV-12 | Browser-driven rendered discovery is unfinished                      | Add extension-controlled discovery tabs, user-visible navigation state, and resume when a browser becomes available. Keep rendered discovery and final download handoff under the same session ownership rules.                                                                                                                                                                     | Implemented / qualification |
+| NAV-13 | **Custom/image CAPTCHA adapters**                                   | Research local image processing and session-aware coordinate submission, including g4u host selection, scaling, replacement, CSRF continuity, expiry and fresh-link generation. FlareSolverr alone does not implement this custom interaction. Paid adapters require demonstrated compatibility, separate external-solving opt-in, OS-keyring credentials and a spending ceiling. | Research |
 
 FlareSolverr service, owned navigation, desktop configuration, extension retry and six-locale recovery messages are implemented. The pinned local Docker deployment passed generated rendered-GET/cookie resolution and a SHA-256-verified 2 MiB range/resume fixture. Real browser-challenge clearance, custom CAPTCHA, fresh g4u links and downstream hosts remain unqualified. See [qualification](FLARESOLVERR_QUALIFICATION.md), [Docker setup](FLARESOLVERR_DOCKER.md), [CAPTCHA research](CAPTCHA_RESEARCH.md) and [the implementation plan](FLARESOLVERR_PLAN.md).
 
@@ -192,6 +192,15 @@ NAV-01 production settings controls: local enable/save/test/stale-setting invali
 
 NAV-04 / NAV-10 qualification increment: production queue UI and actual Engine policy verified with three/twenty real fixture renderer tabs, limit lowering, same-host locking and replaced-wait/restart lifecycle. [Evidence and pending scope/browser/live-host gates](evidence/nav-scheduling/README.md).
 
+NAV-12 increment 0.11.0: scoped durable frontier and bounded report persistence implemented; rendered browser controls and authenticated resource acceptance pending.
+
+NAV-12 0.11.1 adds rendered extraction, session controls and safe staged resource selection; complete extension/native fixture acceptance is pending.
+
+NAV-12 0.11.2 integrates production discovery commands and owned tabs. Selected one-use resources reopen their provenance page and authorize only the intended original control before any capture; installed browser hash acceptance is pending.
+
+NAV-12 0.11.3 binds explicitly permitted cross-origin pages and resources to their observed partition; browser epoch recovery is fenced. Installed rendered/authenticated acceptance remains pending.
+
+NAV-12 0.11.4 adds installed-browser qualification commands and real Engine shared-budget/cross-origin regressions; production worker capture and resource SHA-256 acceptance remain pending.
 NAV-13 runtime integration: production worker and resolver hooks added with a live isolated document nonce, native selected-host metadata, scheduler admission and original browser HTML form submission. Installed fixture acceptance is in progress.
 
 Shared integration 0.8.10: adapter actions now prepare one-use authorization before capture, recheck current page/session/source authority before commit, and abort cancelled capture. Selected provider metadata is recorded through the scoped native command; rendered-discovery navigation opens the selected resource while retaining its provenance page. Full installed-worker acceptance remains pending.
@@ -202,19 +211,28 @@ NAV-13 installed qualification driver added against the combined production work
 
 Shared integration 0.8.12: private and regular scheduler responses and reconciliation are isolated by explicit worker lane, while capacity and host locks remain service-global. Six native scheduler regressions cover lane isolation, retained peer leases, durable private exclusion, authority replacement and queue recovery.
 
+NAV-12 0.11.5 binds live document proofs and selected-source admission, with bounded desktop resource paging. Native regressions pass; installed original-stream acceptance remains pending.
+Shared integration 0.8.13: scoped incremental subscriptions preserve null snapshots; cached subscription cursors recover on scope/claim changes. First production installed Chrome 155 POST gate passes one original submission, 262,161 bytes and native SHA-256. Broader installed blob/cancel/replacement/private/container/Firefox and integrated account/challenge/discovery acceptance remains pending.
+
+NAV-12 0.11.6: full Rust/client tests and Clippy pass. Fresh scoped selection snapshots and exact dynamic-resource readiness are implemented; installed capture qualification remains pending.
 NAV-13 canonical scope and CLI-created navigation ownership corrections integrated; actual installed acceptance remains under investigation with no inferred success.
 
 Shared integration 0.8.13: scoped incremental subscriptions preserve null snapshots; cached subscription cursors recover on scope/claim changes. First production installed Chrome 155 POST gate passes one original submission, 262,161 bytes and native SHA-256. Broader installed blob/cancel/replacement/private/container/Firefox and integrated account/challenge/discovery acceptance remains pending.
 
 NAV-13/adapter integration 0.10.6: current document claims are required for prepare/commit/disable; nonce-keyed grants reject same-URL replacement. Full native/client checks pass; installed challenge qualification is still active.
 
+NAV-12 0.11.7: installed Chrome155 delayed/authenticated discovery and one original GET matched native SHA-256 on base4001f58. Final combined-base, Edge and remaining release-matrix acceptance are tracked separately.
 Shared integration 0.12.0: serialized metadata writes prevent stale source/claim replacement in regular and private lanes. Chromium restart reconciliation resolves actual cookie-store membership. 106 extension regressions, types and both browser builds pass; broader installed acceptance remains pending.
+
+NAV-12 0.11.8 adopts checked common base9dc9986. Installed Chrome/Edge qualification is being refreshed; live hosts/accounts and remaining platform/browser matrix stay pending.
 
 NAV-13 0.10.7: fixed Chromium canvas proof drift, required genuine current document claims, and rejected late host-choice cancellation callbacks. Local stale-case fixture passes twelve scenarios; installed final desktop hashes remain pending.
 
 Shared integration 0.12.1: removal event projection preserves owner/private/exact claim and rejects unqualified historical tombstones. Real engine coverage confirms isolation in both browser lanes and after claim replacement.
 
 Shared integration 0.12.2: direct stream ownership prevents competing legacy download handoffs. 13 stream tests, extension types/builds and actual Chrome original POST hash verification pass. Installed Firefox and broader acceptance remain pending.
+
+NAV-12 0.11.9 integrates direct-stream observer ownership and current session startup fences from basebd6cf35; final installed fixture evidence is being refreshed.
 
 NAV-13 integrated observer ownership in 0.10.8; no frame, source or document gate is relaxed. Final installed directGET qualification remains active.
 
@@ -239,7 +257,15 @@ Account integration (0.9.7) includes authority-qualified incremental browser sna
 Account document proof (0.9.8) binds native credential grants and premium capture to the actual isolated document nonce and generation, plus Chromium document ID when available. The nonce-protected Chrome 155 saved-fill fixture publishes the expected verified bytes. Edge 155 baseline saved-fill passed; its final nonce-protected row and Firefox remain pending further integration.
 Account staging integration (0.9.9) adopts the checked monotonic navigation-record guard, deep-cloned private memory storage, actual Chromium cookie-store reconciliation and E challenge document contract. Credential and capture grants keep distinct purposes and require the current verified nonce. Final installed account reruns follow this shared prerequisite update.
 
+NAV-12 0.13.0 adds bounded original-session provenance preparation for selected cross-origin resources. Installed Chrome local cross-origin and active-frontier service/worker restart qualification passes with one authenticated original GET and the expected native SHA-256; final browser evidence and pending release rows are recorded in [discovery qualification](evidence/nav-discovery/README.md).
+
 Account response ownership (0.9.10) adopts checked direct-stream ownership and removal-event isolation. Installed account qualification asserts selected downstream provider and original provenance through authenticated redirect and native hash publication. Live hosts/accounts and APIs remain pending; [browser/OS acceptance](evidence/nav-accounts/README.md) distinguishes installed fixtures from DOM mocks.
 
 
 NAV-13 0.10.9: canonical native HOST used by control and byte ports; invalid source counters refuse capture. Installed Chrome 155 passes four original local CAPTCHA POSTs, fresh selected-host links and 253,952-byte desktop hashes with diagnostics off and zero paid calls. Twelve stale/cancelled DOM cases submit zero times. Live, paid and broader browser/platform gates remain pending; see [challenge evidence](evidence/nav-challenges/README.md).
+
+NAV-12 0.13.1 preserves explicit original-session ownership across a complete browser-process restart. New epochs refuse automatic adoption; explicit resume renews the old scheduler lease before reopening approved provenance. Checked shared base 91d0553 keeps live resolver previews stable.
+
+NAV-12 0.13.2 reconciles checked root 7e44b00/latest main. Clean committed-source Chrome 155 and Edge 155 both pass cross-origin authenticated discovery with full browser/service/worker restart and expected native hash. Live provider, Firefox/ESR, other OS and owner UI acceptance remain pending.
+
+NAV-12 0.13.3 records final clean committed-source 7f752d3 Chrome/Edge cross-origin and complete restart evidence. Both finish one authenticated original GET, zero HEAD and 262,161 hash-verified native bytes. Documentation/version-only increment; remaining release acceptance rows stay explicit.

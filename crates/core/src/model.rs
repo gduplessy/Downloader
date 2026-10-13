@@ -488,6 +488,23 @@ pub enum Command {
     },
     Grabber(GrabberProject),
     GrabberList,
+    DiscoveryList {
+        scope: crate::navigation::SessionScope,
+    },
+    DiscoveryClaim(crate::rendered_grabber::Claim),
+    DiscoverySelect(crate::rendered_grabber::Select),
+    DiscoveryPrepare(crate::rendered_grabber::Prepare),
+    GrabberResults {
+        id: String,
+        offset: usize,
+        limit: usize,
+    },
+    GrabberControl {
+        id: String,
+        action: String,
+    },
+    DiscoveryPageResult(crate::rendered_grabber::PageResult),
+    DiscoveryStatus(crate::rendered_grabber::Status),
     GrabberRun {
         id: String,
     },
@@ -552,6 +569,8 @@ impl Response {
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GrabberProject {
+    #[serde(default)]
+    pub private: bool,
     pub id: String,
     pub name: String,
     pub url: String,

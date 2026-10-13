@@ -8,6 +8,7 @@ export type ResolverContext = {
   documentNonce: string;
   documentGeneration: number;
   selectedHost?: string;
+  selectedResource?: string;
   disabledAdapters?: string[];
   capabilities?: { pageBlob?: boolean };
   locale: string;

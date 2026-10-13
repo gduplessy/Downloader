@@ -1,3 +1,4 @@
+import { RenderedDiscovery } from './navigation/discovery/runtime';
 import { hasLiveResolver, verifyLiveDocument, type DocumentClaim } from './navigation/session/document';
 import { NavigationStarts } from './navigation/session/start';
 import { PremiumAuthorizations } from './navigation/accounts/premium';
@@ -114,7 +115,7 @@ async function renewAuthority(key: string, record: ResolverRecord) {
 async function projectionScope() {
   const owner = await profile;
   const records = await navigationStore.get(null);
-  const scopes: SessionScope[] = [];
+  const scopes: SessionScope[] = await discovery.liveScopes();
   for (const [key, value] of Object.entries(records)) {
     const record = value as ResolverRecord;
     if (!key.startsWith('resolver-') || !record.scope || record.scope.private !== privateWorker)
@@ -144,6 +145,20 @@ const profile = browser.storage.local.get('profileId').then(async (stored) => {
   if (!stored.profileId) await browser.storage.local.set({ profileId: id });
   return id;
 });
+const discovery = new RenderedDiscovery(
+  native,
+  () => profile,
+  privateWorker,
+  () => browserEpoch,
+  async (id, sourceTabId) => {
+    const snapshot = await native('snapshot');
+    const job = snapshot.jobs.find((job: any) => job.id === id);
+    if (!job) return false;
+    await startResolver(job, true, sourceTabId);
+    const row = (await navigationStore.get("resolver-"+id))["resolver-"+id] as ResolverRecord | undefined;
+    return !!row && await ownsCurrentTab(row);
+  },
+);
 const requests = new Map<string, ScopedRequest>();
 function requestFor(url: string, privateSession?: boolean) {
   const values = [...requests.values()].filter(
@@ -442,9 +457,18 @@ async function load() {
   await observers();
   await recover();
   await browser.alarms.create('resolver-poll', { periodInMinutes: 0.5 });
+  await discovery.poll();
   await pollResolvers();
 }
 async function native(command: string, args?: unknown): Promise<any> {
+  if (command === 'navigation_scheduler' && (args as any)?.request?.action === 'reconcile')
+    args = {
+      ...(args as any),
+      request: {
+        ...(args as any).request,
+        live: [...(args as any).request.live, ...(await discovery.liveRecords())],
+      },
+    };
   let projectionTicket: ProjectionTicket | undefined;
   if (
     [
@@ -467,6 +491,9 @@ async function native(command: string, args?: unknown): Promise<any> {
         throw Error('Scheduler tab authority changed');
       await renewAuthority('resolver-' + (args as any).request.id, record);
       args = { ...(args as object), scope: record.scope };
+    } else {
+      const scope = await discovery.scopeForJob((args as any).request.id);
+      if (scope) args = { ...(args as object), scope };
     }
   }
   if (['add', 'navigate'].includes(command))
@@ -923,6 +950,9 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
     sender.url === browser.runtime.getURL('options.html') ||
     sender.url === browser.runtime.getURL('popup.html');
   if (sender.tab && !extensionPage) {
+    if (message.type === 'discovery_context') return discovery.context(sender, message.document);
+    if (message.type === 'discovery_page_result')
+      return discovery.result(sender, message.result, message.document);
     if (message.type === 'owned_blob_stream')
       return (async () => {
         const reader = blobReaders.get(message.capability);
@@ -993,6 +1023,10 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
     if (message.type !== 'download_media')
       return Promise.reject(Error('Content scripts cannot control the native host'));
   }
+  if (extensionPage && message.type === 'discovery_projects')
+    return discovery.projects(message.tabId);
+  if (extensionPage && message.type === 'discovery_start')
+    return discovery.start(message.id, message.tabId, message.permittedOrigins);
   if (extensionPage && message.type === 'navigation_scheduler')
     return scheduler.request(message.request);
   if (extensionPage && message.type === 'navigation_queue_cancel')
@@ -1388,7 +1422,7 @@ async function pollResolvers(userGesture = false) {
         // Admission is atomic in the service; workers cannot race tab limits.
         if (!(await scheduler.admitted(job.id))) continue;
         try {
-          await startResolver(job, userGesture);
+          await startResolver(job, userGesture, await discovery.sourceForJob(job));
           active.push(job);
         } catch {}
       } else if (userGesture) await startResolver(job, true).catch(() => {});
@@ -1574,6 +1608,12 @@ async function resolverStep(message: any, tabId: number, currentUrl: string, doc
     record.documentGeneration = binding.documentGeneration;
   }
   const decision = message.decision;
+  if (
+    job.request_id?.startsWith('discovery-') &&
+    decision?.kind === 'click' &&
+    message.request?.url !== job.url
+  )
+    return { click: false, repeat: false };
   if (!['wait', 'user', 'click'].includes(decision?.kind))
     throw Error('Invalid navigation decision');
   if (
@@ -1705,6 +1745,8 @@ async function resolverStep(message: any, tabId: number, currentUrl: string, doc
   return { click: decision.kind === 'click' && !repeated, repeat: true };
 }
 browser.tabs.onUpdated.addListener((tabId, change) => {
+  if (change.status === 'complete') void discovery.loaded(tabId).catch(() => {});
+
   if (change.status === 'loading') {
     navigationAuthorizations.invalidateTab(tabId);
     premiumAuthorizations.invalidateTab(tabId);
@@ -1808,7 +1850,10 @@ browser.tabs.onRemoved.addListener(
     })(),
 );
 browser.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === 'resolver-poll') void pollResolvers();
+  if (alarm.name === 'resolver-poll') {
+    void discovery.poll();
+    void pollResolvers();
+  }
   if (alarm.name.startsWith(WAIT_ALARM_PREFIX)) void scheduler.onAlarm(alarm.name).catch(() => {});
 });
 
@@ -1949,6 +1994,7 @@ async function resolverContext(
     documentGeneration: document.generation,
     documentNonce: live.nonce,
     selectedHost: job.selected_host,
+    selectedResource: job.request_id?.startsWith('discovery-') ? job.url : undefined,
     disabledAdapters: settings.disabledAdapters ?? [],
     locale: settings.locale,
     capabilities: { pageBlob: settings.directCapture },

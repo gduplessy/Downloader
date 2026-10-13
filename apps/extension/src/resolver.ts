@@ -141,7 +141,7 @@ async function observe(ctx: ResolverContext | null) {
   const accountState = accountDecision(account);
   const collected = collectControls(document),
     signals = blockers(allElements(document));
-  const inspection = inspectCandidates(location.href, collected.controls, {
+  const inspection = inspectCandidates(location.href, ctx?.selectedResource ? collected.controls.filter((c) => c.target === ctx.selectedResource) : collected.controls, {
     disabledAdapters: ctx?.disabledAdapters,
     selectedHost: ctx?.selectedHost,
     allowPageBlob: ctx?.capabilities?.pageBlob === true,
@@ -262,7 +262,7 @@ async function step() {
     challengeHandle = undefined;
     previewHandle?.close();
     previewHandle = undefined;
-    const ctx = await context();
+    let ctx = await context();
     if (ctx) {
       challengeHandle =
         (await showChallenge(
@@ -300,7 +300,14 @@ async function step() {
         )) ?? undefined;
       if (challengeHandle) return;
     }
-    const observed = await observe(ctx);
+    let observed = await observe(ctx);
+    const deadline = Date.now() + 10000;
+    while (ctx?.selectedResource && !observed.inspection.candidates.length && !observed.signals.blocker && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      ctx = await context();
+      if (!ctx) return;
+      observed = await observe(ctx);
+    }
     if (ctx && observed.account)
       accountPanel = await showAccountPanel(
         document,

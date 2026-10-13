@@ -1,3 +1,4 @@
+import { mountDiscovery } from './navigation/discovery/ui';
 import browser from 'webextension-polyfill';
 import { streamTranslate, type StreamTextKey } from './navigation/streams/i18n';
 import { translate, type Key } from '../../../packages/shared/src/i18n';
@@ -11,6 +12,7 @@ async function main() {
     lastError?: string;
   };
   const locale = settings?.locale ?? 'en';
+  void mountDiscovery(document.body, locale);
   for (const el of document.querySelectorAll<HTMLElement>('[data-i18n]'))
     el.textContent = translate(locale, el.dataset.i18n as Key);
   document.documentElement.lang = locale;

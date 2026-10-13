@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.13.4
+
+- Integrate checked rendered discovery with bounded provenance preparation and explicit original-session restart recovery.
+- Preserve account/CAPTCHA flows and scoped capture admission, document-loss and source-replacement recovery. Clean batch Chrome/Edge cross-origin restart evidence remains distinct from pending Firefox and private/container qualification.
+
+## 0.13.3
+
+- Record final clean committed-source 7f752d3 (0.13.2) Chrome/Edge cross-origin authenticated discovery after complete browser, service and worker restart. Both complete exactly one original GET and the expected native hash with diagnostics off.
+- Preserve explicit live provider/account, Firefox/ESR, private/container installed, other OS and owner UI qualification boundaries. This increment changes documentation and synchronized versions only.
+
+## 0.13.2
+
+- Reconcile checked coordinator base 7e44b00 and latest main, preserving resolver/countdown regressions and explicit WaitingUser recovery after source replacement.
+- Record clean committed-source Chrome 155 and Edge 155 cross-origin acceptance with complete browser, service and worker restart. Both publish one authenticated original GET, zero HEAD and 262,161 bytes with the expected native SHA-256.
+- Keep retained provenance identity checks after asynchronous epoch reads; localize extension state labels and correct empty resource paging. Verify 141 extension, six desktop and 125 native tests (one subprocess fixture ignored), strict Clippy, formatting, types/builds and version checks. Remaining live provider, Firefox/ESR, other OS and owner UI acceptance rows stay explicit.
+
+## 0.13.1
+
+- Adopt checked coordinator base 91d0553, preserving same-document resolver previews and scoped capture ownership.
+- Explicit original-session discovery resume releases its earlier frontier/preparation lease before opening a newly owned tab; Chromium actual partition and Firefox actual container identity remain fenced.
+- Add full installed browser-process close/reopen qualification: a new epoch refuses historical discovery ownership until explicit reauthorization. Use per-run copied native executables so restart auto-launch and cleanup cannot affect another service.
+- Verify eight discovery Engine regressions, 124 extension and six desktop tests, full native tests, strict Clippy, types and builds. Actual Chrome cross-origin browser/service/worker restart publishes one authenticated original GET with the expected native hash; final committed Chrome/Edge evidence follows.
+
+## 0.13.0
+
+- Integrate checked account and shared navigation ownership updates from coordinator base c8ac54d.
+- Reserve bounded service-owned preparation leases before reopening explicitly approved cross-origin HTML provenance in the selected original browser session. Enroll actual partition and document proofs before starting only the known selected resource.
+- Preserve selected-resource metadata across worker recovery, fence concurrent provenance replacement, and close verified preparation tabs on cancellation.
+- Qualify installed Chrome cross-origin authenticated discovery with actual service and worker restart during an active frontier: one original GET, zero HEAD, 262,161 bytes and matching native SHA-256. Edge acceptance and final checks are tracked in discovery evidence; live hosts/accounts, Firefox/ESR and other OS rows remain separate.
+
 ## 0.12.12
 
 - Abort scoped Blob capture when its document starts loading a replacement, and retain actionable browser recovery before clearing the old document marker.
@@ -133,6 +163,56 @@
 
 Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
+## 0.11.9
+
+- Preserve production direct-stream ownership across legacy download observers and integrate latest session startup fences.
+- Keep scoped rendered selection and paged resource controls intact; refresh installed Chrome/Edge evidence on the final combined base.
+
+## 0.11.8
+
+- Adopt monotonic navigation metadata writes and actual Chromium cookie-store reconciliation.
+- Keep rendered resource pages current as discovery progresses; refresh final installed Chrome/Edge qualification against the combined base.
+
+## 0.11.7
+
+- Integrate the live document nonce contract and challenge handoff while preserving exact rendered-resource selection.
+- Installed Chrome155 qualified discovery and one original authenticated GET with matching native SHA-256 on the prior integration base; final combined-base qualification is in progress.
+
+## 0.11.6
+
+- Integrate scope-aware native subscription cursors and preserve discovery admission/document fences.
+- Use fresh scoped snapshots for newly selected jobs and wait for the exact delayed resource before resolver submission. Local streaming qualification remains in progress.
+
+## 0.11.5
+
+- Integrate private-lane scheduler admission with fresh original source-tab authority for selected discovery jobs.
+- Bind rendered reports to the current document nonce and generation; add bounded resource paging and desktop selection controls.
+- Native frontier and Engine regressions pass. Installed authenticated original-stream qualification remains in progress.
+
+## 0.11.4
+
+- Bound delayed/open-shadow DOM extraction and add a reproducible installed Chrome/Edge discovery/native qualification fixture.
+- Add real Engine tests for global admission, cross-origin permission/partition renewal, scoped selection/restart and ephemeral private projects. Installed-browser fixture execution remains pending.
+
+## 0.11.3
+
+- Add explicitly permitted cross-origin partition renewal and per-resource observed session provenance.
+- Fence discovery worker recovery by the current browser session epoch; never reuse a stale browser instance as an owned discovery tab.
+
+## 0.11.2
+
+- Integrate rendered discovery with the production native bridge, worker/tab lifecycle and shared scheduler recovery.
+- Preserve provenance before one-use capture and restrict resolver candidates to the selected rendered resource. Real Engine restart/idempotent selection/private storage regressions pass; installed browser acceptance remains in progress.
+
+## 0.11.1
+
+- Add bounded DOM extraction, owned-tab discovery runtime, explicit browser-session controls and six-locale project resume/cancel/private controls.
+- Stage selected rendered resources as scoped navigation jobs without anonymous inspection; serialize selection against cancellation. Production browser wiring and native hash acceptance remain in progress.
+
+## 0.11.0
+
+- Add atomically persisted rendered discovery frontiers, provenance, bounded results, scoped command fences, duplicate-report fingerprints, and shared navigation admission.
+- Keep new private projects and frontier metadata ephemeral. Local backend qualification is in progress; browser/native rendered fixture qualification is pending.
 ## 0.9.8 — Bind account and capture authority to the actual document
 
 - Verify the live isolated document nonce before account observation, credential grant/consume and adapter authorization; native credential proof includes the exact nonce.
