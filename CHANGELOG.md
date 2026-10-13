@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.17.0
+
+- Add an isolated desktop browser-ownership transfer component with explicit consent, memory-only codes, expiry countdown, optional copy and intentional cancellation/recovery.
+- Bind prepared replies to the unchanged input and exact advanced native claim/source fences; reject changed profile, private lane, cookie store, container or partition. Forget codes on expiry/unmount without automatic cancellation.
+- Provide receiving-extension HTTP-session/preview/accept guidance and actionable pending/error states in six locales. Verify 26 transfer regressions, six existing desktop tests, desktop types/build and version artifacts. App wiring and installed two-session acceptance remain with the integration owner.
+
 ## 0.16.0
 
 - Add ephemeral, one-use desktop-to-browser session handoff tickets with explicit destination acceptance, observed cookie-store/container/partition scope, and source/claim invalidation.
