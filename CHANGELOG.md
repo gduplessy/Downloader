@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.12.10
+
+- Reconcile latest merged main, retaining three-digit countdown clocks within the shared seven-day limit.
+- Adapt its resolver regression suite to current nonce/source/claim and two-phase authorization, covering waits, cancellation, replacement, page loss and successful selection.
+
 ## 0.12.9
 
 - Bound total queued Firefox response-filter bytes while native admission or durable acknowledgement is pending, instead of bounding individual events only.
