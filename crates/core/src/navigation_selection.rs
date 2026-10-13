@@ -58,6 +58,8 @@ pub(crate) fn record(engine: &Engine, request: SelectionRequest) -> Result<serde
     let shared = engine.job(&request.id)?;
     let mut job = shared.lock().unwrap();
     if job.navigation_owner.as_ref() != Some(&request.owner)
+        || job.navigation_transfer_pending
+        || job.navigation_transfer_recovery
         || job.navigation_scope.as_ref() != Some(&request.scope)
         || job.source_generation != request.source_generation
         || !matches!(

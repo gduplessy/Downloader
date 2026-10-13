@@ -1,4 +1,5 @@
 import { mountSchedulerControls } from './navigation/scheduler/ui';
+import { mountTransfer } from './navigation/session/transfer-ui';
 
 import { streamTranslate, type StreamTextKey } from './navigation/streams/i18n';
 import browser from 'webextension-polyfill';
@@ -34,6 +35,9 @@ async function main() {
   input('excluded').value = settings.excluded.join('\n');
   document.getElementById('extension-id')!.textContent = browser.runtime.id;
   localize();
+  const transfer = document.createElement('section');
+  document.body.append(transfer);
+  await mountTransfer(transfer, settings.locale).catch(error => { transfer.textContent = String(error); });
   const navigation = document.createElement('section');
   document.body.append(navigation);
   await mountSchedulerControls(navigation, settings.locale).catch((error) => {

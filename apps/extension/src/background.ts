@@ -1,6 +1,7 @@
 import { RenderedDiscovery } from './navigation/discovery/runtime';
 import { hasLiveResolver, verifyLiveDocument, type DocumentClaim } from './navigation/session/document';
 import { NavigationStarts } from './navigation/session/start';
+import { NavigationTransfer } from './navigation/session/transfer';
 import { PremiumAuthorizations } from './navigation/accounts/premium';
 import { accountRequest, validateAccountRequest } from './navigation/accounts/worker';
 import { validateAccountDocument } from './navigation/accounts/document';
@@ -146,6 +147,23 @@ const profile = browser.storage.local.get('profileId').then(async (stored) => {
   if (!stored.profileId) await browser.storage.local.set({ profileId: id });
   return id;
 });
+const navigationTransfer = new NavigationTransfer(browser, BROWSER, profile, privateWorker,
+  args => native('browser_navigation_transfer', args), navigationPermissions,
+  async (accepted, tabId, page) => {
+    await navigationStore.set({ ['resolver-' + accepted.id]: {
+      tabId, scope: accepted.scope, sourceGeneration: accepted.source_generation,
+      generation: accepted.source_generation, sessionEpoch: await browserEpoch,
+      started: Date.now(), steps: 0, lastOrigin: new URL(page).origin,
+      private: accepted.scope.private,
+    } satisfies ResolverRecord });
+    await native('browser_status', { id: accepted.id, state: 'waiting_browser',
+      message: 'Session transfer accepted; revalidating this page.', bytes: 0, total: null, url: page });
+    eventSnapshot = null;
+    const job = (await native('snapshot')).jobs.find((job: any) => job.id === accepted.id);
+    if (!job) throw Error('Accepted task is unavailable in this session');
+    await scheduler.request({ action: 'control', id: job.id, paused: false, priority: null });
+    await startResolver(job);
+  });
 const discovery = new RenderedDiscovery(
   native,
   () => profile,
@@ -980,6 +998,14 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
   const extensionPage =
     sender.url === browser.runtime.getURL('options.html') ||
     sender.url === browser.runtime.getURL('popup.html');
+  if (extensionPage && message.type === 'navigation_transfer_preview')
+    return navigationTransfer.preview(message.token, message.tabId);
+  if (extensionPage && message.type === 'navigation_transfer_accept')
+    return navigationTransfer.accept(message.previewId, message.consent);
+  if (extensionPage && message.type === 'navigation_transfer_discard') {
+    navigationTransfer.discard(message.previewId);
+    return Promise.resolve(true);
+  }
   if (sender.tab && !extensionPage) {
     if (message.type === 'discovery_context') return discovery.context(sender, message.document);
     if (message.type === 'discovery_page_result')
@@ -1080,6 +1106,21 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
         throw Error('Site permission required');
       const record = (await navigationStore.get('resolver-' + job.id))['resolver-' + job.id] as
         ResolverRecord | undefined;
+      if (job.navigation_transfer_recovery) {
+        if (!record || !(await ownsCurrentTab(record)))
+          throw Error('Reopen the original session or prepare a new desktop transfer');
+        const renewed = await native('browser_navigation_transfer', {
+          action: 'continue', id: job.id, scope: record.scope,
+          source_generation: record.sourceGeneration, consent: true,
+        });
+        record.scope = renewed.scope;
+        record.sourceGeneration = renewed.source_generation;
+        record.generation = renewed.source_generation;
+        await navigationStore.set({ ['resolver-' + job.id]: record });
+        job.navigation_transfer_recovery = false;
+        job.navigation_scope = renewed.scope;
+        job.source_generation = renewed.source_generation;
+      }
       const state = await scheduler.request({ action: 'snapshot' });
       if (record?.wait && state.tasks.find((task) => task.id === job.id)?.status === 'waiting')
         await scheduler.observe(job.id);
@@ -1247,6 +1288,8 @@ async function startResolver(job: any, force = false, sourceTabId?: number) {
   return resolverStarts.run(job.id, () => startOwnedResolver(job, force, sourceTabId));
 }
 async function startOwnedResolver(job: any, force = false, sourceTabId?: number) {
+  if (job.navigation_transfer_pending || job.navigation_transfer_recovery)
+    throw Error('Explicit session transfer or recovery is required');
   const startUrl = job.navigation_url ?? job.page_url;
   if (!/^https?:\/\//.test(startUrl)) throw Error('Page navigation requires HTTP or HTTPS');
   if (force)
@@ -1394,7 +1437,8 @@ async function pollResolvers(userGesture = false) {
     if (!schedulerRecovered) {
       await scheduler.reconcile(
         Object.entries(storage)
-          .filter(([key]) => liveKeys.has(key))
+          .filter(([key]) => liveKeys.has(key) && !snapshot.jobs.some((job: any) =>
+            job.id === key.slice(9) && (job.navigation_transfer_pending || job.navigation_transfer_recovery)))
           .map(([key, record]) => ({
             id: key.slice(9),
             tabId: record.tabId,
@@ -1410,6 +1454,7 @@ async function pollResolvers(userGesture = false) {
     for (const [key, record] of Object.entries(storage)) {
       if (!key.startsWith('resolver-') || !liveKeys.has(key)) continue;
       const job = snapshot.jobs.find((job: any) => job.id === key.slice(9));
+      if (job?.navigation_transfer_pending || job?.navigation_transfer_recovery) continue;
       if (!job || ['complete', 'browser_complete', 'cancelled', 'failed'].includes(job.state)) {
         await scheduler.release(key.slice(9));
         await navigationStore.remove(key);

@@ -145,6 +145,10 @@ pub struct Job {
     #[serde(default)]
     pub navigation_scope: Option<crate::navigation::SessionScope>,
     #[serde(default)]
+    pub navigation_transfer_pending: bool,
+    #[serde(default)]
+    pub navigation_transfer_recovery: bool,
+    #[serde(default)]
     pub selected_host: Option<String>,
     #[serde(default)]
     pub navigation_adapter: Option<crate::navigation_selection::AdapterIdentity>,
@@ -375,6 +379,8 @@ pub enum Command {
         request: crate::navigation_scheduler::SchedulerRequest,
     },
     NavigationSelection(crate::navigation_selection::SelectionRequest),
+    NavigationTransfer(crate::navigation_transfer::DesktopRequest),
+    BrowserNavigationTransfer(crate::navigation_transfer::BrowserRequest),
     NavigationAuthority {
         id: String,
         owner: String,

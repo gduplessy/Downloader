@@ -1,0 +1,51 @@
+{
+  "browser": "Firefox/157.0.1",
+  "os": "win32",
+  "architecture": "x64",
+  "version": "0.13.5",
+  "nativeVersion": "0.13.5",
+  "sourceRevision": "12687b4b78f8207756be7e128fbae6ebdc721d12",
+  "sourceHashes": {
+    "apps/extension/src/background.ts": "e4fd3509e1c6f700c47c1c1d748b108e7431a00e0aebd1dfa50514474c7a2905",
+    "apps/extension/src/resolver.ts": "5268153e996f5aee1aa32494c0ea4231aae19b107908aab8d9d310e30a700f8e",
+    "apps/extension/src/navigation/streams/blob.ts": "752894243a75fa5d77435947e5e8882a76d8e7c3cadd72fc796429c1d9965217",
+    "apps/extension/src/navigation/streams/transport.ts": "db7f24424a6d19101c085e83f7baf0224f514a6a4578cd31700bc9ca56b9979b"
+  },
+  "extensionBundleHashes": {
+    "background": "6d21c296e93f7da526399f5a173fd10502bd69f5569eaede60e4ab562e603404",
+    "resolver": "06be4cae03e91441b33401f9b8f8987d7f1d9802ffd55086c1b0adf85497aebf"
+  },
+  "nativeBinarySha256": "55280d985f3e532354ee7d8c540ba35b16b7ceab1864133bc3dff2e0c104bc24",
+  "cliBinarySha256": "67b71fe28e6825675e44a3f7c74076947b93c8b327763f973456f8cdb58e24c3",
+  "scenario": "blob",
+  "filename": "original-blob.bin",
+  "extensionAPI": "page-owned Blob reader -> owned_blob_stream",
+  "transport": "persistent browser.runtime.connectNative",
+  "driver": "WebDriver BiDi for addon installation and controls; no byte relay",
+  "diagnosticSourceChanges": false,
+  "productionBackground": true,
+  "productionResolver": true,
+  "submissions": 0,
+  "httpRequests": [
+    {
+      "method": "GET",
+      "path": "/nav-adapters/g4u/blob"
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico"
+    }
+  ],
+  "httpPayloadRequests": 0,
+  "bytes": 262161,
+  "sha256": "ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862",
+  "nativeVerifiedSha256": "ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862",
+  "state": "complete",
+  "sourceGeneration": 1,
+  "limitations": [
+    "Local fixtures; live hosts/accounts pending",
+    "Firefox stable only; ESR and other OS rows are separate",
+    "Fixture permissions granted in isolated manifest; user permission prompts unqualified",
+    "Ordinary binary POST download lane remains pending; Blob cancellation/private/container are separate qualification gates"
+  ]
+}

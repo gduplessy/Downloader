@@ -16,12 +16,13 @@ pub struct Engine {
     pub jobs: Mutex<HashMap<String, transfer::SharedJob>>,
     pub settings: Mutex<Settings>,
     pub(crate) navigation_scheduler: Mutex<crate::navigation_scheduler::Scheduler>,
+    pub(crate) navigation_transfer: Mutex<crate::navigation_transfer::Runtime>,
     pub queues: Mutex<Vec<Queue>>,
     pub(crate) discovery_operations: Mutex<()>,
-    contexts: Mutex<HashMap<String, RequestContext>>,
+    pub(crate) contexts: Mutex<HashMap<String, RequestContext>>,
     pub(crate) controls: Mutex<HashMap<String, Arc<AtomicU8>>>,
     captcha_lock: Mutex<()>,
-    solver_tasks: Mutex<HashMap<String, Arc<AtomicU8>>>,
+    pub(crate) solver_tasks: Mutex<HashMap<String, Arc<AtomicU8>>>,
     pub(crate) browser_stream_locks: Mutex<HashMap<String, Arc<Mutex<()>>>>,
     pub stopping: AtomicBool,
 }
@@ -36,6 +37,9 @@ impl Engine {
         store.put("settings", "main", &settings)?;
         let mut jobs = HashMap::new();
         for mut job in store.all::<Job>("job")? {
+            if crate::navigation_transfer::recover_interrupted(&mut job) {
+                store.put("job", &job.id, &job)?;
+            }
             if job.state == JobState::SolvingChallenge {
                 job.state = JobState::WaitingUser;
                 job.solver_outcome = Some("solver_interrupted".into());
@@ -107,6 +111,7 @@ impl Engine {
             jobs: Mutex::new(jobs),
             settings: Mutex::new(settings),
             navigation_scheduler: Mutex::new(navigation_scheduler),
+            navigation_transfer: Mutex::default(),
             discovery_operations: Mutex::new(()),
             queues: Mutex::new(queues),
             contexts: Mutex::new(contexts),
@@ -151,6 +156,9 @@ impl Engine {
         let engine = self.clone();
         std::thread::spawn(move || {
             while !engine.stopping.load(Ordering::Relaxed) {
+                if let Err(e) = crate::navigation_transfer::sweep(&engine) {
+                    eprintln!("Session transfer: {}", security::redact(&e.to_string()));
+                }
                 if let Err(e) = engine.tick() {
                     eprintln!("Scheduler: {}", security::redact(&e.to_string()));
                 }
@@ -251,7 +259,7 @@ impl Engine {
             has_more: false,
         })
     }
-    fn persist(&self, job: &transfer::SharedJob) -> Result<()> {
+    pub(crate) fn persist(&self, job: &transfer::SharedJob) -> Result<()> {
         let job = job.lock().unwrap().clone();
         self.store.lock().unwrap().put("job", &job.id, &job)?;
         Ok(())
@@ -372,6 +380,8 @@ impl Engine {
             page_url: None,
             navigation_owner: request.context.profile.clone(),
             navigation_scope: None,
+            navigation_transfer_pending: false,
+            navigation_transfer_recovery: false,
             selected_host: None,
             navigation_adapter: None,
             source_generation: 1,
@@ -419,6 +429,15 @@ impl Engine {
                 || jobs.iter().any(|job| job.id == task.id)
         });
         for job in &jobs {
+            if job.navigation_transfer_pending || job.navigation_transfer_recovery {
+                if let Some(task) = scheduler.tasks.iter_mut().find(|t| t.id == job.id) {
+                    task.lease = None;
+                    task.wait = None;
+                    task.status = QueueStatus::Finished;
+                    task.reason = "explicit_session_recovery_required".into();
+                }
+                continue;
+            }
             if job.page_url.is_none() {
                 continue;
             }
@@ -564,6 +583,8 @@ impl Engine {
                     .find(|job| job.id == lease.id)
                     .context("Unknown reconciled navigation job")?;
                 if job.private != private_lane
+                    || job.navigation_transfer_pending
+                    || job.navigation_transfer_recovery
                     || job.navigation_owner.as_deref() != Some(owner)
                     || job.source_generation != lease.generation
                     || job.navigation_scope != lease.scope
@@ -573,6 +594,12 @@ impl Engine {
             }
         }
         if let Some(id) = request_id {
+            if jobs.iter().any(|job| {
+                &job.id == id
+                    && (job.navigation_transfer_pending || job.navigation_transfer_recovery)
+            }) {
+                bail!("Navigation session requires explicit transfer or recovery");
+            }
             let task = scheduler
                 .tasks
                 .iter_mut()
@@ -611,6 +638,9 @@ impl Engine {
         scope: Option<&crate::navigation::SessionScope>,
         generation: Option<u64>,
     ) -> Result<()> {
+        if job.navigation_transfer_pending || job.navigation_transfer_recovery {
+            bail!("Navigation session requires explicit transfer or recovery");
+        }
         if let Some(expected) = &job.navigation_scope {
             if scope != Some(expected) || generation != Some(job.source_generation) {
                 bail!("Stale or missing navigation session fence");
@@ -620,6 +650,12 @@ impl Engine {
     }
     pub fn command(self: &Arc<Self>, command: Command) -> Result<serde_json::Value> {
         match command {
+            Command::NavigationTransfer(request) => {
+                crate::navigation_transfer::desktop(self, request)
+            }
+            Command::BrowserNavigationTransfer(request) => {
+                crate::navigation_transfer::browser(self, request)
+            }
             Command::SiteAccount(request) => crate::site_accounts::desktop(self, request),
             Command::BrowserAccount(request) => crate::site_accounts::browser(self, request),
             Command::Captcha {
@@ -635,6 +671,8 @@ impl Engine {
                     let j = job.lock().unwrap();
                     scope.validate()?;
                     if j.navigation_scope.as_ref() != Some(&scope)
+                        || j.navigation_transfer_pending
+                        || j.navigation_transfer_recovery
                         || j.source_generation != source_generation
                         || j.navigation_owner.as_ref() != Some(&owner)
                         || scope.profile != owner
@@ -696,7 +734,9 @@ impl Engine {
                 }
                 // Read-only renewal metadata contains no URL, credential or task mutation.
                 Ok(serde_json::json!({ "scope": current,
-                    "source_generation": job.source_generation, "state": job.state }))
+                    "source_generation": job.source_generation, "state": job.state,
+                    "navigation_transfer_pending": job.navigation_transfer_pending,
+                    "navigation_transfer_recovery": job.navigation_transfer_recovery }))
             }
             Command::NavigationSelection(request) => {
                 crate::navigation_selection::record(self, request)
@@ -779,6 +819,8 @@ impl Engine {
                 {
                     let mut j = job.lock().unwrap();
                     if j.page_url.is_none()
+                        || j.navigation_transfer_pending
+                        || j.navigation_transfer_recovery
                         || !matches!(j.state, JobState::WaitingBrowser | JobState::WaitingUser)
                     {
                         bail!("Job is not waiting for browser navigation");
@@ -1038,6 +1080,9 @@ impl Engine {
                     bail!("Wait for the active transfer to stop");
                 }
                 let mut job = j.lock().unwrap();
+                if job.navigation_transfer_pending || job.navigation_transfer_recovery {
+                    bail!("Explicit session transfer or recovery is required");
+                }
                 if job.state == JobState::Complete {
                     bail!("Download is already complete");
                 }
@@ -1132,6 +1177,9 @@ impl Engine {
                 let j = self.job(&id)?;
                 {
                     let mut job = j.lock().unwrap();
+                    if job.navigation_transfer_pending {
+                        bail!("Cancel the pending session transfer before refreshing its source");
+                    }
                     if matches!(job.state, JobState::Complete | JobState::Cancelled) {
                         bail!("Finished jobs cannot refresh their source");
                     }
