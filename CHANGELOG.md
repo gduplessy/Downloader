@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.21.3
+
+- Reconcile the reviewed queued-source/privacy fixes with installed transfer qualification without overwriting either branch's history.
+- Record Firefox 158 installed smoke acceptance on checked review fixes: two original containers, distinct native/desktop hashes, one original payload GET each, retained source tabs and no native refetch.
+
 ## 0.21.2
 
 - Reconcile queued-container source retention with reviewed main and deterministic Windows expiry checks.
@@ -17,6 +22,15 @@
 - Retain actual context-menu source tabs before queued navigation admission, separately from owned resolver tabs. Validate original cookie store, window, origin, private lane, browser epoch, native owner and source generation before opening a destination.
 - Preserve only a nonsecret durable recovery requirement; lost, restarted or transferred source contexts stop visibly rather than defaulting to a different session.
 - Record Firefox158 sequential container native hashes and the pre-fix queued-container substitution. Installed fixed queue and missing-source qualification follows this checked increment.
+
+## 0.19.1
+
+- Reconcile reviewed handoff UI, monotonic wait timing and stream recovery evidence with installed Chrome/Edge two-profile transfer qualification. Preserve both source histories and the separate pending desktop GUI/browser-process restart boundaries.
+
+## 0.19.0
+
+- Add installed production Chrome/Edge two-profile navigation transfer qualification with independently completed cookie-derived native hashes.
+- Verify actual receiver preview/accept, original-owner fences, one-use tickets, and absence of ticket persistence while preserving the guarded desktop-IPC UI boundary.
 
 ## 0.18.4
 

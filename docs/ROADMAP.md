@@ -1,8 +1,10 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.21.2<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.21.3<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 NAV-11 review hardening (0.21.2) isolates private pending origins from regular cleanup and checks fresh native authority after queue admission before opening a source URL. Mutable caller snapshots cannot change frozen navigation intent. Current main's expiry regression and qualification histories are retained.
+
+NAV-11 reviewed merge (0.21.3) preserves installed transfer qualification and [Firefox queued-container smoke evidence](evidence/nav-integration/firefox-scope-reviewed.json) from checked review fixes. Both native files match their distinct expected hashes; original user tabs remain open and no payload is refetched by native code.
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -303,3 +305,7 @@ NAV merge review (0.18.4) reconciles stream qualification, handoff UI/wait timin
 NAV-11 expiry regression (0.16.3) uses deterministic monotonic observation at the exact five-minute boundary, removing fresh-Windows-runner uptime underflow without weakening the expiry assertion.
 
 NAV stream merge reconciliation (0.16.4) retains the installed stream/private-recovery qualification records alongside current handoff authority and native expiry behavior. Pending local and release acceptance rows remain explicit.
+
+NAV-11 installed transfer increment (0.19.0): actual regular Chrome/Edge profiles complete different cookie-derived native files at the same URL after explicit receiver options preview/accept; old scope/status/stream/account/CAPTCHA operations and token reuse are refused. The [matrix](evidence/nav-browser-streams/transfer-qualification.md) labels guarded desktop-IPC preparation and keeps full browser restart, private/container/partition combinations and live/provider acceptance separate.
+
+NAV reconciliation (0.19.1) preserves reviewed handoff UI/monotonic waits and installed two-profile native hash proofs. The unfinished desktop GUI mode is excluded; stopped ComputerUse does not qualify Prepare/Cancel/Copy, and full browser-process loss remains a required local gate.
