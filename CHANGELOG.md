@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.19.0
+
+- Add installed production Chrome/Edge two-profile navigation transfer qualification with independently completed cookie-derived native hashes.
+- Verify actual receiver preview/accept, original-owner fences, one-use tickets, and absence of ticket persistence while preserving the guarded desktop-IPC UI boundary.
+
 ## 0.16.2
 
 - Retry exact pending handoff recovery after native storage failures while preserving consumed tickets, manual recovery, terminal states, and the bounded 128-entry runtime.

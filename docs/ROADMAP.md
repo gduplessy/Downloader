@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.16.2<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.19.0<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -279,3 +279,5 @@ NAV-11 session-transfer integration (0.16.0) adds native pending/manual-recovery
 NAV-07 original-response progress (0.16.1) rejects late renderer status resets during an exact owned stream and suppresses repeated resolver decisions. Fifteen native stream and nine handoff regressions pass; corrected installed Firefox XHR source/hash qualification is pending.
 
 NAV-07 supported Firefox page-owned XHR passes its installed Windows stable157 exact-source/native hash row; ordinary binary main-frame form/download remains owner-selected pending. NAV-11 handoff storage-failure recovery is bounded, retryable, exact-fenced and monotonic; installed cross-session qualification remains in progress.
+
+NAV-11 installed transfer increment (0.19.0): actual regular Chrome/Edge profiles complete different cookie-derived native files at the same URL after explicit receiver options preview/accept; old scope/status/stream/account/CAPTCHA operations and token reuse are refused. The [matrix](evidence/nav-browser-streams/transfer-qualification.md) labels guarded desktop-IPC preparation and keeps full browser restart, private/container/partition combinations and live/provider acceptance separate.

@@ -1,0 +1,344 @@
+{
+  "recorded": "2026-10-13",
+  "acceptanceScope": "Exact two-profile regular-session transfer rows; desktop preparation is guarded fixture IPC, recipient options UI is actual production UI",
+  "rows": [
+    {
+      "acceptance": "passed",
+      "mode": "two-profile-explicit-transfer",
+      "recorded": "2026-10-13T23:16:58.703Z",
+      "sourceRevision": "de2ab0d49035aafdd662e7b0769d0857402f9ebe",
+      "driverSha256": "74bc7074bfd5a5c577f820a83da390cb4c177bbbf051fdbe5bfdd4ca0704a978",
+      "browser": "Chrome/155.0.8059.39",
+      "os": "win32",
+      "architecture": "x64",
+      "productionBackground": true,
+      "productionResolver": true,
+      "productionReceiverOptions": true,
+      "diagnosticSourceChanges": false,
+      "nativeTransport": "persistent connectNative; desktop prepare through restricted IPC example",
+      "executables": {
+        "hostAndDaemon": {
+          "workspaceRelativePath": "target/debug/downloader-service.exe",
+          "sha256": "0c41f0b36b2b169a2b61cc7e82c8f0c9b57b28fd62cf3962d29ca9461229f6d9",
+          "bytes": 17395712,
+          "modifiedUtc": "2026-10-13T22:53:29.328Z",
+          "sameExecutable": true,
+          "selfReportedVersion": null
+        },
+        "cli": {
+          "workspaceRelativePath": "target/debug/downloader.exe",
+          "sha256": "56088f3016819a7e1deb06e018bc172d77cc4e56ad2318efb82119c7613b53c3",
+          "bytes": 6317056,
+          "modifiedUtc": "2026-10-13T22:53:32.097Z",
+          "selfReportedVersion": "downloader-cli 0.16.2"
+        },
+        "desktopFixture": {
+          "workspaceRelativePath": "target/debug/examples/navigation_transfer_fixture.exe",
+          "sha256": "abef58551d61725e6e79686b5950c69496ff27c2c6282c058532a58b7a54f421",
+          "bytes": 7128064,
+          "modifiedUtc": "2026-10-13T22:53:23.383Z"
+        }
+      },
+      "expectedBytes": 262161,
+      "actualBytes": 262161,
+      "state": "complete",
+      "sha256": "fc55ee5d7a5516e4f888e2bb43fa66637b1c1a26d69f3298b6e8701cfb651d83",
+      "cookieName": "fixture_session",
+      "originRequests": [
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "cookieProfile": "source",
+          "browser": true,
+          "phase": "bootstrap"
+        },
+        {
+          "method": "GET",
+          "path": "/favicon.ico",
+          "cookieProfile": "unrecognized",
+          "browser": true,
+          "phase": "bootstrap"
+        },
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "cookieProfile": "source",
+          "browser": true,
+          "phase": "bootstrap"
+        },
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "cookieProfile": "recipient",
+          "browser": true,
+          "phase": "bootstrap"
+        },
+        {
+          "method": "GET",
+          "path": "/favicon.ico",
+          "cookieProfile": "unrecognized",
+          "browser": true,
+          "phase": "prepare"
+        },
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "cookieProfile": "recipient",
+          "browser": true,
+          "phase": "accept"
+        }
+      ],
+      "observations": {
+        "sourceControlNativeHash": "ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862",
+        "sourceControlNativeBytes": 262161,
+        "actualProfilesDistinct": true,
+        "browser": "Chrome/155.0.8059.39",
+        "cookieStoreMembershipObserved": true,
+        "sameCookieStoreName": true,
+        "browserPrepareDenied": {
+          "command": "navigation_transfer",
+          "denied": true,
+          "errorCode": "native_failed",
+          "reason": "Command is not allowed from a browser extension"
+        },
+        "desktopIpcPrepare": true,
+        "generationsBefore": {
+          "source": 1,
+          "claim": 1
+        },
+        "generationsPrepared": {
+          "source": 2,
+          "claim": 2
+        },
+        "actualReceiverPreview": true,
+        "codeClearedAfterPreview": true,
+        "actualReceiverAccept": true,
+        "generationsAccepted": {
+          "source": 2,
+          "claim": 3
+        },
+        "staleOperations": [
+          {
+            "command": "browser_status",
+            "denied": true,
+            "errorCode": "native_failed",
+            "reason": "Stale or missing navigation session fence"
+          },
+          {
+            "command": "claim_navigation",
+            "denied": true,
+            "errorCode": "native_failed",
+            "reason": "Stale or missing claim source generation"
+          },
+          {
+            "command": "browser_stream",
+            "denied": true,
+            "errorCode": "native_failed",
+            "reason": "Stale or foreign browser stream ownership"
+          },
+          {
+            "command": "browser_account",
+            "denied": true,
+            "errorCode": "native_failed",
+            "reason": "account_navigation_fence_stale"
+          },
+          {
+            "command": "captcha",
+            "denied": true,
+            "errorCode": "native_failed",
+            "reason": "captcha_session_rejected"
+          },
+          {
+            "command": "claim_navigation",
+            "denied": true,
+            "errorCode": "native_failed",
+            "reason": "Claim session changed; explicit owner-authorized transfer required"
+          }
+        ],
+        "identicalPageUrls": true,
+        "sourceSessionHash": "ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862",
+        "recipientSessionHash": "fc55ee5d7a5516e4f888e2bb43fa66637b1c1a26d69f3298b6e8701cfb651d83",
+        "sessionCookieInherited": false,
+        "originalLinkClicks": [0, 0],
+        "ticketReuseDenied": true,
+        "tokenInExtensionStorage": false,
+        "tokenInNativeDb": false
+      },
+      "limitations": [
+        "Local fixture; no live/paid provider calls",
+        "Desktop prepare uses guarded IPC fixture rather than a native desktop UI click",
+        "Settings setup uses a trusted fixture action; receiver and file previews use actual production UI clicks",
+        "Complete browser restart and broader private/container/partition matrix remain separate rows"
+      ]
+    },
+    {
+      "acceptance": "passed",
+      "mode": "two-profile-explicit-transfer",
+      "recorded": "2026-10-13T23:18:55.826Z",
+      "sourceRevision": "de2ab0d49035aafdd662e7b0769d0857402f9ebe",
+      "driverSha256": "74bc7074bfd5a5c577f820a83da390cb4c177bbbf051fdbe5bfdd4ca0704a978",
+      "browser": "Edg/155.0.4283.45",
+      "os": "win32",
+      "architecture": "x64",
+      "productionBackground": true,
+      "productionResolver": true,
+      "productionReceiverOptions": true,
+      "diagnosticSourceChanges": false,
+      "nativeTransport": "persistent connectNative; desktop prepare through restricted IPC example",
+      "executables": {
+        "hostAndDaemon": {
+          "workspaceRelativePath": "target/debug/downloader-service.exe",
+          "sha256": "0c41f0b36b2b169a2b61cc7e82c8f0c9b57b28fd62cf3962d29ca9461229f6d9",
+          "bytes": 17395712,
+          "modifiedUtc": "2026-10-13T22:53:29.328Z",
+          "sameExecutable": true,
+          "selfReportedVersion": null
+        },
+        "cli": {
+          "workspaceRelativePath": "target/debug/downloader.exe",
+          "sha256": "56088f3016819a7e1deb06e018bc172d77cc4e56ad2318efb82119c7613b53c3",
+          "bytes": 6317056,
+          "modifiedUtc": "2026-10-13T22:53:32.097Z",
+          "selfReportedVersion": "downloader-cli 0.16.2"
+        },
+        "desktopFixture": {
+          "workspaceRelativePath": "target/debug/examples/navigation_transfer_fixture.exe",
+          "sha256": "abef58551d61725e6e79686b5950c69496ff27c2c6282c058532a58b7a54f421",
+          "bytes": 7128064,
+          "modifiedUtc": "2026-10-13T22:53:23.383Z"
+        }
+      },
+      "expectedBytes": 262161,
+      "actualBytes": 262161,
+      "state": "complete",
+      "sha256": "fc55ee5d7a5516e4f888e2bb43fa66637b1c1a26d69f3298b6e8701cfb651d83",
+      "cookieName": "fixture_session",
+      "originRequests": [
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "cookieProfile": "source",
+          "browser": true,
+          "phase": "bootstrap"
+        },
+        {
+          "method": "GET",
+          "path": "/favicon.ico",
+          "cookieProfile": "unrecognized",
+          "browser": true,
+          "phase": "bootstrap"
+        },
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "cookieProfile": "source",
+          "browser": true,
+          "phase": "bootstrap"
+        },
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "cookieProfile": "recipient",
+          "browser": true,
+          "phase": "bootstrap"
+        },
+        {
+          "method": "GET",
+          "path": "/favicon.ico",
+          "cookieProfile": "unrecognized",
+          "browser": true,
+          "phase": "prepare"
+        },
+        {
+          "method": "GET",
+          "path": "/nav-adapters/g4u/blob",
+          "cookieProfile": "recipient",
+          "browser": true,
+          "phase": "accept"
+        }
+      ],
+      "observations": {
+        "sourceControlNativeHash": "ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862",
+        "sourceControlNativeBytes": 262161,
+        "actualProfilesDistinct": true,
+        "browser": "Edg/155.0.4283.45",
+        "cookieStoreMembershipObserved": true,
+        "sameCookieStoreName": true,
+        "browserPrepareDenied": {
+          "command": "navigation_transfer",
+          "denied": true,
+          "errorCode": "native_failed",
+          "reason": "Command is not allowed from a browser extension"
+        },
+        "desktopIpcPrepare": true,
+        "generationsBefore": {
+          "source": 1,
+          "claim": 1
+        },
+        "generationsPrepared": {
+          "source": 2,
+          "claim": 2
+        },
+        "actualReceiverPreview": true,
+        "codeClearedAfterPreview": true,
+        "actualReceiverAccept": true,
+        "generationsAccepted": {
+          "source": 2,
+          "claim": 3
+        },
+        "staleOperations": [
+          {
+            "command": "browser_status",
+            "denied": true,
+            "errorCode": "native_failed",
+            "reason": "Stale or missing navigation session fence"
+          },
+          {
+            "command": "claim_navigation",
+            "denied": true,
+            "errorCode": "native_failed",
+            "reason": "Stale or missing claim source generation"
+          },
+          {
+            "command": "browser_stream",
+            "denied": true,
+            "errorCode": "native_failed",
+            "reason": "Stale or foreign browser stream ownership"
+          },
+          {
+            "command": "browser_account",
+            "denied": true,
+            "errorCode": "native_failed",
+            "reason": "account_navigation_fence_stale"
+          },
+          {
+            "command": "captcha",
+            "denied": true,
+            "errorCode": "native_failed",
+            "reason": "captcha_session_rejected"
+          },
+          {
+            "command": "claim_navigation",
+            "denied": true,
+            "errorCode": "native_failed",
+            "reason": "Claim session changed; explicit owner-authorized transfer required"
+          }
+        ],
+        "identicalPageUrls": true,
+        "sourceSessionHash": "ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862",
+        "recipientSessionHash": "fc55ee5d7a5516e4f888e2bb43fa66637b1c1a26d69f3298b6e8701cfb651d83",
+        "sessionCookieInherited": false,
+        "originalLinkClicks": [0, 0],
+        "ticketReuseDenied": true,
+        "tokenInExtensionStorage": false,
+        "tokenInNativeDb": false
+      },
+      "limitations": [
+        "Local fixture; no live/paid provider calls",
+        "Desktop prepare uses guarded IPC fixture rather than a native desktop UI click",
+        "Settings setup uses a trusted fixture action; receiver and file previews use actual production UI clicks",
+        "Complete browser restart and broader private/container/partition matrix remain separate rows"
+      ]
+    }
+  ]
+}
