@@ -3,6 +3,10 @@ export type Job = {
   navigation_scope?: SessionScope | null;
   navigation_transfer_pending?: boolean;
   navigation_transfer_recovery?: boolean;
+  navigation_owner?: string | null;
+  browser_source?: boolean;
+  private?: boolean;
+  partial_created?: boolean;
   source_generation?: number;
   id: string;
   request_id: string;

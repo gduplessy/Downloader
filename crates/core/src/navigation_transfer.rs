@@ -142,6 +142,8 @@ pub enum RecoveryReason {
     Cancelled,
     Expired,
     Interrupted,
+    PreparationFailed,
+    AcceptanceFailed,
 }
 #[derive(Debug, Clone)]
 pub struct Recovery {
@@ -188,11 +190,13 @@ struct Ticket {
 #[derive(Default)]
 pub struct Runtime {
     tickets: HashMap<String, Ticket>,
+    recoveries: HashMap<String, Recovery>,
 }
 impl fmt::Debug for Runtime {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("TransferRuntime")
             .field("entries", &self.tickets.len())
+            .field("recoveries", &self.recoveries.len())
             .finish()
     }
 }
@@ -208,10 +212,12 @@ impl Runtime {
             bail!("transfer_scope_invalid");
         }
         source_page(&fence.page_url)?;
-        if self.tickets.values().any(|t| t.fence.id == fence.id) {
+        if self.tickets.values().any(|t| t.fence.id == fence.id)
+            || self.recoveries.contains_key(&fence.id)
+        {
             bail!("transfer_already_pending");
         }
-        if self.tickets.len() >= MAX_TICKETS {
+        if self.tickets.len() + self.recoveries.len() >= MAX_TICKETS {
             bail!("transfer_capacity_reached");
         }
         let expires_at_ms = now_ms
@@ -308,10 +314,12 @@ impl Runtime {
             .find_map(|(token, ticket)| (ticket.fence == *fence).then(|| token.clone()))
             .ok_or_else(|| anyhow::anyhow!("transfer_ticket_unavailable"))?;
         let ticket = self.tickets.remove(&token).expect("matched ticket");
-        Ok(Recovery {
+        let recovery = Recovery {
             fence: ticket.fence,
             reason: RecoveryReason::Cancelled,
-        })
+        };
+        self.queue_recovery(recovery.clone());
+        Ok(recovery)
     }
     /// Remove expired entries only together with their manual recovery records.
     /// Run on tick/prepare/preview/accept; never silently drop pending jobs.
@@ -319,16 +327,37 @@ impl Runtime {
         let expired = self
             .tickets
             .iter()
-            .filter(|(_, ticket)| now_ms >= ticket.expires_at_ms)
+            .filter(|(_, ticket)| {
+                now_ms >= ticket.expires_at_ms
+                    || ticket.created.elapsed() >= Duration::from_millis(TICKET_TTL_MS)
+            })
             .map(|(token, _)| token.clone())
             .collect::<Vec<_>>();
-        expired
+        let recoveries = expired
             .into_iter()
             .map(|token| Recovery {
                 fence: self.tickets.remove(&token).expect("expired ticket").fence,
                 reason: RecoveryReason::Expired,
             })
-            .collect()
+            .collect::<Vec<_>>();
+        for recovery in &recoveries {
+            self.queue_recovery(recovery.clone());
+        }
+        recoveries
+    }
+    fn queue_recovery(&mut self, recovery: Recovery) {
+        // Every queued failure consumes a released ticket slot. Continues do not
+        // create tickets and restore their already-persisted manual gate on failure.
+        self.recoveries.insert(recovery.fence.id.clone(), recovery);
+    }
+    fn acknowledge_recovery(&mut self, fence: &FrozenFence) {
+        if self
+            .recoveries
+            .get(&fence.id)
+            .is_some_and(|pending| pending.fence == *fence)
+        {
+            self.recoveries.remove(&fence.id);
+        }
     }
     pub fn pending(&self, id: &str) -> Option<FrozenFence> {
         self.tickets
@@ -495,7 +524,13 @@ pub fn desktop(engine: &Arc<Engine>, request: DesktopRequest) -> Result<serde_js
                 Ok(())
             })();
             if let Err(error) = saved {
-                let _ = engine.navigation_transfer.lock().unwrap().cancel(&fence);
+                let mut runtime = engine.navigation_transfer.lock().unwrap();
+                let _ = runtime.cancel(&fence);
+                runtime.queue_recovery(Recovery {
+                    fence: fence.clone(),
+                    reason: RecoveryReason::PreparationFailed,
+                });
+                drop(runtime);
                 job.navigation_transfer_pending = false;
                 job.navigation_transfer_recovery = true;
                 job.error = Some("transfer_preparation_failed".into());
@@ -533,6 +568,11 @@ pub fn desktop(engine: &Arc<Engine>, request: DesktopRequest) -> Result<serde_js
             let recovery = engine.navigation_transfer.lock().unwrap().cancel(&fence)?;
             drop(job);
             apply_recovery(engine, &recovery)?;
+            engine
+                .navigation_transfer
+                .lock()
+                .unwrap()
+                .acknowledge_recovery(&recovery.fence);
             Ok(serde_json::json!({"id":id,"cancelled":true}))
         }
     }
@@ -596,6 +636,14 @@ pub fn browser(engine: &Arc<Engine>, request: BrowserRequest) -> Result<serde_js
                 job.navigation_transfer_recovery = true;
                 job.state = JobState::WaitingUser;
                 job.error = Some("transfer_acceptance_failed".into());
+                engine
+                    .navigation_transfer
+                    .lock()
+                    .unwrap()
+                    .queue_recovery(Recovery {
+                        fence,
+                        reason: RecoveryReason::AcceptanceFailed,
+                    });
                 return Err(error);
             }
             Ok(serde_json::to_value(accepted)?)
@@ -640,11 +688,30 @@ pub fn sweep(engine: &Engine) -> Result<()> {
 /// Deterministic clock entry point for native regression fixtures; not a wire command.
 #[doc(hidden)]
 pub fn sweep_at(engine: &Engine, now_ms: u64) -> Result<()> {
-    let recoveries = engine.navigation_transfer.lock().unwrap().expire(now_ms);
+    let recoveries = {
+        let mut runtime = engine.navigation_transfer.lock().unwrap();
+        runtime.expire(now_ms);
+        runtime.recoveries.values().cloned().collect::<Vec<_>>()
+    };
+    let mut first_error = None;
     for recovery in recoveries {
-        apply_recovery(engine, &recovery)?;
+        match apply_recovery(engine, &recovery) {
+            Ok(()) => engine
+                .navigation_transfer
+                .lock()
+                .unwrap()
+                .acknowledge_recovery(&recovery.fence),
+            Err(error) => {
+                if first_error.is_none() {
+                    first_error = Some(error);
+                }
+            }
+        }
     }
-    Ok(())
+    match first_error {
+        Some(error) => Err(error),
+        None => Ok(()),
+    }
 }
 pub fn recover_interrupted(job: &mut Job) -> bool {
     if !job.navigation_transfer_pending {
@@ -669,7 +736,21 @@ fn apply_recovery(engine: &Engine, recovery: &Recovery) -> Result<()> {
         return Ok(());
     };
     let mut job = shared.lock().unwrap();
-    if !job.navigation_transfer_pending {
+    // A failed durable write may already have set the in-memory recovery flag.
+    // Retry that exact authority, but never undo a successful explicit Continue.
+    let terminal = matches!(
+        job.state,
+        JobState::Complete | JobState::BrowserComplete | JobState::Cancelled | JobState::Failed
+    );
+    if !job.navigation_transfer_pending && !job.navigation_transfer_recovery && !terminal {
+        return Ok(());
+    }
+    if job.id != recovery.fence.id
+        || job.navigation_scope.as_ref() != Some(&recovery.fence.scope)
+        || job.source_generation != recovery.fence.source_generation
+        || job.navigation_owner.as_deref() != Some(&recovery.fence.owner)
+        || job.private != recovery.fence.scope.private
+    {
         return Ok(());
     }
     if matches!(
@@ -690,6 +771,8 @@ fn apply_recovery(engine: &Engine, recovery: &Recovery) -> Result<()> {
                 RecoveryReason::Cancelled => "transfer_cancelled",
                 RecoveryReason::Expired => "transfer_expired",
                 RecoveryReason::Interrupted => "transfer_interrupted",
+                RecoveryReason::PreparationFailed => "transfer_preparation_failed",
+                RecoveryReason::AcceptanceFailed => "transfer_acceptance_failed",
             }
             .into(),
         );
@@ -758,4 +841,36 @@ fn now_ms() -> Result<u64> {
         .timestamp_millis()
         .try_into()
         .map_err(|_| anyhow::anyhow!("transfer_clock_invalid"))
+}
+
+#[cfg(test)]
+mod clock_tests {
+    use super::*;
+    #[test]
+    fn monotonic_deadline_refuses_wall_clock_rollback() {
+        let profile = uuid::Uuid::new_v4().to_string();
+        let fence = FrozenFence {
+            id: uuid::Uuid::new_v4().to_string(),
+            owner: profile.clone(),
+            scope: SessionScope {
+                browser: "chromium".into(),
+                profile,
+                private: false,
+                cookie_store_id: Some("0".into()),
+                container_id: None,
+                partition_key: None,
+                claim_generation: 2,
+            },
+            source_generation: 2,
+            page_url: "http://127.0.0.1:9/fixture".into(),
+            filename: "fixture.bin".into(),
+        };
+        let mut runtime = Runtime::default();
+        let prepared = runtime.prepare(fence, 1_000_000).unwrap();
+        runtime.tickets.get_mut(&prepared.token).unwrap().created = Instant::now()
+            .checked_sub(Duration::from_millis(TICKET_TTL_MS))
+            .unwrap();
+        assert!(runtime.fence(&prepared.token, 1).is_err());
+        assert_eq!(runtime.expire(1).len(), 1);
+    }
 }

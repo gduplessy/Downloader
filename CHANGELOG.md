@@ -6,6 +6,33 @@
 - Preserve only a nonsecret durable recovery requirement; lost, restarted or transferred source contexts stop visibly rather than defaulting to a different session.
 - Record Firefox158 sequential container native hashes and the pre-fix queued-container substitution. Installed fixed queue and missing-source qualification follows this checked increment.
 
+## 0.18.3
+
+- Record the thirteen-plan implementation acceptance audit, separating checked behavior, required remaining local browser/UI gates, and owner-selected pending release rows.
+
+## 0.18.2
+
+- Use monotonic wait clocks in the production browser scheduler, including poll-based rechecks after wall-clock jumps, bounded observation intervals, restart recovery and wait-generation replacement.
+- Add production scheduler regressions proving clock jumps only request fresh observation; they never claim server readiness or emit a readiness notification.
+
+## 0.18.1
+
+- Record installed Edge 155 original binary attachment POST acceptance on checked integration 312a6dd: one submission, 8,388,625 bytes, and matching native and independent desktop SHA-256.
+- Preserve distinct pending rows for redirects, browser-loss recovery, install permission UX and live providers.
+
+## 0.18.0
+
+- Wire desktop session handoff controls to the native API, with explicit preparation/cancellation and six-locale instructions for recipient preview and acceptance.
+- Hold codes only in panel memory, honor the shorter native deadline, and cap display with monotonic five-minute expiry. Legitimate pending projections may arrive before the reply without losing the code; changed authority invalidates it.
+- Add fifty desktop handoff regressions for reply, projection, cancellation, expiry and locale behavior. Installed two-profile/container qualification remains in progress.
+
+## 0.16.2
+
+- Retry exact pending handoff recovery after native storage failures while preserving consumed tickets, manual recovery, terminal states, and the bounded 128-entry runtime.
+- Enforce five-minute ticket lifetime with monotonic elapsed time as well as the displayed deadline. Sixteen handoff cases and a monotonic-expiry regression cover persistence and authority changes.
+- Record the corrected exact-source Firefox 157 XHR pass: one original POST, 262,161 verified desktop bytes, matching native/external SHA, and no replay or driver byte relay.
+- Add a guarded desktop IPC example for isolated installed handoff fixtures; it requires an explicit owned fixture directory and accepts only handoff commands.
+
 ## 0.16.1
 
 - Refuse renderer status changes that would reset acknowledged progress while the exact original response stream owns the native job; explicit interruption keeps durable progress.

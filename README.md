@@ -377,4 +377,8 @@ Session-transfer integration (0.16.0) adds ephemeral one-use handoff tickets and
 
 Original-response progress (0.16.1) remains authoritative while capture is owned: late renderer status cannot reset durable stream bytes before verification. Final Firefox XHR qualification uses explicit executable and compiled-source provenance checks.
 
+Firefox page-owned XHR qualification (0.16.2 evidence) passes on stable157 with exact compiled source52b037b/native0.16.1: one original POST and262,161 matching native/external hash bytes. Ordinary binary form-navigation/download remains explicitly pending. Handoff recovery now retries durable failures without reviving expired tickets.
+
+Desktop handoff controls (0.18.0) are wired to native preparation/cancellation with six-locale recipient guidance, memory-only codes, exact authority checks, and monotonic expiry. Installed cross-profile/container qualification remains in progress.
+
 NAV-11 queued-source retention (0.21.0) separates pending user origins from owned resolver records, validates actual source context before admission, and requires explicit recovery after source loss or transfer. Firefox158 sequential container hashes pass; the reproduced queued-container substitution and corrected installed qualification are tracked separately in docs/evidence/nav-integration/firefox-scope*.json.

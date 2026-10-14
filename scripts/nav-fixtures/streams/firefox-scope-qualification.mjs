@@ -909,7 +909,15 @@ try {
     const queued = scheduler.tasks.find((task) => task.id === jobB.id);
     assert.ok(queued && !queued.lease, 'Second task was not queued');
     assert.equal(await record(jobB.id), null, 'Queued task already has resolver record');
+    const requirement = await evaluateJson(
+      'browser.storage.local.get(' + JSON.stringify('navigation-source-required-' + jobB.request_id) + ').then(JSON.stringify)',
+    );
+    const required = requirement['navigation-source-required-' + jobB.request_id];
+    assert.equal(required?.required, true, 'Queued original-context requirement was not persisted');
+    assert.equal(required.sourceGeneration, jobB.source_generation);
+    assert.deepEqual(Object.keys(required).sort(), ['jobId', 'required', 'sourceGeneration']);
     scopeReport.queuedCase = {
+      nonsecretRecoveryRequirementPersisted: true,
       firstLeaseHeld: true,
       maxActive: 1,
       secondStatus: queued.status,
@@ -931,7 +939,10 @@ try {
     assert.equal(stored, null, 'Missing-source task created replacement resolver');
     assert.equal(native.bytes, 0);
     assert.equal(native.verified_sha256, null);
-    scopeReport.missingSource = { refused: true, state: native.state, bytes: native.bytes };
+    assert.equal(native.state, 'waiting_user', 'Missing original source has no visible recovery state');
+    assert.match(native.error, /navigation_source_(unavailable|explicit_recovery_required)/);
+    assert.equal(requests.filter(request => request.variant === 'B').length, 0);
+    scopeReport.missingSource = { refused: true, state: native.state, bytes: native.bytes, recoveryCode: native.error.split(':')[0], zeroOriginalPayloadRequests: true };
   } else {
     const ownedB = await resolver(jobB, contexts[1]);
     await select(ownedB);
@@ -946,10 +957,18 @@ try {
     0,
     'Wrong-context payload fetched',
   );
+  const originalA = await evaluateJson('browser.tabs.get(' + contexts[0].tabId + ').then(JSON.stringify)');
+  assert.equal(originalA.cookieStoreId, contexts[0].cookieStoreId);
+  if (scopeMode !== 'missing-source') {
+    const originalB = await evaluateJson('browser.tabs.get(' + contexts[1].tabId + ').then(JSON.stringify)');
+    assert.equal(originalB.cookieStoreId, contexts[1].cookieStoreId);
+  }
+  scopeReport.originalSourceTabsRetained = true;
   const sourceFiles = [
     'apps/extension/src/background.ts',
     'apps/extension/src/resolver.ts',
     'apps/extension/src/navigation/session/scope.ts',
+    'apps/extension/src/navigation/session/source.ts',
     'apps/extension/src/navigation/streams/blob.ts',
     'apps/extension/src/navigation/streams/transport.ts',
   ];
@@ -961,7 +980,7 @@ try {
     resolver: digest(await readFile(resolve(ext, 'resolver.js'))),
     scopeHelper: digest(await readFile(resolve(ext, 'scope-helper.js'))),
   };
-  scopeReport.productionCompiledInputs = compiledProductionInputs;
+  scopeReport.productionCompiledInputs = compiledProductionInputs.filter(path => !path.startsWith('.fixture-streams/'));
   scopeReport.sourceRevision = sourceRevision;
   scopeReport.nativeBuildRevision = nativeBuildRevision;
   scopeReport.productVersion = JSON.parse(await readFile('package.json', 'utf8')).version;

@@ -278,4 +278,14 @@ NAV-11 session-transfer integration (0.16.0) adds native pending/manual-recovery
 
 NAV-07 original-response progress (0.16.1) rejects late renderer status resets during an exact owned stream and suppresses repeated resolver decisions. Fifteen native stream and nine handoff regressions pass; corrected installed Firefox XHR source/hash qualification is pending.
 
+NAV-07 supported Firefox page-owned XHR passes its installed Windows stable157 exact-source/native hash row; ordinary binary main-frame form/download remains owner-selected pending. NAV-11 handoff storage-failure recovery is bounded, retryable, exact-fenced and monotonic; installed cross-session qualification remains in progress.
+
+NAV-11 desktop handoff controls (0.18.0) complete native/recipient wiring and handle live pending projections without discarding a legitimate reply. Fifty desktop transfer regressions cover authority, expiry and cancellation. Installed cross-profile/container qualification is still in progress.
+
+NAV-07 Edge qualification (0.18.1) completes one original binary attachment POST through installed Edge 155 and the production native sink, with 8,388,625 hash-verified bytes. Other POST/lifecycle rows remain separate; see [installed evidence](evidence/nav-integration/production-edge-post.json).
+
+NAV-04 production clock integration (0.18.2) uses monotonic alarm/poll rechecks during a live worker and durable UTC recovery after restart. Repeated observations remain bounded and generation-fenced; every wake still requires fresh page/server readiness. Installed wait/alarm qualification remains pending.
+
+NAV audit (0.18.3): [remaining acceptance by plan](plans/nav/IMPLEMENTATION-AUDIT.md) records local integration gates separately from live, paid, unavailable-platform and explicitly deferred Firefox binary-form rows. Implementation PRs alone do not close these gates.
+
 NAV-11 queued-source retention (0.21.0) separates pending user origins from owned resolver records, validates actual source context before admission, and requires explicit recovery after source loss or transfer. Firefox158 sequential container hashes pass; the reproduced queued-container substitution and corrected installed qualification are tracked separately in docs/evidence/nav-integration/firefox-scope*.json.
