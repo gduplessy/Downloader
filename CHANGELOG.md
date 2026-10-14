@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.23.0
+
+- Qualify installed production Chromium scheduler readiness, actual worker replacement, durable alarms and default-three/configured-twenty real tab admission against an enforced local server.
+- Record scoped browser resource samples and same-host serialization with a free global slot; retain Retry-After ingestion, extension cancellation fencing and broader recovery gates as pending.
+
 ## 0.22.0
 
 - Integrate recorded Chrome/Edge qualification of two actual top-level cookie partitions, distinct native Blob hashes, and missing-cookie-permission refusal before job creation.

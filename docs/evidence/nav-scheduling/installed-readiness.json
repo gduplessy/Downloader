@@ -1,0 +1,68 @@
+{
+  "fixture": "installed-production-scheduler-readiness-v1",
+  "source_revision": "1524bbb09e0fd17bde5dac9949d478a7fee7a551",
+  "browser": "Chrome/155.0.8059.40",
+  "native_binary_sha256": "fcfd3188fbd4eadef648b26fe2766bee9f7df6a01022b209779d632d4759759d",
+  "native_version": "0.18.3",
+  "native_build_revision": "d83fbbe608f83567d6429793004d449278a54c15",
+  "fixture_sha256": "10a85887bb96b1e61cebe4b9307fa909feb0066223712aff50e93718ad7fcd6a",
+  "server_sha256": "4033f56c1e338a07d2673598ccc68277e43ec77035d7710b19e17f85f4ee00e6",
+  "production_source_sha256": "6c3a33851eac93af6d28ec0fed8365643046792e7a1bccdce8e553a36d0abc2e",
+  "os": "win32",
+  "arch": "x64",
+  "default_limit": 3,
+  "configured_limit": 20,
+  "resources": [
+    {
+      "active": 3,
+      "processes": 13,
+      "working_set_mib": 822,
+      "private_mib": 391.7
+    },
+    {
+      "active": 20,
+      "processes": 30,
+      "working_set_mib": 1940.7,
+      "private_mib": 814
+    }
+  ],
+  "installed_queue": {
+    "default_leases": 3,
+    "configured_leases": 20,
+    "actual_owned_tabs": 20,
+    "lowered_limit_preserves_leases": 19,
+    "sensitive_second_lease": false,
+    "sensitive_block_reason": "host_session_busy",
+    "free_global_slot_during_sensitive_check": true
+  },
+  "wait": {
+    "status": "waiting",
+    "generation": 1,
+    "source_generation": 1,
+    "observed_duration_ms": 1000
+  },
+  "actual_alarm": true,
+  "worker_restart": {
+    "terminated_old_target": true,
+    "replacement_target": true,
+    "preserved_wait_generation": true,
+    "preserved_lease": true,
+    "restored_alarm": true
+  },
+  "server_hold_ms": 45000,
+  "submissions": [
+    {
+      "method": "POST",
+      "ready": true
+    }
+  ],
+  "premature_submissions": 0,
+  "limits": [
+    "Synthetic local pages; production worker/resolver/native messaging unchanged except unique host address",
+    "Pregranted loopback permissions; trusted preview control selected by CDP input",
+    "Installed extension queue cancel rejects missing scope fence; desktop CLI cancels fixture jobs",
+    "Retry-After ingestion, whole-browser restart/sleep and unavailable OS remain pending; resource measurements are samples not memory-bound proofs"
+  ],
+  "published_fixture_sha256": "7d4aff78006dd50c5ccdfbeaf4e8fa3d6f1fd9532f0e1d78a27bdbed3b343c11",
+  "metadata_only_followup": "Removed stale worker-restart-pending limit after the actual restart assertions passed; execution logic unchanged. fixture_sha256 identifies executed startup bytes; published_fixture_sha256 identifies metadata-corrected source."
+}
