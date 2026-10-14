@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.16.1<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.16.3<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -277,3 +277,7 @@ NAV-12 0.13.3 records final clean committed-source 7f752d3 Chrome/Edge cross-ori
 NAV-11 session-transfer integration (0.16.0) adds native pending/manual-recovery gates, transient one-use tickets, and explicit recipient acceptance using the destination tab's actual cookie/container/partition scope. Native compilation and focused recipient tests pass; desktop controls and installed cross-session qualification remain in progress.
 
 NAV-07 original-response progress (0.16.1) rejects late renderer status resets during an exact owned stream and suppresses repeated resolver decisions. Fifteen native stream and nine handoff regressions pass; corrected installed Firefox XHR source/hash qualification is pending.
+
+NAV-07 supported Firefox page-owned XHR passes its installed Windows stable157 exact-source/native hash row; ordinary binary main-frame form/download remains owner-selected pending. NAV-11 handoff storage-failure recovery is bounded, retryable, exact-fenced and monotonic; installed cross-session qualification remains in progress.
+
+NAV-11 expiry regression (0.16.3) uses deterministic monotonic observation at the exact five-minute boundary, removing fresh-Windows-runner uptime underflow without weakening the expiry assertion.

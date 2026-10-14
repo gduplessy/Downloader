@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.16.3
+
+- Make monotonic ticket-expiry regression deterministic on fresh Windows runners by advancing the observed instant rather than subtracting five minutes from a possibly shorter system uptime.
+- Preserve runtime expiry behavior and verify both the final valid instant and exact expiry boundary with a rolled-back wall clock.
+
+## 0.16.2
+
+- Retry exact pending handoff recovery after native storage failures while preserving consumed tickets, manual recovery, terminal states, and the bounded 128-entry runtime.
+- Enforce five-minute ticket lifetime with monotonic elapsed time as well as the displayed deadline. Sixteen handoff cases and a monotonic-expiry regression cover persistence and authority changes.
+- Record the corrected exact-source Firefox 157 XHR pass: one original POST, 262,161 verified desktop bytes, matching native/external SHA, and no replay or driver byte relay.
+- Add a guarded desktop IPC example for isolated installed handoff fixtures; it requires an explicit owned fixture directory and accepts only handoff commands.
+
 ## 0.16.1
 
 - Refuse renderer status changes that would reset acknowledged progress while the exact original response stream owns the native job; explicit interruption keeps durable progress.
