@@ -7,6 +7,7 @@ pub mod media;
 pub mod model;
 pub mod navigation;
 pub mod navigation_selection;
+pub mod navigation_transfer;
 pub mod security;
 pub mod solver;
 pub mod storage;

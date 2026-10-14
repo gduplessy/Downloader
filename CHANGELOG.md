@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.16.4
+
+- Reconcile the production-stream qualification branch with current handoff recovery and deterministic Windows expiry checks, preserving both qualification histories and current ownership fences.
+
+## 0.16.3
+
+- Make monotonic ticket-expiry regression deterministic on fresh Windows runners by advancing the observed instant rather than subtracting five minutes from a possibly shorter system uptime.
+- Preserve runtime expiry behavior and verify both the final valid instant and exact expiry boundary with a rolled-back wall clock.
+
+## 0.16.2
+
+- Retry exact pending handoff recovery after native storage failures while preserving consumed tickets, manual recovery, terminal states, and the bounded 128-entry runtime.
+- Enforce five-minute ticket lifetime with monotonic elapsed time as well as the displayed deadline. Sixteen handoff cases and a monotonic-expiry regression cover persistence and authority changes.
+- Record the corrected exact-source Firefox 157 XHR pass: one original POST, 262,161 verified desktop bytes, matching native/external SHA, and no replay or driver byte relay.
+- Add a guarded desktop IPC example for isolated installed handoff fixtures; it requires an explicit owned fixture directory and accepts only handoff commands.
+
+## 0.16.1
+
+- Refuse renderer status changes that would reset acknowledged progress while the exact original response stream owns the native job; explicit interruption keeps durable progress.
+- Stop repeated resolver decisions during an owned capture. A regression reproduces the former zero-byte reset and verifies the final native hash/publication path.
+- Keep final Firefox XHR qualification pending until the corrected fixture verifies its actual compiled source and desktop hash.
+
+## 0.16.0
+
+- Add ephemeral, one-use desktop-to-browser session handoff tickets with explicit destination acceptance, observed cookie-store/container/partition scope, and source/claim invalidation.
+- Freeze browser actions during handoff and require intentional recovery after cancellation, expiry, or native restart. Clear inherited account grants, request contexts, replay decisions, and solver references.
+- Verify nine real-engine transfer/recovery cases, preserving partial files and terminal jobs while refusing stale authority, private-lane mismatch, and reused tickets.
+- Add recipient extension controls in six locales and focused session-change, expiry, duplicate-acceptance, and partition tests. Desktop handoff controls and installed two-session qualification are still being completed.
+- Preserve checked Firefox Blob qualification and the original XHR failure trace; fix the final-ACK/EOF filter race and cover finished-filter resume refusal. Installed XHR hash qualification follows the checked fix.
+
 ## 0.14.3
 
 - Record installed production Blob, genuine worker loss, safe native-service recovery and split-private storage qualification with precise remaining gates.
@@ -21,6 +51,7 @@
 - Add a shared production worker/resolver Blob qualification driver with real preview events, scoped native ingress interruption and private-context bootstrap.
 - Preserve sanitized installed Chrome/Edge native-hash, cancellation, source/document replacement, tab-close and private-record visibility evidence.
 - Keep worker/service/browser recovery, complete privacy/container matrix, Firefox and live-provider acceptance explicit; private context-menu activation is synthetic and labeled.
+
 ## 0.13.6
 
 - Namespace private ephemeral navigation metadata so primitive browser-download IDs cannot cross into regular storage views or removal operations.
@@ -113,13 +144,6 @@
 - Qualify installed Chrome/Edge saved-fill and Chrome existing-session hashes; preserve pending live provider, permission-prompt, Firefox and non-Windows acceptance.
 - Verify 127 client and 113 native tests, strict Clippy/fmt, frontend types/builds, native Tauri compilation and actual Windows generated-keyring cleanup.
 
-## 0.10.9
-
-- Route native control messages and original-response byte streams through the same canonical HOST; reject absent or invalid source counters before capture.
-- Adopt checked account/scheduler integration while preserving strict challenge document, scope, source, frame and selected-host proof.
-- Qualify four installed Chrome 155 local CAPTCHA POST-to-fresh-link desktop hashes, diagnostics off and paid calls zero. Record twelve stale/cancelled DOM cases with zero submissions.
-- Verify 121 extension, 6 desktop and 113 native tests, client types/builds, Rustfmt, strict Clippy, desktop Rust compilation and version artifacts. Live/paid, automatic fresh-page preview and broader browser/platform rows remain pending.
-
 ## 0.12.4
 
 - Integrate the checked account batch: desktop OS-keyring metadata, explicit saved fills, existing-session premium controls, purpose-separated grants and live document proof.
@@ -157,44 +181,6 @@
 - Serialize navigation metadata writes and reject delayed records with older native source or claim counters; private records remain ephemeral.
 - Reconcile Chromium tab ownership against actual cookie-store membership when the Tab API omits cookieStoreId.
 - Verify 106 extension regressions, extension types and both browser builds. Installed Firefox and broader integrated acceptance remain pending.
-
-## 0.10.5
-
-- Adopt canonical scope ordering and validated CLI navigation ownership from coordinator integration.
-- Normalize image binding scope identity and stop cancelled host-choice callbacks from reopening the solver.
-
-
-## 0.10.4
-
-- Integrate coordinator two-phase capture and read-only authority adoption while retaining live-document and challenge form fences.
-- Add an isolated actual-installed production worker/resolver qualification driver; final native hash acceptance remains pending until its checks pass.
-
-
-## 0.10.3
-
-- Integrate the verified coordinator capture/session/scheduler base and wire owner-fenced image challenge selection, local/manual/paid controls, and HTML-form fresh-link continuation.
-- Verify live isolated-world document identities before resolver contexts and challenge actions; enforce service admission before paid task creation.
-
-
-## 0.10.2
-
-- Bind image challenge submissions to complete form state and selected-host fields, reject occluded targets, and preserve immutable session snapshots.
-- Qualify production React FlareSolverr settings against isolated native state, including save/test/stale result/disable/restart; eight stale browser lifecycle cases submit zero forms.
-
-
-## 0.10.1
-
-- Add service restart/late-result reconciliation with source/claim-bound paid tasks, actual image dimension checks, translated budget controls and strict worker authorization.
-- Qualify 120 unique held-out images plus 80 negative images and four synthetic fresh-link desktop hashes. Installed worker/live host acceptance remains pending.
-
-
-## 0.10.0
-
-- Add qualified local open-circle geometry, stale-answer fencing, six-locale challenge controls, and service-owned optional CoordinatesTask reservations tested entirely against mocks.
-- Paid solving remains disabled with zero budget; live challenge and downstream browser acceptance remain pending.
-
-
-Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
 ## 0.11.9
 
@@ -299,6 +285,46 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Add desktop-selected site accounts keyed by exact origin and browser session, OS-keyring credential references, ephemeral private session metadata, typed authentication/entitlement observations and expiring one-use form grants.
 - Add six-language desktop account controls and browser form/cancellation modules. Qualified premium controls require the explicitly selected active session; purchase, advertisements and unqualified live layouts remain excluded.
 - Browser worker integration and native keyring/file acceptance remain in progress; local fixtures do not qualify live accounts or provider APIs.
+
+## 0.10.9
+
+- Route native control messages and original-response byte streams through the same canonical HOST; reject absent or invalid source counters before capture.
+- Adopt checked account/scheduler integration while preserving strict challenge document, scope, source, frame and selected-host proof.
+- Qualify four installed Chrome 155 local CAPTCHA POST-to-fresh-link desktop hashes, diagnostics off and paid calls zero. Record twelve stale/cancelled DOM cases with zero submissions.
+- Verify 121 extension, 6 desktop and 113 native tests, client types/builds, Rustfmt, strict Clippy, desktop Rust compilation and version artifacts. Live/paid, automatic fresh-page preview and broader browser/platform rows remain pending.
+
+## 0.10.5
+
+- Adopt canonical scope ordering and validated CLI navigation ownership from coordinator integration.
+- Normalize image binding scope identity and stop cancelled host-choice callbacks from reopening the solver.
+
+## 0.10.4
+
+- Integrate coordinator two-phase capture and read-only authority adoption while retaining live-document and challenge form fences.
+- Add an isolated actual-installed production worker/resolver qualification driver; final native hash acceptance remains pending until its checks pass.
+
+## 0.10.3
+
+- Integrate the verified coordinator capture/session/scheduler base and wire owner-fenced image challenge selection, local/manual/paid controls, and HTML-form fresh-link continuation.
+- Verify live isolated-world document identities before resolver contexts and challenge actions; enforce service admission before paid task creation.
+
+## 0.10.2
+
+- Bind image challenge submissions to complete form state and selected-host fields, reject occluded targets, and preserve immutable session snapshots.
+- Qualify production React FlareSolverr settings against isolated native state, including save/test/stale result/disable/restart; eight stale browser lifecycle cases submit zero forms.
+
+## 0.10.1
+
+- Add service restart/late-result reconciliation with source/claim-bound paid tasks, actual image dimension checks, translated budget controls and strict worker authorization.
+- Qualify 120 unique held-out images plus 80 negative images and four synthetic fresh-link desktop hashes. Installed worker/live host acceptance remains pending.
+
+## 0.10.0
+
+- Add qualified local open-circle geometry, stale-answer fencing, six-locale challenge controls, and service-owned optional CoordinatesTask reservations tested entirely against mocks.
+- Paid solving remains disabled with zero budget; live challenge and downstream browser acceptance remain pending.
+
+
+Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays at 0 until the IDM parity release gate is satisfied.
 
 ## 0.8.13
 

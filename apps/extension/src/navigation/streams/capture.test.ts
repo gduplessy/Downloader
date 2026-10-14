@@ -178,4 +178,26 @@ describe('original response takeover', () => {
     expect(sink.abort).toHaveBeenCalledWith('filter_interrupted');
     expect(failed).toHaveBeenCalledOnce();
   });
+  it('publishes EOF when Firefox stops while the last durable chunk ACK is pending', async () => {
+    let acknowledge!: () => void;
+    const ack = new Promise<void>(resolve => { acknowledge = resolve; });
+    const events: string[] = [];
+    const sink = {
+      chunk: vi.fn(async () => { events.push('chunk'); await ack; events.push('ack'); }),
+      end: vi.fn(async () => { events.push('end'); }),
+      abort: vi.fn(async () => { events.push('abort'); }),
+    } as unknown as DurableStreamSink;
+    const filter: any = { suspend: vi.fn(), resume: vi.fn(() => { throw Error('Finished filter'); }),
+      close: vi.fn(() => events.push('close')), disconnect: vi.fn() };
+    const completed = vi.fn(); const failed = vi.fn();
+    takeFirefox(filter, sink, failed, Promise.resolve(true), completed);
+    filter.ondata({ data: new Uint8Array([1, 2, 3]).buffer });
+    await new Promise(resolve => setTimeout(resolve, 0));
+    filter.onstop(); acknowledge();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(events).toEqual(['chunk', 'ack', 'end', 'close']);
+    expect(filter.resume).not.toHaveBeenCalled();
+    expect(failed).not.toHaveBeenCalled();
+    expect(completed).toHaveBeenCalledWith(true);
+  });
 });

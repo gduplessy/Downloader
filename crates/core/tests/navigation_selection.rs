@@ -176,7 +176,9 @@ fn authority_renewal_reads_only_current_generations_in_the_same_context() {
         .unwrap();
     assert_eq!(value["source_generation"], 2);
     assert_eq!(value["scope"]["claim_generation"], 2);
-    assert_eq!(value.as_object().unwrap().len(), 3);
+    assert_eq!(value.as_object().unwrap().len(), 5);
+    assert_eq!(value["navigation_transfer_pending"], false);
+    assert_eq!(value["navigation_transfer_recovery"], false);
     assert!(value.get("url").is_none());
     assert!(engine
         .command(command(

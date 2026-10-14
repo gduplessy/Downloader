@@ -1,0 +1,124 @@
+{
+  "browser": "Firefox/157.0.1",
+  "os": "win32",
+  "architecture": "x64",
+  "version": "0.16.1",
+  "nativeVersion": "0.16.1",
+  "nativeBuildRevision": "52b037baa324b7090a377a02c57254807be7e2fe",
+  "nativeHostDiagnostics": {
+    "version": "0.16.1",
+    "protocol": 1,
+    "platform": "windows"
+  },
+  "daemonDiagnostics": {
+    "version": "0.16.1",
+    "protocol": 1,
+    "platform": "windows"
+  },
+  "sourceRevision": "52b037baa324b7090a377a02c57254807be7e2fe",
+  "compiledSourceRevision": "52b037baa324b7090a377a02c57254807be7e2fe",
+  "buildProvenance": {
+    "explicitAbsWorkingDir": true,
+    "absoluteEntryPoints": true,
+    "verifiedProductionInputs": [
+      "apps/extension/src/navigation/session/document.ts",
+      "apps/extension/src/navigation/session/scope.ts",
+      "apps/extension/src/navigation/discovery/runtime.ts",
+      "apps/extension/src/navigation/session/start.ts",
+      "apps/extension/src/navigation/session/transfer.ts",
+      "apps/extension/src/navigation/accounts/policy.ts",
+      "apps/extension/src/navigation/accounts/premium.ts",
+      "apps/extension/src/navigation/adapters/context.ts",
+      "apps/extension/src/resolver-policy.ts",
+      "apps/extension/src/navigation/adapters/policy.ts",
+      "apps/extension/src/navigation/accounts/worker.ts",
+      "apps/extension/src/navigation/accounts/document.ts",
+      "apps/extension/src/navigation/session/projection.ts",
+      "apps/extension/src/navigation/authorization.ts",
+      "apps/extension/src/navigation/session/store.ts",
+      "apps/extension/src/navigation/streams/replay.ts",
+      "packages/shared/src/navigation.ts",
+      "apps/extension/src/navigation/streams/transport.ts",
+      "apps/extension/src/navigation/streams/ownership.ts",
+      "apps/extension/src/navigation/streams/recovery.ts",
+      "apps/extension/src/navigation/streams/capture.ts",
+      "apps/extension/src/navigation/streams/blob.ts",
+      "packages/shared/src/events.ts",
+      "apps/extension/src/navigation/challenges/worker.ts",
+      "apps/extension/src/navigation/scheduler/labels.ts",
+      "apps/extension/src/navigation/scheduler/runtime.ts",
+      "apps/extension/src/navigation/scheduler/waits.ts",
+      "apps/extension/src/capture.ts",
+      "packages/shared/src/translations.ts",
+      "packages/shared/src/i18n.ts",
+      "apps/extension/src/background.ts",
+      "apps/extension/src/navigation/accounts/binding.ts",
+      "apps/extension/src/navigation/scheduler/timers.ts",
+      "apps/extension/src/navigation/adapters/dom.ts",
+      "apps/extension/src/navigation/accounts/forms.ts",
+      "apps/extension/src/navigation/accounts/observe.ts",
+      "apps/extension/src/navigation/accounts/labels.ts",
+      "apps/extension/src/navigation/accounts/panel.ts",
+      "apps/extension/src/navigation/challenges/geometry.ts",
+      "apps/extension/src/navigation/challenges/lifecycle.ts",
+      "apps/extension/src/navigation/challenges/messages.ts",
+      "apps/extension/src/navigation/challenges/page.ts",
+      "apps/extension/src/navigation/adapters/preview.ts",
+      "apps/extension/src/navigation/adapters/selection-ui.ts",
+      "apps/extension/src/resolver.ts"
+    ]
+  },
+  "sourceHashes": {
+    "apps/extension/src/background.ts": "c5f91468ed466e3bc8961e32c986e4becebbda35911e39cdb7283bad2c1ce529",
+    "apps/extension/src/resolver.ts": "5268153e996f5aee1aa32494c0ea4231aae19b107908aab8d9d310e30a700f8e",
+    "apps/extension/src/navigation/streams/blob.ts": "752894243a75fa5d77435947e5e8882a76d8e7c3cadd72fc796429c1d9965217",
+    "apps/extension/src/navigation/streams/capture.ts": "b4b4a736e64fe02cf095ff9aba1b2f6d10d06a29dcfdc010898b325844b7a12c",
+    "apps/extension/src/navigation/streams/transport.ts": "db7f24424a6d19101c085e83f7baf0224f514a6a4578cd31700bc9ca56b9979b"
+  },
+  "extensionBundleHashes": {
+    "background": "b5c6cfd4021d221bd9b6325f7490fdeef0a9c54b01f7da19bdb61a24ce0a0985",
+    "resolver": "d4a77ca035651571aea7f6844c0eb62a5da7219cb5f0ae5148c940e8c873fd19"
+  },
+  "nativeBinarySha256": "038c236b16a91794680da1b0c5dcb0197e10ffdef98e0b68417ff6d232202a8a",
+  "cliBinarySha256": "0788410123155a5c5f7aa993cce176ee6fef351637bb9f99663f2197b755d006",
+  "scenario": "xhr",
+  "filename": "original-xhr.bin",
+  "extensionAPI": "browser.webRequest.filterResponseData",
+  "transport": "persistent browser.runtime.connectNative",
+  "driver": "WebDriver BiDi for addon installation and controls; no byte relay",
+  "diagnosticNativeWrapper": false,
+  "diagnosticSourceChanges": false,
+  "productionBackground": true,
+  "productionResolver": true,
+  "submissions": 1,
+  "originalPageOwnedXhr": true,
+  "pageOwnedConsumer": "bounded response.body.getReader drain/discard",
+  "ordinaryNavigationPostRewritten": false,
+  "httpRequests": [
+    {
+      "method": "GET",
+      "path": "/nav-adapters/g4u/xhr"
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico"
+    },
+    {
+      "method": "POST",
+      "path": "/one-use"
+    }
+  ],
+  "httpPayloadRequests": 1,
+  "bytes": 262161,
+  "sha256": "ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862",
+  "nativeVerifiedSha256": "ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862",
+  "state": "complete",
+  "claimGeneration": 1,
+  "sourceGeneration": 1,
+  "limitations": [
+    "Local fixtures; live hosts/accounts pending",
+    "Firefox stable only; ESR and other OS rows are separate",
+    "Fixture permissions granted in isolated manifest; user permission prompts unqualified",
+    "Ordinary binary POST download lane remains pending; Blob cancellation/private/container are separate qualification gates"
+  ]
+}

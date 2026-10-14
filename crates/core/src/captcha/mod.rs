@@ -532,6 +532,8 @@ pub fn reconcile(
 pub fn ownership(job: &crate::Job) -> Option<String> {
     let scope = job.navigation_scope.as_ref()?;
     if job.private
+        || job.navigation_transfer_pending
+        || job.navigation_transfer_recovery
         || !matches!(
             job.state,
             crate::JobState::WaitingBrowser | crate::JobState::WaitingUser
