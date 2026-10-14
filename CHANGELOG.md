@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.22.3
+
+- Record installed Firefox service-loss acceptance on c6bd315: verified isolated daemon restart, WaitingUser recovery, 6,975,488 retained bytes matching the original prefix, one producer GET and no publication/refetch.
+
 ## 0.22.2
 
 - Retry exact-stream native abort after service downtime when a stopped reader's persisted capture marker is interrupted or detached but its native job remains BrowserDownloading.
