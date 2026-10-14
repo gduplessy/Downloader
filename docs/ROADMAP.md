@@ -1,10 +1,12 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.21.3<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.22.0<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 NAV-11 review hardening (0.21.2) isolates private pending origins from regular cleanup and checks fresh native authority after queue admission before opening a source URL. Mutable caller snapshots cannot change frozen navigation intent. Current main's expiry regression and qualification histories are retained.
 
 NAV-11 reviewed merge (0.21.3) preserves installed transfer qualification and [Firefox queued-container smoke evidence](evidence/nav-integration/firefox-scope-reviewed.json) from checked review fixes. Both native files match their distinct expected hashes; original user tabs remain open and no payload is refetched by native code.
+
+NAV-11/NAV-12 partition qualification (0.22.0) integrates [actual Chrome/Edge partition evidence](evidence/nav-browser-streams/partition-qualification.md): two top-level sites in one profile/store, distinct matching native Blob hashes, and missing-cookie-permission refusal before job creation. Records retain their historical checked source and native revisions. Arbitrary embedded-frame capture and remaining audit gates stay pending.
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
