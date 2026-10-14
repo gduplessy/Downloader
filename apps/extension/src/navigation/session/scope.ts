@@ -81,14 +81,14 @@ export interface ScopeBrowser {
     getPartitionKey?: (details: any) => Promise<any>;
   };
 }
-export async function scopeForTab(
+export type ScopeContext = Omit<SessionScope, 'claim_generation'>;
+export async function contextForTab(
   api: ScopeBrowser,
   browser: string,
   profile: string,
   tabId: number,
-  generation: number,
   frameId = 0,
-): Promise<SessionScope> {
+): Promise<ScopeContext> {
   const tab = await api.tabs.get(tabId);
   const stores = await api.cookies.getAllCookieStores();
   const store = stores.find((s) => s.tabIds.includes(tabId));
@@ -115,6 +115,19 @@ export async function scopeForTab(
     container_id:
       browser === 'firefox' && store.id.startsWith('firefox-container-') ? store.id : null,
     partition_key,
+  };
+}
+
+export async function scopeForTab(
+  api: ScopeBrowser,
+  browser: string,
+  profile: string,
+  tabId: number,
+  generation: number,
+  frameId = 0,
+): Promise<SessionScope> {
+  return {
+    ...(await contextForTab(api, browser, profile, tabId, frameId)),
     claim_generation: generation,
   };
 }

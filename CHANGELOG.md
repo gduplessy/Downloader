@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.21.0
+
+- Retain actual context-menu source tabs before queued navigation admission, separately from owned resolver tabs. Validate original cookie store, window, origin, private lane, browser epoch, native owner and source generation before opening a destination.
+- Preserve only a nonsecret durable recovery requirement; lost, restarted or transferred source contexts stop visibly rather than defaulting to a different session.
+- Record Firefox158 sequential container native hashes and the pre-fix queued-container substitution. Installed fixed queue and missing-source qualification follows this checked increment.
+
 ## 0.16.1
 
 - Refuse renderer status changes that would reset acknowledged progress while the exact original response stream owns the native job; explicit interruption keeps durable progress.

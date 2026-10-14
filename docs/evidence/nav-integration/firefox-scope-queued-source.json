@@ -1,5 +1,5 @@
 {
-  "browser": "Firefox/157.0.1",
+  "browser": "Firefox/158.0",
   "os": "win32",
   "productVersion": "0.16.1",
   "nativeVersion": "0.16.1",
@@ -251,5 +251,6 @@
     "Firefox ESR/other OS",
     "Worker loss/full browser restart",
     "Ordinary binary main-frame form navigation"
-  ]
+  ],
+  "browserVersionProvenance": "Disposable repro profile compatibility.ini LastVersion=158.0_20261007201254/20261007201254; replaces an earlier assumed157.0.1 label. Original binary-form157 evidence is independent."
 }
