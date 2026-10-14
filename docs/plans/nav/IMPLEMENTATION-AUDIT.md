@@ -16,11 +16,11 @@ Audit date: 2026-10-13. Checked integration: `b9231c9` (0.18.2). The thirteen pl
 | NAV-08 | Installed Chrome/Edge/Firefox Blob hashes; scoped protocol/lifecycle checks | Supported Firefox loss/cancel/revocation; measured peak buffering independent of file size |
 | NAV-09 | Replay policy/fencing, original POST and authenticated one-use GET counts | Remaining consume-on-HEAD/GET, rotating/expired/redirect token counters; changed-partial recovery |
 | NAV-10 | Fifty-job Engine/renderer fixture, caps, fairness and host leases | Installed worker admission/resource limits, waits and restart |
-| NAV-11 | Actual private Chromium hashes/storage audit; native/recipient transfer and desktop UI tests | Cross-profile transfer evidence integration; queued Firefox container repair; actual partitions and download-mapping lifecycle |
+| NAV-11 | Actual private Chromium hashes/storage audit; native/recipient transfer and desktop UI tests | Cross-profile transfer evidence integration; actual partitions and download-mapping lifecycle |
 | NAV-12 | Installed Chrome/Edge authenticated discovery plus full browser/service/worker restart | Installed cancellation/tab-close/auth expiry negatives; supported Firefox/context rows |
 | NAV-13 | Qualified narrow geometry corpus, mocked paid provider, Chrome challenge-to-file hashes | Installed Edge/Firefox invalidation/UI and native controls |
 
-The live cross-profile Chrome transfer has passed in the batch worktree; its checked evidence and Edge repeat are being integrated. The Firefox queued-container fixture reproduced default-store substitution before any file publication; repair and positive qualification remain mandatory. Frame access and partition capabilities must be measured against actual APIs, never synthesized.
+The live cross-profile Chrome transfer has passed in the batch worktree; its checked evidence and Edge repeat are being integrated. The Firefox queued-container fixture reproduced default-store substitution before any file publication. Checked af318b9 now passes actual queued-container hashes and lost-source WaitingUser recovery on Firefox158; private permission and native context-menu UI remain pending. Frame access and partition capabilities must be measured against actual APIs, never synthesized.
 
 ## Owner-selected pending rows
 

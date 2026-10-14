@@ -1,0 +1,244 @@
+{
+  "mode": "sequential",
+  "initialActivation": "synthetic invocation of unchanged registered context-menu listener with actual browser.tabs.get metadata",
+  "nativeContextMenuUiQualified": false,
+  "rows": [
+    {
+      "label": "A",
+      "state": "complete",
+      "bytes": 262161,
+      "sha256": "ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862",
+      "nativeVerifiedSha256": "ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862",
+      "filename": "blob",
+      "scope": {
+        "browser": "firefox",
+        "cookie_store_id": "firefox-container-6",
+        "container_id": "firefox-container-6",
+        "private": false,
+        "profileHash": "07d2094fa54964df209cab664c3e8f4c99022eb8e0a2f2c08719c635b9fe762b",
+        "claim_generation": 1
+      },
+      "sourceGeneration": 1
+    },
+    {
+      "label": "B",
+      "state": "complete",
+      "bytes": 262161,
+      "sha256": "30c153bb00535953db52a8ab18f3546caee48e2a72def7e12e65e4616d9f9154",
+      "nativeVerifiedSha256": "30c153bb00535953db52a8ab18f3546caee48e2a72def7e12e65e4616d9f9154",
+      "filename": "blob (1)",
+      "scope": {
+        "browser": "firefox",
+        "cookie_store_id": "firefox-container-7",
+        "container_id": "firefox-container-7",
+        "private": false,
+        "profileHash": "07d2094fa54964df209cab664c3e8f4c99022eb8e0a2f2c08719c635b9fe762b",
+        "claim_generation": 1
+      },
+      "sourceGeneration": 1
+    }
+  ],
+  "negative": [
+    {
+      "label": "actual other container",
+      "reply": {
+        "transportSucceeded": true,
+        "ok": false,
+        "error": {
+          "code": "native_failed",
+          "message": "Stale or foreign browser stream ownership"
+        },
+        "dataKeys": []
+      },
+      "zeroNativeBytes": true
+    },
+    {
+      "label": "missing scope",
+      "reply": {
+        "transportSucceeded": false,
+        "error": "Error: An unexpected error occurred",
+        "name": "Error"
+      },
+      "zeroNativeBytes": true
+    },
+    {
+      "label": "actual private tab",
+      "qualified": false,
+      "blockedReason": "Error: {\"columnNumber\":77,\"exception\":{\"type\":\"error\"},\"lineNumber\":0,\"stackTrace\":{\"callFrames\":[{\"columnNumber\":77,\"functionName\":\"\",\"lineNumber\":0,\"url\":\"moz-extension://[isolated-addon]/options.html\"}]},\"text\":\"Error: Extension does not have permission for incognito mode\"}",
+      "noFabricatedPrivateScope": true
+    }
+  ],
+  "httpRequests": [
+    {
+      "method": "GET",
+      "path": "/seed/A",
+      "variant": null
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico",
+      "variant": "A"
+    },
+    {
+      "method": "GET",
+      "path": "/source",
+      "variant": "A"
+    },
+    {
+      "method": "GET",
+      "path": "/seed/B",
+      "variant": null
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico",
+      "variant": "B"
+    },
+    {
+      "method": "GET",
+      "path": "/source",
+      "variant": "B"
+    },
+    {
+      "method": "GET",
+      "path": "/seed/C",
+      "variant": null
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico",
+      "variant": "C"
+    },
+    {
+      "method": "GET",
+      "path": "/nav-adapters/g4u/blob",
+      "variant": "A"
+    },
+    {
+      "method": "GET",
+      "path": "/file",
+      "variant": "A"
+    },
+    {
+      "method": "GET",
+      "path": "/nav-adapters/g4u/blob",
+      "variant": "B"
+    },
+    {
+      "method": "GET",
+      "path": "/file",
+      "variant": "B"
+    }
+  ],
+  "scopeProof": [
+    {
+      "label": "A",
+      "sourceCookieStoreId": "firefox-container-6",
+      "initialActivation": "unchanged registered production listener",
+      "sourcePrivate": false
+    },
+    {
+      "label": "B",
+      "sourceCookieStoreId": "firefox-container-7",
+      "initialActivation": "unchanged registered production listener",
+      "sourcePrivate": false
+    }
+  ],
+  "pending": [
+    "Native context-menu UI",
+    "Firefox ESR",
+    "Other OS",
+    "Worker-loss/full-browser restart",
+    "Ordinary binary main-frame form-navigation response"
+  ],
+  "contexts": [
+    {
+      "label": "A",
+      "userContext": "a70c55e3-7dc0-4d4b-8b39-a141aad843a4",
+      "cookieStoreId": "firefox-container-6",
+      "private": false
+    },
+    {
+      "label": "B",
+      "userContext": "cf1a5a1a-025a-4ddd-9ea0-2f2e599319e3",
+      "cookieStoreId": "firefox-container-7",
+      "private": false
+    }
+  ],
+  "cookieName": "nav_scope_fixture",
+  "identicalPagePath": "/nav-adapters/g4u/blob",
+  "identicalProducerFilePath": "/file",
+  "blobUrls": "Per-document object URLs; identical original producer /file endpoint",
+  "sourceHashes": {
+    "apps/extension/src/background.ts": "c5f91468ed466e3bc8961e32c986e4becebbda35911e39cdb7283bad2c1ce529",
+    "apps/extension/src/resolver.ts": "5268153e996f5aee1aa32494c0ea4231aae19b107908aab8d9d310e30a700f8e",
+    "apps/extension/src/navigation/session/scope.ts": "8bcea960ae15ac97a8df82441fe362f735f4ca257d9405b5ea1a6e938a26f603",
+    "apps/extension/src/navigation/streams/blob.ts": "752894243a75fa5d77435947e5e8882a76d8e7c3cadd72fc796429c1d9965217",
+    "apps/extension/src/navigation/streams/transport.ts": "db7f24424a6d19101c085e83f7baf0224f514a6a4578cd31700bc9ca56b9979b"
+  },
+  "bundleHashes": {
+    "background": "417358820f3072052343a37cd9a5887feab0403a97333aa777a2d9233175a80e",
+    "resolver": "d4a77ca035651571aea7f6844c0eb62a5da7219cb5f0ae5148c940e8c873fd19",
+    "scopeHelper": "c8c697e89514031712f12a1c37f6a67cab7d407bc25e07eaae92f5ad2640cf25"
+  },
+  "productionCompiledInputs": [
+    "apps/extension/src/navigation/session/document.ts",
+    "apps/extension/src/navigation/session/scope.ts",
+    "apps/extension/src/navigation/discovery/runtime.ts",
+    "apps/extension/src/navigation/session/start.ts",
+    "apps/extension/src/navigation/session/transfer.ts",
+    "apps/extension/src/navigation/accounts/policy.ts",
+    "apps/extension/src/navigation/accounts/premium.ts",
+    "apps/extension/src/navigation/adapters/context.ts",
+    "apps/extension/src/resolver-policy.ts",
+    "apps/extension/src/navigation/adapters/policy.ts",
+    "apps/extension/src/navigation/accounts/worker.ts",
+    "apps/extension/src/navigation/accounts/document.ts",
+    "apps/extension/src/navigation/session/projection.ts",
+    "apps/extension/src/navigation/authorization.ts",
+    "apps/extension/src/navigation/session/store.ts",
+    "apps/extension/src/navigation/streams/replay.ts",
+    "packages/shared/src/navigation.ts",
+    "apps/extension/src/navigation/streams/transport.ts",
+    "apps/extension/src/navigation/streams/ownership.ts",
+    "apps/extension/src/navigation/streams/recovery.ts",
+    "apps/extension/src/navigation/streams/capture.ts",
+    "apps/extension/src/navigation/streams/blob.ts",
+    "packages/shared/src/events.ts",
+    "apps/extension/src/navigation/challenges/worker.ts",
+    "apps/extension/src/navigation/scheduler/labels.ts",
+    "apps/extension/src/navigation/scheduler/runtime.ts",
+    "apps/extension/src/navigation/scheduler/waits.ts",
+    "apps/extension/src/capture.ts",
+    "packages/shared/src/translations.ts",
+    "packages/shared/src/i18n.ts",
+    "apps/extension/src/background.ts",
+    "apps/extension/src/navigation/accounts/binding.ts",
+    "apps/extension/src/navigation/scheduler/timers.ts",
+    "apps/extension/src/navigation/adapters/dom.ts",
+    "apps/extension/src/navigation/accounts/forms.ts",
+    "apps/extension/src/navigation/accounts/observe.ts",
+    "apps/extension/src/navigation/accounts/labels.ts",
+    "apps/extension/src/navigation/accounts/panel.ts",
+    "apps/extension/src/navigation/challenges/geometry.ts",
+    "apps/extension/src/navigation/challenges/lifecycle.ts",
+    "apps/extension/src/navigation/challenges/messages.ts",
+    "apps/extension/src/navigation/challenges/page.ts",
+    "apps/extension/src/navigation/adapters/preview.ts",
+    "apps/extension/src/navigation/adapters/selection-ui.ts",
+    "apps/extension/src/resolver.ts"
+  ],
+  "sourceRevision": "52b037baa324b7090a377a02c57254807be7e2fe",
+  "nativeBuildRevision": "52b037baa324b7090a377a02c57254807be7e2fe",
+  "productVersion": "0.16.1",
+  "nativeVersion": "0.16.1",
+  "nativeBinarySha256": "038c236b16a91794680da1b0c5dcb0197e10ffdef98e0b68417ff6d232202a8a",
+  "cliBinarySha256": "0788410123155a5c5f7aa993cce176ee6fef351637bb9f99663f2197b755d006",
+  "browser": "Firefox/158.0",
+  "os": "win32",
+  "state": "qualified",
+  "driverByteRelay": false,
+  "nativePayloadRefetch": false,
+  "syntheticScope": false,
+  "privatePositiveLaneQualified": false
+}

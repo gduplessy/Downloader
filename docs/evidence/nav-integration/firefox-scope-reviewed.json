@@ -1,0 +1,136 @@
+{
+  "result": "qualified",
+  "mode": "queued",
+  "browser": "Firefox/158.0",
+  "os": "win32",
+  "sourceRevision": "5556c251ffe25a16385563eda5c49856abaddc4d",
+  "compiledSourceRevision": "5556c251ffe25a16385563eda5c49856abaddc4d",
+  "productVersion": "0.21.2",
+  "nativeBuildRevision": "d83fbbe608f83567d6429793004d449278a54c15",
+  "nativeVersion": "0.18.3",
+  "nativeBinarySha256": "fcfd3188fbd4eadef648b26fe2766bee9f7df6a01022b209779d632d4759759d",
+  "cliBinarySha256": "4de06a6ee01224b97dbc618fcd176e7bd4b733c8e3f302527b516eb3fdf92e80",
+  "sourceHashes": {
+    "apps/extension/src/background.ts": "88f2c57c907eaa4f178cfca8413a0d1476657c01e4e075a6934f71fbe94a4a9c",
+    "apps/extension/src/resolver.ts": "5268153e996f5aee1aa32494c0ea4231aae19b107908aab8d9d310e30a700f8e",
+    "apps/extension/src/navigation/session/scope.ts": "68c0b39f33838e68b878f76bfd32ed7b181f2533a5845358abcc6b516912d9a2",
+    "apps/extension/src/navigation/session/source.ts": "7260b130785aba5adb8d2b03ea3a834436c6d5bc592087e68cc32c23033ec985",
+    "apps/extension/src/navigation/streams/blob.ts": "752894243a75fa5d77435947e5e8882a76d8e7c3cadd72fc796429c1d9965217",
+    "apps/extension/src/navigation/streams/transport.ts": "db7f24424a6d19101c085e83f7baf0224f514a6a4578cd31700bc9ca56b9979b"
+  },
+  "bundleHashes": {
+    "background": "4d72dc1771f64bd5e5139cddca79ca59cd50aa1f380f29f074130692e9413dcc",
+    "resolver": "06be4cae03e91441b33401f9b8f8987d7f1d9802ffd55086c1b0adf85497aebf",
+    "scopeHelper": "44dcbb2957e1e25a8437ec44a5cd6fb49ae92de49c37fe521334c69094b406be"
+  },
+  "fixtureSha256": "1a3e0f8fa1c610fb39a3bb6d1ef7ba0bb0245f7efaa1bd9375c0bd69c58b90d6",
+  "verifiedProductionInputs": [
+    "apps/extension/src/navigation/session/scope.ts",
+    "apps/extension/src/navigation/session/store.ts",
+    "apps/extension/src/navigation/session/source.ts",
+    "apps/extension/src/navigation/session/document.ts",
+    "apps/extension/src/navigation/discovery/runtime.ts",
+    "apps/extension/src/navigation/session/start.ts",
+    "apps/extension/src/navigation/session/transfer.ts",
+    "apps/extension/src/navigation/accounts/policy.ts",
+    "apps/extension/src/navigation/accounts/premium.ts",
+    "apps/extension/src/navigation/adapters/context.ts",
+    "apps/extension/src/resolver-policy.ts",
+    "apps/extension/src/navigation/adapters/policy.ts",
+    "apps/extension/src/navigation/accounts/worker.ts",
+    "apps/extension/src/navigation/accounts/document.ts",
+    "apps/extension/src/navigation/session/projection.ts",
+    "apps/extension/src/navigation/authorization.ts",
+    "apps/extension/src/navigation/session/preflight.ts",
+    "apps/extension/src/navigation/streams/replay.ts",
+    "packages/shared/src/navigation.ts",
+    "apps/extension/src/navigation/streams/transport.ts",
+    "apps/extension/src/navigation/streams/ownership.ts",
+    "apps/extension/src/navigation/streams/recovery.ts",
+    "apps/extension/src/navigation/streams/capture.ts",
+    "apps/extension/src/navigation/streams/blob.ts",
+    "packages/shared/src/events.ts",
+    "apps/extension/src/navigation/challenges/worker.ts",
+    "apps/extension/src/navigation/scheduler/waits.ts",
+    "apps/extension/src/navigation/scheduler/labels.ts",
+    "apps/extension/src/navigation/scheduler/runtime.ts",
+    "apps/extension/src/capture.ts",
+    "packages/shared/src/translations.ts",
+    "packages/shared/src/i18n.ts",
+    "apps/extension/src/background.ts",
+    "apps/extension/src/navigation/accounts/binding.ts",
+    "apps/extension/src/navigation/scheduler/timers.ts",
+    "apps/extension/src/navigation/adapters/dom.ts",
+    "apps/extension/src/navigation/accounts/forms.ts",
+    "apps/extension/src/navigation/accounts/observe.ts",
+    "apps/extension/src/navigation/accounts/labels.ts",
+    "apps/extension/src/navigation/accounts/panel.ts",
+    "apps/extension/src/navigation/challenges/geometry.ts",
+    "apps/extension/src/navigation/challenges/lifecycle.ts",
+    "apps/extension/src/navigation/challenges/messages.ts",
+    "apps/extension/src/navigation/challenges/page.ts",
+    "apps/extension/src/navigation/adapters/preview.ts",
+    "apps/extension/src/navigation/adapters/selection-ui.ts",
+    "apps/extension/src/resolver.ts"
+  ],
+  "rows": [
+    {
+      "label": "A",
+      "state": "complete",
+      "bytes": 262161,
+      "desktopSha256": "ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862",
+      "nativeVerifiedSha256": "ea7079c478bfa028ecbe546e3f39bbf22aa9e5a5d575fd3854105c3c05d6a862",
+      "sourceGeneration": 1,
+      "scope": {
+        "browser": "firefox",
+        "cookie_store_id": "firefox-container-6",
+        "container_id": "firefox-container-6",
+        "private": false,
+        "profileHash": "d8cfed2c8558c65ced1072e712099df3887d3d84fd0a57a2003ba6428c200ddd",
+        "claim_generation": 1
+      }
+    },
+    {
+      "label": "B",
+      "state": "complete",
+      "bytes": 262161,
+      "desktopSha256": "30c153bb00535953db52a8ab18f3546caee48e2a72def7e12e65e4616d9f9154",
+      "nativeVerifiedSha256": "30c153bb00535953db52a8ab18f3546caee48e2a72def7e12e65e4616d9f9154",
+      "sourceGeneration": 1,
+      "scope": {
+        "browser": "firefox",
+        "cookie_store_id": "firefox-container-7",
+        "container_id": "firefox-container-7",
+        "private": false,
+        "profileHash": "d8cfed2c8558c65ced1072e712099df3887d3d84fd0a57a2003ba6428c200ddd",
+        "claim_generation": 1
+      }
+    }
+  ],
+  "originalSourceTabsRetained": true,
+  "payloadRequests": [
+    {
+      "method": "GET",
+      "path": "/file",
+      "variant": "A"
+    },
+    {
+      "method": "GET",
+      "path": "/file",
+      "variant": "B"
+    }
+  ],
+  "driverByteRelay": false,
+  "nativePayloadRefetch": false,
+  "syntheticScope": false,
+  "diagnosticSourceChanges": false,
+  "diagnosticNativeWrapper": false,
+  "nativeContextMenuUiQualified": false,
+  "privatePositiveLaneQualified": false,
+  "limitations": [
+    "Local permitted fixtures only",
+    "Initial context-menu invocation is synthetic against the unchanged registered handler with actual tab metadata",
+    "Actual preview and byte transport are production paths; no iframe or private-addon acceptance claimed",
+    "Runtime review fixes were tested at source5556c25/product0.21.2; final0.21.3 adds metadata and transfer-fixture merge reconciliation only"
+  ]
+}

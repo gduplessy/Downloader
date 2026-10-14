@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.21.3
+
+- Reconcile the reviewed queued-source/privacy fixes with installed transfer qualification without overwriting either branch's history.
+- Record Firefox 158 installed smoke acceptance on checked review fixes: two original containers, distinct native/desktop hashes, one original payload GET each, retained source tabs and no native refetch.
+
+## 0.21.2
+
+- Reconcile queued-container source retention with reviewed main and deterministic Windows expiry checks.
+- Fence private transient source records through the actual navigation storage facade, including guessed regular-worker cleanup attempts.
+- Freeze navigation intent and reread native authority after admission before any HTTP tab action, rejecting changed sources, owners, scopes, claims, terminal states and pending transfers.
+
+## 0.21.1
+
+- Record actual Firefox158 queued-container A/B native hashes and trace-off lost-source recovery from checked af318b9 extension21.0 with the preserved identified native16.1 pair.
+- Require visible typed WaitingUser recovery, zero replacement payload requests, a nonsecret pending-source marker and retained original user tabs. Wait for normal scheduler polling rather than assuming immediate admission after release.
+- Keep native context-menu UI, private-addon permission, supported-stream loss/cancel and remaining provider/platform acceptance explicit.
+
+## 0.21.0
+
+- Retain actual context-menu source tabs before queued navigation admission, separately from owned resolver tabs. Validate original cookie store, window, origin, private lane, browser epoch, native owner and source generation before opening a destination.
+- Preserve only a nonsecret durable recovery requirement; lost, restarted or transferred source contexts stop visibly rather than defaulting to a different session.
+- Record Firefox158 sequential container native hashes and the pre-fix queued-container substitution. Installed fixed queue and missing-source qualification follows this checked increment.
+
 ## 0.19.1
 
 - Reconcile reviewed handoff UI, monotonic wait timing and stream recovery evidence with installed Chrome/Edge two-profile transfer qualification. Preserve both source histories and the separate pending desktop GUI/browser-process restart boundaries.

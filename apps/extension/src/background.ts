@@ -1,3 +1,4 @@
+import { NavigationSources, NavigationSourceError } from './navigation/session/source';
 import { RenderedDiscovery } from './navigation/discovery/runtime';
 import { hasLiveResolver, verifyLiveDocument, type DocumentClaim } from './navigation/session/document';
 import { NavigationStarts } from './navigation/session/start';
@@ -15,6 +16,7 @@ import {
 import { matchAdapter } from './navigation/adapters/policy';
 import type { SessionScope, StreamIdentity } from '../../../packages/shared/src/navigation';
 import { scopeForTab, sameScope, sessionKey, type ScopedRequest } from './navigation/session/scope';
+import { admittedNavigationJob } from './navigation/session/preflight';
 import { navigationStorage, memoryStorage } from './navigation/session/store';
 import { classifyReplay } from './navigation/streams/replay';
 import { DurableStreamSink, NativeStreamPort } from './navigation/streams/transport';
@@ -147,6 +149,10 @@ const profile = browser.storage.local.get('profileId').then(async (stored) => {
   if (!stored.profileId) await browser.storage.local.set({ profileId: id });
   return id;
 });
+const navigationSources = new NavigationSources(
+  browser as any, BROWSER, profile, browserEpoch, ephemeralStore,
+  privateWorker ? navigationStore : browser.storage.local, privateWorker,
+);
 const navigationTransfer = new NavigationTransfer(browser, BROWSER, profile, privateWorker,
   args => native('browser_navigation_transfer', args), navigationPermissions,
   async (accepted, tabId, page) => {
@@ -161,6 +167,7 @@ const navigationTransfer = new NavigationTransfer(browser, BROWSER, profile, pri
     eventSnapshot = null;
     const job = (await native('snapshot')).jobs.find((job: any) => job.id === accepted.id);
     if (!job) throw Error('Accepted task is unavailable in this session');
+    await navigationSources.adopted(job);
     await scheduler.request({ action: 'control', id: job.id, paused: false, priority: null });
     await startResolver(job);
   });
@@ -964,8 +971,11 @@ browser.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === 'navigate') {
       const url = info.linkUrl || tab?.url;
       if (url && (await navigationPermissions(url))) {
+        if (tab?.id === undefined) throw new NavigationSourceError('navigation_source_missing');
+        const requestId = crypto.randomUUID();
+        await navigationSources.prepare(requestId, tab.id);
         const job = await native('navigate', {
-          request_id: crypto.randomUUID(),
+          request_id: requestId,
           url,
           paused: true,
           description: '',
@@ -976,7 +986,7 @@ browser.contextMenus.onClicked.addListener((info, tab) => {
           queue: null,
           checksum: null,
         });
-        await startResolver(job, false, tab?.id);
+        await startResolver(job, false, tab.id);
       }
     }
     if (info.menuItemId === 'link' && info.linkUrl)
@@ -1088,6 +1098,8 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
     return scheduler.request(message.request);
   if (extensionPage && message.type === 'navigation_queue_cancel')
     return (async () => {
+      const sourceJob = (await browserSnapshot()).jobs.find((job: any) => job.id === message.id);
+      if (sourceJob) await navigationSources.invalidate(sourceJob);
       await native('cancel', { id: message.id });
       await scheduler.release(message.id);
       const storage = await navigationStore.get('resolver-' + message.id);
@@ -1287,14 +1299,33 @@ const resolverStarts = new NavigationStarts();
 async function startResolver(job: any, force = false, sourceTabId?: number) {
   return resolverStarts.run(job.id, () => startOwnedResolver(job, force, sourceTabId));
 }
+async function pendingNavigationSource(job: any, sourceTabId?: number) {
+  try {
+    if (sourceTabId !== undefined) await navigationSources.remember(job, sourceTabId);
+    return (await navigationSources.resolve(job)) ?? sourceTabId;
+  } catch (error) {
+    if (error instanceof NavigationSourceError) {
+      await navigationSources.invalidate(job);
+      await native('browser_status', {
+        id: job.id, state: 'waiting_user', bytes: job.bytes ?? 0, total: job.total ?? null,
+        message: `${error.code}: Original browser context is unavailable. Continue from its original session or use explicit session transfer.`,
+      }).catch(() => {});
+      await scheduler.release(job.id).catch(() => {});
+    }
+    throw error;
+  }
+}
 async function startOwnedResolver(job: any, force = false, sourceTabId?: number) {
-  if (job.navigation_transfer_pending || job.navigation_transfer_recovery)
+  // Freeze the observed source before awaits; cached snapshot DTOs can change in place.
+  job = structuredClone(job);
+  if (job.navigation_transfer_pending || job.navigation_transfer_recovery) {
+    await navigationSources.invalidate(job);
     throw Error('Explicit session transfer or recovery is required');
+  }
   const startUrl = job.navigation_url ?? job.page_url;
   if (!/^https?:\/\//.test(startUrl)) throw Error('Page navigation requires HTTP or HTTPS');
   if (force)
     await scheduler.request({ action: 'control', id: job.id, paused: false, priority: null });
-  if (!(await scheduler.admitted(job.id))) return;
   const key = 'resolver-' + job.id,
     stored = await navigationStore.get(key);
   if (stored[key] && (stored[key] as ResolverRecord).sessionEpoch !== (await browserEpoch)) {
@@ -1304,6 +1335,9 @@ async function startOwnedResolver(job: any, force = false, sourceTabId?: number)
     delete stored[key];
   }
   if (stored[key]) {
+    if (!(await admittedNavigationJob(job, () => scheduler.admitted(job.id),
+      // A new native BrowserSnapshot reads the current store; do not use browserSnapshot's event cache.
+      () => native('snapshot')))) return;
     const record = stored[key] as ResolverRecord;
     try {
       if (!(await ownsCurrentTab(record)))
@@ -1360,6 +1394,12 @@ async function startOwnedResolver(job: any, force = false, sourceTabId?: number)
       throw error;
     }
   }
+  sourceTabId = await pendingNavigationSource(job, sourceTabId);
+  if (!(await admittedNavigationJob(job, () => scheduler.admitted(job.id),
+      // A new native BrowserSnapshot reads the current store; do not use browserSnapshot's event cache.
+      () => native('snapshot')))) return;
+  // Admission can wait; revalidate the observed source before using its window/store.
+  sourceTabId = await pendingNavigationSource(job, sourceTabId);
   const source = sourceTabId === undefined ? undefined : await browser.tabs.get(sourceTabId);
   if (job.private && (!browser.storage.session || source?.incognito !== true || !privateWorker))
     throw Error(
@@ -1387,6 +1427,8 @@ async function startOwnedResolver(job: any, force = false, sourceTabId?: number)
     if (attempts === 199) throw Error('Page did not settle before its session claim');
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
+  // The fresh destination partition is observed after load; no source partition is inherited.
+  await pendingNavigationSource(job, sourceTabId);
   const proposed = await scopeForTab(
     browser as any,
     BROWSER,
@@ -1420,6 +1462,7 @@ async function startOwnedResolver(job: any, force = false, sourceTabId?: number)
     bytes: 0,
     total: null,
   });
+  await navigationSources.adopted(job);
   await scheduler.heartbeat(job.id, tab.id!);
   await injectResolver(tab.id!);
 }
@@ -1430,6 +1473,10 @@ async function pollResolvers(userGesture = false) {
   try {
     await recoverDirectCaptures(await navigationStore.get(null));
     const snapshot = await browserSnapshot();
+    for (const job of snapshot.jobs)
+      if (job.navigation_transfer_pending || job.navigation_transfer_recovery ||
+          ['complete', 'browser_complete', 'cancelled', 'failed'].includes(job.state))
+        await navigationSources.invalidate(job);
     const storage: Record<string, any> = await navigationStore.get(null);
     const liveKeys = new Set<string>();
     for (const [key, value] of Object.entries(storage))
@@ -1496,8 +1543,7 @@ async function pollResolvers(userGesture = false) {
       }
       const stored: Record<string, any> = await navigationStore.get('resolver-' + job.id);
       if (!stored['resolver-' + job.id]) {
-        // Admission is atomic in the service; workers cannot race tab limits.
-        if (!(await scheduler.admitted(job.id))) continue;
+        // startResolver validates pending origins before its atomic service admission.
         try {
           await startResolver(job, userGesture, await discovery.sourceForJob(job));
           active.push(job);
