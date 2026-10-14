@@ -1,0 +1,92 @@
+{
+  "mode": "reader-loss",
+  "outcome": "qualified",
+  "sourceRevision": "d18f30e838d88f2113ba5c0c4a994486354c263e",
+  "nativeBuildRevision": "d83fbbe608f83567d6429793004d449278a54c15",
+  "nativeVersion": "0.18.3",
+  "nativeBinarySha256": "fcfd3188fbd4eadef648b26fe2766bee9f7df6a01022b209779d632d4759759d",
+  "cliBinarySha256": "4de06a6ee01224b97dbc618fcd176e7bd4b733c8e3f302527b516eb3fdf92e80",
+  "browser": "Firefox/158.0",
+  "os": "win32",
+  "fixtureSha256": "f0bd9e86b117eccb73fbceeab5ca85116f4672fc4eb9e264f3755f13938837a6",
+  "diagnosticSourceChanges": false,
+  "diagnosticNativeWrapper": false,
+  "recovery": {
+    "state": "waiting_user",
+    "bytes": 90112,
+    "originalBytes": 8388625,
+    "partialSha256": "e98ccd9920b912c1c2383ea95a141780f83d8e15228bdc2a180ee42f71cbda24",
+    "intendedPrefixSha256": "e98ccd9920b912c1c2383ea95a141780f83d8e15228bdc2a180ee42f71cbda24",
+    "sourceGeneration": 1,
+    "verifiedSha256": null,
+    "recoveryMessage": "Navigation tab was closed. Continue page navigation from the extension.",
+    "noPublication": true,
+    "noRefetch": true,
+    "lateProgressUnchanged": true,
+    "elapsedMs": 5135
+  },
+  "settledDiagnostic": {
+    "native": {
+      "state": "waiting_user",
+      "bytes": 90112,
+      "total": null,
+      "sourceGeneration": 1,
+      "verifiedSha256": null,
+      "hasError": true,
+      "errorCode": null,
+      "navigationScope": {
+        "browser": "firefox",
+        "cookie_store_id": "firefox-container-6",
+        "container_id": "firefox-container-6",
+        "private": false,
+        "claim_generation": 1
+      }
+    },
+    "markers": {
+      "sessionAreaAvailable": true,
+      "local": {
+        "resolver": null,
+        "capture": null
+      },
+      "session": {
+        "resolver": null,
+        "capture": {
+          "state": "interrupted",
+          "tabId": 5,
+          "sourceGeneration": 1,
+          "documentGeneration": null,
+          "kind": "blob",
+          "hasDocumentNonce": true,
+          "scope": {
+            "browser": "firefox",
+            "cookie_store_id": "firefox-container-6",
+            "container_id": "firefox-container-6",
+            "private": false,
+            "claim_generation": 1
+          }
+        }
+      },
+      "documentNonceEquivalent": false
+    }
+  },
+  "payloadRequestCount": 1,
+  "originalSourceTabsRetained": true,
+  "sourceHashes": {
+    "apps/extension/src/background.ts": "948154914acfa2b51f8efb10746e771ee2b256f49f5b4b0e135c09105d98cac7",
+    "apps/extension/src/resolver.ts": "5268153e996f5aee1aa32494c0ea4231aae19b107908aab8d9d310e30a700f8e",
+    "apps/extension/src/navigation/session/scope.ts": "447a6ad3a08067f1a5bc7e63f6656cb70acf1eeaedde2bb92e1e09b84bd34d2c",
+    "apps/extension/src/navigation/session/source.ts": "7260b130785aba5adb8d2b03ea3a834436c6d5bc592087e68cc32c23033ec985",
+    "apps/extension/src/navigation/streams/blob.ts": "752894243a75fa5d77435947e5e8882a76d8e7c3cadd72fc796429c1d9965217",
+    "apps/extension/src/navigation/streams/transport.ts": "db7f24424a6d19101c085e83f7baf0224f514a6a4578cd31700bc9ca56b9979b"
+  },
+  "bundleHashes": {
+    "background": "6b185b4cf988f3cbf0df92c8773534110b8ca9c1be464eba36792a407121b665",
+    "resolver": "06be4cae03e91441b33401f9b8f8987d7f1d9802ffd55086c1b0adf85497aebf",
+    "scopeHelper": "536561a466eaea0e9eefe16af6057937709650ae9b9ce9965b5734cfa7d51b23"
+  },
+  "limits": [
+    "Owning resolver tab closed; original user source tab retained",
+    "Initial activation invokes registered menu listener",
+    "Full browser loss, intermittent revoked-Blob drift and remaining acceptance gates remain pending"
+  ]
+}

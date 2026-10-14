@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.22.4
+
+- Record installed Firefox owning-tab loss acceptance on d18f30e: WaitingUser, 90,112 retained bytes matching the original prefix, stable late progress, one producer GET and no publication/refetch.
+
 ## 0.22.3
 
 - Record installed Firefox service-loss acceptance on c6bd315: verified isolated daemon restart, WaitingUser recovery, 6,975,488 retained bytes matching the original prefix, one producer GET and no publication/refetch.

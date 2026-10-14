@@ -14,3 +14,7 @@ The public JSON is sanitized and preserves exact historical provenance. Later fi
 ## Fixed service-loss repeat
 
 Checked c6bd315 (0.22.2), the same identified native 0.18.3 pair and Firefox158 pass installed service-loss acceptance. The exact isolated daemon exits and a distinct replacement appears. Ordinary polling recovers WaitingUser with 6,975,488 retained bytes whose SHA-256 matches the original prefix; late progress remains stable, no final file is published, and exactly one original producer GET occurs. The sanitized record is `firefox-service-loss-fixed.json`. This qualifies exact-stream abort retry after daemon loss, while preserving native live-reader reconnect semantics. Intermittent revoked-Blob state drift and full browser loss remain pending.
+
+## Owning-tab loss
+
+Checked d18f30e, the same native pair and Firefox158 pass actual owning resolver-tab close. WaitingUser retains 90,112 bytes matching the original prefix; no final file, refetch or late progress occurs, and the original user source tab remains open. The sanitized record is `firefox-reader-loss.json`. This tests tab close, not full browser shutdown or worker restart.

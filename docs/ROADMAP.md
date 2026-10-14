@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.22.3<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.22.4<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 NAV-11 review hardening (0.21.2) isolates private pending origins from regular cleanup and checks fresh native authority after queue admission before opening a source URL. Mutable caller snapshots cannot change frozen navigation intent. Current main's expiry regression and qualification histories are retained.
 
@@ -13,6 +13,8 @@ NAV-08 recovery investigation (0.22.1) records [installed Firefox revoked-Blob e
 NAV-08 abort recovery (0.22.2) retries an exact interrupted/detached stream after native downtime while preserving existing live-reader checkpoint reconnect semantics. Scope, owner, generation, epoch and tab fences remain required; installed service-loss repeat acceptance and intermittent revoked-Blob state drift are still pending.
 
 NAV-08 service-loss repeat (0.22.3) passes installed Firefox158 on checked c6bd315: exact daemon restart, WaitingUser, 6,975,488 retained bytes with matching original-prefix hash, stable late progress and no publication/refetch. See [recorded evidence](evidence/nav-integration/firefox-service-loss-fixed.json). Intermittent revoked-Blob drift and full browser loss remain pending.
+
+NAV-08 owning-tab loss (0.22.4) passes installed Firefox158 on checked d18f30e: WaitingUser with 90,112 original-prefix hash-verified retained bytes, stable late progress and one original producer GET. The original user source tab remains open. See [evidence](evidence/nav-integration/firefox-reader-loss.json); full browser loss remains pending.
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
