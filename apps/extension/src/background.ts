@@ -29,6 +29,7 @@ import browser from 'webextension-polyfill';
 import { challengeHandler } from './navigation/challenges/worker';
 import { shouldSolve } from './resolver-policy';
 import { NavigationScheduler, WAIT_ALARM_PREFIX } from './navigation/scheduler/runtime';
+import { cancelNavigationTask } from './navigation/scheduler/cancel';
 import { observeWait, waitFingerprint, type DurableWait } from './navigation/scheduler/waits';
 import {
   defaults,
@@ -1098,15 +1099,17 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
     return scheduler.request(message.request);
   if (extensionPage && message.type === 'navigation_queue_cancel')
     return (async () => {
-      const sourceJob = (await browserSnapshot()).jobs.find((job: any) => job.id === message.id);
-      if (sourceJob) await navigationSources.invalidate(sourceJob);
-      await native('cancel', { id: message.id });
-      await scheduler.release(message.id);
+      const sourceJob = (await native('snapshot')).jobs.find((job: any) => job.id === message.id);
+      if (!sourceJob) throw Error('Navigation task unavailable');
       const storage = await navigationStore.get('resolver-' + message.id);
       const record = storage['resolver-' + message.id] as ResolverRecord | undefined;
-      await navigationStore.remove('resolver-' + message.id);
-      if (record && (await ownsCurrentTab(record)))
-        await browser.tabs.remove(record.tabId).catch(() => {});
+      await cancelNavigationTask(sourceJob, record, {
+        owner: await profile, native, owns: ownsCurrentTab,
+        invalidate: (job) => navigationSources.invalidate(job),
+        release: (id) => scheduler.release(id),
+        removeRecord: (id) => navigationStore.remove('resolver-' + id),
+        closeTab: (tabId) => browser.tabs.remove(tabId),
+      });
       await pollResolvers();
       return true;
     })();

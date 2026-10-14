@@ -351,214 +351,290 @@ try {
     0,
     'Elapsed local deadline submitted prematurely',
   );
-  let workerRestart = null;
-  if (process.env.NAV_WORKER_RESTART === '1') {
-    const oldWorker = (await command('Target.getTargets')).targetInfos.find(
-      (t) =>
-        t.type === 'service_worker' &&
-        t.url === 'chrome-extension://' + extensionId + '/background.js',
-    );
-    assert.ok(oldWorker);
-    await command('ServiceWorker.enable', {}, optionsSession);
-    await command('ServiceWorker.stopAllWorkers', {}, optionsSession);
-    let stopped = false;
-    for (let i = 0; i < 100; i++) {
-      if (
-        !(await command('Target.getTargets')).targetInfos.some(
-          (t) => t.targetId === oldWorker.targetId,
-        )
-      ) {
-        stopped = true;
-        break;
-      }
-      await new Promise((r) => setTimeout(r, 100));
-    }
-    assert.ok(stopped, 'Worker target did not terminate');
-    const recovered = await snapshot();
-    const recoveredTask = recovered.tasks.find((t) => t.id === job.id);
-    assert.equal(recoveredTask.wait.generation, waiting.wait.generation);
-    assert.ok(recoveredTask.lease);
-    const newWorker = (await command('Target.getTargets')).targetInfos.find(
-      (t) =>
-        t.type === 'service_worker' &&
-        t.url === 'chrome-extension://' + extensionId + '/background.js',
-    );
-    assert.ok(newWorker);
-    assert.notEqual(newWorker.targetId, oldWorker.targetId);
-    const restoredAlarms = await evaluate(optionsSession, 'chrome.alarms.getAll()');
-    assert.ok(restoredAlarms.some((a) => a.name.startsWith('navigation-wait-' + job.id + ':')));
-    workerRestart = {
-      terminated_old_target: true,
-      replacement_target: true,
-      preserved_wait_generation: true,
-      preserved_lease: true,
-      restored_alarm: true,
-    };
-    console.log('Installed actual worker restart preserved durable wait and alarm');
-  }
-  const deadline = Date.now() + 90000;
-  while (Date.now() < deadline && !fixture.requests.some((r) => r.path.endsWith('/submit'))) {
-    const targets = (await command('Target.getTargets')).targetInfos;
-    const tab = targets.find((t) => t.type === 'page' && t.url === page);
-    if (tab) {
-      const session = await targetSession(tab.targetId);
-      if (await click(session, null, 'radio')) await click(session, 'Continue');
-      await command('Target.detachFromTarget', { sessionId: session });
-    }
-    await new Promise((r) => setTimeout(r, 1000));
-  }
-  const submits = fixture.requests.filter((r) => r.path.endsWith('/submit'));
-  assert.equal(submits.length, 1);
-  assert.equal(submits[0].ready, true);
-  const queueRows = [];
-  const queueRequest = (request) =>
-    evaluate(
+  if (process.env.NAV_CANCEL_ONLY === '1') {
+    const beforeTargets = (await command('Target.getTargets')).targetInfos;
+    const ownedTab = beforeTargets.find((t) => t.type === 'page' && t.url === page);
+    assert.ok(ownedTab);
+    const userOrigin = await command('Target.createTarget', { url: page + '&retained-user-tab=1' });
+    await evaluate(
       optionsSession,
       'chrome.runtime.sendMessage(' +
-        JSON.stringify({ type: 'navigation_scheduler', request }) +
+        JSON.stringify({ type: 'navigation_queue_cancel', id: job.id }) +
         ')',
     );
-  call('cancel', job.id);
-  const port = new URL(fixture.base).port;
-  for (let i = 0; i < 21; i++) {
-    const url =
-      'http://host' + i + '.scheduler.test:' + port + '/nav-adapters/gofile/wait?id=queue' + i;
-    const added = call('add', url, '--navigate', '--filename', 'queue-' + i + '.bin');
-    queueRows.push({ id: added.id, url });
-  }
-  await evaluate(
-    optionsSession,
-    'chrome.runtime.sendMessage(' +
-      JSON.stringify({ type: 'continue_navigation', url: queueRows[0].url }) +
-      ')',
-  );
-  async function activeCount(expected) {
+    await new Promise((r) => setTimeout(r, 2000));
+    const cancelled = call('list').jobs.find((j) => j.id === job.id);
+    assert.equal(cancelled.state, 'cancelled');
+    const after = await snapshot();
+    assert.ok(!after.tasks.some((t) => t.id === job.id && t.lease));
+    const pendingAlarms = await evaluate(optionsSession, 'chrome.alarms.getAll()');
+    assert.ok(!pendingAlarms.some((a) => a.name.startsWith('navigation-wait-' + job.id + ':')));
+    const stored = await evaluate(optionsSession, 'chrome.storage.local.get(null)');
+    assert.ok(!Object.hasOwn(stored, 'resolver-' + job.id));
+    const remaining = (await command('Target.getTargets')).targetInfos;
+    assert.ok(!remaining.some((t) => t.targetId === ownedTab.targetId));
+    assert.ok(remaining.some((t) => t.targetId === userOrigin.targetId));
+    assert.equal(fixture.requests.filter((r) => r.path.endsWith('/submit')).length, 0);
+    const evidence = {
+      fixture: 'installed-production-scoped-queue-cancel-v1',
+      source_revision: execFileSync('git', ['rev-parse', 'HEAD'], {
+        encoding: 'utf8',
+        windowsHide: true,
+      }).trim(),
+      browser: version.product,
+      native_version: call('diagnostics').version,
+      native_build_revision: process.env.NAV_NATIVE_REVISION ?? null,
+      native_binary_sha256: createHash('sha256')
+        .update(await readFile(service))
+        .digest('hex'),
+      cli_binary_sha256: createHash('sha256')
+        .update(await readFile(cli))
+        .digest('hex'),
+      fixture_sha256: createHash('sha256').update(fixtureSource).digest('hex'),
+      production_background_sha256: createHash('sha256')
+        .update(await readFile('apps/extension/src/background.ts'))
+        .digest('hex'),
+      production_cancel_sha256: createHash('sha256')
+        .update(await readFile('apps/extension/src/navigation/scheduler/cancel.ts'))
+        .digest('hex'),
+      os: process.platform,
+      arch: process.arch,
+      rows: {
+        state: cancelled.state,
+        wait_alarm_removed: true,
+        resolver_record_removed: true,
+        reservation_released: true,
+        owned_resolver_tab_closed: true,
+        unrelated_user_tab_retained: true,
+        original_submissions: 0,
+        desktop_cancel_fallback: false,
+      },
+      limits: [
+        'Synthetic local wait page and pregranted permissions; production extension/native messaging except unique host address',
+        'Trusted extension-page cancellation message; native desktop/window UI not exercised',
+        'Retained same-site user tab has no task resolver record; private/native partial cancellation is covered separately by engine tests',
+        'Unavailable browser/platform and live-account matrix remains pending',
+      ],
+    };
+    await writeFile(
+      resolve(root, 'cancellation-evidence.json'),
+      JSON.stringify(evidence, null, 2) + '\n',
+    );
+    await writeFile(
+      'docs/evidence/nav-scheduling/installed-cancellation.json',
+      JSON.stringify(evidence, null, 2) + '\n',
+    );
+    console.log(JSON.stringify(evidence, null, 2));
+  } else {
+    let workerRestart = null;
+    if (process.env.NAV_WORKER_RESTART === '1') {
+      const oldWorker = (await command('Target.getTargets')).targetInfos.find(
+        (t) =>
+          t.type === 'service_worker' &&
+          t.url === 'chrome-extension://' + extensionId + '/background.js',
+      );
+      assert.ok(oldWorker);
+      await command('ServiceWorker.enable', {}, optionsSession);
+      await command('ServiceWorker.stopAllWorkers', {}, optionsSession);
+      let stopped = false;
+      for (let i = 0; i < 100; i++) {
+        if (
+          !(await command('Target.getTargets')).targetInfos.some(
+            (t) => t.targetId === oldWorker.targetId,
+          )
+        ) {
+          stopped = true;
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      assert.ok(stopped, 'Worker target did not terminate');
+      const recovered = await snapshot();
+      const recoveredTask = recovered.tasks.find((t) => t.id === job.id);
+      assert.equal(recoveredTask.wait.generation, waiting.wait.generation);
+      assert.ok(recoveredTask.lease);
+      const newWorker = (await command('Target.getTargets')).targetInfos.find(
+        (t) =>
+          t.type === 'service_worker' &&
+          t.url === 'chrome-extension://' + extensionId + '/background.js',
+      );
+      assert.ok(newWorker);
+      assert.notEqual(newWorker.targetId, oldWorker.targetId);
+      const restoredAlarms = await evaluate(optionsSession, 'chrome.alarms.getAll()');
+      assert.ok(restoredAlarms.some((a) => a.name.startsWith('navigation-wait-' + job.id + ':')));
+      workerRestart = {
+        terminated_old_target: true,
+        replacement_target: true,
+        preserved_wait_generation: true,
+        preserved_lease: true,
+        restored_alarm: true,
+      };
+      console.log('Installed actual worker restart preserved durable wait and alarm');
+    }
+    const deadline = Date.now() + 90000;
+    while (Date.now() < deadline && !fixture.requests.some((r) => r.path.endsWith('/submit'))) {
+      const targets = (await command('Target.getTargets')).targetInfos;
+      const tab = targets.find((t) => t.type === 'page' && t.url === page);
+      if (tab) {
+        const session = await targetSession(tab.targetId);
+        if (await click(session, null, 'radio')) await click(session, 'Continue');
+        await command('Target.detachFromTarget', { sessionId: session });
+      }
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    const submits = fixture.requests.filter((r) => r.path.endsWith('/submit'));
+    assert.equal(submits.length, 1);
+    assert.equal(submits[0].ready, true);
+    const queueRows = [];
+    const queueRequest = (request) =>
+      evaluate(
+        optionsSession,
+        'chrome.runtime.sendMessage(' +
+          JSON.stringify({ type: 'navigation_scheduler', request }) +
+          ')',
+      );
+    call('cancel', job.id);
+    const port = new URL(fixture.base).port;
+    for (let i = 0; i < 21; i++) {
+      const url =
+        'http://host' + i + '.scheduler.test:' + port + '/nav-adapters/gofile/wait?id=queue' + i;
+      const added = call('add', url, '--navigate', '--filename', 'queue-' + i + '.bin');
+      queueRows.push({ id: added.id, url });
+    }
+    await evaluate(
+      optionsSession,
+      'chrome.runtime.sendMessage(' +
+        JSON.stringify({ type: 'continue_navigation', url: queueRows[0].url }) +
+        ')',
+    );
+    async function activeCount(expected) {
+      for (let i = 0; i < 300; i++) {
+        const state = await snapshot();
+        const active = state.tasks.filter((t) => queueRows.some((j) => j.id === t.id) && t.lease);
+        if (active.length === expected) return state;
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      throw Error('Actual queue cap ' + expected + ' missing ' + JSON.stringify(await snapshot()));
+    }
+    const resources = () =>
+      JSON.parse(
+        execFileSync(
+          'powershell.exe',
+          [
+            '-NoProfile',
+            '-File',
+            'scripts/nav-fixtures/scheduler/installed-resources.ps1',
+            '-BrowserPid',
+            String(browserProc.pid),
+          ],
+          { windowsHide: true, encoding: 'utf8' },
+        ),
+      );
+    const atThree = await activeCount(3),
+      resourcesThree = resources();
+    await queueRequest({ action: 'settings', max_active: 20, notifications: false });
+    const atTwenty = await activeCount(20),
+      resourcesTwenty = resources();
+    let liveTabs = [];
     for (let i = 0; i < 300; i++) {
-      const state = await snapshot();
-      const active = state.tasks.filter((t) => queueRows.some((j) => j.id === t.id) && t.lease);
-      if (active.length === expected) return state;
+      liveTabs = await evaluate(optionsSession, 'chrome.tabs.query({})');
+      if (liveTabs.filter((t) => t.url?.includes('.scheduler.test:')).length === 20) break;
       await new Promise((r) => setTimeout(r, 100));
     }
-    throw Error('Actual queue cap ' + expected + ' missing ' + JSON.stringify(await snapshot()));
-  }
-  const resources = () =>
-    JSON.parse(
-      execFileSync(
-        'powershell.exe',
-        [
-          '-NoProfile',
-          '-File',
-          'scripts/nav-fixtures/scheduler/installed-resources.ps1',
-          '-BrowserPid',
-          String(browserProc.pid),
-        ],
-        { windowsHide: true, encoding: 'utf8' },
-      ),
+    assert.equal(liveTabs.filter((t) => t.url?.includes('.scheduler.test:')).length, 20);
+    const queuedRow = queueRows.find((j) => !atTwenty.tasks.find((t) => t.id === j.id)?.lease);
+    await queueRequest({ action: 'control', id: queuedRow.id, paused: true, priority: null });
+    const existing = queueRows.find((j) => atTwenty.tasks.find((t) => t.id === j.id)?.lease);
+    const spare = queueRows.find(
+      (j) => j.id !== existing.id && atTwenty.tasks.find((t) => t.id === j.id)?.lease,
     );
-  const atThree = await activeCount(3),
-    resourcesThree = resources();
-  await queueRequest({ action: 'settings', max_active: 20, notifications: false });
-  const atTwenty = await activeCount(20),
-    resourcesTwenty = resources();
-  let liveTabs = [];
-  for (let i = 0; i < 300; i++) {
-    liveTabs = await evaluate(optionsSession, 'chrome.tabs.query({})');
-    if (liveTabs.filter((t) => t.url?.includes('.scheduler.test:')).length === 20) break;
-    await new Promise((r) => setTimeout(r, 100));
+    call('cancel', spare.id);
+    await activeCount(19);
+    const sensitive = call(
+      'add',
+      existing.url + '&duplicate=1',
+      '--navigate',
+      '--filename',
+      'serial.bin',
+    );
+    await evaluate(
+      optionsSession,
+      'chrome.runtime.sendMessage(' +
+        JSON.stringify({ type: 'continue_navigation', url: existing.url + '&duplicate=1' }) +
+        ')',
+    );
+    await new Promise((r) => setTimeout(r, 1000));
+    const serial = await snapshot();
+    assert.equal(serial.tasks.find((t) => t.id === sensitive.id).lease, null);
+    assert.equal(serial.tasks.find((t) => t.id === sensitive.id).reason, 'host_session_busy');
+    await queueRequest({ action: 'settings', max_active: 3, notifications: false });
+    const lowered = await snapshot();
+    assert.equal(
+      lowered.tasks.filter((t) => queueRows.some((j) => j.id === t.id) && t.lease).length,
+      19,
+    );
+    for (const row of [...queueRows, { id: sensitive.id }]) call('cancel', row.id);
+    console.log('Installed actual admission limits 3/20 and sensitive host serialization verified');
+    const evidence = {
+      fixture: 'installed-production-scheduler-readiness-v1',
+      source_revision: execFileSync('git', ['rev-parse', 'HEAD'], {
+        encoding: 'utf8',
+        windowsHide: true,
+      }).trim(),
+      browser: version.product,
+      native_binary_sha256: createHash('sha256')
+        .update(await readFile(service))
+        .digest('hex'),
+      native_version: call('diagnostics').version,
+      native_build_revision: process.env.NAV_NATIVE_REVISION ?? null,
+      fixture_sha256: createHash('sha256').update(fixtureSource).digest('hex'),
+      server_sha256: createHash('sha256').update(serverSource).digest('hex'),
+      production_source_sha256: createHash('sha256')
+        .update(await readFile('apps/extension/src/background.ts'))
+        .digest('hex'),
+      os: process.platform,
+      arch: process.arch,
+      default_limit: 3,
+      configured_limit: 20,
+      resources: [
+        { active: 3, ...resourcesThree },
+        { active: 20, ...resourcesTwenty },
+      ],
+      installed_queue: {
+        default_leases: 3,
+        configured_leases: 20,
+        actual_owned_tabs: 20,
+        lowered_limit_preserves_leases: 19,
+        sensitive_second_lease: false,
+        sensitive_block_reason: 'host_session_busy',
+        free_global_slot_during_sensitive_check: true,
+      },
+      wait: {
+        status: waiting.status,
+        generation: waiting.wait.generation,
+        source_generation: waiting.generation,
+        observed_duration_ms: waiting.wait.observed_duration_ms,
+      },
+      actual_alarm: true,
+      worker_restart: workerRestart,
+      server_hold_ms: 45000,
+      submissions: submits.map((r) => ({ method: r.method, ready: r.ready })),
+      premature_submissions: 0,
+      limits: [
+        'Synthetic local pages; production worker/resolver/native messaging unchanged except unique host address',
+        'Pregranted loopback permissions; trusted preview control selected by CDP input',
+        'Installed extension queue cancel rejects missing scope fence; desktop CLI cancels fixture jobs',
+        'Retry-After ingestion, whole-browser restart/sleep and unavailable OS remain pending; resource measurements are samples not memory-bound proofs',
+      ],
+    };
+    await mkdir('docs/evidence/nav-scheduling', { recursive: true });
+    await writeFile(resolve(root, 'evidence.json'), JSON.stringify(evidence, null, 2) + '\n');
+    await writeFile(
+      'docs/evidence/nav-scheduling/installed-readiness.json',
+      JSON.stringify(evidence, null, 2) + '\n',
+    );
+    console.log(JSON.stringify(evidence, null, 2));
   }
-  assert.equal(liveTabs.filter((t) => t.url?.includes('.scheduler.test:')).length, 20);
-  const queuedRow = queueRows.find((j) => !atTwenty.tasks.find((t) => t.id === j.id)?.lease);
-  await queueRequest({ action: 'control', id: queuedRow.id, paused: true, priority: null });
-  const existing = queueRows.find((j) => atTwenty.tasks.find((t) => t.id === j.id)?.lease);
-  const spare = queueRows.find(
-    (j) => j.id !== existing.id && atTwenty.tasks.find((t) => t.id === j.id)?.lease,
-  );
-  call('cancel', spare.id);
-  await activeCount(19);
-  const sensitive = call(
-    'add',
-    existing.url + '&duplicate=1',
-    '--navigate',
-    '--filename',
-    'serial.bin',
-  );
-  await evaluate(
-    optionsSession,
-    'chrome.runtime.sendMessage(' +
-      JSON.stringify({ type: 'continue_navigation', url: existing.url + '&duplicate=1' }) +
-      ')',
-  );
-  await new Promise((r) => setTimeout(r, 1000));
-  const serial = await snapshot();
-  assert.equal(serial.tasks.find((t) => t.id === sensitive.id).lease, null);
-  assert.equal(serial.tasks.find((t) => t.id === sensitive.id).reason, 'host_session_busy');
-  await queueRequest({ action: 'settings', max_active: 3, notifications: false });
-  const lowered = await snapshot();
-  assert.equal(
-    lowered.tasks.filter((t) => queueRows.some((j) => j.id === t.id) && t.lease).length,
-    19,
-  );
-  for (const row of [...queueRows, { id: sensitive.id }]) call('cancel', row.id);
-  console.log('Installed actual admission limits 3/20 and sensitive host serialization verified');
-  const evidence = {
-    fixture: 'installed-production-scheduler-readiness-v1',
-    source_revision: execFileSync('git', ['rev-parse', 'HEAD'], {
-      encoding: 'utf8',
-      windowsHide: true,
-    }).trim(),
-    browser: version.product,
-    native_binary_sha256: createHash('sha256')
-      .update(await readFile(service))
-      .digest('hex'),
-    native_version: call('diagnostics').version,
-    native_build_revision: process.env.NAV_NATIVE_REVISION ?? null,
-    fixture_sha256: createHash('sha256').update(fixtureSource).digest('hex'),
-    server_sha256: createHash('sha256').update(serverSource).digest('hex'),
-    production_source_sha256: createHash('sha256')
-      .update(await readFile('apps/extension/src/background.ts'))
-      .digest('hex'),
-    os: process.platform,
-    arch: process.arch,
-    default_limit: 3,
-    configured_limit: 20,
-    resources: [
-      { active: 3, ...resourcesThree },
-      { active: 20, ...resourcesTwenty },
-    ],
-    installed_queue: {
-      default_leases: 3,
-      configured_leases: 20,
-      actual_owned_tabs: 20,
-      lowered_limit_preserves_leases: 19,
-      sensitive_second_lease: false,
-      sensitive_block_reason: 'host_session_busy',
-      free_global_slot_during_sensitive_check: true,
-    },
-    wait: {
-      status: waiting.status,
-      generation: waiting.wait.generation,
-      source_generation: waiting.generation,
-      observed_duration_ms: waiting.wait.observed_duration_ms,
-    },
-    actual_alarm: true,
-    worker_restart: workerRestart,
-    server_hold_ms: 45000,
-    submissions: submits.map((r) => ({ method: r.method, ready: r.ready })),
-    premature_submissions: 0,
-    limits: [
-      'Synthetic local pages; production worker/resolver/native messaging unchanged except unique host address',
-      'Pregranted loopback permissions; trusted preview control selected by CDP input',
-      'Installed extension queue cancel rejects missing scope fence; desktop CLI cancels fixture jobs',
-      'Retry-After ingestion, whole-browser restart/sleep and unavailable OS remain pending; resource measurements are samples not memory-bound proofs',
-    ],
-  };
-  await mkdir('docs/evidence/nav-scheduling', { recursive: true });
-  await writeFile(resolve(root, 'evidence.json'), JSON.stringify(evidence, null, 2) + '\n');
-  await writeFile(
-    'docs/evidence/nav-scheduling/installed-readiness.json',
-    JSON.stringify(evidence, null, 2) + '\n',
-  );
-  console.log(JSON.stringify(evidence, null, 2));
 } finally {
   if (ws) {
     await command('Browser.close').catch(() => {});

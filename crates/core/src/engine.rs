@@ -1079,6 +1079,48 @@ impl Engine {
                 self.persist(&j)?;
                 Ok(serde_json::json!({"id":id}))
             }
+            Command::CancelNavigation {
+                id,
+                owner,
+                scope,
+                source_generation,
+            } => {
+                scope.validate()?;
+                let shared = self.job(&id)?;
+                // Match transfer preparation/finalization order: controls, solver, then job.
+                // Hold the job through persistence so a late stream frame cannot restore it.
+                let controls = self.controls.lock().unwrap();
+                let solvers = self.solver_tasks.lock().unwrap();
+                let mut job = shared.lock().unwrap();
+                self.check_navigation_fence(&job, Some(&scope), Some(source_generation))?;
+                if owner != scope.profile
+                    || job.navigation_owner.as_deref() != Some(&owner)
+                    || job.navigation_scope.as_ref() != Some(&scope)
+                    || job.private != scope.private
+                    || job.page_url.is_none()
+                {
+                    bail!("Cancellation requires the current navigation owner and scope");
+                }
+                if matches!(job.state, JobState::Complete | JobState::BrowserComplete) {
+                    bail!("Completed navigation cannot be cancelled");
+                }
+                if let Some(control) = controls.get(&id) {
+                    control.store(2, Ordering::Relaxed);
+                }
+                if let Some(control) = solvers.get(&id) {
+                    control.store(1, Ordering::Relaxed);
+                }
+                job.state = JobState::Cancelled;
+                job.error = None;
+                self.store.lock().unwrap().put("job", &id, &*job)?;
+                drop(job);
+                drop(solvers);
+                drop(controls);
+                let mut scheduler = self.navigation_scheduler.lock().unwrap();
+                scheduler.tasks.retain(|task| task.id != id);
+                scheduler.persist(&self.store.lock().unwrap())?;
+                Ok(serde_json::json!({"id": id, "cancelled": true}))
+            }
             Command::Cancel { id } => {
                 let j = self.job(&id)?;
                 if let Some(c) = self.controls.lock().unwrap().get(&id) {

@@ -371,6 +371,7 @@ pub fn native(args: &[String]) -> Result<()> {
                 ),
 
                 c @ downloader_core::Command::NavigationAuthority { .. } => call(c),
+                c @ downloader_core::Command::CancelNavigation { .. } => call(c),
                 c @ downloader_core::Command::BrowserSnapshot { .. } => browser_snapshot(call(c)?),
                 c @ downloader_core::Command::BrowserSubscribe { .. } => browser_events(call(c)?),
                 c @ downloader_core::Command::Negotiate { .. } => call(c),

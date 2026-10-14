@@ -19,7 +19,7 @@ Output is written to `docs/evidence/nav-scheduling/installed-readiness.json` onl
 ## Remaining boundaries
 
 - Navigation Retry-After ingestion remains pending: `retryAfter()` currently has no production caller. The server rejects premature requests with 429/Retry-After, but a successful zero-premature-request row does not prove header ingestion.
-- Installed extension queue cancellation currently fails the service scope fence. The driver uses the authorized desktop CLI to cancel its isolated fixture jobs; this is not extension cancellation acceptance.
+- Historical 0.22.0 extension queue cancellation failed the service scope fence. The new scoped cancellation command/coordinator has native and extension regressions; its installed requalification uses `NAV_CANCEL_ONLY=1` and remains pending until its separate evidence row passes. Historical queue resource evidence used desktop cancellation.
 - Whole-browser restart, real sleep/clock changes, notification denial and unavailable OS/browser matrices remain separate gates.
 - These pages are synthetic. Live provider/account and paid-provider acceptance remain deferred under the owner decisions.
 - The readiness POST returns an HTML acknowledgement. No file-transfer success is claimed by this fixture.

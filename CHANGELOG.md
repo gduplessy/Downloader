@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.23.1
+
+- Add exact owner/session/source-fenced navigation cancellation while keeping legacy scoped cancellation refused. Commit the native terminal state before invalidating browser source, alarms, reservation or resolver tab.
+- Preserve partial bytes, refuse stale/private/foreign/recovery fences and late stream writes; add native and extension cancellation regressions plus an installed cancellation fixture lane. Installed requalification follows separately.
+
 ## 0.23.0
 
 - Qualify installed production Chromium scheduler readiness, actual worker replacement, durable alarms and default-three/configured-twenty real tab admission against an enforced local server.

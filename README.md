@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.23.0<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.23.1<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -386,3 +386,5 @@ NAV-11 queued-source retention (0.21.0) separates pending user origins from owne
 NAV-11 Firefox scope qualification (0.21.1): checked af318b9 extension21.0/native16.1 on Firefox158 passes actual sequential and queued container Blob hashes plus lost-source WaitingUser with zero replacement bytes or payload requests. Normal scheduler polling drives recovery; original user tabs remain open. Initial activation invokes the registered context-menu handler with actual browser metadata; native context-menu UI and private-addon permission acceptance remain pending. See docs/evidence/nav-integration/firefox-scope-queued-fixed.json and firefox-scope-missing-source.json.
 
 Installed Chromium scheduler readiness, actual worker-restart alarms, default-three/configured-twenty admission and sampled resources: [reproduction and remaining gates](docs/evidence/nav-scheduling/INSTALLED.md).
+
+Scoped navigation queue cancellation now commits the current native session/source fence before browser cleanup; installed cancellation requalification remains pending.
