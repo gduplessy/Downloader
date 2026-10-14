@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.22.10
+
+- Preserve installed Firefox full-browser-loss failure: verified browser/native-host exit leaves BrowserDownloading and a nonterminal 880,640-byte original-prefix-verified checkpoint after 120 seconds, with no publication/refetch.
+
 ## 0.22.9
 
 - Record current installed Firefox stream cancellation: WaitingUser, 69,632 original-prefix hash-verified retained bytes, stable progress and no publication/refetch.
