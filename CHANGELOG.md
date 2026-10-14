@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.22.7
+
+- Record two installed Firefox revoked-Blob runs on checked 3e7167c after actual capture interruption: stable WaitingUser, zero-byte retained prefix, one original producer GET and no publication/refetch.
+
 ## 0.22.6
 
 - Synchronize installed Firefox interruption acceptance with the actual interrupted production capture and native WaitingUser, preventing earlier preview state from satisfying the wait.
