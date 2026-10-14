@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.9
+
+- Record current installed Firefox stream cancellation: WaitingUser, 69,632 original-prefix hash-verified retained bytes, stable progress and no publication/refetch.
+- Prepare identity-checked browser stop control before stream selection, avoiding late shutdown observations that occur after legitimate completion.
+
 ## 0.22.8
 
 - Add full-browser-loss qualification that stops only verified fixture browser processes, confirms native-host exit, preserves the daemon and records actual retained checkpoints without reconstructing session authority.

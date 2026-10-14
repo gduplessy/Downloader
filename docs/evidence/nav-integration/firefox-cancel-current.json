@@ -1,0 +1,139 @@
+{
+  "mode": "cancel",
+  "outcome": "qualified",
+  "sourceRevision": "173e957e3d206d0d36522f14705572207ef7361b",
+  "nativeBuildRevision": "d83fbbe608f83567d6429793004d449278a54c15",
+  "nativeVersion": "0.18.3",
+  "nativeBinarySha256": "fcfd3188fbd4eadef648b26fe2766bee9f7df6a01022b209779d632d4759759d",
+  "cliBinarySha256": "4de06a6ee01224b97dbc618fcd176e7bd4b733c8e3f302527b516eb3fdf92e80",
+  "browser": "Firefox/158.0",
+  "os": "win32",
+  "fixtureSha256": "0702643734485ae1fd8e3a6af25982792edb84717e4c6249fd526443cc51b935",
+  "diagnosticSourceChanges": false,
+  "diagnosticNativeWrapper": false,
+  "recovery": {
+    "state": "waiting_user",
+    "bytes": 69632,
+    "originalBytes": 8388625,
+    "partialSha256": "907f7c056492c0216cac5ab96e85bedcbc6990acd43e7a5794af0182bed0b94c",
+    "intendedPrefixSha256": "907f7c056492c0216cac5ab96e85bedcbc6990acd43e7a5794af0182bed0b94c",
+    "sourceGeneration": 1,
+    "verifiedSha256": null,
+    "recoveryMessage": "Browser stream cancelled; original source cannot be replayed",
+    "noPublication": true,
+    "noRefetch": true,
+    "lateProgressUnchanged": true,
+    "elapsedMs": 12744
+  },
+  "settledDiagnostic": {
+    "native": {
+      "state": "waiting_user",
+      "bytes": 69632,
+      "total": null,
+      "sourceGeneration": 1,
+      "verifiedSha256": null,
+      "hasError": true,
+      "errorCode": null,
+      "navigationScope": {
+        "browser": "firefox",
+        "cookie_store_id": "firefox-container-6",
+        "container_id": "firefox-container-6",
+        "private": false,
+        "claim_generation": 1
+      }
+    },
+    "markers": {
+      "capture": {
+        "state": "interrupted",
+        "tabId": 5,
+        "sourceGeneration": 1,
+        "documentGeneration": null,
+        "kind": "blob",
+        "hasDocumentNonce": true,
+        "hasStreamId": true,
+        "scope": {
+          "browser": "firefox",
+          "cookie_store_id": "firefox-container-6",
+          "container_id": "firefox-container-6",
+          "private": false,
+          "claim_generation": 1
+        }
+      },
+      "captureScopeMatchesNative": true,
+      "sessionAreaAvailable": true,
+      "local": {
+        "resolver": {
+          "state": null,
+          "tabId": 5,
+          "sourceGeneration": 1,
+          "documentGeneration": 1,
+          "kind": null,
+          "hasDocumentNonce": false,
+          "hasStreamId": false,
+          "scope": {
+            "browser": "firefox",
+            "cookie_store_id": "firefox-container-6",
+            "container_id": "firefox-container-6",
+            "private": false,
+            "claim_generation": 1
+          }
+        },
+        "capture": null
+      },
+      "session": {
+        "resolver": {
+          "state": null,
+          "tabId": 5,
+          "sourceGeneration": 1,
+          "documentGeneration": 1,
+          "kind": null,
+          "hasDocumentNonce": true,
+          "hasStreamId": false,
+          "scope": {
+            "browser": "firefox",
+            "cookie_store_id": "firefox-container-6",
+            "container_id": "firefox-container-6",
+            "private": false,
+            "claim_generation": 1
+          }
+        },
+        "capture": {
+          "state": "interrupted",
+          "tabId": 5,
+          "sourceGeneration": 1,
+          "documentGeneration": null,
+          "kind": "blob",
+          "hasDocumentNonce": true,
+          "hasStreamId": true,
+          "scope": {
+            "browser": "firefox",
+            "cookie_store_id": "firefox-container-6",
+            "container_id": "firefox-container-6",
+            "private": false,
+            "claim_generation": 1
+          }
+        }
+      },
+      "documentNonceEquivalent": true
+    }
+  },
+  "payloadRequestCount": 1,
+  "sourceHashes": {
+    "apps/extension/src/background.ts": "b17383a63aee64ca50f9121174e7879cba8610a0c451b07d853d167c77dc9ed3",
+    "apps/extension/src/resolver.ts": "5268153e996f5aee1aa32494c0ea4231aae19b107908aab8d9d310e30a700f8e",
+    "apps/extension/src/navigation/session/scope.ts": "447a6ad3a08067f1a5bc7e63f6656cb70acf1eeaedde2bb92e1e09b84bd34d2c",
+    "apps/extension/src/navigation/session/source.ts": "7260b130785aba5adb8d2b03ea3a834436c6d5bc592087e68cc32c23033ec985",
+    "apps/extension/src/navigation/streams/blob.ts": "752894243a75fa5d77435947e5e8882a76d8e7c3cadd72fc796429c1d9965217",
+    "apps/extension/src/navigation/streams/transport.ts": "db7f24424a6d19101c085e83f7baf0224f514a6a4578cd31700bc9ca56b9979b"
+  },
+  "bundleHashes": {
+    "background": "88ab61381d6d4c9ae9da1cc7d18c5c4406b8e0750691dfa7e3a174c2b32c3390",
+    "resolver": "06be4cae03e91441b33401f9b8f8987d7f1d9802ffd55086c1b0adf85497aebf",
+    "scopeHelper": "b8b813a6ff75e9b057636d1752434987ccdb879769fa30f86307ff953f3cba47"
+  },
+  "fixtureCopy": "Immutable same-directory copy of committed 173e957 fixture; recorded hash identifies its UTF-8 checkout bytes",
+  "limits": [
+    "Initial activation uses registered menu listener; cancellation invokes production runtime message",
+    "Full browser loss, private-addon permission, ESR, other OS and remaining audit gates remain pending"
+  ]
+}

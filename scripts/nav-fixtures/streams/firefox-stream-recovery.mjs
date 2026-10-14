@@ -16,7 +16,8 @@ assert.match(sourceRevision, /^[a-f0-9]{40}$/, 'Record exact checked extension s
 const scenario = 'blob';
 const scopeMode = process.env.NAV_RECOVERY_MODE ?? 'cancel';
 assert.ok(['cancel', 'revoked-blob', 'reader-loss', 'service-loss', 'browser-loss'].includes(scopeMode));
-const payloadBytes = 8 * 1024 * 1024 + 17;
+const payloadBytes = Number(process.env.NAV_RECOVERY_BYTES ?? (8 * 1024 * 1024 + 17));
+assert.ok(Number.isSafeInteger(payloadBytes) && payloadBytes >= 1024 * 1024 && payloadBytes <= 64 * 1024 * 1024, 'Bound recovery payload size');
 const scopeReport = {
   mode: scopeMode,
   diagnosticSourceChanges: process.env.NAV_TRACE === '1' || process.env.NAV_RPC_TRACE === '1',
@@ -427,7 +428,7 @@ await writeFile(
       ');',
   ].join('\n'),
 );
-let browserProc, ws, options;
+let browserProc, ws, options, preparedBrowserStop;
 let firefoxError = '';
 let browserStartedAt = 0;
 let seq = 0;
@@ -933,6 +934,30 @@ try {
   if (privateScope) await negative('actual private tab', privateScope);
   if (privateWindow) await evaluate('browser.windows.remove(' + privateWindow.id + ')');
 
+  let browserStopSignal, browserLossDaemon;
+  if (scopeMode === 'browser-loss') {
+    // Prepare slow identity scans and the controller before consuming the Blob action.
+    rememberTree();
+    const daemons = nativeProcesses(true);
+    assert.equal(daemons.length, 1, 'Expected one preserved isolated daemon');
+    browserLossDaemon = daemons[0];
+    browserStopSignal = resolve(dir, 'browser-stop.signal');
+    const ready = resolve(dir, 'browser-stop.ready');
+    const stopped = resolve(dir, 'browser-stop.json');
+    const quote = value => "'" + String(value).replaceAll("'", "''") + "'";
+    const owned = JSON.stringify([...identities.values()]);
+    const script = '$ErrorActionPreference="Stop"; $owned=ConvertFrom-Json ' + quote(owned) + '; $null=Get-CimInstance Win32_Process -Filter "ProcessId=$PID"; Set-Content -LiteralPath ' + quote(ready) + ' -Value "ready"; while(!(Test-Path -LiteralPath ' + quote(browserStopSignal) + ')){Start-Sleep -Milliseconds 10}; $all=Get-CimInstance Win32_Process -Filter "Name=\'firefox.exe\'"; $stopped=@(); foreach($saved in @($owned)[($owned.Count-1)..0]){$current=$all|Where-Object {$_.ProcessId -eq $saved.ProcessId}; if($null -eq $current){continue}; if($current.CreationDate.ToUniversalTime().ToString("o") -ne $saved.Created -or $current.ExecutablePath -ne $saved.ExecutablePath -or $current.ParentProcessId -ne $saved.ParentProcessId){throw "Prepared browser identity changed"}; Stop-Process -Id $current.ProcessId -Force -ErrorAction SilentlyContinue; $stopped+=@{pid=$saved.ProcessId;created=$saved.Created}}; $stopped|ConvertTo-Json -Compress|Set-Content -LiteralPath ' + quote(stopped);
+    preparedBrowserStop = spawn('powershell.exe', ['-NoProfile','-EncodedCommand',Buffer.from(script,'utf16le').toString('base64')],
+      {windowsHide:true,stdio:['ignore','ignore','pipe']});
+    let stopError = '';
+    preparedBrowserStop.stderr.on('data', bytes => stopError += bytes);
+    await wait(async () => {
+      if (preparedBrowserStop.exitCode !== null) throw Error('Prepared browser stop failed: '+stopError);
+      try { await readFile(ready); return true; } catch(error) { if(error.code !== 'ENOENT') throw error; return false; }
+    }, 'Prepared identity-guarded browser stop readiness', 15000);
+    scopeReport.browserLossPreparation = {beforeTrustedSelection:true, controllerPid:preparedBrowserStop.pid,
+      browserIdentities:[...identities.values()].map(item=>({pid:item.ProcessId,parentPid:item.ParentProcessId,created:item.Created}))};
+  }
   const startedAt = Date.now();
   if (scopeMode === 'revoked-blob')
     await at(ownedA.context, 'URL.revokeObjectURL(document.querySelector("a").href)');
@@ -951,15 +976,15 @@ try {
       await send('browsingContext.close', {context: ownedA.context});
     else if (scopeMode === 'browser-loss') {
       assert.equal(pending.size, 0, 'Do not terminate fixture browser with pending BiDi commands');
-      rememberTree();
-      scopeReport.control.terminatedBrowserIdentities = [...identities.values()].map(item =>
-        ({pid:item.ProcessId, parentPid:item.ParentProcessId, created:item.Created}));
-      const daemons = nativeProcesses(true);
-      assert.equal(daemons.length, 1, 'Expected one preserved isolated daemon');
-      const preserved = daemons[0];
+      const preserved = browserLossDaemon;
+      scopeReport.control.terminatedBrowserIdentities = scopeReport.browserLossPreparation.browserIdentities;
       scopeReport.control.preservedDaemonIdentity = {pid:preserved.ProcessId, created:preserved.Created};
       fixtureStage = 'verified browser process loss';
-      stopOwnedTree();
+      scopeReport.control.stopRequestedAt = new Date().toISOString();
+      await writeFile(browserStopSignal, 'stop');
+      await wait(() => preparedBrowserStop.exitCode !== null, 'Prepared browser controller exit', 15000);
+      assert.equal(preparedBrowserStop.exitCode, 0, 'Identity-guarded browser stop failed');
+      scopeReport.control.stopCompletedAt = new Date().toISOString();
       await wait(() => !processes().some(item => identities.get(item.ProcessId)?.Created === item.Created),
         'Verified fixture browser tree exit', 15000);
       await wait(() => nativeProcesses().every(item => /(?:^|\s)daemon(?:\s|$)/.test(item.CommandLine ?? '')),
@@ -1037,14 +1062,16 @@ try {
       const query = 'import sqlite3,json,sys; c=sqlite3.connect("file:"+sys.argv[1]+"?mode=ro",uri=True); rows=[json.loads(row[0]) for row in c.execute("SELECT data FROM records WHERE kind=?",("browser_stream",))]; print(json.dumps([{"offset":r.get("offset"),"total":r.get("total"),"terminal":r.get("terminal"),"sourceGeneration":r.get("identity",{}).get("source_generation")} for r in rows if r.get("job_id")==sys.argv[2]]))';
       const checkpoints = JSON.parse(execFileSync('python', ['-c',query,resolve(data,'downloader.db').replaceAll('\\','/'),jobA.id],
         {windowsHide:true,encoding:'utf8',timeout:15000,stdio:['ignore','pipe','pipe']}));
-      const retained = await readFile(resolve(dirname(current.destination), '.' + current.filename + '.' + current.id + '.part'));
-      let published = false;
-      try { await readFile(current.destination); published = true; } catch (readError) { if(readError.code !== 'ENOENT') throw readError; }
+      let retained = null, publishedBytes = null;
+      try { retained = await readFile(resolve(dirname(current.destination), '.' + current.filename + '.' + current.id + '.part')); }
+      catch(readError) { if(readError.code !== 'ENOENT') throw readError; }
+      try { publishedBytes = await readFile(current.destination); } catch(readError) { if(readError.code !== 'ENOENT') throw readError; }
       scopeReport.browserLossNegative = {state:current.state, bytes:current.bytes,
         sourceGeneration:current.source_generation, verifiedSha256:current.verified_sha256,
-        checkpoints, partialLength:retained.length, partialSha256:digest(retained),
-        intendedPrefixSha256:digest(payloads.A.subarray(0,retained.length)),
-        noPublication:!published, originalGetCount:requests.filter(request=>request.variant==='A').length,
+        checkpoints, partialLength:retained?.length ?? null, partialSha256:retained ? digest(retained) : null,
+        intendedPrefixSha256:retained ? digest(payloads.A.subarray(0,retained.length)) : null,
+        publishedLength:publishedBytes?.length ?? null, publishedSha256:publishedBytes ? digest(publishedBytes) : null,
+        controlTooLate:current.state === 'complete', noPublication:publishedBytes === null, originalGetCount:requests.filter(request=>request.variant==='A').length,
         otherGetCount:requests.filter(request=>request.variant!=='A').length,
         waitDeadlineMs:120000, noBrowserRestartOrEpochMutation:true};
       scopeReport.originalSourceTabsRetained = false;
@@ -1170,6 +1197,9 @@ try {
   ws?.close();
   await writeFile(resolve(dir, 'owned-firefox-stderr.log'), firefoxError);
   await writeFile(resolve(dir, 'owned-daemon-stderr.log'), daemonError);
+  if (preparedBrowserStop?.exitCode === null) preparedBrowserStop.kill();
+  preparedBrowserStop?.stderr.destroy();
+  preparedBrowserStop?.unref();
   stopOwnedTree();
   browserProc?.kill();
   browserProc?.stderr.destroy();
