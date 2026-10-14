@@ -1,6 +1,8 @@
 //! Owner-fenced original browser-response storage. No network requests are issued here.
+mod lease;
 use crate::{navigation::*, security, storage, transfer, Engine, JobState};
 use anyhow::{bail, Context, Result};
+pub(crate) use lease::ReaderLeases;
 use serde::{Deserialize, Serialize};
 use std::{
     io::{Read, Seek, SeekFrom, Write},
@@ -89,12 +91,43 @@ pub fn operation(engine: &Arc<Engine>, operation: StreamOperation) -> Result<Str
         .or_insert_with(|| Arc::new(std::sync::Mutex::new(())))
         .clone();
     let _serial = serial.lock().unwrap();
-    let previous: Option<Checkpoint> = engine
-        .store
-        .lock()
-        .unwrap()
-        .get("browser_stream", &identity.stream_id)
-        .ok();
+    let identity = identity.clone();
+    let ack = operation_locked(engine, operation)?;
+    let mut leases = engine.browser_reader_leases.lock().unwrap();
+    if ack.terminal {
+        leases.remove(&identity.stream_id);
+    } else {
+        leases.observe(&identity, std::time::Instant::now());
+    }
+    Ok(ack)
+}
+fn checkpoint(engine: &Arc<Engine>, id: &str) -> Result<Option<Checkpoint>> {
+    match engine.store.lock().unwrap().get("browser_stream", id) {
+        Ok(record) => Ok(Some(record)),
+        Err(error)
+            if matches!(
+                error.downcast_ref::<rusqlite::Error>(),
+                Some(rusqlite::Error::QueryReturnedNoRows)
+            ) =>
+        {
+            Ok(None)
+        }
+        Err(error) => Err(error),
+    }
+}
+fn operation_locked(engine: &Arc<Engine>, operation: StreamOperation) -> Result<StreamAck> {
+    let identity = match &operation {
+        StreamOperation::Begin { identity, .. }
+        | StreamOperation::Chunk { identity, .. }
+        | StreamOperation::End { identity, .. }
+        | StreamOperation::Abort { identity, .. } => identity,
+    };
+    identity.scope.validate()?;
+    uuid::Uuid::parse_str(&identity.stream_id)?;
+    if identity.source_generation == 0 {
+        bail!("Invalid source generation");
+    }
+    let previous = checkpoint(engine, &identity.stream_id)?;
     let job_id = match &operation {
         StreamOperation::Begin {
             target: NavigationTarget::Job { id },
@@ -411,7 +444,9 @@ pub fn operation(engine: &Arc<Engine>, operation: StreamOperation) -> Result<Str
             job.state = JobState::WaitingUser;
             // No source tokens or arbitrary page diagnostics are persisted.
             job.error = Some(
-                if reason == "cancelled" {
+                if reason == "reader_lost" {
+                    "browser_reader_lost: original browser reader disappeared; request a fresh provider action"
+                } else if reason == "cancelled" {
                     "Browser stream cancelled; original source cannot be replayed"
                 } else {
                     "Browser stream interrupted; request a fresh provider action"
@@ -428,9 +463,319 @@ pub fn operation(engine: &Arc<Engine>, operation: StreamOperation) -> Result<Str
         .put_browser_checkpoint(&record, &job)?;
     Ok(ack(&record))
 }
+/// A lost original reader requires a fresh provider action, never a source replay.
+pub(crate) fn expire_readers(engine: &Arc<Engine>) -> Result<()> {
+    expire_readers_at(engine, std::time::Instant::now())
+}
+fn expire_readers_at(engine: &Arc<Engine>, now: std::time::Instant) -> Result<()> {
+    let expired = engine
+        .browser_reader_leases
+        .lock()
+        .unwrap()
+        .expired_identities(now);
+    for identity in expired {
+        let serial = engine
+            .browser_stream_locks
+            .lock()
+            .unwrap()
+            .entry(identity.stream_id.clone())
+            .or_insert_with(|| Arc::new(std::sync::Mutex::new(())))
+            .clone();
+        let _serial = serial.lock().unwrap();
+        // A heartbeat or durable frame may have renewed while we waited for this stream.
+        if !engine
+            .browser_reader_leases
+            .lock()
+            .unwrap()
+            .expired(&identity, now)
+        {
+            continue;
+        }
+        let checkpoint = checkpoint(engine, &identity.stream_id)?;
+        let shared = checkpoint
+            .as_ref()
+            .and_then(|record| engine.jobs.lock().unwrap().get(&record.job_id).cloned());
+        let eligible = checkpoint.as_ref().is_some_and(|record| {
+            !record.terminal
+                && record.identity.scope == identity.scope
+                && record.identity.source_generation == identity.source_generation
+        }) && shared.as_ref().is_some_and(|shared| {
+            let job = shared.lock().unwrap();
+            matches!(
+                job.state,
+                JobState::BrowserDownloading | JobState::WaitingUser
+            ) && job.navigation_scope.as_ref() == Some(&identity.scope)
+                && job.source_generation == identity.source_generation
+                && job.navigation_owner.as_ref() == Some(&identity.scope.profile)
+                && !job.navigation_transfer_pending
+                && !job.navigation_transfer_recovery
+        });
+        if !eligible {
+            engine
+                .browser_reader_leases
+                .lock()
+                .unwrap()
+                .remove(&identity.stream_id);
+            continue;
+        }
+        // Failed durable abort remains retryable; never report recovery before persistence.
+        operation_locked(
+            engine,
+            StreamOperation::Abort {
+                identity: identity.clone(),
+                reason: "reader_lost".into(),
+            },
+        )?;
+        engine
+            .browser_reader_leases
+            .lock()
+            .unwrap()
+            .remove(&identity.stream_id);
+    }
+    Ok(())
+}
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn reader_fixture() -> (tempfile::TempDir, Arc<Engine>, String, StreamIdentity) {
+        reader_fixture_private(false)
+    }
+    fn reader_fixture_private(
+        private: bool,
+    ) -> (tempfile::TempDir, Arc<Engine>, String, StreamIdentity) {
+        let directory = tempfile::tempdir().unwrap();
+        let engine = Engine::open(directory.path()).unwrap();
+        let owner = uuid::Uuid::new_v4().to_string();
+        let job = engine
+            .command(crate::Command::Navigate(crate::AddJob {
+                request_id: uuid::Uuid::new_v4().to_string(),
+                url: "http://127.0.0.1:9/one-use".into(),
+                filename: Some("original.bin".into()),
+                directory: Some(directory.path().join("output")),
+                queue: None,
+                checksum: None,
+                paused: true,
+                context: crate::RequestContext {
+                    profile: Some(owner.clone()),
+                    browser: Some("firefox".into()),
+                    private,
+                    ..Default::default()
+                },
+                media: None,
+                description: String::new(),
+            }))
+            .unwrap();
+        let id = job["id"].as_str().unwrap().to_string();
+        let scope = SessionScope {
+            browser: "firefox".into(),
+            profile: owner.clone(),
+            private,
+            cookie_store_id: Some("firefox-container-1".into()),
+            container_id: Some("firefox-container-1".into()),
+            partition_key: None,
+            claim_generation: 1,
+        };
+        engine
+            .command(crate::Command::ClaimNavigation {
+                id: id.clone(),
+                owner,
+                force: false,
+                scope: Some(scope.clone()),
+                source_generation: None,
+            })
+            .unwrap();
+        let identity = StreamIdentity {
+            stream_id: uuid::Uuid::new_v4().to_string(),
+            scope,
+            source_generation: 1,
+        };
+        operation(
+            &engine,
+            StreamOperation::Begin {
+                identity: identity.clone(),
+                target: NavigationTarget::Job { id: id.clone() },
+                filename: "original.bin".into(),
+                total: Some(6),
+            },
+        )
+        .unwrap();
+        operation(
+            &engine,
+            StreamOperation::Chunk {
+                identity: identity.clone(),
+                offset: 0,
+                data_base64: "AQID".into(),
+            },
+        )
+        .unwrap();
+        (directory, engine, id, identity)
+    }
+    #[test]
+    fn lost_reader_preserves_actual_durable_prefix_and_fences_late_frames() {
+        let (_directory, engine, id, identity) = reader_fixture();
+        let now = std::time::Instant::now();
+        engine
+            .browser_reader_leases
+            .lock()
+            .unwrap()
+            .observe(&identity, now);
+        expire_readers_at(&engine, now + lease::READER_TIMEOUT).unwrap();
+        let job = engine.job(&id).unwrap();
+        let job = job.lock().unwrap();
+        assert_eq!(job.state, JobState::WaitingUser);
+        assert_eq!(job.bytes, 3);
+        assert!(job.verified_sha256.is_none());
+        assert!(job
+            .error
+            .as_ref()
+            .unwrap()
+            .starts_with("browser_reader_lost:"));
+        assert_eq!(std::fs::read(transfer::part_path(&job)).unwrap(), [1, 2, 3]);
+        assert!(!job.destination.exists());
+        drop(job);
+        assert!(
+            checkpoint(&engine, &identity.stream_id)
+                .unwrap()
+                .unwrap()
+                .terminal
+        );
+        for frame in [
+            StreamOperation::Chunk {
+                identity: identity.clone(),
+                offset: 3,
+                data_base64: "BAUG".into(),
+            },
+            StreamOperation::End {
+                identity: identity.clone(),
+                total: 3,
+                expected_sha256: None,
+            },
+        ] {
+            assert!(operation(&engine, frame)
+                .unwrap_err()
+                .to_string()
+                .contains("terminal"));
+        }
+        assert!(engine
+            .browser_reader_leases
+            .lock()
+            .unwrap()
+            .expired_identities(now + lease::READER_TIMEOUT * 2)
+            .is_empty());
+    }
+    #[test]
+    fn reopened_checkpoint_has_grace_and_exact_retained_ack_can_renew() {
+        let (directory, engine, id, identity) = reader_fixture();
+        drop(engine);
+        let engine = Engine::open(directory.path()).unwrap();
+        let now = std::time::Instant::now();
+        expire_readers_at(&engine, now + std::time::Duration::from_secs(44)).unwrap();
+        assert_eq!(
+            engine.job(&id).unwrap().lock().unwrap().state,
+            JobState::BrowserDownloading
+        );
+        let ack = operation(
+            &engine,
+            StreamOperation::Chunk {
+                identity: identity.clone(),
+                offset: 0,
+                data_base64: "AQID".into(),
+            },
+        )
+        .unwrap();
+        assert_eq!(ack.accepted_offset, 3);
+        assert!(!ack.terminal);
+        let checkpoint = checkpoint(&engine, &identity.stream_id).unwrap().unwrap();
+        assert_eq!(checkpoint.offset, 3);
+    }
+    #[test]
+    fn corrupt_checkpoint_is_reported_and_expiry_remains_retryable() {
+        let (directory, engine, _id, identity) = reader_fixture();
+        let now = std::time::Instant::now();
+        engine
+            .browser_reader_leases
+            .lock()
+            .unwrap()
+            .observe(&identity, now);
+        let saved = checkpoint(&engine, &identity.stream_id).unwrap().unwrap();
+        let connection =
+            rusqlite::Connection::open(directory.path().join("downloader.db")).unwrap();
+        connection
+            .execute(
+                "UPDATE records SET data='invalid-json' WHERE kind='browser_stream' AND id=?1",
+                [&identity.stream_id],
+            )
+            .unwrap();
+        assert!(expire_readers_at(&engine, now + lease::READER_TIMEOUT).is_err());
+        assert!(engine
+            .browser_reader_leases
+            .lock()
+            .unwrap()
+            .expired(&identity, now + lease::READER_TIMEOUT));
+        connection
+            .execute(
+                "UPDATE records SET data=?1 WHERE kind='browser_stream' AND id=?2",
+                rusqlite::params![serde_json::to_string(&saved).unwrap(), identity.stream_id],
+            )
+            .unwrap();
+        expire_readers_at(&engine, now + lease::READER_TIMEOUT).unwrap();
+    }
+    #[test]
+    fn replaced_or_cancelled_owner_cannot_be_changed_by_old_reader_expiry() {
+        for cancelled in [false, true] {
+            let (_directory, engine, id, identity) = reader_fixture();
+            let now = std::time::Instant::now();
+            engine
+                .browser_reader_leases
+                .lock()
+                .unwrap()
+                .observe(&identity, now);
+            let job = engine.job(&id).unwrap();
+            if cancelled {
+                job.lock().unwrap().state = JobState::Cancelled;
+            } else {
+                job.lock().unwrap().source_generation = 2;
+            }
+            expire_readers_at(&engine, now + lease::READER_TIMEOUT).unwrap();
+            let job = job.lock().unwrap();
+            assert_eq!(job.bytes, 3);
+            assert_eq!(
+                job.state,
+                if cancelled {
+                    JobState::Cancelled
+                } else {
+                    JobState::BrowserDownloading
+                }
+            );
+            assert!(engine
+                .browser_reader_leases
+                .lock()
+                .unwrap()
+                .expired_identities(now + lease::READER_TIMEOUT)
+                .is_empty());
+        }
+    }
+    #[test]
+    fn reader_heap_tracks_only_live_streams_and_private_leases_do_not_survive_restart() {
+        let (directory, engine, id, identity) = reader_fixture_private(true);
+        for _ in 0..8 {
+            operation(
+                &engine,
+                StreamOperation::Begin {
+                    identity: identity.clone(),
+                    target: NavigationTarget::Job { id: id.clone() },
+                    filename: "original.bin".into(),
+                    total: Some(6),
+                },
+            )
+            .unwrap();
+        }
+        assert_eq!(engine.browser_reader_leases.lock().unwrap().len(), 1);
+        drop(engine);
+        let engine = Engine::open(directory.path()).unwrap();
+        assert!(engine.snapshot().jobs.is_empty());
+        assert_eq!(engine.browser_reader_leases.lock().unwrap().len(), 0);
+    }
     #[test]
     fn strict_bounded_base64() {
         assert_eq!(decode("AQID/w==").unwrap(), [1, 2, 3, 255]);

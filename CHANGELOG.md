@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.11
+
+- Track original browser readers with 45-second monotonic leases and ten-second owner-fenced, single-in-flight Begin keepalives that never replay requests or advance byte offsets.
+- Preserve startup reconnect grace; expired exact checkpoints enter WaitingUser with retained partials and fence late chunks/EOF. Corrupt-store recovery remains retryable and replaced/cancelled authority is untouched.
+
 ## 0.22.10
 
 - Preserve installed Firefox full-browser-loss failure: verified browser/native-host exit leaves BrowserDownloading and a nonterminal 880,640-byte original-prefix-verified checkpoint after 120 seconds, with no publication/refetch.
