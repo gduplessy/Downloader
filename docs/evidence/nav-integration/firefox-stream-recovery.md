@@ -18,3 +18,7 @@ Checked c6bd315 (0.22.2), the same identified native 0.18.3 pair and Firefox158 
 ## Owning-tab loss
 
 Checked d18f30e, the same native pair and Firefox158 pass actual owning resolver-tab close. WaitingUser retains 90,112 bytes matching the original prefix; no final file, refetch or late progress occurs, and the original user source tab remains open. The sanitized record is `firefox-reader-loss.json`. This tests tab close, not full browser shutdown or worker restart.
+
+## Admission observation correction
+
+The second ordered revoked-Blob repeat failed before its native stream began: preview WaitingUser at 14:02:30.408Z, selection WaitingBrowser at 14:02:32.258Z, fixture failure at 14:02:32.9149652Z, native begin at 14:02:33.1080611Z, then abort at 14:02:33.1461239Z. Read-only SQLite/WAL audit shows the final job WaitingUser and terminal zero-byte checkpoint. See `firefox-revoked-ordered-failure.json`. This observation does not prove capture-marker removal or post-abort drift. Earlier revocation observations using the same loose wait remain provisional. The strengthened fixture requires the actual matching interrupted capture and native WaitingUser before settling; repeat qualification is pending.

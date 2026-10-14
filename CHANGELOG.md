@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.6
+
+- Synchronize installed Firefox interruption acceptance with the actual interrupted production capture and native WaitingUser, preventing earlier preview state from satisfying the wait.
+- Preserve native event timing that explains the failed observation before admission; repeat qualification remains pending until the strengthened fixture passes.
+
 ## 0.22.5
 
 - Order resolver navigation writes and Blob interruption transitions per owning tab so an in-flight step cannot overwrite final recovery state.

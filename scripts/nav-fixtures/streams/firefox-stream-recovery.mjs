@@ -973,12 +973,12 @@ try {
       scopeReport.control.restartedDaemonIdentity = {pid: restarted[0].ProcessId, created: restarted[0].Created};
     }
   } else scopeReport.control = {mode: scopeMode, revokedActualPageBlob: true};
-  const readRecoveryMarkers = async () => evaluateJson(
-    '(async()=>{const local=await browser.storage.local.get();const temporary=browser.storage.session?await browser.storage.session.get():{};const key=' + JSON.stringify(jobA.id) + ';const pick=(all,prefix)=>all[prefix+key]??null;const safe=record=>record?{state:record.state??null,tabId:record.tabId??null,sourceGeneration:record.sourceGeneration??null,documentGeneration:record.documentGeneration??null,kind:record.kind??null,hasDocumentNonce:typeof record.documentNonce==="string",scope:record.scope?{browser:record.scope.browser,cookie_store_id:record.scope.cookie_store_id,container_id:record.scope.container_id,private:record.scope.private,claim_generation:record.scope.claim_generation}:null}:null;const merged={...local,...temporary};const resolver=pick(merged,"resolver-"),capture=pick(merged,"capture-");return JSON.stringify({sessionAreaAvailable:!!browser.storage.session,local:{resolver:safe(pick(local,"resolver-")),capture:safe(pick(local,"capture-"))},session:{resolver:safe(pick(temporary,"resolver-")),capture:safe(pick(temporary,"capture-"))},documentNonceEquivalent:!!resolver&&!!capture&&typeof resolver.documentNonce==="string"&&resolver.documentNonce===capture.documentNonce})})()',
+  const readRecoveryMarkers = async (nativeScope = nativeA.navigation_scope) => evaluateJson(
+    '(async()=>{const local=await browser.storage.local.get();const temporary=browser.storage.session?await browser.storage.session.get():{};const key=' + JSON.stringify(jobA.id) + ';const nativeScope=' + JSON.stringify(nativeScope) + ';const pick=(all,prefix)=>all[prefix+key]??null;const safe=record=>record?{state:record.state??null,tabId:record.tabId??null,sourceGeneration:record.sourceGeneration??null,documentGeneration:record.documentGeneration??null,kind:record.kind??null,hasDocumentNonce:typeof record.documentNonce==="string",hasStreamId:typeof record.streamId==="string",scope:record.scope?{browser:record.scope.browser,cookie_store_id:record.scope.cookie_store_id,container_id:record.scope.container_id,private:record.scope.private,claim_generation:record.scope.claim_generation}:null}:null;const merged={...local,...temporary};const resolver=pick(merged,"resolver-"),capture=pick(merged,"capture-");const sameScope=(left,right)=>!!left&&!!right&&["browser","profile","private","cookie_store_id","container_id","partition_key","claim_generation"].every(field=>JSON.stringify(left[field])===JSON.stringify(right[field]));return JSON.stringify({capture:safe(capture),captureScopeMatchesNative:sameScope(capture?.scope,nativeScope),sessionAreaAvailable:!!browser.storage.session,local:{resolver:safe(pick(local,"resolver-")),capture:safe(pick(local,"capture-"))},session:{resolver:safe(pick(temporary,"resolver-")),capture:safe(pick(temporary,"capture-"))},documentNonceEquivalent:!!resolver&&!!capture&&typeof resolver.documentNonce==="string"&&resolver.documentNonce===capture.documentNonce})})()',
   );
   let interrupted;
   try {
-    interrupted = await wait(() => {
+    interrupted = await wait(async () => {
     const current = list().find(job => job.id === jobA.id);
     scopeReport.lastInterruptionObservation = {state: current?.state ?? null,
       bytes: current?.bytes ?? null, total: current?.total ?? null,
@@ -986,7 +986,22 @@ try {
       verifiedSha256: current?.verified_sha256 ?? null,
       hasError: typeof current?.error === 'string' && current.error.length > 0};
     assert.notEqual(current.state, 'complete', 'Interrupted original Blob was published');
-    return current.state === 'waiting_user' ? current : null;
+    if (current.state !== 'waiting_user') return null;
+    // The adapter preview is already WaitingUser before asynchronous selection commits.
+    // Wait for the actual production stream marker, not that earlier preview state.
+    const markers = await readRecoveryMarkers(current.navigation_scope);
+    scopeReport.lastInterruptionMarkers = markers;
+    const actualCapture = markers.capture;
+    if (actualCapture?.state !== 'interrupted' || !actualCapture.hasStreamId
+        || actualCapture.tabId !== ownedA.tab.id
+        || actualCapture.sourceGeneration !== current.source_generation
+        || !markers.captureScopeMatchesNative
+        || (scopeMode === 'revoked-blob' && !markers.documentNonceEquivalent)) return null;
+    scopeReport.interruptionAdmissionObserved = {nativeState: current.state,
+      captureState: actualCapture.state, exactNativeScope: true,
+      sourceGeneration: actualCapture.sourceGeneration,
+      documentNonceEquivalent: markers.documentNonceEquivalent};
+    return current;
     }, 'Native original stream interruption', 120000);
   } catch (error) {
     try { scopeReport.interruptionTimeoutMarkers = await readRecoveryMarkers(); }
@@ -1000,12 +1015,8 @@ try {
   if (scopeMode !== 'revoked-blob') assert.ok(interrupted.bytes >= progress.bytes);
   else assert.equal(interrupted.bytes, 0);
   const partialPath = resolve(dirname(interrupted.destination), '.' + interrupted.filename + '.' + interrupted.id + '.part');
-  let partial;
-  if (scopeMode === 'revoked-blob' && interrupted.bytes === 0) {
-    // Revocation rejects admission before a sink opens; no partial artifact should exist.
-    await assert.rejects(readFile(partialPath), error => error.code === 'ENOENT');
-    partial = Buffer.alloc(0);
-  } else partial = await readFile(partialPath);
+  // A real admitted native Blob stream owns a staging file, even at zero bytes.
+  const partial = await readFile(partialPath);
   assert.equal(partial.length, interrupted.bytes);
   assert.equal(digest(partial), digest(payloads.A.subarray(0, partial.length)));
   await assert.rejects(readFile(interrupted.destination), error => error.code === 'ENOENT');
