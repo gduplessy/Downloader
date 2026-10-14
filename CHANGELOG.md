@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.1
+
+- Preserve installed Firefox revoked-Blob observations and a reusable interruption fixture with exact daemon identity controls and sanitized settling diagnostics.
+- Record the reproduced daemon-restart gap and intermittent state drift as pending; a single passing revocation run does not close either recovery gate.
+
 ## 0.22.0
 
 - Integrate recorded Chrome/Edge qualification of two actual top-level cookie partitions, distinct native Blob hashes, and missing-cookie-permission refusal before job creation.
