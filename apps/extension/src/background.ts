@@ -1,6 +1,10 @@
 import { NavigationSources, NavigationSourceError } from './navigation/session/source';
 import { RenderedDiscovery } from './navigation/discovery/runtime';
-import { hasLiveResolver, verifyLiveDocument, type DocumentClaim } from './navigation/session/document';
+import {
+  hasLiveResolver,
+  verifyLiveDocument,
+  type DocumentClaim,
+} from './navigation/session/document';
 import { NavigationStarts } from './navigation/session/start';
 import { NavigationTransfer } from './navigation/session/transfer';
 import { PremiumAuthorizations } from './navigation/accounts/premium';
@@ -22,6 +26,7 @@ import { classifyReplay } from './navigation/streams/replay';
 import { DurableStreamSink, NativeStreamPort } from './navigation/streams/transport';
 import { DirectCaptureOwners } from './navigation/streams/ownership';
 import { orphanedStreamIdentity, recoverStreamAbort } from './navigation/streams/recovery';
+import { CaptureTransitions, interruptedCaptureMatches } from './navigation/streams/transitions';
 import { armChromium, takeFirefox, originalResponseMetadata } from './navigation/streams/capture';
 import { readOwnedBlob } from './navigation/streams/blob';
 import { applyEvents } from '../../../packages/shared/src/events';
@@ -150,27 +155,51 @@ const profile = browser.storage.local.get('profileId').then(async (stored) => {
   return id;
 });
 const navigationSources = new NavigationSources(
-  browser as any, BROWSER, profile, browserEpoch, ephemeralStore,
-  privateWorker ? navigationStore : browser.storage.local, privateWorker,
+  browser as any,
+  BROWSER,
+  profile,
+  browserEpoch,
+  ephemeralStore,
+  privateWorker ? navigationStore : browser.storage.local,
+  privateWorker,
 );
-const navigationTransfer = new NavigationTransfer(browser, BROWSER, profile, privateWorker,
-  args => native('browser_navigation_transfer', args), navigationPermissions,
+const navigationTransfer = new NavigationTransfer(
+  browser,
+  BROWSER,
+  profile,
+  privateWorker,
+  (args) => native('browser_navigation_transfer', args),
+  navigationPermissions,
   async (accepted, tabId, page) => {
-    await navigationStore.set({ ['resolver-' + accepted.id]: {
-      tabId, scope: accepted.scope, sourceGeneration: accepted.source_generation,
-      generation: accepted.source_generation, sessionEpoch: await browserEpoch,
-      started: Date.now(), steps: 0, lastOrigin: new URL(page).origin,
-      private: accepted.scope.private,
-    } satisfies ResolverRecord });
-    await native('browser_status', { id: accepted.id, state: 'waiting_browser',
-      message: 'Session transfer accepted; revalidating this page.', bytes: 0, total: null, url: page });
+    await navigationStore.set({
+      ['resolver-' + accepted.id]: {
+        tabId,
+        scope: accepted.scope,
+        sourceGeneration: accepted.source_generation,
+        generation: accepted.source_generation,
+        sessionEpoch: await browserEpoch,
+        started: Date.now(),
+        steps: 0,
+        lastOrigin: new URL(page).origin,
+        private: accepted.scope.private,
+      } satisfies ResolverRecord,
+    });
+    await native('browser_status', {
+      id: accepted.id,
+      state: 'waiting_browser',
+      message: 'Session transfer accepted; revalidating this page.',
+      bytes: 0,
+      total: null,
+      url: page,
+    });
     eventSnapshot = null;
     const job = (await native('snapshot')).jobs.find((job: any) => job.id === accepted.id);
     if (!job) throw Error('Accepted task is unavailable in this session');
     await navigationSources.adopted(job);
     await scheduler.request({ action: 'control', id: job.id, paused: false, priority: null });
     await startResolver(job);
-  });
+  },
+);
 const discovery = new RenderedDiscovery(
   native,
   () => profile,
@@ -181,8 +210,9 @@ const discovery = new RenderedDiscovery(
     const job = snapshot.jobs.find((job: any) => job.id === id);
     if (!job) return false;
     await startResolver(job, true, sourceTabId);
-    const row = (await navigationStore.get("resolver-"+id))["resolver-"+id] as ResolverRecord | undefined;
-    return !!row && await ownsCurrentTab(row);
+    const row = (await navigationStore.get('resolver-' + id))['resolver-' + id] as
+      ResolverRecord | undefined;
+    return !!row && (await ownsCurrentTab(row));
   },
 );
 const requests = new Map<string, ScopedRequest>();
@@ -195,8 +225,9 @@ function requestFor(url: string, privateSession?: boolean) {
   );
   return values.length === 1 ? values[0] : undefined;
 }
-const captureCancels = new Map<number, () => Promise<void>>();
+const captureCancels = new Map<number, (alreadySerialized?: boolean) => Promise<void>>();
 const directOwners = new DirectCaptureOwners();
+const captureTransitions = new CaptureTransitions();
 const blobReaders = new Map<
   string,
   {
@@ -267,7 +298,8 @@ async function armDirect(
   filename = 'download',
 ) {
   if (!settings.directCapture || !record.scope) return false;
-  await captureCancels.get(record.tabId)?.();
+  // armDirect is called only inside the serialized resolver commit transition.
+  await captureCancels.get(record.tabId)?.(true);
   captureCancels.delete(record.tabId);
   const sink = await newSink(id, record, filename, null, !request.url.startsWith('blob:'));
   directOwners.assign(record.tabId, id, sink.identity);
@@ -277,193 +309,208 @@ async function armDirect(
     if (terminal || state === lastState) return;
     lastState = state;
     if (['complete', 'interrupted', 'detached'].includes(state)) terminal = true;
-    await navigationStore.set({ ['capture-' + id]: {
-      state, tabId: record.tabId, scope: record.scope,
-      sourceGeneration: record.sourceGeneration, streamId: sink.identity.stream_id,
-      documentNonce: record.documentNonce,
-      kind: request.url.startsWith('blob:') ? 'blob' : 'response',
-    } });
+    await navigationStore.set({
+      ['capture-' + id]: {
+        state,
+        tabId: record.tabId,
+        scope: record.scope,
+        sourceGeneration: record.sourceGeneration,
+        streamId: sink.identity.stream_id,
+        documentNonce: record.documentNonce,
+        kind: request.url.startsWith('blob:') ? 'blob' : 'response',
+      },
+    });
   };
   try {
-  if (request.url.startsWith('blob:')) {
-    const tab = await browser.tabs.get(record.tabId);
-    if (new URL(request.url).origin !== new URL(tab.url!).origin) {
-      await sink.abort();
-      throw Error('Blob frame origin mismatch');
-    }
-    const capability = crypto.randomUUID();
-    await captureState('armed');
-    const cancelBlob = async () => {
-      await sink.abort('cancelled').catch(() => {});
-      blobReaders.delete(capability);
-      await captureState('interrupted');
-    };
-    captureCancels.set(record.tabId, cancelBlob);
-    blobReaders.set(capability, {
-      tabId: record.tabId,
-      frameId: 0,
-      scope: record.scope,
-      sink,
-      jobId: id,
-      sourceGeneration: record.sourceGeneration!,
-      captureState,
-    });
-    const failedBlob = async () => {
-      await sink.abort().catch(() => {});
-      await captureState('interrupted');
-    };
-    if (BROWSER === 'chromium')
-      void browser.scripting
-        .executeScript({
-          target: { tabId: record.tabId, frameIds: [0] },
-          func: readOwnedBlob,
-          args: [request.url, capability, 192 * 1024],
-        })
-        .catch(failedBlob)
-        .finally(() => blobReaders.delete(capability));
-    else
-      void browser.tabs
-        .executeScript(record.tabId, {
-          frameId: 0,
-          code:
-            '(' +
-            readOwnedBlob.toString() +
-            ')(' +
-            JSON.stringify(request.url) +
-            ',' +
-            JSON.stringify(capability) +
-            ',196608)',
-        })
-        .catch(failedBlob)
-        .finally(() => blobReaders.delete(capability));
-    return true;
-  }
-  if (BROWSER === 'chromium') {
-    const api = (globalThis as any).chrome.debugger;
-    const cancel = await armChromium(
-      api,
-      record.tabId,
-      request,
-      sink,
-      async (state) => {
-        await captureState(state);
-        if (['interrupted', 'detached'].includes(state))
-          await native('browser_status', {
-            id,
-            state: 'waiting_user',
-            message:
-              'Direct capture interrupted. Request a fresh provider action; original requests are never replayed.',
-            bytes: sink.offset,
-            total: null,
-          }).catch(() => {});
-      },
-      async (headers) => {
-        const metadata = originalResponseMetadata(headers);
-        await sink.begin({ kind: 'job', id }, metadata.filename ?? filename, metadata.total);
-      },
-    );
-    captureCancels.set(record.tabId, cancel);
-  } else {
-    if (
-      !(await browser.permissions.contains({
-        permissions: ['webRequest', 'webRequestBlocking'],
-        origins: [sitePattern(request.url)],
-      }))
-    ) {
-      await sink.abort();
-      throw Error('Firefox direct capture needs response-filter permissions');
-    }
-    await captureState('armed');
-    let taken = false;
-    let requestId: string | undefined;
-    let admit: (accepted: boolean) => void = () => {};
-    const ready = new Promise<boolean>((resolve) => {
-      admit = resolve;
-    });
-    const headers = (details: any) => {
-      if (details.requestId !== requestId) return;
-      browser.webRequest.onHeadersReceived.removeListener(headers);
-      const values: Record<string, string> = Object.fromEntries(
-        (details.responseHeaders ?? []).map((h: any) => [h.name.toLowerCase(), h.value ?? '']),
-      );
-      const file =
-        details.statusCode === 200 &&
-        (/attachment/i.test(values['content-disposition'] ?? '') ||
-          !/(?:text\/html|json)/i.test(values['content-type'] ?? ''));
-      if (!file) {
-        directOwners.release(record.tabId, sink.identity.stream_id);
-        admit(false);
-        void native('browser_status', {
-          id,
-          state: 'waiting_user',
-          message: 'Navigation response remains in its original browser context.',
-          bytes: 0,
-          total: null,
-        }).catch(() => {});
-        return;
+    if (request.url.startsWith('blob:')) {
+      const tab = await browser.tabs.get(record.tabId);
+      if (new URL(request.url).origin !== new URL(tab.url!).origin) {
+        await sink.abort();
+        throw Error('Blob frame origin mismatch');
       }
-      const metadata = originalResponseMetadata(values);
-      void sink.begin({ kind: 'job', id }, metadata.filename ?? filename, metadata.total).then(
-        async () => { await captureState('streaming'); admit(true); },
-        () => {
+      const capability = crypto.randomUUID();
+      await captureState('armed');
+      const cancelBlob = (alreadySerialized = false) => {
+        const stop = async () => {
+          await sink.abort('cancelled').catch(() => {});
+          blobReaders.delete(capability);
+          await captureState('interrupted');
+        };
+        return alreadySerialized ? stop() : captureTransitions.run(record.tabId, stop);
+      };
+      captureCancels.set(record.tabId, cancelBlob);
+      blobReaders.set(capability, {
+        tabId: record.tabId,
+        frameId: 0,
+        scope: record.scope,
+        sink,
+        jobId: id,
+        sourceGeneration: record.sourceGeneration!,
+        captureState,
+      });
+      const failedBlob = () =>
+        captureTransitions.run(record.tabId, async () => {
+          await sink.abort().catch(() => {});
+          await captureState('interrupted');
+        });
+      if (BROWSER === 'chromium')
+        void browser.scripting
+          .executeScript({
+            target: { tabId: record.tabId, frameIds: [0] },
+            func: readOwnedBlob,
+            args: [request.url, capability, 192 * 1024],
+          })
+          .catch(failedBlob)
+          .finally(() => blobReaders.delete(capability));
+      else
+        void browser.tabs
+          .executeScript(record.tabId, {
+            frameId: 0,
+            code:
+              '(' +
+              readOwnedBlob.toString() +
+              ')(' +
+              JSON.stringify(request.url) +
+              ',' +
+              JSON.stringify(capability) +
+              ',196608)',
+          })
+          .catch(failedBlob)
+          .finally(() => blobReaders.delete(capability));
+      return true;
+    }
+    if (BROWSER === 'chromium') {
+      const api = (globalThis as any).chrome.debugger;
+      const cancel = await armChromium(
+        api,
+        record.tabId,
+        request,
+        sink,
+        async (state) => {
+          await captureState(state);
+          if (['interrupted', 'detached'].includes(state))
+            await native('browser_status', {
+              id,
+              state: 'waiting_user',
+              message:
+                'Direct capture interrupted. Request a fresh provider action; original requests are never replayed.',
+              bytes: sink.offset,
+              total: null,
+            }).catch(() => {});
+        },
+        async (headers) => {
+          const metadata = originalResponseMetadata(headers);
+          await sink.begin({ kind: 'job', id }, metadata.filename ?? filename, metadata.total);
+        },
+      );
+      captureCancels.set(record.tabId, cancel);
+    } else {
+      if (
+        !(await browser.permissions.contains({
+          permissions: ['webRequest', 'webRequestBlocking'],
+          origins: [sitePattern(request.url)],
+        }))
+      ) {
+        await sink.abort();
+        throw Error('Firefox direct capture needs response-filter permissions');
+      }
+      await captureState('armed');
+      let taken = false;
+      let requestId: string | undefined;
+      let admit: (accepted: boolean) => void = () => {};
+      const ready = new Promise<boolean>((resolve) => {
+        admit = resolve;
+      });
+      const headers = (details: any) => {
+        if (details.requestId !== requestId) return;
+        browser.webRequest.onHeadersReceived.removeListener(headers);
+        const values: Record<string, string> = Object.fromEntries(
+          (details.responseHeaders ?? []).map((h: any) => [h.name.toLowerCase(), h.value ?? '']),
+        );
+        const file =
+          details.statusCode === 200 &&
+          (/attachment/i.test(values['content-disposition'] ?? '') ||
+            !/(?:text\/html|json)/i.test(values['content-type'] ?? ''));
+        if (!file) {
           directOwners.release(record.tabId, sink.identity.stream_id);
           admit(false);
-        },
-      );
-    };
-    const listen = (details: any) => {
-      if (
-        taken ||
-        details.tabId !== record.tabId ||
-        details.frameId !== 0 ||
-        details.url !== request.url ||
-        details.method !== request.method
-      )
-        return;
-      taken = true;
-      requestId = details.requestId;
-      takeFirefox(
-        (browser.webRequest as any).filterResponseData(details.requestId),
-        sink,
-        () => {
-          browser.webRequest.onBeforeRequest.removeListener(listen);
-          browser.webRequest.onHeadersReceived.removeListener(headers);
-          void captureState('interrupted');
           void native('browser_status', {
-            id, state: 'waiting_user',
-            message: 'Firefox response capture failed. Request a fresh action in the owning browser; original requests are never replayed.',
-            bytes: sink.offset, total: null,
+            id,
+            state: 'waiting_user',
+            message: 'Navigation response remains in its original browser context.',
+            bytes: 0,
+            total: null,
           }).catch(() => {});
-        },
-        ready,
-        (completed) => {
-          browser.webRequest.onBeforeRequest.removeListener(listen);
-          browser.webRequest.onHeadersReceived.removeListener(headers);
-          void captureState(completed ? 'complete' : 'interrupted');
-        },
+          return;
+        }
+        const metadata = originalResponseMetadata(values);
+        void sink.begin({ kind: 'job', id }, metadata.filename ?? filename, metadata.total).then(
+          async () => {
+            await captureState('streaming');
+            admit(true);
+          },
+          () => {
+            directOwners.release(record.tabId, sink.identity.stream_id);
+            admit(false);
+          },
+        );
+      };
+      const listen = (details: any) => {
+        if (
+          taken ||
+          details.tabId !== record.tabId ||
+          details.frameId !== 0 ||
+          details.url !== request.url ||
+          details.method !== request.method
+        )
+          return;
+        taken = true;
+        requestId = details.requestId;
+        takeFirefox(
+          (browser.webRequest as any).filterResponseData(details.requestId),
+          sink,
+          () => {
+            browser.webRequest.onBeforeRequest.removeListener(listen);
+            browser.webRequest.onHeadersReceived.removeListener(headers);
+            void captureState('interrupted');
+            void native('browser_status', {
+              id,
+              state: 'waiting_user',
+              message:
+                'Firefox response capture failed. Request a fresh action in the owning browser; original requests are never replayed.',
+              bytes: sink.offset,
+              total: null,
+            }).catch(() => {});
+          },
+          ready,
+          (completed) => {
+            browser.webRequest.onBeforeRequest.removeListener(listen);
+            browser.webRequest.onHeadersReceived.removeListener(headers);
+            void captureState(completed ? 'complete' : 'interrupted');
+          },
+        );
+      };
+      browser.webRequest.onHeadersReceived.addListener(
+        headers,
+        { urls: [sitePattern(request.url)] },
+        ['responseHeaders'],
       );
-    };
-    browser.webRequest.onHeadersReceived.addListener(
-      headers,
-      { urls: [sitePattern(request.url)] },
-      ['responseHeaders'],
-    );
-    browser.webRequest.onBeforeRequest.addListener(listen, { urls: [sitePattern(request.url)] }, [
-      'blocking',
-    ]);
-    const cancel = async () => {
-      admit(false);
-      browser.webRequest.onBeforeRequest.removeListener(listen);
-      browser.webRequest.onHeadersReceived.removeListener(headers);
-      await sink.abort('cancelled').catch(() => {});
-      await captureState('interrupted');
-    };
-    captureCancels.set(record.tabId, cancel);
-    setTimeout(() => {
-      if (!taken) void cancel();
-    }, 60000);
-  }
-  return false;
+      browser.webRequest.onBeforeRequest.addListener(listen, { urls: [sitePattern(request.url)] }, [
+        'blocking',
+      ]);
+      const cancel = async () => {
+        admit(false);
+        browser.webRequest.onBeforeRequest.removeListener(listen);
+        browser.webRequest.onHeadersReceived.removeListener(headers);
+        await sink.abort('cancelled').catch(() => {});
+        await captureState('interrupted');
+      };
+      captureCancels.set(record.tabId, cancel);
+      setTimeout(() => {
+        if (!taken) void cancel();
+      }, 60000);
+    }
+    return false;
   } catch (error) {
     directOwners.release(record.tabId, sink.identity.stream_id);
     throw error;
@@ -752,18 +799,22 @@ async function add(
 }
 async function capture(item: browser.Downloads.DownloadItem, resolverId?: string) {
   const download = item as Download;
-  const browserJob = (jobId: string) => ({jobId, private: privateWorker || item.incognito === true});
+  const browserJob = (jobId: string) => ({
+    jobId,
+    private: privateWorker || item.incognito === true,
+  });
   let record =
     requestFor(download.finalUrl || item.url, Boolean(item.incognito)) ??
     requestFor(item.url, Boolean(item.incognito));
-  if (!privateWorker && !item.incognito) await browser.storage.local.set({
-    lastCapture: {
-      observedMethod: record?.method ?? null,
-      state: item.state,
-      bytes: item.bytesReceived,
-      assignedNavigation: Boolean(resolverId),
-    },
-  });
+  if (!privateWorker && !item.incognito)
+    await browser.storage.local.set({
+      lastCapture: {
+        observedMethod: record?.method ?? null,
+        state: item.state,
+        bytes: item.bytesReceived,
+        assignedNavigation: Boolean(resolverId),
+      },
+    });
   if (ongoing.has(item.id)) return;
   const replayable =
     classifyReplay({ method: record?.method, sourceGeneration: 1 }).disposition === 'replayable';
@@ -873,7 +924,8 @@ async function resolveDownload(item: browser.Downloads.DownloadItem) {
   }
   if (entry) {
     const id = entry[0].slice('resolver-'.length);
-    if (directOwners.owns(entry[1].tabId, id, entry[1].scope, entry[1].sourceGeneration ?? 1)) return;
+    if (directOwners.owns(entry[1].tabId, id, entry[1].scope, entry[1].sourceGeneration ?? 1))
+      return;
     await navigationStore.set({
       [entry[0]]: { ...entry[1], downloadId: item.id },
     });
@@ -941,29 +993,75 @@ async function recover() {
 const recoveringStreams = new Set<string>();
 async function recoverDirectCaptures(storage: Record<string, any>) {
   for (const [key, capture] of Object.entries(storage)) {
-    if (!key.startsWith('capture-') || !capture?.scope
-        || !['armed', 'taking_original_response', 'streaming', 'interrupted', 'detached'].includes(capture.state)) continue;
-    const id = key.slice(8), record = storage['resolver-' + id] as ResolverRecord | undefined;
-    if (!record?.scope || recoveringStreams.has(id)
-        || directOwners.owns(record.tabId, id, record.scope, record.sourceGeneration!)) continue;
+    if (
+      !key.startsWith('capture-') ||
+      !capture?.scope ||
+      !['armed', 'taking_original_response', 'streaming', 'interrupted', 'detached'].includes(
+        capture.state,
+      )
+    )
+      continue;
+    const id = key.slice(8),
+      record = storage['resolver-' + id] as ResolverRecord | undefined;
+    if (
+      !record?.scope ||
+      recoveringStreams.has(id) ||
+      directOwners.owns(record.tabId, id, record.scope, record.sourceGeneration!)
+    )
+      continue;
     recoveringStreams.add(id);
     try {
-      if (!(await ownsCurrentTab(record))) continue;
-      const job = (await browserSnapshot()).jobs.find((row: any) => row.id === id);
-      const identity = orphanedStreamIdentity(capture, record, job, await browserEpoch);
-      if (!identity) continue;
-      const port = new NativeStreamPort(() => browser.runtime.connectNative(HOST));
-      try { await recoverStreamAbort(capture, identity, current =>
-        port.operation({...current, operation:'abort', reason:'worker_interrupted'}), job.state); }
-      finally { port.close(); }
-      await native('browser_status', {
-        id, state:'waiting_user',
-        message:'browser_worker_interrupted: request a fresh action in the owning browser; original requests are never replayed',
-        bytes:job.bytes, total:job.total,
+      await captureTransitions.run(record.tabId, async () => {
+        // Admission may have waited behind a fresh commit; use its current markers/owner.
+        const latest = await navigationStore.get([key, 'resolver-' + id]);
+        const currentCapture = latest[key],
+          currentRecord = latest['resolver-' + id];
+        if (
+          !currentRecord?.scope ||
+          !(await ownsCurrentTab(currentRecord)) ||
+          directOwners.owns(
+            currentRecord.tabId,
+            id,
+            currentRecord.scope,
+            currentRecord.sourceGeneration,
+          )
+        )
+          return;
+        const job = (await browserSnapshot()).jobs.find((row: any) => row.id === id);
+        const identity = orphanedStreamIdentity(
+          currentCapture,
+          currentRecord,
+          job,
+          await browserEpoch,
+        );
+        if (!identity) return;
+        const port = new NativeStreamPort(() => browser.runtime.connectNative(HOST));
+        try {
+          await recoverStreamAbort(
+            currentCapture,
+            identity,
+            (current) =>
+              port.operation({ ...current, operation: 'abort', reason: 'worker_interrupted' }),
+            job.state,
+          );
+        } finally {
+          port.close();
+        }
+        await native('browser_status', {
+          id,
+          state: 'waiting_user',
+          message:
+            'browser_worker_interrupted: request a fresh action in the owning browser; original requests are never replayed',
+          bytes: job.bytes,
+          total: job.total,
+        });
+        await navigationStore.set({ [key]: { ...currentCapture, state: 'interrupted' } });
       });
-      await navigationStore.set({[key]: {...capture, state:'interrupted'}});
-    } catch { /* Keep the marker so the next service/poll recovery can retry its exact abort. */ }
-    finally { recoveringStreams.delete(id); }
+    } catch {
+      /* Keep the marker so the next service/poll recovery can retry its exact abort. */
+    } finally {
+      recoveringStreams.delete(id);
+    }
   }
 }
 browser.contextMenus.onClicked.addListener((info, tab) => {
@@ -1038,9 +1136,11 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
           await reader.captureState('complete');
           blobReaders.delete(message.capability);
         } else if (message.operation === 'abort') {
-          await reader.sink.abort();
-          await reader.captureState('interrupted');
-          blobReaders.delete(message.capability);
+          await captureTransitions.run(reader.tabId, async () => {
+            await reader.sink.abort();
+            await reader.captureState('interrupted');
+            blobReaders.delete(message.capability);
+          });
         } else throw Error('Unknown page stream operation');
         return true;
       })();
@@ -1122,8 +1222,11 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
         if (!record || !(await ownsCurrentTab(record)))
           throw Error('Reopen the original session or prepare a new desktop transfer');
         const renewed = await native('browser_navigation_transfer', {
-          action: 'continue', id: job.id, scope: record.scope,
-          source_generation: record.sourceGeneration, consent: true,
+          action: 'continue',
+          id: job.id,
+          scope: record.scope,
+          source_generation: record.sourceGeneration,
+          consent: true,
         });
         record.scope = renewed.scope;
         record.sourceGeneration = renewed.source_generation;
@@ -1307,7 +1410,10 @@ async function pendingNavigationSource(job: any, sourceTabId?: number) {
     if (error instanceof NavigationSourceError) {
       await navigationSources.invalidate(job);
       await native('browser_status', {
-        id: job.id, state: 'waiting_user', bytes: job.bytes ?? 0, total: job.total ?? null,
+        id: job.id,
+        state: 'waiting_user',
+        bytes: job.bytes ?? 0,
+        total: job.total ?? null,
         message: `${error.code}: Original browser context is unavailable. Continue from its original session or use explicit session transfer.`,
       }).catch(() => {});
       await scheduler.release(job.id).catch(() => {});
@@ -1335,17 +1441,27 @@ async function startOwnedResolver(job: any, force = false, sourceTabId?: number)
     delete stored[key];
   }
   if (stored[key]) {
-    if (!(await admittedNavigationJob(job, () => scheduler.admitted(job.id),
-      // A new native BrowserSnapshot reads the current store; do not use browserSnapshot's event cache.
-      () => native('snapshot')))) return;
+    if (
+      !(await admittedNavigationJob(
+        job,
+        () => scheduler.admitted(job.id),
+        // A new native BrowserSnapshot reads the current store; do not use browserSnapshot's event cache.
+        () => native('snapshot'),
+      ))
+    )
+      return;
     const record = stored[key] as ResolverRecord;
     try {
       if (!(await ownsCurrentTab(record)))
         throw Error('Original navigation tab context unavailable');
       await renewAuthority(key, record);
-      if (!force && await hasLiveResolver(browser, BROWSER, record.tabId, {
-        nonce: record.documentNonce, documentId: record.documentId,
-      })) {
+      if (
+        !force &&
+        (await hasLiveResolver(browser, BROWSER, record.tabId, {
+          nonce: record.documentNonce,
+          documentId: record.documentId,
+        }))
+      ) {
         await scheduler.heartbeat(job.id, record.tabId);
         return;
       }
@@ -1395,9 +1511,15 @@ async function startOwnedResolver(job: any, force = false, sourceTabId?: number)
     }
   }
   sourceTabId = await pendingNavigationSource(job, sourceTabId);
-  if (!(await admittedNavigationJob(job, () => scheduler.admitted(job.id),
+  if (
+    !(await admittedNavigationJob(
+      job,
+      () => scheduler.admitted(job.id),
       // A new native BrowserSnapshot reads the current store; do not use browserSnapshot's event cache.
-      () => native('snapshot')))) return;
+      () => native('snapshot'),
+    ))
+  )
+    return;
   // Admission can wait; revalidate the observed source before using its window/store.
   sourceTabId = await pendingNavigationSource(job, sourceTabId);
   const source = sourceTabId === undefined ? undefined : await browser.tabs.get(sourceTabId);
@@ -1474,8 +1596,11 @@ async function pollResolvers(userGesture = false) {
     await recoverDirectCaptures(await navigationStore.get(null));
     const snapshot = await browserSnapshot();
     for (const job of snapshot.jobs)
-      if (job.navigation_transfer_pending || job.navigation_transfer_recovery ||
-          ['complete', 'browser_complete', 'cancelled', 'failed'].includes(job.state))
+      if (
+        job.navigation_transfer_pending ||
+        job.navigation_transfer_recovery ||
+        ['complete', 'browser_complete', 'cancelled', 'failed'].includes(job.state)
+      )
         await navigationSources.invalidate(job);
     const storage: Record<string, any> = await navigationStore.get(null);
     const liveKeys = new Set<string>();
@@ -1484,8 +1609,15 @@ async function pollResolvers(userGesture = false) {
     if (!schedulerRecovered) {
       await scheduler.reconcile(
         Object.entries(storage)
-          .filter(([key]) => liveKeys.has(key) && !snapshot.jobs.some((job: any) =>
-            job.id === key.slice(9) && (job.navigation_transfer_pending || job.navigation_transfer_recovery)))
+          .filter(
+            ([key]) =>
+              liveKeys.has(key) &&
+              !snapshot.jobs.some(
+                (job: any) =>
+                  job.id === key.slice(9) &&
+                  (job.navigation_transfer_pending || job.navigation_transfer_recovery),
+              ),
+          )
           .map(([key, record]) => ({
             id: key.slice(9),
             tabId: record.tabId,
@@ -1626,6 +1758,16 @@ async function resolverAction(message: any, tabId: number, page: string, documen
     premiumAuthorizations.invalidateTab(tabId);
     return true;
   }
+  return captureTransitions.run(tabId, () =>
+    resolverCommitSerialized(message, tabId, page, documentId),
+  );
+}
+async function resolverCommitSerialized(
+  message: any,
+  tabId: number,
+  page: string,
+  documentId?: string,
+) {
   const entries = await navigationStore.get(null);
   const entry = Object.entries(entries).find(
     ([key, value]: any) => key.startsWith('resolver-') && value.tabId === tabId,
@@ -1633,6 +1775,8 @@ async function resolverAction(message: any, tabId: number, page: string, documen
   if (!entry) throw Error('navigation_authorization_stale');
   const record = entry[1] as ResolverRecord,
     id = entry[0].slice(9);
+  if (interruptedCaptureMatches(entries['capture-' + id], record))
+    throw Error('navigation_authorization_stale');
   const bound = authorizationBinding(message, record, tabId, page, documentId);
   const premium = premiumAuthorizations.has(message.token);
   const action = navigationAuthorizations.consume(message.token, bound);
@@ -1675,6 +1819,16 @@ async function resolverAction(message: any, tabId: number, page: string, documen
   return { click: !direct, direct, repeat: true };
 }
 async function resolverStep(message: any, tabId: number, currentUrl: string, documentId?: string) {
+  return captureTransitions.run(tabId, () =>
+    resolverStepSerialized(message, tabId, currentUrl, documentId),
+  );
+}
+async function resolverStepSerialized(
+  message: any,
+  tabId: number,
+  currentUrl: string,
+  documentId?: string,
+) {
   const snapshot = await browserSnapshot();
   const storage: Record<string, any> = await navigationStore.get(null);
   const entry = Object.entries(storage).find(
@@ -1689,11 +1843,7 @@ async function resolverStep(message: any, tabId: number, currentUrl: string, doc
   if (record.scope && directOwners.owns(tabId, id, record.scope, record.sourceGeneration!))
     return { click: false, repeat: false };
   const capture = storage['capture-' + id];
-  if (capture?.scope && record.scope && sameScope(capture.scope, record.scope)
-      && capture.sourceGeneration === record.sourceGeneration
-      && capture.documentNonce === record.documentNonce
-      && ['interrupted', 'detached'].includes(capture.state))
-    return { click: false, repeat: false };
+  if (interruptedCaptureMatches(capture, record)) return { click: false, repeat: false };
   record.lastOrigin = new URL(currentUrl).origin;
   let premiumSelection: Selection | null = null;
   if (message.premium === true) {
@@ -1884,16 +2034,23 @@ browser.tabs.onUpdated.addListener((tabId, change) => {
         if (key.startsWith('resolver-') && record.tabId === tabId) {
           const id = key.slice(9);
           const capture = records['capture-' + id];
-          if (capture?.kind === 'blob' && capture.scope && record.scope
-              && sameScope(capture.scope, record.scope)
-              && capture.sourceGeneration === record.sourceGeneration
-              && ['armed', 'streaming'].includes(capture.state)) {
+          if (
+            capture?.kind === 'blob' &&
+            capture.scope &&
+            record.scope &&
+            sameScope(capture.scope, record.scope) &&
+            capture.sourceGeneration === record.sourceGeneration &&
+            ['armed', 'streaming'].includes(capture.state)
+          ) {
             await captureCancels.get(tabId)?.();
             captureCancels.delete(tabId);
             await native('browser_status', {
-              id, state: 'waiting_user',
-              message: 'browser_document_replaced: request a fresh Blob action in the owning browser',
-              bytes: 0, total: null,
+              id,
+              state: 'waiting_user',
+              message:
+                'browser_document_replaced: request a fresh Blob action in the owning browser',
+              bytes: 0,
+              total: null,
             }).catch(() => {});
           }
           record.documentGeneration = 0;

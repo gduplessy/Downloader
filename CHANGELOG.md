@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.5
+
+- Order resolver navigation writes and Blob interruption transitions per owning tab so an in-flight step cannot overwrite final recovery state.
+- Reject pre-issued control authorization for the same interrupted capture; preserve concurrency across unrelated tabs and replacement ownership fences.
+
 ## 0.22.4
 
 - Record installed Firefox owning-tab loss acceptance on d18f30e: WaitingUser, 90,112 retained bytes matching the original prefix, stable late progress, one producer GET and no publication/refetch.
