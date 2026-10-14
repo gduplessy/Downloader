@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.16.4<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.18.4<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -283,6 +283,16 @@ NAV-11 session-transfer integration (0.16.0) adds native pending/manual-recovery
 NAV-07 original-response progress (0.16.1) rejects late renderer status resets during an exact owned stream and suppresses repeated resolver decisions. Fifteen native stream and nine handoff regressions pass; corrected installed Firefox XHR source/hash qualification is pending.
 
 NAV-07 supported Firefox page-owned XHR passes its installed Windows stable157 exact-source/native hash row; ordinary binary main-frame form/download remains owner-selected pending. NAV-11 handoff storage-failure recovery is bounded, retryable, exact-fenced and monotonic; installed cross-session qualification remains in progress.
+
+NAV-11 desktop handoff controls (0.18.0) complete native/recipient wiring and handle live pending projections without discarding a legitimate reply. Fifty desktop transfer regressions cover authority, expiry and cancellation. Installed cross-profile/container qualification is still in progress.
+
+NAV-07 Edge qualification (0.18.1) completes one original binary attachment POST through installed Edge 155 and the production native sink, with 8,388,625 hash-verified bytes. Other POST/lifecycle rows remain separate; see [installed evidence](evidence/nav-integration/production-edge-post.json).
+
+NAV-04 production clock integration (0.18.2) uses monotonic alarm/poll rechecks during a live worker and durable UTC recovery after restart. Repeated observations remain bounded and generation-fenced; every wake still requires fresh page/server readiness. Installed wait/alarm qualification remains pending.
+
+NAV audit (0.18.3): [remaining acceptance by plan](plans/nav/IMPLEMENTATION-AUDIT.md) records local integration gates separately from live, paid, unavailable-platform and explicitly deferred Firefox binary-form rows. Implementation PRs alone do not close these gates.
+
+NAV merge review (0.18.4) reconciles stream qualification, handoff UI/wait timing and deterministic native Windows expiry checks; runtime acceptance boundaries remain as documented in the audit.
 
 NAV-11 expiry regression (0.16.3) uses deterministic monotonic observation at the exact five-minute boundary, removing fresh-Windows-runner uptime underflow without weakening the expiry assertion.
 

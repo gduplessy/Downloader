@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.18.4
+
+- Reconcile the handoff UI and production wait timing with reviewed stream evidence and deterministic native Windows expiry checks. Preserve current feature documentation and acceptance boundaries.
+
+## 0.18.3
+
+- Record the thirteen-plan implementation acceptance audit, separating checked behavior, required remaining local browser/UI gates, and owner-selected pending release rows.
+
+## 0.18.2
+
+- Use monotonic wait clocks in the production browser scheduler, including poll-based rechecks after wall-clock jumps, bounded observation intervals, restart recovery and wait-generation replacement.
+- Add production scheduler regressions proving clock jumps only request fresh observation; they never claim server readiness or emit a readiness notification.
+
+## 0.18.1
+
+- Record installed Edge 155 original binary attachment POST acceptance on checked integration 312a6dd: one submission, 8,388,625 bytes, and matching native and independent desktop SHA-256.
+- Preserve distinct pending rows for redirects, browser-loss recovery, install permission UX and live providers.
+
+## 0.18.0
+
+- Wire desktop session handoff controls to the native API, with explicit preparation/cancellation and six-locale instructions for recipient preview and acceptance.
+- Hold codes only in panel memory, honor the shorter native deadline, and cap display with monotonic five-minute expiry. Legitimate pending projections may arrive before the reply without losing the code; changed authority invalidates it.
+- Add fifty desktop handoff regressions for reply, projection, cancellation, expiry and locale behavior. Installed two-profile/container qualification remains in progress.
+
 ## 0.16.4
 
 - Reconcile the production-stream qualification branch with current handoff recovery and deterministic Windows expiry checks, preserving both qualification histories and current ownership fences.

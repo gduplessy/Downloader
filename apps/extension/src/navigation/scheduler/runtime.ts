@@ -1,5 +1,5 @@
 import browser from 'webextension-polyfill';
-import type { DurableWait } from './waits';
+import { WaitClock, type Clock, type DurableWait } from './waits';
 import type { SessionScope } from '../../../../../packages/shared/src/navigation';
 import { schedulerText } from './labels';
 export type QueueStatus = 'queued' | 'active' | 'waiting' | 'manual' | 'recovering' | 'paused' | 'finished';
@@ -10,9 +10,34 @@ export const WAIT_ALARM_PREFIX = 'navigation-wait-';
 export class NavigationScheduler {
   private snapshot: QueueSnapshot | null = null;
   private wakes = new Map<string, Promise<void>>();
-  constructor(private native: NativeScheduler, private wake: (id: string) => Promise<void>) {}
+  private waitClock: WaitClock;
+  private waitKeys = new Map<string, string>();
+  private observations = new Map<string, { key: string; next: number }>();
+  constructor(private native: NativeScheduler, private wake: (id: string) => Promise<void>,
+    private clock: Clock = { utc: () => Date.now(), monotonic: () => performance.now() }) {
+    this.waitClock = new WaitClock(clock);
+  }
+  private observationKey(task: QueueTask): string {
+    const key = this.alarmName(task);
+    const previous = this.waitKeys.get(task.id);
+    if (previous && previous !== key) {
+      this.waitClock.forget(previous);
+      this.observations.delete(task.id);
+    }
+    this.waitKeys.set(task.id, key);
+    return key;
+  }
+  private forgetObservation(id: string) {
+    const previous = this.waitKeys.get(id);
+    if (previous) this.waitClock.forget(previous);
+    this.waitKeys.delete(id);
+    this.observations.delete(id);
+  }
   async request(request: Record<string, unknown>): Promise<QueueSnapshot> {
     this.snapshot = await this.native(request);
+    for (const id of this.waitKeys.keys())
+      if (!this.snapshot.tasks.some(task => task.id === id && task.wait && task.lease))
+        this.forgetObservation(id);
     return this.snapshot;
   }
   async admitted(id: string): Promise<boolean> {
@@ -88,7 +113,8 @@ export class NavigationScheduler {
   private alarmName(task: QueueTask): string {
     return WAIT_ALARM_PREFIX + task.id + ':' + task.generation + ':' + task.wait!.generation;
   }
-  private async clearAlarms(id: string) {
+  private async clearAlarms(id: string, forget = true) {
+    if (forget) this.forgetObservation(id);
     const prefix = WAIT_ALARM_PREFIX + id;
     const alarms = await browser.alarms.getAll();
     await Promise.all(alarms.filter(alarm => alarm.name === prefix || alarm.name.startsWith(prefix + ':')).map(alarm => browser.alarms.clear(alarm.name)));
@@ -96,7 +122,13 @@ export class NavigationScheduler {
   async observe(id: string) {
     const state = await this.request({ action: 'snapshot' });
     const task = state.tasks.find(t => t.id === id);
-    if (task?.wait) await this.onAlarm(this.alarmName(task));
+    if (task?.wait) {
+      const key = this.observationKey(task);
+      const previous = this.observations.get(id);
+      if (previous ? this.clock.monotonic() < previous.next : !this.waitClock.due(key, task.wait))
+        return;
+      await this.onAlarm(key);
+    }
   }
   async onAlarm(name: string) {
     if (!name.startsWith(WAIT_ALARM_PREFIX)) return false;
@@ -114,15 +146,27 @@ export class NavigationScheduler {
         this.wakes.delete(id);
         const latest = await this.request({ action: 'snapshot' }).catch(() => state);
         const current = latest.tasks.find(t => t.id === id && t.status === 'waiting' && !!t.lease && !!t.wait);
-        if (current) await browser.alarms.create(this.alarmName(current), { when: Date.now() + 30000 });
+        if (current) {
+          const key = this.observationKey(current);
+          this.observations.set(id, { key, next: this.clock.monotonic() + 30000 });
+          await browser.alarms.create(key, { when: this.clock.utc() + 30000 });
+        } else this.forgetObservation(id);
       }
     }
     return true;
   }
   private async alarm(task: QueueTask) {
     if (task.wait) {
-      await this.clearAlarms(task.id);
-      await browser.alarms.create(this.alarmName(task), { when: Math.max(Date.now() + 1000, task.wait.next_recheck_ms) });
+      const key = this.observationKey(task);
+      const previous = this.observations.get(task.id);
+      const remaining = previous
+        ? Math.max(0, previous.next - this.clock.monotonic())
+        : this.waitClock.recheckDelay(key, task.wait);
+      await this.clearAlarms(task.id, false);
+      // Alarm timestamps use UTC; polling also checks the monotonic target so
+      // a live backward clock jump cannot strand a wait until the old UTC date.
+      this.observations.set(task.id, { key, next: this.clock.monotonic() + remaining });
+      await browser.alarms.create(key, { when: this.clock.utc() + Math.max(1000, remaining) });
     }
   }
 }
