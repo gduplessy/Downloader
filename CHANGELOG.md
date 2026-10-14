@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.19.1
+
+- Reconcile reviewed handoff UI, monotonic wait timing and stream recovery evidence with installed Chrome/Edge two-profile transfer qualification. Preserve both source histories and the separate pending desktop GUI/browser-process restart boundaries.
+
+## 0.19.0
+
+- Add installed production Chrome/Edge two-profile navigation transfer qualification with independently completed cookie-derived native hashes.
+- Verify actual receiver preview/accept, original-owner fences, one-use tickets, and absence of ticket persistence while preserving the guarded desktop-IPC UI boundary.
+
 ## 0.18.4
 
 - Reconcile the handoff UI and production wait timing with reviewed stream evidence and deterministic native Windows expiry checks. Preserve current feature documentation and acceptance boundaries.
