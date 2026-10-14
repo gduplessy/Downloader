@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.2
+
+- Retry exact-stream native abort after service downtime when a stopped reader's persisted capture marker is interrupted or detached but its native job remains BrowserDownloading.
+- Preserve scope, generation, owner, epoch and tab fences plus existing acknowledged-checkpoint reconnect semantics; no original payload request is replayed.
+
 ## 0.22.1
 
 - Preserve installed Firefox revoked-Blob observations and a reusable interruption fixture with exact daemon identity controls and sanitized settling diagnostics.

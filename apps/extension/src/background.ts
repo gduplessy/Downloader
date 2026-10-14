@@ -21,7 +21,7 @@ import { navigationStorage, memoryStorage } from './navigation/session/store';
 import { classifyReplay } from './navigation/streams/replay';
 import { DurableStreamSink, NativeStreamPort } from './navigation/streams/transport';
 import { DirectCaptureOwners } from './navigation/streams/ownership';
-import { orphanedStreamIdentity } from './navigation/streams/recovery';
+import { orphanedStreamIdentity, recoverStreamAbort } from './navigation/streams/recovery';
 import { armChromium, takeFirefox, originalResponseMetadata } from './navigation/streams/capture';
 import { readOwnedBlob } from './navigation/streams/blob';
 import { applyEvents } from '../../../packages/shared/src/events';
@@ -942,7 +942,7 @@ const recoveringStreams = new Set<string>();
 async function recoverDirectCaptures(storage: Record<string, any>) {
   for (const [key, capture] of Object.entries(storage)) {
     if (!key.startsWith('capture-') || !capture?.scope
-        || !['armed', 'taking_original_response', 'streaming'].includes(capture.state)) continue;
+        || !['armed', 'taking_original_response', 'streaming', 'interrupted', 'detached'].includes(capture.state)) continue;
     const id = key.slice(8), record = storage['resolver-' + id] as ResolverRecord | undefined;
     if (!record?.scope || recoveringStreams.has(id)
         || directOwners.owns(record.tabId, id, record.scope, record.sourceGeneration!)) continue;
@@ -953,8 +953,8 @@ async function recoverDirectCaptures(storage: Record<string, any>) {
       const identity = orphanedStreamIdentity(capture, record, job, await browserEpoch);
       if (!identity) continue;
       const port = new NativeStreamPort(() => browser.runtime.connectNative(HOST));
-      try { await port.operation({...identity, operation:'abort', reason:'worker_interrupted'}); }
-      catch { /* An armed response may not have admitted a native checkpoint yet. */ }
+      try { await recoverStreamAbort(capture, identity, current =>
+        port.operation({...current, operation:'abort', reason:'worker_interrupted'}), job.state); }
       finally { port.close(); }
       await native('browser_status', {
         id, state:'waiting_user',
@@ -962,7 +962,7 @@ async function recoverDirectCaptures(storage: Record<string, any>) {
         bytes:job.bytes, total:job.total,
       });
       await navigationStore.set({[key]: {...capture, state:'interrupted'}});
-    } catch { /* Keep the active marker so the next service/poll recovery can retry. */ }
+    } catch { /* Keep the marker so the next service/poll recovery can retry its exact abort. */ }
     finally { recoveringStreams.delete(id); }
   }
 }
