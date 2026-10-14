@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.22.0
+
+- Add installed Chromium qualification for two actual top-level CHIPS cookie partitions, distinct independently verified native hashes, and missing-cookie-permission refusal before job creation. Preserve explicit frame-0 capture limits and exact production build/native provenance.
+
 ## 0.18.3
 
 - Record the thirteen-plan implementation acceptance audit, separating checked behavior, required remaining local browser/UI gates, and owner-selected pending release rows.
