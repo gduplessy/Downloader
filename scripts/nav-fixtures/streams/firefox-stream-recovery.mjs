@@ -15,7 +15,7 @@ const sourceRevision =
 assert.match(sourceRevision, /^[a-f0-9]{40}$/, 'Record exact checked extension source revision');
 const scenario = 'blob';
 const scopeMode = process.env.NAV_RECOVERY_MODE ?? 'cancel';
-assert.ok(['cancel', 'revoked-blob', 'reader-loss', 'service-loss'].includes(scopeMode));
+assert.ok(['cancel', 'revoked-blob', 'reader-loss', 'service-loss', 'browser-loss'].includes(scopeMode));
 const payloadBytes = 8 * 1024 * 1024 + 17;
 const scopeReport = {
   mode: scopeMode,
@@ -949,6 +949,28 @@ try {
       await evaluate('browser.runtime.sendMessage({type:"cancel_capture",id:' + JSON.stringify(jobA.id) + '})');
     else if (scopeMode === 'reader-loss')
       await send('browsingContext.close', {context: ownedA.context});
+    else if (scopeMode === 'browser-loss') {
+      assert.equal(pending.size, 0, 'Do not terminate fixture browser with pending BiDi commands');
+      rememberTree();
+      scopeReport.control.terminatedBrowserIdentities = [...identities.values()].map(item =>
+        ({pid:item.ProcessId, parentPid:item.ParentProcessId, created:item.Created}));
+      const daemons = nativeProcesses(true);
+      assert.equal(daemons.length, 1, 'Expected one preserved isolated daemon');
+      const preserved = daemons[0];
+      scopeReport.control.preservedDaemonIdentity = {pid:preserved.ProcessId, created:preserved.Created};
+      fixtureStage = 'verified browser process loss';
+      stopOwnedTree();
+      await wait(() => !processes().some(item => identities.get(item.ProcessId)?.Created === item.Created),
+        'Verified fixture browser tree exit', 15000);
+      await wait(() => nativeProcesses().every(item => /(?:^|\s)daemon(?:\s|$)/.test(item.CommandLine ?? '')),
+        'Verified fixture native-host exit', 15000);
+      assert.ok(nativeProcesses(true).some(item => item.ProcessId === preserved.ProcessId && item.Created === preserved.Created),
+        'Browser-loss gate must preserve original daemon');
+      scopeReport.control.browserAndNativeHostsExited = true;
+      scopeReport.control.waitDeadlineMs = 120000;
+      scopeReport.control.noBrowserRestartOrEpochMutation = true;
+      ws?.close();
+    }
     else if (scopeMode === 'service-loss') {
       // CLI/native messaging can start a replacement daemon; the initial ChildProcess
       // may already have exited. Select the actual live daemon, not that stale handle.
@@ -987,6 +1009,11 @@ try {
       hasError: typeof current?.error === 'string' && current.error.length > 0};
     assert.notEqual(current.state, 'complete', 'Interrupted original Blob was published');
     if (current.state !== 'waiting_user') return null;
+    if (scopeMode === 'browser-loss') {
+      scopeReport.interruptionAdmissionObserved = {nativeState:current.state,
+        sourceGeneration:current.source_generation, afterVerifiedBrowserExit:true};
+      return current;
+    }
     // The adapter preview is already WaitingUser before asynchronous selection commits.
     // Wait for the actual production stream marker, not that earlier preview state.
     const markers = await readRecoveryMarkers(current.navigation_scope);
@@ -1004,6 +1031,25 @@ try {
     return current;
     }, 'Native original stream interruption', 120000);
   } catch (error) {
+    if (scopeMode === 'browser-loss') {
+      // Read the actual retained checkpoint and bytes without creating a browser/reader.
+      const current = list().find(job => job.id === jobA.id);
+      const query = 'import sqlite3,json,sys; c=sqlite3.connect("file:"+sys.argv[1]+"?mode=ro",uri=True); rows=[json.loads(row[0]) for row in c.execute("SELECT data FROM records WHERE kind=?",("browser_stream",))]; print(json.dumps([{"offset":r.get("offset"),"total":r.get("total"),"terminal":r.get("terminal"),"sourceGeneration":r.get("identity",{}).get("source_generation")} for r in rows if r.get("job_id")==sys.argv[2]]))';
+      const checkpoints = JSON.parse(execFileSync('python', ['-c',query,resolve(data,'downloader.db').replaceAll('\\','/'),jobA.id],
+        {windowsHide:true,encoding:'utf8',timeout:15000,stdio:['ignore','pipe','pipe']}));
+      const retained = await readFile(resolve(dirname(current.destination), '.' + current.filename + '.' + current.id + '.part'));
+      let published = false;
+      try { await readFile(current.destination); published = true; } catch (readError) { if(readError.code !== 'ENOENT') throw readError; }
+      scopeReport.browserLossNegative = {state:current.state, bytes:current.bytes,
+        sourceGeneration:current.source_generation, verifiedSha256:current.verified_sha256,
+        checkpoints, partialLength:retained.length, partialSha256:digest(retained),
+        intendedPrefixSha256:digest(payloads.A.subarray(0,retained.length)),
+        noPublication:!published, originalGetCount:requests.filter(request=>request.variant==='A').length,
+        otherGetCount:requests.filter(request=>request.variant!=='A').length,
+        waitDeadlineMs:120000, noBrowserRestartOrEpochMutation:true};
+      scopeReport.originalSourceTabsRetained = false;
+      throw error;
+    }
     try { scopeReport.interruptionTimeoutMarkers = await readRecoveryMarkers(); }
     catch { scopeReport.interruptionTimeoutMarkersUnavailable = true; }
     throw error;
@@ -1022,7 +1068,7 @@ try {
   await assert.rejects(readFile(interrupted.destination), error => error.code === 'ENOENT');
   await new Promise(resolve => setTimeout(resolve, 1500));
   const settled = list().find(job => job.id === jobA.id);
-  const recoveryMarkers = await readRecoveryMarkers();
+  const recoveryMarkers = scopeMode === 'browser-loss' ? {browserExited:true} : await readRecoveryMarkers();
   scopeReport.settledDiagnostic = {
     native: { state: settled.state, bytes: settled.bytes, total: settled.total,
       sourceGeneration: settled.source_generation, verifiedSha256: settled.verified_sha256,
@@ -1038,9 +1084,12 @@ try {
   assert.equal(settled.verified_sha256, null);
   assert.equal(requests.filter(request => request.variant === 'A').length, 1);
   assert.equal(requests.filter(request => request.variant !== 'A').length, 0);
-  const sourceA = await evaluateJson('browser.tabs.get(' + contexts[0].tabId + ').then(JSON.stringify)');
-  assert.equal(sourceA.cookieStoreId, contexts[0].cookieStoreId);
-  scopeReport.originalSourceTabsRetained = true;
+  if (scopeMode === 'browser-loss') scopeReport.originalSourceTabsRetained = false;
+  else {
+    const sourceA = await evaluateJson('browser.tabs.get(' + contexts[0].tabId + ').then(JSON.stringify)');
+    assert.equal(sourceA.cookieStoreId, contexts[0].cookieStoreId);
+    scopeReport.originalSourceTabsRetained = true;
+  }
   scopeReport.recovery = {state: settled.state, bytes: settled.bytes, originalBytes: payloadBytes,
     partialSha256: digest(partial), intendedPrefixSha256: digest(payloads.A.subarray(0, partial.length)),
     sourceGeneration: settled.source_generation, verifiedSha256: settled.verified_sha256,
@@ -1081,9 +1130,9 @@ try {
   scopeReport.privatePositiveLaneQualified = false;
   await writeFile(resolve(dir, 'evidence.json'), JSON.stringify(scopeReport, null, 2));
   console.log(JSON.stringify(scopeReport, null, 2));
-  await send('session.end', {});
+  if (scopeMode !== 'browser-loss') await send('session.end', {});
 } catch (error) {
-  if (options?.context && process.env.NAV_RPC_TRACE === '1') {
+  if (scopeMode !== 'browser-loss' && options?.context && process.env.NAV_RPC_TRACE === '1') {
     try {
       const diagnostic = await send('script.evaluate', {
         expression:

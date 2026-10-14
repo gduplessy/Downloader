@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.22.8
+
+- Add full-browser-loss qualification that stops only verified fixture browser processes, confirms native-host exit, preserves the daemon and records actual retained checkpoints without reconstructing session authority.
+
 ## 0.22.7
 
 - Record two installed Firefox revoked-Blob runs on checked 3e7167c after actual capture interruption: stable WaitingUser, zero-byte retained prefix, one original producer GET and no publication/refetch.

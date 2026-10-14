@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.22.7<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.22.8<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 NAV-11 review hardening (0.21.2) isolates private pending origins from regular cleanup and checks fresh native authority after queue admission before opening a source URL. Mutable caller snapshots cannot change frozen navigation intent. Current main's expiry regression and qualification histories are retained.
 
@@ -21,6 +21,8 @@ NAV-08 interruption ordering (0.22.5) serializes resolver writes and Blob interr
 NAV-08 fixture synchronization (0.22.6) requires the actual interrupted capture marker and native WaitingUser before checking retained bytes. Native event timing shows the failed repeat observed preview state before stream admission; it does not prove marker removal or post-abort state drift. Strengthened installed repeat acceptance remains pending.
 
 NAV-08 revoked-Blob repeat (0.22.7) passes two installed Firefox158 runs on checked 3e7167c with actual matching interruption marker, stable WaitingUser, zero-byte original-prefix verification, one original producer GET and no publication/refetch. See [evidence](evidence/nav-integration/firefox-revoked-admitted.json). Full browser loss remains pending.
+
+NAV-07/NAV-08 browser-loss fixture (0.22.8) verifies actual isolated browser/native-host process exit while preserving the daemon, then checks bounded manual recovery and retained partials without browser restart or epoch mutation. Installed acceptance remains pending.
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
