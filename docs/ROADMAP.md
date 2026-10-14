@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.16.3<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.16.4<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -274,6 +274,10 @@ NAV-12 0.13.2 reconciles checked root 7e44b00/latest main. Clean committed-sourc
 
 NAV-12 0.13.3 records final clean committed-source 7f752d3 Chrome/Edge cross-origin and complete restart evidence. Both finish one authenticated original GET, zero HEAD and 262,161 hash-verified native bytes. Documentation/version-only increment; remaining release acceptance rows stay explicit.
 
+NAV-07/08/09/11 production qualification increment (0.14.0): installed Chrome/Edge Blob-to-native hashes and specific cancellation/replacement/private rows are recorded in [the full-worker matrix](evidence/nav-browser-streams/README.md). Worker/service/browser recovery, complete profile/partition/container qualification and Firefox/live-provider acceptance remain pending; these passing fixture rows do not close the roadmap items.
+
+NAV-07/08/09/11 qualification increment (0.14.3): installed Chrome worker termination preserves durable progress; native-service restart reaches safe manual reauthorization with a verified original partial prefix. Actual Chrome/Edge private Blob hashes and the labeled split-storage primitive probe pass. Fresh production Blob evidence captures selected native-host/daemon SHA independently of CLI version. Complete browser restart, cross-session transfer, full profile/container/partition races, actual private menu UI and broader browser/platform/live-provider acceptance remain pending; see [evidence](evidence/nav-browser-streams/README.md).
+
 NAV-11 session-transfer integration (0.16.0) adds native pending/manual-recovery gates, transient one-use tickets, and explicit recipient acceptance using the destination tab's actual cookie/container/partition scope. Native compilation and focused recipient tests pass; desktop controls and installed cross-session qualification remain in progress.
 
 NAV-07 original-response progress (0.16.1) rejects late renderer status resets during an exact owned stream and suppresses repeated resolver decisions. Fifteen native stream and nine handoff regressions pass; corrected installed Firefox XHR source/hash qualification is pending.
@@ -281,3 +285,5 @@ NAV-07 original-response progress (0.16.1) rejects late renderer status resets d
 NAV-07 supported Firefox page-owned XHR passes its installed Windows stable157 exact-source/native hash row; ordinary binary main-frame form/download remains owner-selected pending. NAV-11 handoff storage-failure recovery is bounded, retryable, exact-fenced and monotonic; installed cross-session qualification remains in progress.
 
 NAV-11 expiry regression (0.16.3) uses deterministic monotonic observation at the exact five-minute boundary, removing fresh-Windows-runner uptime underflow without weakening the expiry assertion.
+
+NAV stream merge reconciliation (0.16.4) retains the installed stream/private-recovery qualification records alongside current handoff authority and native expiry behavior. Pending local and release acceptance rows remain explicit.
