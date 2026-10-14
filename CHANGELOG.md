@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.0
+
+- Integrate recorded Chrome/Edge qualification of two actual top-level cookie partitions, distinct native Blob hashes, and missing-cookie-permission refusal before job creation.
+- Preserve exact historical runtime/build revisions and top-frame-only limits; update the remaining integration audit without claiming iframe or live-host acceptance.
+
 ## 0.21.3
 
 - Reconcile the reviewed queued-source/privacy fixes with installed transfer qualification without overwriting either branch's history.
