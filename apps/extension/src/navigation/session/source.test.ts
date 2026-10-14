@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { NavigationSources } from './source';
+import { memoryStorage, navigationStorage } from './store';
 function storage() {
   const values: Record<string, any> = {};
   return {
@@ -60,6 +61,37 @@ function fixture() {
   };
 }
 describe('pending navigation origins', () => {
+  it.each(['invalidate', 'adopted'] as const)(
+    'keeps private origins usable after guessed regular %s cleanup',
+    async (cleanup) => {
+      const f = fixture();
+      f.change({ incognito: true, cookieStoreId: 'firefox-private' });
+      const local = memoryStorage();
+      const session = memoryStorage();
+      const privateMarkers = navigationStorage(local, session, true);
+      const privateSource = new NavigationSources(
+        f.api, 'firefox', Promise.resolve('profile'), Promise.resolve('epoch'),
+        session, privateMarkers, true,
+      );
+      const regularSource = new NavigationSources(
+        f.api, 'firefox', Promise.resolve('profile'), Promise.resolve('epoch'),
+        session, local, false,
+      );
+      const job = { ...f.job, private: true };
+      await privateSource.prepare(job.request_id, 8);
+      await regularSource[cleanup](job);
+      expect(await privateSource.resolve(job)).toBe(8);
+      const privateOrigin = (await session.get(null))['private-nav:navigation-source-origin-request'];
+      expect(privateOrigin).toMatchObject({
+        requestId: 'request', tabId: 8, origin: 'https://source.example',
+        jobId: 'job', sourceGeneration: 7, context: { private: true },
+      });
+      expect(await navigationStorage(local, session, false).get(null)).toEqual({});
+      expect(await local.get(null)).toEqual({});
+      await privateSource.adopted(job);
+      expect(await session.get(null)).toEqual({});
+    },
+  );
   it('captures before native reply and resolves actual source when a queued task finally admits', async () => {
     const f = fixture();
     await f.source.prepare('request', 8);

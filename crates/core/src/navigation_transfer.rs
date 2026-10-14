@@ -324,12 +324,16 @@ impl Runtime {
     /// Remove expired entries only together with their manual recovery records.
     /// Run on tick/prepare/preview/accept; never silently drop pending jobs.
     pub fn expire(&mut self, now_ms: u64) -> Vec<Recovery> {
+        self.expire_at(now_ms, Instant::now())
+    }
+    fn expire_at(&mut self, now_ms: u64, monotonic_now: Instant) -> Vec<Recovery> {
         let expired = self
             .tickets
             .iter()
             .filter(|(_, ticket)| {
                 now_ms >= ticket.expires_at_ms
-                    || ticket.created.elapsed() >= Duration::from_millis(TICKET_TTL_MS)
+                    || monotonic_now.saturating_duration_since(ticket.created)
+                        >= Duration::from_millis(TICKET_TTL_MS)
             })
             .map(|(token, _)| token.clone())
             .collect::<Vec<_>>();
@@ -372,6 +376,9 @@ impl Runtime {
         self.tickets.is_empty()
     }
     fn available(&self, token: &str, now_ms: u64) -> Result<&Ticket> {
+        self.available_at(token, now_ms, Instant::now())
+    }
+    fn available_at(&self, token: &str, now_ms: u64, monotonic_now: Instant) -> Result<&Ticket> {
         if token.len() != 36 || uuid::Uuid::parse_str(token).is_err() {
             bail!("transfer_ticket_unavailable");
         }
@@ -380,7 +387,8 @@ impl Runtime {
             .get(token)
             .filter(|ticket| {
                 now_ms < ticket.expires_at_ms
-                    && ticket.created.elapsed() < Duration::from_millis(TICKET_TTL_MS)
+                    && monotonic_now.saturating_duration_since(ticket.created)
+                        < Duration::from_millis(TICKET_TTL_MS)
             })
             .ok_or_else(|| anyhow::anyhow!("transfer_ticket_unavailable"))?;
         Ok(ticket)
@@ -867,10 +875,14 @@ mod clock_tests {
         };
         let mut runtime = Runtime::default();
         let prepared = runtime.prepare(fence, 1_000_000).unwrap();
-        runtime.tickets.get_mut(&prepared.token).unwrap().created = Instant::now()
-            .checked_sub(Duration::from_millis(TICKET_TTL_MS))
-            .unwrap();
-        assert!(runtime.fence(&prepared.token, 1).is_err());
-        assert_eq!(runtime.expire(1).len(), 1);
+        let created = runtime.tickets.get(&prepared.token).unwrap().created;
+        // A fresh Windows runner can have less uptime than the ticket TTL.
+        // Advance the observed instant instead of subtracting from its epoch.
+        let deadline = created + Duration::from_millis(TICKET_TTL_MS);
+        assert!(runtime
+            .available_at(&prepared.token, 1, deadline - Duration::from_nanos(1))
+            .is_ok());
+        assert!(runtime.available_at(&prepared.token, 1, deadline).is_err());
+        assert_eq!(runtime.expire_at(1, deadline).len(), 1);
     }
 }

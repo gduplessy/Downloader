@@ -1,4 +1,5 @@
 import { contextForTab, type ScopeBrowser, type ScopeContext } from './scope';
+import { memoryStorage, navigationStorage } from './store';
 interface Storage {
   get(key: string): Promise<Record<string, any>>;
   set(values: Record<string, unknown>): Promise<void>;
@@ -33,6 +34,7 @@ const originKey = (requestId: string) => 'navigation-source-origin-' + requestId
 const same = (a: ScopeContext, b: ScopeContext) => JSON.stringify(a) === JSON.stringify(b);
 export class NavigationSources {
   private writes = new Map<string, Promise<unknown>>();
+  private transient: Storage;
   private run<T>(requestId: string, operation: () => Promise<T>): Promise<T> {
     const result = (this.writes.get(requestId) ?? Promise.resolve())
       .catch(() => {})
@@ -50,10 +52,13 @@ export class NavigationSources {
     private browser: string,
     private profile: Promise<string>,
     private epoch: Promise<string>,
-    private transient: Storage,
+    transient: Storage,
     private markers: Storage,
     private privateWorker: boolean,
-  ) {}
+  ) {
+    // Source identity stays ephemeral, but shares the navigation lane fences.
+    this.transient = navigationStorage(memoryStorage(), transient, privateWorker);
+  }
   private validateJob(job: SourceJob) {
     if (
       !job.id ||

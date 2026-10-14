@@ -16,6 +16,7 @@ import {
 import { matchAdapter } from './navigation/adapters/policy';
 import type { SessionScope, StreamIdentity } from '../../../packages/shared/src/navigation';
 import { scopeForTab, sameScope, sessionKey, type ScopedRequest } from './navigation/session/scope';
+import { admittedNavigationJob } from './navigation/session/preflight';
 import { navigationStorage, memoryStorage } from './navigation/session/store';
 import { classifyReplay } from './navigation/streams/replay';
 import { DurableStreamSink, NativeStreamPort } from './navigation/streams/transport';
@@ -1315,6 +1316,8 @@ async function pendingNavigationSource(job: any, sourceTabId?: number) {
   }
 }
 async function startOwnedResolver(job: any, force = false, sourceTabId?: number) {
+  // Freeze the observed source before awaits; cached snapshot DTOs can change in place.
+  job = structuredClone(job);
   if (job.navigation_transfer_pending || job.navigation_transfer_recovery) {
     await navigationSources.invalidate(job);
     throw Error('Explicit session transfer or recovery is required');
@@ -1332,7 +1335,9 @@ async function startOwnedResolver(job: any, force = false, sourceTabId?: number)
     delete stored[key];
   }
   if (stored[key]) {
-    if (!(await scheduler.admitted(job.id))) return;
+    if (!(await admittedNavigationJob(job, () => scheduler.admitted(job.id),
+      // A new native BrowserSnapshot reads the current store; do not use browserSnapshot's event cache.
+      () => native('snapshot')))) return;
     const record = stored[key] as ResolverRecord;
     try {
       if (!(await ownsCurrentTab(record)))
@@ -1390,7 +1395,9 @@ async function startOwnedResolver(job: any, force = false, sourceTabId?: number)
     }
   }
   sourceTabId = await pendingNavigationSource(job, sourceTabId);
-  if (!(await scheduler.admitted(job.id))) return;
+  if (!(await admittedNavigationJob(job, () => scheduler.admitted(job.id),
+      // A new native BrowserSnapshot reads the current store; do not use browserSnapshot's event cache.
+      () => native('snapshot')))) return;
   // Admission can wait; revalidate the observed source before using its window/store.
   sourceTabId = await pendingNavigationSource(job, sourceTabId);
   const source = sourceTabId === undefined ? undefined : await browser.tabs.get(sourceTabId);

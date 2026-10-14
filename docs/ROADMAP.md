@@ -1,6 +1,8 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.21.1<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.21.2<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+
+NAV-11 review hardening (0.21.2) isolates private pending origins from regular cleanup and checks fresh native authority after queue admission before opening a source URL. Mutable caller snapshots cannot change frozen navigation intent. Current main's expiry regression and qualification histories are retained.
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 
@@ -274,6 +276,10 @@ NAV-12 0.13.2 reconciles checked root 7e44b00/latest main. Clean committed-sourc
 
 NAV-12 0.13.3 records final clean committed-source 7f752d3 Chrome/Edge cross-origin and complete restart evidence. Both finish one authenticated original GET, zero HEAD and 262,161 hash-verified native bytes. Documentation/version-only increment; remaining release acceptance rows stay explicit.
 
+NAV-07/08/09/11 production qualification increment (0.14.0): installed Chrome/Edge Blob-to-native hashes and specific cancellation/replacement/private rows are recorded in [the full-worker matrix](evidence/nav-browser-streams/README.md). Worker/service/browser recovery, complete profile/partition/container qualification and Firefox/live-provider acceptance remain pending; these passing fixture rows do not close the roadmap items.
+
+NAV-07/08/09/11 qualification increment (0.14.3): installed Chrome worker termination preserves durable progress; native-service restart reaches safe manual reauthorization with a verified original partial prefix. Actual Chrome/Edge private Blob hashes and the labeled split-storage primitive probe pass. Fresh production Blob evidence captures selected native-host/daemon SHA independently of CLI version. Complete browser restart, cross-session transfer, full profile/container/partition races, actual private menu UI and broader browser/platform/live-provider acceptance remain pending; see [evidence](evidence/nav-browser-streams/README.md).
+
 NAV-11 session-transfer integration (0.16.0) adds native pending/manual-recovery gates, transient one-use tickets, and explicit recipient acceptance using the destination tab's actual cookie/container/partition scope. Native compilation and focused recipient tests pass; desktop controls and installed cross-session qualification remain in progress.
 
 NAV-07 original-response progress (0.16.1) rejects late renderer status resets during an exact owned stream and suppresses repeated resolver decisions. Fifteen native stream and nine handoff regressions pass; corrected installed Firefox XHR source/hash qualification is pending.
@@ -291,3 +297,9 @@ NAV audit (0.18.3): [remaining acceptance by plan](plans/nav/IMPLEMENTATION-AUDI
 NAV-11 queued-source retention (0.21.0) separates pending user origins from owned resolver records, validates actual source context before admission, and requires explicit recovery after source loss or transfer. Firefox158 sequential container hashes pass; the reproduced queued-container substitution and corrected installed qualification are tracked separately in docs/evidence/nav-integration/firefox-scope*.json.
 
 NAV-11 Firefox scope qualification (0.21.1): checked af318b9 extension21.0/native16.1 on Firefox158 passes actual sequential and queued container Blob hashes plus lost-source WaitingUser with zero replacement bytes or payload requests. Normal scheduler polling drives recovery; original user tabs remain open. Initial activation invokes the registered context-menu handler with actual browser metadata; native context-menu UI and private-addon permission acceptance remain pending. See docs/evidence/nav-integration/firefox-scope-queued-fixed.json and firefox-scope-missing-source.json.
+
+NAV merge review (0.18.4) reconciles stream qualification, handoff UI/wait timing and deterministic native Windows expiry checks; runtime acceptance boundaries remain as documented in the audit.
+
+NAV-11 expiry regression (0.16.3) uses deterministic monotonic observation at the exact five-minute boundary, removing fresh-Windows-runner uptime underflow without weakening the expiry assertion.
+
+NAV stream merge reconciliation (0.16.4) retains the installed stream/private-recovery qualification records alongside current handoff authority and native expiry behavior. Pending local and release acceptance rows remain explicit.
