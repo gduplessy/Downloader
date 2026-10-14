@@ -11,6 +11,41 @@ import { observeWait } from './waits';
 const snapshot = (): QueueSnapshot => ({ settings: { max_active: 3, paused: false, notifications: true }, active: 1, tasks: [{ id: 'job', generation: 1, owner: 'profile', host_keys: [], priority: 0, order: 1, status: 'waiting', reason: 'waiting_server_readiness', lease: { owner: 'profile', generation: 1, tab_id: 7, expires_at_ms: 90000 }, wait: observeWait(undefined, 1, 60000, 0, 'countdown') }] });
 beforeEach(() => { vi.resetAllMocks(); browser.alarms.create.mockResolvedValue(undefined); browser.alarms.clear.mockResolvedValue(true); browser.alarms.getAll.mockResolvedValue([{ name: 'navigation-wait-job:1:1' }]); });
 describe('durable browser alarm recovery', () => {
+ it('production polling uses monotonic rechecks through clock jumps without claiming readiness', async () => {
+   let utc = 0, mono = 0;
+   const state = snapshot(); const native = vi.fn().mockResolvedValue(state);
+   const wake = vi.fn().mockResolvedValue(undefined);
+   browser.tabs.get.mockResolvedValue({ id: 7 });
+   const scheduler = new NavigationScheduler(native, wake, {utc: () => utc, monotonic: () => mono});
+   await scheduler.reconcile([{id: 'job', tabId: 7}]);
+   expect(browser.alarms.create).toHaveBeenLastCalledWith('navigation-wait-job:1:1', {when: 30000});
+   utc = 400000; mono = 1000;
+   await scheduler.observe('job'); expect(wake).not.toHaveBeenCalled();
+   utc = -10000; mono = 30000;
+   await scheduler.observe('job'); expect(wake).toHaveBeenCalledTimes(1);
+   await scheduler.observe('job'); expect(wake).toHaveBeenCalledTimes(1);
+   utc = -20000; mono = 59000;
+   await scheduler.reconcile([{id: 'job', tabId: 7}]);
+   expect(browser.alarms.create).toHaveBeenLastCalledWith('navigation-wait-job:1:1', {when: -19000});
+   mono = 60000; await scheduler.observe('job'); expect(wake).toHaveBeenCalledTimes(2);
+   expect(native.mock.calls.some(([request]) => ['ready', 'notify'].includes(request.action))).toBe(false);
+ });
+ it('restart uses durable UTC once and replaced wait generations get a new monotonic target', async () => {
+   let utc = 70000, mono = 0;
+   const state = snapshot(); const native = vi.fn().mockResolvedValue(state);
+   browser.tabs.get.mockResolvedValue({id: 7}); const wake = vi.fn().mockResolvedValue(undefined);
+   const scheduler = new NavigationScheduler(native, wake, {utc: () => utc, monotonic: () => mono});
+   await scheduler.reconcile([{id: 'job', tabId: 7}]);
+   await scheduler.observe('job'); expect(wake).toHaveBeenCalledTimes(1);
+   state.tasks[0].wait = observeWait(state.tasks[0].wait!, 1, 120000, utc, 'replacement');
+   await scheduler.reconcile([{id: 'job', tabId: 7}]);
+   await scheduler.observe('job'); expect(wake).toHaveBeenCalledTimes(1);
+   utc -= 900000; mono = 30000;
+   await scheduler.observe('job'); expect(wake).toHaveBeenCalledTimes(2);
+   await scheduler.release('job');
+   state.tasks = [];
+   await scheduler.observe('job'); expect(wake).toHaveBeenCalledTimes(2);
+ });
  it('reconciles Chromium tabs using actual cookie-store membership', async () => {
    const scope = { browser: 'chromium' as const, profile: 'profile', private: false,
      cookie_store_id: '0', container_id: null, partition_key: null, claim_generation: 2 };

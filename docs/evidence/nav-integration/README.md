@@ -1,5 +1,9 @@
 # Installed navigation qualification
 
+## Edge original POST attachment
+
+[Checked integration 312a6dd, Edge 155 on Windows x64](production-edge-post.json) completes one original binary attachment POST through the production debugger capture and persistent native sink. Native verification and an independent desktop-file hash match for 8,388,625 bytes. Diagnostics are off; no driver byte relay or response refetch occurs. This local row does not qualify redirects, permission prompts, browser-loss recovery, or live providers. Source and compiled bundle hashes are recorded; native binary hashes are recorded after completion.
+
 ## Firefox response-filter differential
 
 [Recorded matrix](firefox-filter-feasibility.json): Firefox 157.0.1 on Windows x64 filters a main-frame original POST containing ASCII text (8,388,625 bytes). Changing only its payload to arbitrary binary bytes produces `Invalid request ID`, zero filtered bytes and one original POST. Both packaged cases use identical `text/plain` headers, no Content-Disposition, persistent MV2, blocking onBeforeRequest, a 500 ms response delay and driver detachment before addon-owned submission. Adding only X-Content-Type-Options: nosniff to the refused binary case restores all 8,388,625 filtered bytes with one POST. This controlled header change causally isolates MIME sniffing in this local API fixture; the exact internal C++ refusal branch remains unobserved. Original attachment responses and production native capture remain pending.

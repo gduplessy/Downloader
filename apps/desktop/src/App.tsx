@@ -26,6 +26,7 @@ import { Accounts } from './navigation/Accounts';
 import { api, pickDirectory, fileAction } from './api';
 import type { Job, Snapshot, Settings, Queue } from './types';
 import { CaptchaSettings } from './features/CaptchaSettings';
+import { NavigationTransfer } from './features/NavigationTransfer';
 import { translate, languages, type Key, type Locale } from '../../../packages/shared/src/i18n';
 import { bytes, expandUrls } from '../../../packages/shared/src/utils';
 const activeStates = [
@@ -471,6 +472,10 @@ export default function App() {
                   </div>
                 )}
                 {job.solver_outcome && <p role="status">{t(job.solver_outcome as Key)}</p>}
+                {job.page_url && job.navigation_scope && (
+                  <NavigationTransfer key={job.id} job={job} locale={locale}
+                    request={(args) => api('navigation_transfer', args)} refresh={load} />
+                )}
                 <div className="actions">
                   {job.page_url && (
                     <button
@@ -484,6 +489,9 @@ export default function App() {
                         catching(
                           run('solve_challenge', {
                             id: job.id,
+                            owner: job.navigation_owner ?? null,
+                            scope: job.navigation_scope ?? null,
+                            source_generation: job.source_generation ?? null,
                             automatic: false,
                             url: job.navigation_url ?? job.page_url,
                           }),

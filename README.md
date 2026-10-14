@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.19.0<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.19.1<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -77,9 +77,9 @@ Hosted page → free-download step → countdown → final GET link/form
                            browser paused → desktop accepted → verified file
 ```
 
-With FlareSolverr enabled, recognized browser protection receives one automatic resolution attempt. The resolver respects waiting periods and stops for custom CAPTCHA, sign-in, payment, or ambiguous controls. Complete the manual step in the tab, then choose **Continue page navigation**. Non-replayable POST requests and browser-generated blobs remain browser-managed.
+With FlareSolverr enabled, recognized browser protection receives one automatic resolution attempt. The resolver respects waiting periods and stops for custom CAPTCHA, sign-in, payment, or ambiguous controls. Complete the manual step in the tab, then choose **Continue page navigation**. Optional direct capture streams qualified original POST and page Blob bytes to the desktop; unsupported responses remain recoverable in the browser.
 
-Navigation is bounded to three active pages and one page per host. Browser profiles claim navigation jobs exclusively to avoid competing workers. This is a heuristic workflow; changing live sites require separate acceptance testing. Unsupported image variants remain manual; live premium-account acceptance and DRM bypass remain unsupported. These limits are tracked explicitly in the [hosted-page and challenge roadmap](docs/ROADMAP.md#1-hosted-download-pages-and-challenges) and [protected-content roadmap](docs/ROADMAP.md#5-media-and-protected-content).
+Navigation defaults to three active pages, configurable from one to twenty; session-sensitive hosts remain serial. Browser profiles claim navigation jobs exclusively to avoid competing workers. This is a heuristic workflow; changing live sites require separate acceptance testing. Unsupported image variants remain manual; live premium-account acceptance and DRM bypass remain unsupported. These limits are tracked explicitly in the [hosted-page and challenge roadmap](docs/ROADMAP.md#1-hosted-download-pages-and-challenges) and [protected-content roadmap](docs/ROADMAP.md#5-media-and-protected-content).
 
 ### Optional local FlareSolverr
 
@@ -379,4 +379,8 @@ Original-response progress (0.16.1) remains authoritative while capture is owned
 
 Firefox page-owned XHR qualification (0.16.2 evidence) passes on stable157 with exact compiled source52b037b/native0.16.1: one original POST and262,161 matching native/external hash bytes. Ordinary binary form-navigation/download remains explicitly pending. Handoff recovery now retries durable failures without reviving expired tickets.
 
+Desktop handoff controls (0.18.0) are wired to native preparation/cancellation with six-locale recipient guidance, memory-only codes, exact authority checks, and monotonic expiry. Installed cross-profile/container qualification remains in progress.
+
 Installed [two-profile transfer qualification](docs/evidence/nav-browser-streams/transfer-qualification.md) verifies Chrome/Edge recipient options, distinct native hashes and stale-owner refusal. Desktop preparation in these rows uses guarded fixture IPC; full browser-process restart and broader session matrices remain separate acceptance work.
+
+Transfer qualification reconciliation (0.19.1) retains the reviewed handoff UI/wait implementation and both installed evidence histories. Desktop GUI Prepare/Cancel/Copy and complete browser-process loss remain separate required local gates; the stopped GUI fixture supplies no acceptance.
