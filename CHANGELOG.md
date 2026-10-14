@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.16.3
+
+- Make monotonic ticket-expiry regression deterministic on fresh Windows runners by advancing the observed instant rather than subtracting five minutes from a possibly shorter system uptime.
+- Preserve runtime expiry behavior and verify both the final valid instant and exact expiry boundary with a rolled-back wall clock.
+
 ## 0.16.2
 
 - Retry exact pending handoff recovery after native storage failures while preserving consumed tickets, manual recovery, terminal states, and the bounded 128-entry runtime.
