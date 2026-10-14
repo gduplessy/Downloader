@@ -18,6 +18,8 @@ const scopeMode = process.env.NAV_SCOPE_MODE ?? 'queued';
 assert.ok(['queued', 'sequential', 'missing-source'].includes(scopeMode));
 const scopeReport = {
   mode: scopeMode,
+  diagnosticSourceChanges: process.env.NAV_TRACE === '1' || process.env.NAV_RPC_TRACE === '1',
+  diagnosticNativeWrapper: process.env.NAV_NATIVE_STDERR === '1',
   initialActivation:
     'synthetic invocation of unchanged registered context-menu listener with actual browser.tabs.get metadata',
   nativeContextMenuUiQualified: false,
@@ -933,8 +935,12 @@ try {
   await completed(jobA, contexts[0]);
   if (scopeMode === 'sequential') jobB = await activate(contexts[1]);
   if (scopeMode === 'missing-source') {
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-    const native = list().find((job) => job.id === jobB.id);
+    const native = await wait(async () => {
+      const current = list().find(job => job.id === jobB.id);
+      assert.equal(await record(jobB.id), null, 'Missing-source task created replacement resolver');
+      assert.equal(current.bytes, 0);
+      return current.state === 'waiting_user' ? current : null;
+    }, 'Visible native missing-source recovery through normal poll', 90000);
     const stored = await record(jobB.id);
     assert.equal(stored, null, 'Missing-source task created replacement resolver');
     assert.equal(native.bytes, 0);
@@ -982,6 +988,9 @@ try {
   };
   scopeReport.productionCompiledInputs = compiledProductionInputs.filter(path => !path.startsWith('.fixture-streams/'));
   scopeReport.sourceRevision = sourceRevision;
+  scopeReport.compiledSourceRevision = sourceRevision;
+  scopeReport.fixtureSha256 = digest(await readFile(new URL(import.meta.url)));
+  scopeReport.buildProvenance = { explicitAbsWorkingDir: true, absoluteEntryPoints: true, verifiedProductionInputs: scopeReport.productionCompiledInputs };
   scopeReport.nativeBuildRevision = nativeBuildRevision;
   scopeReport.productVersion = JSON.parse(await readFile('package.json', 'utf8')).version;
   scopeReport.nativeVersion = hostDiagnostics.version;

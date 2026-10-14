@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.21.1
+
+- Record actual Firefox158 queued-container A/B native hashes and trace-off lost-source recovery from checked af318b9 extension21.0 with the preserved identified native16.1 pair.
+- Require visible typed WaitingUser recovery, zero replacement payload requests, a nonsecret pending-source marker and retained original user tabs. Wait for normal scheduler polling rather than assuming immediate admission after release.
+- Keep native context-menu UI, private-addon permission, supported-stream loss/cancel and remaining provider/platform acceptance explicit.
+
 ## 0.21.0
 
 - Retain actual context-menu source tabs before queued navigation admission, separately from owned resolver tabs. Validate original cookie store, window, origin, private lane, browser epoch, native owner and source generation before opening a destination.
