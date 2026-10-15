@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.25.0<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.25.1<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 NAV-11 review hardening (0.21.2) isolates private pending origins from regular cleanup and checks fresh native authority after queue admission before opening a source URL. Mutable caller snapshots cannot change frozen navigation intent. Current main's expiry regression and qualification histories are retained.
 
@@ -353,3 +353,5 @@ Cancellation now preserves the native terminal state across EOF-control registra
 Queued cancellation revalidates the current scheduler owner at native commit; a replaced queued owner cannot cancel through a stale snapshot.
 
 NAV integration 0.25.0 combines adapter recovery, browser-reader liveness and authority-fenced cancellation. Deterministic context/queue/EOF/publication race tests preserve Cancelled and original partials; installed qualification remains tied to each recorded build.
+
+NAV-05 recovery 0.24.5: Cancel/Escape invalidates pending retained-preview replacement and pre-Cancel coalesced refreshes through the actual close lifetime. Later explicit Continue still obtains fresh owned context; deterministic context/worker-step cancellation cases cover no resurrection or stale-authority submission. Historical installed evidence retains its exact checked versions.

@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.25.0<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.25.1<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -402,3 +402,5 @@ Cancellation now preserves the native terminal state across EOF-control registra
 Queued cancellation revalidates the current scheduler owner at native commit; a replaced queued owner cannot cancel through a stale snapshot.
 
 NAV integration 0.25.0 combines adapter recovery, browser-reader liveness and authority-fenced cancellation. Deterministic context/queue/EOF/publication race tests preserve Cancelled and original partials; installed qualification remains tied to each recorded build.
+
+NAV-05 recovery 0.24.5: Cancel/Escape invalidates pending retained-preview replacement and pre-Cancel coalesced refreshes through the actual close lifetime. Later explicit Continue still obtains fresh owned context; deterministic context/worker-step cancellation cases cover no resurrection or stale-authority submission. Historical installed evidence retains its exact checked versions.

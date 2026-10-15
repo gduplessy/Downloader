@@ -1,8 +1,18 @@
 # Changelog
 
+## 0.25.1
+
+- Preserve the final reviewed adapter Cancel lifetime guard in the combined cancellation and reader-recovery integration.
+
 ## 0.25.0
 
 - Integrate reviewed adapters and browser-reader liveness with fenced queue cancellation and atomic finalizer publication. Historical installed evidence remains tied to its checked builds.
+
+## 0.24.5
+
+- Fence pending retained-preview refreshes with the actual preview close lifetime, preventing Cancel/Escape from reopening a replacement after asynchronous ownership checks finish.
+- Invalidate coalesced work issued before Cancel while allowing a later explicit Continue to revalidate and render a fresh preview.
+- Add context-wait and worker-step-wait cancellation regressions without reusing stale authority.
 
 ## 0.24.4
 

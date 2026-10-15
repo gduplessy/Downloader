@@ -85,7 +85,7 @@ const actionLabels: Record<string, Record<string, string>> = {
   ar: { link: 'اتباع الرابط', GET: 'تنزيل GET', POST: 'تنزيل POST', script: 'إجراء المتصفح' },
   'zh-CN': { link: '打开链接', GET: 'GET 下载', POST: 'POST 下载', script: '浏览器操作' },
 };
-export type PreviewHandle = { close(): void; stale(): void };
+export type PreviewHandle = { close(): void; stale(): void; signal: AbortSignal };
 export function showPreview(
   document: Document,
   preview: Preview,
@@ -239,6 +239,6 @@ export function showPreview(
   document.documentElement.append(host);
   const firstFocus = radios[0] ?? panel.querySelector<HTMLButtonElement>('button:not(:disabled)');
   firstFocus?.focus();
-  return { close, stale };
+  return { close, stale, signal: lifetime.signal };
 }
 export const previewLocales = Object.keys(messages);

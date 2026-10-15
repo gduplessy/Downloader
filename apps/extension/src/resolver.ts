@@ -260,6 +260,16 @@ async function step() {
     return;
   }
   running = true;
+  const previousPreview = previewHandle;
+  const cancelled = () => !documentActive || previousPreview?.signal?.aborted === true;
+  const cancelPending = () => { stepPending = false; };
+  previousPreview?.signal?.addEventListener('abort', cancelPending, { once: true });
+  const closePreview = () => {
+    // Replacing a validated preview is not a user cancellation of queued refreshes.
+    previousPreview?.signal?.removeEventListener('abort', cancelPending);
+    previewHandle?.close();
+    previewHandle = undefined;
+  };
   try {
     accountPanel?.close();
     accountPanel = undefined;
@@ -269,7 +279,7 @@ async function step() {
     // A stale preview cannot submit; its Refresh action can request fresh authority.
     previewHandle?.stale();
     let ctx = await context();
-    if (previewHandle && !ctx) return;
+    if (cancelled() || (previewHandle && !ctx)) return;
     if (ctx) {
       challengeHandle =
         (await showChallenge(
@@ -305,19 +315,21 @@ async function step() {
             setTimeout(() => void step().catch(() => {}), 500);
           },
         )) ?? undefined;
+      if (cancelled()) { challengeHandle?.close(); challengeHandle = undefined; return; }
       if (challengeHandle) {
-        previewHandle?.close();
-        previewHandle = undefined;
+        closePreview();
         return;
       }
     }
     let observed = await observe(ctx);
+    if (cancelled()) return;
     const deadline = Date.now() + 10000;
     while (ctx?.selectedResource && !observed.inspection.candidates.length && !observed.signals.blocker && Date.now() < deadline) {
       await new Promise((resolve) => setTimeout(resolve, 100));
       ctx = await context();
-      if (!ctx) return;
+      if (cancelled() || !ctx) return;
       observed = await observe(ctx);
+      if (cancelled()) return;
     }
     if (ctx && observed.account)
       accountPanel = await showAccountPanel(
@@ -328,10 +340,10 @@ async function step() {
         currentAccountBinding,
         accountAction,
       );
+    if (cancelled()) { accountPanel?.close(); accountPanel = undefined; return; }
     if (ctx && observed.inspection.kind === 'click' && observed.inspection.selected) {
-      await submit(ctx, observed, observed.inspection.selected);
-      previewHandle?.close();
-      previewHandle = undefined;
+      await submit(ctx, observed, observed.inspection.selected, previousPreview?.signal);
+      closePreview();
       return;
     }
     if (
@@ -355,7 +367,8 @@ async function step() {
         fingerprint: observed.fingerprint,
         binding: preview.binding,
       });
-      previewHandle?.close();
+      if (cancelled()) return;
+      closePreview();
       previewHandle = showPreview(
         document,
         preview,
@@ -417,6 +430,7 @@ async function step() {
       fingerprint: observed.fingerprint,
       ...(ctx ? { binding: binding(ctx, observed.inspection, observed.fingerprint) } : {}),
     });
+    if (cancelled()) return;
     if (reply?.click && decision.kind === 'click' && element) {
       const fresh = await observe(null);
       if (
@@ -427,6 +441,9 @@ async function step() {
     }
     if (reply?.repeat) setTimeout(() => void step(), 1000);
   } finally {
+    previousPreview?.signal?.removeEventListener('abort', cancelPending);
+    if (previewHandle === previousPreview && previousPreview?.signal?.aborted)
+      previewHandle = undefined;
     running = false;
     if (stepPending && documentActive) {
       stepPending = false;
