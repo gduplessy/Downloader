@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.22.14<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.24.5<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 NAV-11 review hardening (0.21.2) isolates private pending origins from regular cleanup and checks fresh native authority after queue admission before opening a source URL. Mutable caller snapshots cannot change frozen navigation intent. Current main's expiry regression and qualification histories are retained.
 
@@ -335,3 +335,13 @@ NAV stream merge reconciliation (0.16.4) retains the installed stream/private-re
 NAV-11 installed transfer increment (0.19.0): actual regular Chrome/Edge profiles complete different cookie-derived native files at the same URL after explicit receiver options preview/accept; old scope/status/stream/account/CAPTCHA operations and token reuse are refused. The [matrix](evidence/nav-browser-streams/transfer-qualification.md) labels guarded desktop-IPC preparation and keeps full browser restart, private/container/partition combinations and live/provider acceptance separate.
 
 NAV reconciliation (0.19.1) preserves reviewed handoff UI/monotonic waits and installed two-profile native hash proofs. The unfinished desktop GUI mode is excluded; stopped ComputerUse does not qualify Prepare/Cancel/Copy, and full browser-process loss remains a required local gate.
+
+NAV-05 installed local negatives (0.24.0): actual Chrome 155 and Edge 155 each passed trusted adapter disable with conservative generic preview and changed-layout stale-selection refusal. All four cases had zero payload/purchase requests and no publication; exact historical runtime/native fingerprints and initial activation limits are in docs/evidence/nav-adapters. An intermittent refresh ownership-observation failure is being fixed separately; no live-host acceptance is claimed.
+
+NAV-05 recovery correction (0.24.1): keep stale Refresh controls visible when owned-context observation fails, and coalesce overlapping refreshes into a fresh observation after the active step. Old selection authorization remains rejected; post-fix installed repetition is tracked separately.
+
+NAV-05 recovery 0.24.2 preserves stale controls through the full asynchronous preview replacement, including worker-step rejection. Installed post-fix acceptance remains separately tracked.
+
+NAV-05 local post-fix qualification (0.24.3): both adapter-disable fallback and changed-layout refusal passed actual installed Chrome/Edge controls at checked runtime 2656b52. Exact native states, historical build hashes and remaining live-host/platform boundaries are recorded in docs/evidence/nav-adapters/INSTALLED-NEGATIVES.md.
+
+NAV-05 recovery 0.24.5: Cancel/Escape invalidates pending retained-preview replacement and pre-Cancel coalesced refreshes through the actual close lifetime. Later explicit Continue still obtains fresh owned context; deterministic context/worker-step cancellation cases cover no resurrection or stale-authority submission. Historical installed evidence retains its exact checked versions.

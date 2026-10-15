@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.24.5
+
+- Fence pending retained-preview refreshes with the actual preview close lifetime, preventing Cancel/Escape from reopening a replacement after asynchronous ownership checks finish.
+- Invalidate coalesced work issued before Cancel while allowing a later explicit Continue to revalidate and render a fresh preview.
+- Add context-wait and worker-step-wait cancellation regressions without reusing stale authority.
+
+## 0.24.4
+
+- Reconcile reviewed adapter preview recovery with original-reader liveness and interruption recovery, retaining both acceptance histories and synchronized product metadata.
+
+## 0.24.3
+
+- Record all four post-fix installed Chrome/Edge adapter-negative passes at exact runtime 2656b52, with zero payload/trap requests and no publication.
+- Preserve observed waiting_user versus waiting_browser states and the historical native 0.18.3 fingerprint; 187 extension tests pass.
+
+## 0.24.2
+
+- Retain the stale adapter preview through every asynchronous replacement check, including a rejected worker step; remove it only for a validated replacement or action.
+- Add a rejected-step regression and retry detached accessibility nodes in the installed fixture without weakening UI assertions.
+
+## 0.24.1
+
+- Retain stale preview recovery controls if fresh owned context is temporarily unavailable; refreshing never reuses old authorization.
+- Coalesce refresh requests received during an active resolver observation so the latest document generation gets a fresh authority check.
+- Add deterministic rejected-context and overlapping-refresh regressions; installed post-fix repetition is tracked separately from historical 0.24.0 evidence.
+
+## 0.24.0
+
+- Record actual installed Chrome/Edge adapter disable and changed-layout refusal gates with exact historical source/native fingerprints, zero payload/trap requests and no publication.
+- Keep fixture activation boundaries, per-case isolation and the intermittent recovery-preview defect explicit for a separate source fix.
+
 ## 0.22.14
 
 - Qualify an actual Chrome original POST reader through 60.193 seconds of upstream idle, followed by native/external hash-matching completion of 8,388,625 bytes with one POST and no HEAD/refetch.
