@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.24.3
+
+- Record all four post-fix installed Chrome/Edge adapter-negative passes at exact runtime 2656b52, with zero payload/trap requests and no publication.
+- Preserve observed waiting_user versus waiting_browser states and the historical native 0.18.3 fingerprint; 187 extension tests pass.
+
 ## 0.24.2
 
 - Retain the stale adapter preview through every asynchronous replacement check, including a rejected worker step; remove it only for a validated replacement or action.

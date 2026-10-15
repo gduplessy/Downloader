@@ -21,3 +21,9 @@ Live g4u, ddownload, Rapidgator and Gofile layouts/accounts, Firefox adapter neg
 ## Recovery defect found during qualification
 
 Some attempts lost the preview during asynchronous adapter-disable refresh. Successful rows prove their exact runs, not repeat reliability. The existing resolver closes its preview before awaiting owned context; a transient context rejection leaves no Refresh UI. A separate source correction and regression/installed repeats are required before claiming this defect resolved.
+
+## Corrected source repetition
+
+The four `postfix-*.json` records repeat both controls on Chrome 155 and Edge 155 at exact checked runtime `2656b52d2e1866d8ff6f28d7fd487b370b821ca2`. Disabled cases ended `waiting_user`; changed-layout cases showed the required stale-selection refresh UI and ended `waiting_browser`. All four had zero payload/trap requests and no native publication. These exact native state observations are preserved rather than inferred from UI text.
+
+The correction retains stale recovery controls through all asynchronous replacement validation and coalesces overlapping Refresh requests. Three deterministic regressions cover failed context, overlapping refresh/generation advance, and worker-step rejection, with no action/authorization from stale authority. The full extension suite passes 187 tests; typecheck and fixture syntax/version checks pass. Native remains the explicitly recorded historical 0.18.3 pair.
