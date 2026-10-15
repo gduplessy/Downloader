@@ -1,0 +1,41 @@
+{
+  "checked_runtime_revision": "1524bbb09e0fd17bde5dac9949d478a7fee7a551",
+  "native_build_revision": "d83fbbe608f83567d6429793004d449278a54c15",
+  "cli_binary_sha256": "4de06a6ee01224b97dbc618fcd176e7bd4b733c8e3f302527b516eb3fdf92e80",
+  "sourceHashes": {
+    "apps/extension/src/background.ts": "6c3a33851eac93af6d28ec0fed8365643046792e7a1bccdce8e553a36d0abc2e",
+    "apps/extension/src/resolver.ts": "5268153e996f5aee1aa32494c0ea4231aae19b107908aab8d9d310e30a700f8e",
+    "apps/extension/src/navigation/adapters/policy.ts": "accc3594102592862e5fdbefbbaf56d1adb125488bcc6798b37d07d5b19700d0",
+    "apps/extension/src/navigation/adapters/selection-ui.ts": "ed75a26240e7978d421836980b205693693b17b1f4ac99874ca259b259065d6d",
+    "apps/extension/src/navigation/adapters/preview.ts": "478b5c171f9fb7990cb6371065959be1fa8f78a217f415ef2b498846da1d587d"
+  },
+  "bundleHashes": {
+    "background.js": "e2d0e76f2c48f1f9b5c5109d4e3c69f501176cd96521077bbb24abdf2179c410",
+    "resolver.js": "06be4cae03e91441b33401f9b8f8987d7f1d9802ffd55086c1b0adf85497aebf",
+    "options.js": "00ae53dfbc32af8ff2e29fa56022894a832cc7134f3c8ed569d68a9fe4c47eaf",
+    "content.js": "daa6cf00b6951a869b1cf29a73a22bd9d698257bfdafb921450c1fce7d833b4d"
+  },
+  "fixture": "production-installed-adapter-negatives-v1",
+  "browser": "Edg/155.0.4283.45",
+  "os": "win32",
+  "arch": "x64",
+  "native_version": "0.18.3",
+  "native_binary_sha256": "fcfd3188fbd4eadef648b26fe2766bee9f7df6a01022b209779d632d4759759d",
+  "rows": [
+    {
+      "scenario": "disabled",
+      "state": "waiting_user",
+      "unauthorized_requests": 0,
+      "payload_requests": 0,
+      "published": false
+    }
+  ],
+  "limits": [
+    "Synthetic loopback layouts; no live provider qualification",
+    "CLI creates the task; trusted production extension messages initiate owned navigation and resume completed HTML; desktop and context-menu UI activation are not qualified",
+    "Preview controls use actual AX/Input; no authorization shim and no payload bytes through CDP",
+    "Unique native fixture host and pregranted loopback permissions; production modules otherwise unchanged"
+  ],
+  "evidence_class": "installed-production-negative",
+  "case_isolation": "Separate fixture-owned profile, native binaries, state, registry key and daemon for each case; fixture disposal does not qualify extension cancellation."
+}

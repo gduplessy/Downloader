@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.24.0
+
+- Record actual installed Chrome/Edge adapter disable and changed-layout refusal gates with exact historical source/native fingerprints, zero payload/trap requests and no publication.
+- Keep fixture activation boundaries, per-case isolation and the intermittent recovery-preview defect explicit for a separate source fix.
+
 ## 0.22.0
 
 - Integrate recorded Chrome/Edge qualification of two actual top-level cookie partitions, distinct native Blob hashes, and missing-cookie-permission refusal before job creation.

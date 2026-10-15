@@ -24,3 +24,5 @@
 /.fixture-streams/
 
 /.fixture-challenges/
+
+.fixture-adapters/
