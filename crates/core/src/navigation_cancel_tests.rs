@@ -249,3 +249,126 @@ fn context_owner_changed_before_cancel_commit_is_refused_without_mutation() {
         })
         .unwrap();
 }
+
+#[test]
+fn cancel_after_assembling_before_atomic_publication_preserves_partial() {
+    let dir = tempfile::tempdir().unwrap();
+    let engine = Engine::open(dir.path()).unwrap();
+    let owner = uuid::Uuid::new_v4().to_string();
+    let job = engine
+        .command(Command::Navigate(AddJob {
+            request_id: uuid::Uuid::new_v4().to_string(),
+            url: "http://127.0.0.1:9/original".into(),
+            filename: Some("race.bin".into()),
+            directory: Some(dir.path().join("output")),
+            queue: None,
+            checksum: None,
+            paused: true,
+            context: RequestContext {
+                profile: Some(owner.clone()),
+                browser: Some("chromium".into()),
+                ..Default::default()
+            },
+            media: None,
+            description: String::new(),
+        }))
+        .unwrap();
+    let id = job["id"].as_str().unwrap().to_string();
+    let scope = SessionScope {
+        browser: "chromium".into(),
+        profile: owner.clone(),
+        private: false,
+        cookie_store_id: Some("0".into()),
+        container_id: None,
+        partition_key: None,
+        claim_generation: 1,
+    };
+    engine
+        .command(Command::ClaimNavigation {
+            id: id.clone(),
+            owner: owner.clone(),
+            force: false,
+            scope: Some(scope.clone()),
+            source_generation: None,
+        })
+        .unwrap();
+    let identity = StreamIdentity {
+        stream_id: uuid::Uuid::new_v4().to_string(),
+        scope: scope.clone(),
+        source_generation: 1,
+    };
+    engine
+        .command(Command::BrowserStream(StreamOperation::Begin {
+            identity: identity.clone(),
+            target: NavigationTarget::Job { id: id.clone() },
+            filename: "race.bin".into(),
+            total: Some(3),
+        }))
+        .unwrap();
+    engine
+        .command(Command::BrowserStream(StreamOperation::Chunk {
+            identity: identity.clone(),
+            offset: 0,
+            data_base64: "YWJj".into(),
+        }))
+        .unwrap();
+    let eof_pause = crate::fault::install_test_pause("finalize_before_publication", &id);
+    let eof_engine = engine.clone();
+    let eof_thread = std::thread::spawn(move || {
+        eof_engine.command(Command::BrowserStream(StreamOperation::End {
+            identity,
+            total: 3,
+            expected_sha256: None,
+        }))
+    });
+    eof_pause.reached.wait();
+    assert_eq!(
+        engine.job(&id).unwrap().lock().unwrap().state,
+        JobState::Assembling
+    );
+    let finalizer = engine.controls.lock().unwrap().get(&id).cloned().unwrap();
+    let cancelled = engine
+        .command(Command::CancelNavigation {
+            id: id.clone(),
+            owner,
+            scope: Some(scope),
+            source_generation: 1,
+        })
+        .unwrap();
+    assert_eq!(cancelled["cancelled"], true);
+    assert_eq!(finalizer.load(Ordering::Relaxed), 2);
+    assert_eq!(
+        engine.job(&id).unwrap().lock().unwrap().state,
+        JobState::Cancelled
+    );
+    let after_cancel = engine
+        .command(Command::Subscribe {
+            after_sequence: None,
+            limit: 100,
+        })
+        .unwrap();
+    let cursor = after_cancel["sequence"].as_u64().unwrap();
+    eof_pause.resume.wait();
+    assert!(eof_thread.join().unwrap().is_err());
+    let job = engine.job(&id).unwrap().lock().unwrap().clone();
+    assert_eq!(job.state, JobState::Cancelled);
+    assert_eq!(job.bytes, 3);
+    assert!(!job.destination.exists());
+    assert_eq!(std::fs::read(transfer::part_path(&job)).unwrap(), b"abc");
+    {
+        let events = engine
+            .command(Command::Subscribe {
+                after_sequence: Some(cursor),
+                limit: 100,
+            })
+            .unwrap();
+        for event in events["events"].as_array().unwrap() {
+            if event["job"]["id"] == id {
+                assert_eq!(
+                    event["job"]["state"], "cancelled",
+                    "No checkpoint may revive an acknowledged cancelled job"
+                );
+            }
+        }
+    }
+}

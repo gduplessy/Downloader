@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.23.6
+
+- Fence atomic hard-link and staging-file publication with the live terminal job/control state, without holding the job lock during copy or hashing.
+- Exercise cancellation after Assembling and before publication through actual browser-stream EOF.
+
 ## 0.23.5
 
 - Keep exact navigation queue cleanup inside the terminal job fence, revalidate context ownership nonblockingly, and publish refreshed context under its source-generation lock.

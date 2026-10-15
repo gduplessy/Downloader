@@ -70,7 +70,34 @@ pub fn publish(
     force_copy: bool,
     control: &AtomicU8,
 ) -> Result<()> {
+    publish_guarded(part, destination, expected, force_copy, control, None)
+}
+
+fn publication_guard<'a>(
+    job: Option<&'a Mutex<Job>>,
+    control: &AtomicU8,
+) -> Result<Option<std::sync::MutexGuard<'a, Job>>> {
+    let live = job.map(|job| job.lock().unwrap());
+    if control.load(Ordering::Relaxed) != 0
+        || live
+            .as_ref()
+            .is_some_and(|job| job.state == JobState::Cancelled)
+    {
+        bail!("operation_cancelled");
+    }
+    Ok(live)
+}
+
+fn publish_guarded(
+    part: &Path,
+    destination: &Path,
+    expected: &str,
+    force_copy: bool,
+    control: &AtomicU8,
+    job: Option<&Mutex<Job>>,
+) -> Result<()> {
     if !force_copy && !crate::fault::force_copy() {
+        let _publication = publication_guard(job, control)?;
         match std::fs::hard_link(part, destination) {
             Ok(()) => {
                 sync_parent(destination)?;
@@ -97,6 +124,7 @@ pub fn publish(
             && digest(&stage, control)? == expected
         {
             drop(file);
+            let _publication = publication_guard(job, control)?;
             return rename_no_replace(&stage, destination);
         }
         drop(file);
@@ -126,6 +154,7 @@ pub fn publish(
             bail!("checksum_mismatch: Publication copy differs from verified output");
         }
         crate::fault::point("copy_before_publish");
+        let _publication = publication_guard(job, control)?;
         rename_no_replace(&stage, destination)
     })();
     if stage.exists() {
@@ -246,18 +275,21 @@ pub fn finish(
     let part = transfer::part_path(&j);
     let started = Instant::now();
     crate::fault::point("publication_before");
+    #[cfg(test)]
+    crate::fault::pause_for_test("finalize_before_publication", &j.id);
     if j.destination.exists() {
         if !recovering || digest(&j.destination, control)? != j.verified_sha256.as_deref().unwrap()
         {
             bail!("storage_error: Destination collision; original file preserved");
         }
     } else {
-        publish(
+        publish_guarded(
             &part,
             &j.destination,
             j.verified_sha256.as_deref().unwrap(),
             false,
             control,
+            Some(&job),
         )?;
     }
     j.metrics.publication_seconds += started.elapsed().as_secs_f64();
