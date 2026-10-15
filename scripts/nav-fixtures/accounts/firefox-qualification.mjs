@@ -89,6 +89,7 @@ const report = {
   nativeRevision,
   nativeHashes: binaries,
   fixtureSha256: digest(await readFile(import.meta.filename)),
+  serverSha256: digest(await readFile(new URL('./server.mjs', import.meta.url))),
   helperSha256: digest(await readFile(desktopBinary)),
   helperSourceRevision: 'd99c2f889c8d7819196b5790ed4f66f93e5a84e6',
   initialActivation:
@@ -489,6 +490,45 @@ try {
       );
       return result[0];
     }, 'Original page permitted download preparation');
+    const documentTag = randomUUID();
+    await wait(async () => {
+      const result = await json(
+        `browser.tabs.executeScript(${record.tabId},{frameId:0,code:${JSON.stringify(`(()=>{if(document.documentElement.dataset.fixtureBlobReady!=='true'||!document.getElementById('__downloader_adapter_preview'))return false;document.documentElement.dataset.fixtureOwnedDocument=${JSON.stringify(documentTag)};return true})()`)}}).then(JSON.stringify)`,
+      );
+      return result[0];
+    }, 'Production premium Blob preview');
+    const tree = await send('browsingContext.getTree');
+    let ownedContext;
+    for (const candidate of tree.contexts.filter(
+      (item) => item.url === base + '/nav-adapters/ddownload/account',
+    )) {
+      if (
+        (await at(candidate.context, 'document.documentElement.dataset.fixtureOwnedDocument')) ===
+        documentTag
+      ) {
+        ownedContext = candidate.context;
+        break;
+      }
+    }
+    assert.ok(ownedContext, 'Actual owning account document not found');
+    await send('browsingContext.activate', { context: ownedContext });
+    await send('input.performActions', {
+      context: ownedContext,
+      actions: [
+        {
+          type: 'key',
+          id: 'account-preview-choice',
+          actions: [
+            { type: 'keyDown', value: ' ' },
+            { type: 'keyUp', value: ' ' },
+            { type: 'keyDown', value: '\uE004' },
+            { type: 'keyUp', value: '\uE004' },
+            { type: 'keyDown', value: '\uE007' },
+            { type: 'keyUp', value: '\uE007' },
+          ],
+        },
+      ],
+    });
     job = await wait(() => {
       const current = list().find((j) => j.id === job.id);
       if (['failed', 'cancelled'].includes(current?.state))
