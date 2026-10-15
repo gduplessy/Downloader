@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.14
+
+- Qualify an actual Chrome original POST reader through 60.193 seconds of upstream idle, followed by native/external hash-matching completion of 8,388,625 bytes with one POST and no HEAD/refetch.
+- Preserve the standalone fixture and exact source/native fingerprints; other reader lanes and global peak-memory qualification remain separate.
+
 ## 0.22.13
 
 - Isolate expired reader recovery failures so one corrupt checkpoint cannot starve other lost readers; preserve failed leases for retry and report errors after the sweep.
