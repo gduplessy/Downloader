@@ -483,6 +483,12 @@ try {
         return result[0];
       }, 'Production saved-fill control');
     }
+    await wait(async () => {
+      const result = await json(
+        `browser.tabs.executeScript(${record.tabId},{frameId:0,code:${JSON.stringify(`(()=>{const button=document.getElementById('prepare-download');if(!button)return false;button.click();return true})()`)}}).then(JSON.stringify)`,
+      );
+      return result[0];
+    }, 'Original page permitted download preparation');
     job = await wait(() => {
       const current = list().find((j) => j.id === job.id);
       if (['failed', 'cancelled'].includes(current?.state))
