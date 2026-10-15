@@ -63,6 +63,7 @@ const desktop = (command) =>
       env,
       windowsHide: true,
       encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
       input: JSON.stringify(command),
     }),
   );
@@ -431,7 +432,6 @@ try {
     );
     assert.equal(job.navigation_scope.cookie_store_id, context.cookieStoreId);
     const accountId = randomUUID();
-    accountIds.push(accountId);
     desktop({
       command: 'site_account',
       args: {
@@ -450,18 +450,26 @@ try {
         password: context.name === 'alice' ? 'fixture-only' : null,
       },
     });
+    accountIds.push(accountId);
     if (context.name === 'bob') {
-      let refused = false;
+      let refusal;
       try {
         desktop({
           command: 'site_account',
           args: { action: 'select', job_id: job.id, account_id: accountIds[0], mode: 'premium' },
         });
-      } catch {
-        refused = true;
+      } catch (error) {
+        refusal = String(error.stderr ?? '').trim();
       }
-      assert.equal(refused, true, 'Alice container account must not bind to Bob');
-      report.negative.push({ case: 'cross-container-account-selection', refused });
+      assert.equal(
+        refusal,
+        'Error: account_session_mismatch',
+        'Cross-container refusal must be the exact native account error',
+      );
+      report.negative.push({
+        case: 'cross-container-account-selection',
+        error: 'account_session_mismatch',
+      });
     }
     desktop({
       command: 'site_account',
@@ -495,12 +503,43 @@ try {
       return values[0] ? JSON.parse(values[0]) : null;
     };
     if (context.name === 'alice') {
-      await wait(async () => {
-        const result = await json(
-          `browser.tabs.executeScript(${record.tabId},{frameId:0,code:${JSON.stringify(`(()=>{const b=document.querySelector('[data-downloader-ui="account"] button');if(b?.textContent==='Fill and submit this sign-in form'&&!b.disabled){b.click();return true}return false})()`)}}).then(JSON.stringify)`,
+      const fillDocument = randomUUID();
+      const point = await wait(async () => {
+        const values = await json(
+          `browser.tabs.executeScript(${record.tabId},{frameId:0,code:${JSON.stringify(`(()=>{const button=document.querySelector('[data-downloader-ui="account"] button');if(button?.textContent!=='Fill and submit this sign-in form'||button.disabled)return null;const rect=button.getBoundingClientRect();if(rect.width<=0||rect.height<=0)return null;document.documentElement.dataset.fixtureFillDocument=${JSON.stringify(fillDocument)};return {x:Math.floor(rect.x+rect.width/2),y:Math.floor(rect.y+rect.height/2)}})()`)}}).then(JSON.stringify)`,
         );
-        return result[0];
+        return values[0];
       }, 'Production saved-fill control');
+      const tree = await send('browsingContext.getTree');
+      let fillContext;
+      for (const candidate of tree.contexts.filter(
+        (item) => item.url === base + '/nav-adapters/ddownload/login',
+      )) {
+        if (
+          (await at(candidate.context, 'document.documentElement.dataset.fixtureFillDocument')) ===
+          fillDocument
+        ) {
+          fillContext = candidate.context;
+          break;
+        }
+      }
+      assert.ok(fillContext, 'Actual saved-fill document not found');
+      await send('browsingContext.activate', { context: fillContext });
+      await send('input.performActions', {
+        context: fillContext,
+        actions: [
+          {
+            type: 'pointer',
+            id: 'saved-fill-pointer',
+            parameters: { pointerType: 'mouse' },
+            actions: [
+              { type: 'pointerMove', x: point.x, y: point.y, duration: 0, origin: 'viewport' },
+              { type: 'pointerDown', button: 0 },
+              { type: 'pointerUp', button: 0 },
+            ],
+          },
+        ],
+      });
     }
     await wait(async () => {
       const result = await json(
@@ -592,14 +631,6 @@ try {
   );
   report.privatePermission = privateResult;
   report.outcome = 'passed';
-  await writeFile(resolve(dir, 'evidence.json'), JSON.stringify(report, null, 2));
-  console.log(
-    JSON.stringify(
-      { outcome: report.outcome, evidence: resolve(dir, 'evidence.json'), rows: report.rows },
-      null,
-      2,
-    ),
-  );
 } catch (error) {
   try {
     report.accountPage = await safePageDiagnostic?.();
@@ -610,25 +641,30 @@ try {
   );
   throw error;
 } finally {
-  for (const id of accountIds)
+  const cleanup = {
+    created: accountIds.length,
+    removed: 0,
+    remainingFixtureAccounts: null,
+    errors: [],
+  };
+  for (const id of accountIds) {
     try {
       desktop({ command: 'site_account', args: { action: 'remove', id } });
-    } catch {}
+      cleanup.removed++;
+    } catch {
+      cleanup.errors.push('account_remove_failed');
+    }
+  }
   try {
     const result = desktop({ command: 'site_account', args: { action: 'list' } });
-    await writeFile(
-      resolve(dir, 'cleanup.json'),
-      JSON.stringify(
-        {
-          removed: accountIds.length,
-          remainingFixtureAccounts: accountIds.filter((id) => JSON.stringify(result).includes(id))
-            .length,
-        },
-        null,
-        2,
-      ),
-    );
-  } catch {}
+    cleanup.remainingFixtureAccounts = accountIds.filter((id) =>
+      JSON.stringify(result).includes(id),
+    ).length;
+  } catch {
+    cleanup.errors.push('account_list_failed');
+  }
+  await writeFile(resolve(dir, 'cleanup.json'), JSON.stringify(cleanup, null, 2));
+  report.cleanup = cleanup;
   try {
     await Promise.race([send('browser.close'), sleep(3000)]);
   } catch {}
@@ -639,3 +675,23 @@ try {
     execFileSync('reg', ['DELETE', registry, '/f'], { windowsHide: true, stdio: 'ignore' });
   } catch {}
 }
+assert.equal(
+  report.cleanup?.removed,
+  report.cleanup?.created,
+  'Every created account must be removed',
+);
+assert.equal(report.cleanup?.remainingFixtureAccounts, 0, 'Fixture accounts remain after cleanup');
+assert.deepEqual(report.cleanup?.errors, [], 'Account cleanup failed');
+await writeFile(resolve(dir, 'evidence.json'), JSON.stringify(report, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      outcome: report.outcome,
+      evidence: resolve(dir, 'evidence.json'),
+      rows: report.rows,
+      cleanup: report.cleanup,
+    },
+    null,
+    2,
+  ),
+);
