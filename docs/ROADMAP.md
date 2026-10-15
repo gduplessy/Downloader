@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.22.11<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.22.12<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 NAV-11 review hardening (0.21.2) isolates private pending origins from regular cleanup and checks fresh native authority after queue admission before opening a source URL. Mutable caller snapshots cannot change frozen navigation intent. Current main's expiry regression and qualification histories are retained.
 
@@ -29,6 +29,8 @@ NAV-08 current cancellation (0.22.9) passes installed Firefox158 on checked 173e
 NAV-07/NAV-08 full-browser-loss evidence (0.22.10) reproduces a recovery gap on checked 653affe: verified browser/native-host exit, preserved daemon, and BrowserDownloading/nonterminal checkpoint after 120 seconds. The 880,640-byte retained partial matches the original prefix; no final publication or refetch occurred. See [negative evidence](evidence/nav-integration/firefox-browser-loss-negative.json). Bounded reader liveness repair and repeat acceptance remain pending.
 
 NAV-07/NAV-08 reader liveness (0.22.11) adds 45-second monotonic reader leases, startup reconnect grace and ten-second exact-owner Begin keepalives without payload replay or offset advancement. Expiry retains the partial and fences late chunk/EOF. Focused native and extension regressions pass; full native verification and rebuilt installed browser-loss acceptance remain pending.
+
+NAV-07/NAV-08 Firefox browser loss (0.22.12) passes installed Firefox158/Windows on checked be7484d and matching rebuilt native0.22.11: verified browser/native-host exit, preserved daemon, WaitingUser in 50.5 seconds, terminal checkpoint at 659,456 matching original-prefix bytes, stable progress and no publication/refetch. See [evidence](evidence/nav-integration/firefox-browser-loss-fixed.json). Full native152-test suite, strict Clippy/format and extension199 tests pass. Other browser targets, live-reader idle and peak-buffer acceptance remain separate.
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 

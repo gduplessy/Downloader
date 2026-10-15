@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.22.12
+
+- Record installed Firefox full-browser-loss recovery on matching be7484d/native0.22.11: WaitingUser in 50.5 seconds, terminal checkpoint at 659,456 original-prefix hash-verified bytes, stable progress and no publication/refetch.
+
 ## 0.22.11
 
 - Track original browser readers with 45-second monotonic leases and ten-second owner-fenced, single-in-flight Begin keepalives that never replay requests or advance byte offsets.

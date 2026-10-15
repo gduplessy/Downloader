@@ -1,0 +1,64 @@
+{
+  "outcome": "qualified",
+  "mode": "browser-loss",
+  "sourceRevision": "be7484d09dabb291572bea4cb19b587de7426875",
+  "nativeBuildRevision": "be7484d09dabb291572bea4cb19b587de7426875",
+  "nativeVersion": "0.22.11",
+  "nativeBinarySha256": "f8ae361043daf6a787fd87c004bf946aab7983b26fbbff0acd08eaee72bbe9e7",
+  "cliBinarySha256": "717f37e4bf9a2dbe7eae6621f5b7cd0e58eedb587987c566ed99b912c5e9a40f",
+  "browser": "Firefox/158.0",
+  "os": "win32",
+  "fixtureSha256": "e3e5df09fc4c755f33a951181acbceb12d22c49f88782d20a66503b3630ef809",
+  "diagnosticSourceChanges": false,
+  "diagnosticNativeWrapper": false,
+  "recovery": {
+    "state": "waiting_user",
+    "bytes": 659456,
+    "originalBytes": 8388625,
+    "partialSha256": "1f7663d681a7d15373375cf0c065e1aeb3af4ae6f471b57c7f716350d95e8366",
+    "intendedPrefixSha256": "1f7663d681a7d15373375cf0c065e1aeb3af4ae6f471b57c7f716350d95e8366",
+    "sourceGeneration": 1,
+    "verifiedSha256": null,
+    "recoveryMessage": "browser_reader_lost: original browser reader disappeared; request a fresh provider action",
+    "noPublication": true,
+    "noRefetch": true,
+    "lateProgressUnchanged": true,
+    "elapsedMs": 50495
+  },
+  "checkpoints": [
+    {
+      "offset": 659456,
+      "terminal": true,
+      "sourceGeneration": 1
+    }
+  ],
+  "control": {
+    "stopRequestedAt": "2026-10-15T00:34:54.665Z",
+    "stopCompletedAt": "2026-10-15T00:34:55.908Z",
+    "browserAndNativeHostsExited": true,
+    "preservedDaemonIdentity": {
+      "pid": 31028,
+      "created": "2026-10-15T00:34:24.938783Z"
+    },
+    "noBrowserRestartOrEpochMutation": true
+  },
+  "payloadRequestCount": 1,
+  "sourceHashes": {
+    "apps/extension/src/background.ts": "b17383a63aee64ca50f9121174e7879cba8610a0c451b07d853d167c77dc9ed3",
+    "apps/extension/src/resolver.ts": "5268153e996f5aee1aa32494c0ea4231aae19b107908aab8d9d310e30a700f8e",
+    "apps/extension/src/navigation/session/scope.ts": "447a6ad3a08067f1a5bc7e63f6656cb70acf1eeaedde2bb92e1e09b84bd34d2c",
+    "apps/extension/src/navigation/session/source.ts": "7260b130785aba5adb8d2b03ea3a834436c6d5bc592087e68cc32c23033ec985",
+    "apps/extension/src/navigation/streams/blob.ts": "752894243a75fa5d77435947e5e8882a76d8e7c3cadd72fc796429c1d9965217",
+    "apps/extension/src/navigation/streams/transport.ts": "8f40051e5cb11522e3f83f749e2ecb28656e6d9cdf02bbd577a7901898cad794"
+  },
+  "bundleHashes": {
+    "background": "cc738e094482a8831d5e7a841b1bcf96672b76ba0b8e543f08790ed9914c7c4c",
+    "resolver": "06be4cae03e91441b33401f9b8f8987d7f1d9802ffd55086c1b0adf85497aebf",
+    "scopeHelper": "96bef346e44c00da0f2583620af21cc285c744663c1442860c861d0fd2cdc0ac"
+  },
+  "limits": [
+    "Installed Firefox158 Windows full-browser-loss row only",
+    "Initial activation invokes registered production menu listener",
+    "Live-reader idle heartbeat, Chromium process loss, peak buffering and other audit gates remain separate"
+  ]
+}
