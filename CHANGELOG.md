@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.24.2
+
+- Retain the stale adapter preview through every asynchronous replacement check, including a rejected worker step; remove it only for a validated replacement or action.
+- Add a rejected-step regression and retry detached accessibility nodes in the installed fixture without weakening UI assertions.
+
 ## 0.24.1
 
 - Retain stale preview recovery controls if fresh owned context is temporarily unavailable; refreshing never reuses old authorization.

@@ -209,12 +209,10 @@ async function click(session, name, role = 'button') {
         n.backendDOMNodeId,
     );
   if (!node) return false;
-  const { model } = await command(
-      'DOM.getBoxModel',
-      { backendNodeId: node.backendDOMNodeId },
-      session,
-    ),
-    border = model.border,
+  let model;
+  try { ({ model } = await command('DOM.getBoxModel', { backendNodeId: node.backendDOMNodeId }, session)); }
+  catch(error) { if(/Could not compute box model|No node with given id/.test(String(error)))return false;throw error; }
+  const border = model.border,
     x = (border[0] + border[2] + border[4] + border[6]) / 4,
     y = (border[1] + border[3] + border[5] + border[7]) / 4;
   await command(
@@ -340,8 +338,8 @@ try {
       for(let i=0;i<100;i++){stored=await evaluate(optionsSession,'chrome.storage.local.get("settings")');if(stored.settings.disabledAdapters.includes('local-fixture'))break;await new Promise(r=>setTimeout(r,100));}
       assert(stored.settings.disabledAdapters.includes('local-fixture'),'Trusted disable did not persist '+JSON.stringify({stored,tree:(await command('Accessibility.getFullAXTree',{},session)).nodes.filter(n=>!n.ignored).map(n=>({role:n.role?.value,name:n.name?.value})),jobs:call('list').jobs}));
       let tree;
-      let refreshUsed=false;
-      for(let i=0;i<100;i++){tree=(await command('Accessibility.getFullAXTree',{},session)).nodes;if(tree.filter(n=>!n.ignored&&n.role?.value==='radio').length===2&&!tree.some(n=>!n.ignored&&n.name?.value==='Use generic controls'))break;if(!refreshUsed&&tree.some(n=>!n.ignored&&n.name?.value==='Page changed. Refresh the selection.')){await waitClick(session,'Refresh');refreshUsed=true;}await new Promise(r=>setTimeout(r,100));}
+      let refreshAttempts=0;
+      for(let i=0;i<100;i++){tree=(await command('Accessibility.getFullAXTree',{},session)).nodes;if(tree.filter(n=>!n.ignored&&n.role?.value==='radio').length===2&&!tree.some(n=>!n.ignored&&n.name?.value==='Use generic controls'))break;if(refreshAttempts<3&&i%20===0&&tree.some(n=>!n.ignored&&n.name?.value==='Page changed. Refresh the selection.')){await waitClick(session,'Refresh');refreshAttempts++;}await new Promise(r=>setTimeout(r,100));}
       assert(!tree.some(n=>!n.ignored&&n.name?.value==='Use generic controls'),'Fallback still uses local adapter');
       assert(tree.filter(n=>!n.ignored&&n.role?.value==='radio').length===2,'Generic fallback should preserve explicit ambiguity '+JSON.stringify({tree:tree.filter(n=>!n.ignored).map(n=>({role:n.role?.value,name:n.name?.value})),jobs:call('list').jobs.map(j=>({state:j.state,error:j.error,navigation_scope:j.navigation_scope,source_generation:j.source_generation})),diagnostics:await evaluate(optionsSession,'chrome.runtime.sendMessage({type:"diagnostics"})')}));
       await waitClick(session,'Cancel');

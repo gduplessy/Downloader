@@ -270,8 +270,6 @@ async function step() {
     previewHandle?.stale();
     let ctx = await context();
     if (previewHandle && !ctx) return;
-    previewHandle?.close();
-    previewHandle = undefined;
     if (ctx) {
       challengeHandle =
         (await showChallenge(
@@ -307,7 +305,11 @@ async function step() {
             setTimeout(() => void step().catch(() => {}), 500);
           },
         )) ?? undefined;
-      if (challengeHandle) return;
+      if (challengeHandle) {
+        previewHandle?.close();
+        previewHandle = undefined;
+        return;
+      }
     }
     let observed = await observe(ctx);
     const deadline = Date.now() + 10000;
@@ -328,6 +330,8 @@ async function step() {
       );
     if (ctx && observed.inspection.kind === 'click' && observed.inspection.selected) {
       await submit(ctx, observed, observed.inspection.selected);
+      previewHandle?.close();
+      previewHandle = undefined;
       return;
     }
     if (
@@ -351,6 +355,7 @@ async function step() {
         fingerprint: observed.fingerprint,
         binding: preview.binding,
       });
+      previewHandle?.close();
       previewHandle = showPreview(
         document,
         preview,
@@ -370,7 +375,7 @@ async function step() {
         },
         () => {
           documentGeneration++;
-          void step();
+          void step().catch(() => {});
         },
         async () => {
           const disabled = await browser.runtime.sendMessage({

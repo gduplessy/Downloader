@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.24.1<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.24.2<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -388,3 +388,5 @@ NAV-11 Firefox scope qualification (0.21.1): checked af318b9 extension21.0/nativ
 Installed NAV-05 negative evidence: [Chrome/Edge adapter controls](docs/evidence/nav-adapters/INSTALLED-NEGATIVES.md). Historical acceptance uses explicitly fingerprinted extension/native builds.
 
 NAV-05 recovery correction (0.24.1): keep stale Refresh controls visible when owned-context observation fails, and coalesce overlapping refreshes into a fresh observation after the active step. Old selection authorization remains rejected; post-fix installed repetition is tracked separately.
+
+NAV-05 recovery 0.24.2 preserves stale controls through the full asynchronous preview replacement, including worker-step rejection. Installed post-fix acceptance remains separately tracked.

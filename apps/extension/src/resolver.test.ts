@@ -334,3 +334,25 @@ it('coalesces refresh during an in-flight ownership observation and rereads fres
   expect(fixture.preview.mock.calls[1][1].binding.documentGeneration).toBe(3);
   for (const element of fixture.elements.values()) expect(element.click).not.toHaveBeenCalled();
 });
+
+
+it('keeps the stale preview until a replacement has passed its worker step', async () => {
+  control('first'); control('second');
+  const close = vi.fn(), stale = vi.fn();
+  fixture.preview.mockReturnValue({ close, stale });
+  await import('./resolver');
+  await vi.waitFor(() => expect(fixture.preview).toHaveBeenCalledTimes(1));
+  fixture.send.mockImplementation(async (message) => {
+    if (message.type === 'resolver_context') return { ...context, documentGeneration: message.document.generation, disabledAdapters: ['local-fixture'] };
+    if (message.type === 'resolver_step') throw Error('transient step ownership observation failure');
+    return null;
+  });
+  const refresh = fixture.preview.mock.calls[0][4] as () => void;
+  refresh();
+  await vi.waitFor(() => expect(fixture.send).toHaveBeenCalledWith(expect.objectContaining({ type: 'resolver_step', document: { nonce: documentNonce, generation: 2 } })));
+  await new Promise(resolve => setTimeout(resolve, 10));
+  expect(stale).toHaveBeenCalled();
+  expect(close).not.toHaveBeenCalled();
+  expect(fixture.preview).toHaveBeenCalledTimes(1);
+  for (const element of fixture.elements.values()) expect(element.click).not.toHaveBeenCalled();
+});
