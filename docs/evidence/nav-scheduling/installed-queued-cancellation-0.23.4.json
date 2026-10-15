@@ -1,0 +1,41 @@
+{
+  "fixture": "installed-production-unadmitted-queue-cancel-v1",
+  "source_revision": "3d6bd4d6b0d2601d5c386e2dc2aafa6a3a103b12",
+  "browser": "Chrome/155.0.8059.40",
+  "native_version": "0.23.4",
+  "cli_version": "downloader-cli 0.23.4",
+  "native_build_revision": "3d6bd4d6b0d2601d5c386e2dc2aafa6a3a103b12",
+  "native_binary_sha256": "efcc5807b11bf1f2b9039be36a6c5857e89d97f9a849ae64f513df1ad7e28530",
+  "cli_binary_sha256": "df70aa583326eccebb86942f25b6abc63192c75e10694f1debb7cf8e9f3800e1",
+  "fixture_sha256": "225ae3ce5c5ee49f07ea10ab46c9150e42769c225dbf1d9a89af1f92f9955e33",
+  "queue_helper_sha256": "4874c34f8169d2e870fd1651eca51caf5174bed266d34033f771631aea1ea3a3",
+  "production_background_sha256": "1a828bd3ee16260ea693a5286bb4b4b725b612e0f88624319dde39d646d33dc1",
+  "production_cancel_sha256": "ad71227e78c699a63cf200be376107e723cfd8dc6fb4fb0568efcd698a1d1210",
+  "os": "win32",
+  "arch": "x64",
+  "rows": {
+    "queue_size": 21,
+    "active_limit": 1,
+    "cancelled_row": 21,
+    "admitted_before_cancel": false,
+    "navigation_scope_before": null,
+    "navigation_owner_before": null,
+    "existing_scheduler_owner_required": true,
+    "foreign_regular_refused": true,
+    "foreign_private_refused": true,
+    "stale_source_refused": true,
+    "legacy_navigation_cancel_refused": true,
+    "ordinary_unscoped_download_legacy_cancel_preserved": true,
+    "state": "cancelled",
+    "exact_terminal_retry_succeeded": true,
+    "queued_record_removed": true,
+    "active_peer_lease_preserved": true,
+    "active_peer_tab_preserved": true,
+    "desktop_cancel_fallback": false
+  },
+  "limits": [
+    "Synthetic local queue with actual production extension/native messaging; pregranted loopback permissions",
+    "No-owner and private-unclaimed kernel refusal and owner precedence have deterministic native tests; this installed row has existing scheduler authority",
+    "Native desktop/window UI and unavailable platform matrix remain pending"
+  ]
+}

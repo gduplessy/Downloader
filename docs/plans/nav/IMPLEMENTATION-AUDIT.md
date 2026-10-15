@@ -1,6 +1,6 @@
 # NAV implementation acceptance audit
 
-Audit refresh: 2026-10-14. Merged integration: `a888dbf` (0.21.3). The thirteen plans and six implementation PR batches exist. All five PRs open at merge review are merged. Historical evidence keeps its own checked revisions; this refresh does not imply rerunning it on main. This audit distinguishes implemented behavior from acceptance still required; it does not close the roadmap.
+Audit refresh: 2026-10-15. Review staging includes PR22 and its reconciled adapter/reader-recovery work; current installed cancellation records identify checked runtime/native 3b808ae (0.25.1). Earlier merged integration a888dbf (0.21.3) and earlier batch merge reports remain historical. The thirteen plans and six implementation batches exist. Evidence retains its own checked revision; this audit distinguishes implemented behavior from acceptance still required and does not close the roadmap.
 
 ## Remaining local gates
 
@@ -9,13 +9,13 @@ Audit refresh: 2026-10-14. Merged integration: `a888dbf` (0.21.3). The thirteen 
 | NAV-01 | Local solver lifecycle and controls fixtures | Installed native/extension enable, save, test, disable and manual retry controls |
 | NAV-02 | Windows keyring lifecycle; installed Chrome/Edge saved login hashes | Firefox/container/private account paths; installed controls |
 | NAV-03 | Scoped entitlement/quota/expiry contracts; installed Chromium file hashes | Supported Firefox entitled-session and competing-context paths |
-| NAV-04 | Production monotonic scheduler fix; clock, wait and restart policy regressions | Installed enforced server readiness, alarm, sleep/restart; Retry-After integration |
-| NAV-05 | Adapter DOM, preview, stale selection and keyboard tests; downstream hashes | Installed disabled-adapter fallback and changed-layout refusal |
+| NAV-04 | Production monotonic scheduler regressions; installed Chrome enforced 45-second server readiness versus one-second DOM hint, real alarm and actual worker replacement on recorded historical builds | Navigation Retry-After header ingestion; real sleep/clock changes and remaining whole-browser restart/wait lanes |
+| NAV-05 | Adapter DOM/preview/stale/keyboard tests; four actual Chrome/Edge disable-fallback and changed-layout refusal passes on checked 2656b52; deterministic pending-refresh Cancel lifetime regressions integrated | Installed Firefox/other-platform negatives; broader context matrix and post-Cancel refresh installed repetition; live hosts remain deferred |
 | NAV-06 | Four-host synthetic matrix, contribution schema and opt-in smoke command | Live acceptance remains deferred as agreed |
 | NAV-07 | Installed Chromium original POST; Chrome 60-second idle then full hash-matching completion; Edge 8 MiB; Firefox page-owned XHR; rebuilt Firefox full-browser loss preserves terminal partial in WaitingUser | Chromium browser-loss repeat, other live-reader idle lanes and installed permission/debugger refusal; counted response matrix |
 | NAV-08 | Installed Chrome/Edge/Firefox Blob hashes; Firefox daemon/tab/browser loss and cancellation retain verified partials; two admission-aware revoked-Blob runs preserve stable WaitingUser without refetch | Chromium browser-loss repeat; live-reader idle; measured peak buffering independent of file size |
 | NAV-09 | Replay policy/fencing, original POST and authenticated one-use GET counts | Remaining consume-on-HEAD/GET, rotating/expired/redirect token counters; changed-partial recovery |
-| NAV-10 | Fifty-job Engine/renderer fixture, caps, fairness and host leases | Installed worker admission/resource limits, waits and restart |
+| NAV-10 | Fifty-job Engine/renderer fixture; installed Chrome default-three/configured-twenty native leases and twenty real tabs, sensitive-host serialization with a free slot, durable wait/worker replacement; observed resource samples | Hard resource/peak-memory bounds; remaining whole-browser/sleep/restart/platform lanes. Samples do not establish limits |
 | NAV-11 | Actual private Chromium hashes/storage audit; installed Chrome/Edge two-profile transfer; actual top-level partition Blob hashes; reviewed Firefox queued-container smoke | Actual download-mapping lifecycle; remaining private/container transfer combinations and installed desktop controls |
 | NAV-12 | Installed Chrome/Edge authenticated discovery plus full browser/service/worker restart | Installed cancellation/tab-close/auth expiry negatives; supported Firefox/context rows |
 | NAV-13 | Qualified narrow geometry corpus, mocked paid provider, Chrome challenge-to-file hashes | Installed Edge/Firefox invalidation/UI and native controls |
@@ -31,3 +31,5 @@ Chrome/Edge cross-profile transfer evidence is integrated in main. Actual top-le
 - Provider APIs follow individual provider qualification; no guessed premium bypass is required or implemented.
 
 See each plan and `docs/evidence/nav-*` for precise source, native executable, browser and fixture limitations. Historical mocks, renderer shims and sampled heaps do not become installed browser or bounded-buffer proof.
+
+Scheduler reproduction and exact historical readiness/admission provenance: [installed scheduler qualification](../../evidence/nav-scheduling/INSTALLED.md). Readiness POST acknowledgement is not file-transfer proof. Adapter provenance and all four post-fix negative rows: [installed adapter negatives](../../evidence/nav-adapters/INSTALLED-NEGATIVES.md).

@@ -1,0 +1,33 @@
+{
+  "fixture": "installed-production-scoped-queue-cancel-v1",
+  "source_revision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+  "browser": "Chrome/155.0.8059.40",
+  "native_version": "0.25.1",
+  "cli_version": "downloader-cli 0.25.1",
+  "checked_product_version": "0.25.1",
+  "native_build_revision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+  "native_binary_sha256": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+  "cli_binary_sha256": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c",
+  "fixture_sha256": "d052be76e9342cabba9948607645f252abc5f497943a07fef86d6677fd3165fb",
+  "production_background_sha256": "377d6884f27ebe2cb0aac18b32077e5798322862678206febeab7dba4d508a0a",
+  "production_cancel_sha256": "ad71227e78c699a63cf200be376107e723cfd8dc6fb4fb0568efcd698a1d1210",
+  "os": "win32",
+  "arch": "x64",
+  "rows": {
+    "state": "cancelled",
+    "wait_alarm_removed": true,
+    "resolver_record_removed": true,
+    "reservation_released": true,
+    "owned_resolver_tab_closed": true,
+    "unrelated_user_tab_retained": true,
+    "original_submissions": 0,
+    "desktop_cancel_fallback": false,
+    "legacy_scoped_cancel_refused": true
+  },
+  "limits": [
+    "Synthetic local wait page and pregranted permissions; production extension/native messaging except unique host address",
+    "Trusted extension-page cancellation message; native desktop/window UI not exercised",
+    "Retained same-site user tab has no task resolver record; private/native partial cancellation is covered separately by engine tests",
+    "Unavailable browser/platform and live-account matrix remains pending"
+  ]
+}

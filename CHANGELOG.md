@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.25.2
+
+- Record final combined 3b808ae/native0.25.1 installed Chrome/Edge scoped cancellation and Chrome queued authority/peer-preservation passes, preserving historical fingerprints and failed preconditions.
+- Stop the fixture esbuild service explicitly after owned cleanup; all three final repeats exit zero without changing production runtime.
+- Align NAV-04/NAV-05/NAV-10 acceptance audit with actual historical installed readiness, adapter negatives, worker/admission and resource observations; retain ingestion, platform, sleep and hard-memory gates. No native0.25.2 rebuild is claimed.
+
 ## 0.25.1
 
 - Preserve the final reviewed adapter Cancel lifetime guard in the combined cancellation and reader-recovery integration.

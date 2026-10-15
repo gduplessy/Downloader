@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { startSchedulerServer } from './installed-server.mjs';
 import { qualifyQueuedCancellation } from './installed-queued-cancel.mjs';
 const require = createRequire(new URL('../../../apps/extension/package.json', import.meta.url)),
-  { build } = require('esbuild');
+  { build, stop } = require('esbuild');
 const executable =
   process.env.NAV_BROWSER ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const root = resolve('.fixture-streams', 'scheduler-installed-' + randomUUID()),
@@ -719,4 +719,5 @@ try {
   await fixture.close();
   // Exactly the unique fixture-created key; no user native host registration is altered.
   execFileSync('reg', ['DELETE', registry, '/f'], { windowsHide: true, stdio: 'ignore' });
+  stop();
 }
