@@ -1119,6 +1119,8 @@ impl Engine {
                         .iter()
                         .find(|task| task.id == id && task.generation == source_generation)
                         .map(|task| task.owner.clone());
+                    #[cfg(test)]
+                    crate::fault::pause_for_test("cancel_navigation_before_job", &id);
                     let mut job = shared.lock().unwrap();
                     self.check_navigation_fence(&job, scope.as_ref(), Some(source_generation))?;
                     let canonical_owner = job
@@ -1155,9 +1157,33 @@ impl Engine {
                         std::thread::sleep(Duration::from_millis(1));
                         continue;
                     };
+                    let Ok(queue) = self.navigation_scheduler.try_lock() else {
+                        drop(solvers);
+                        drop(controls);
+                        drop(job);
+                        std::thread::sleep(Duration::from_millis(1));
+                        continue;
+                    };
+                    let current_queue_owner = queue
+                        .tasks
+                        .iter()
+                        .find(|task| task.id == id && task.generation == source_generation)
+                        .map(|task| task.owner.as_str());
+                    if job.navigation_owner.is_none()
+                        && context_owner.is_none()
+                        && current_queue_owner != queued_owner.as_deref()
+                    {
+                        drop(queue);
+                        drop(solvers);
+                        drop(controls);
+                        drop(job);
+                        std::thread::sleep(Duration::from_millis(1));
+                        continue;
+                    }
                     if !same_control(&control, controls.get(&id))
                         || !same_control(&solver, solvers.get(&id))
                     {
+                        drop(queue);
                         drop(solvers);
                         drop(controls);
                         drop(job);
@@ -1175,6 +1201,7 @@ impl Engine {
                     job.state = JobState::Cancelled;
                     job.error = None;
                     self.store.lock().unwrap().put("job", &id, &*job)?;
+                    drop(queue);
                     drop(solvers);
                     drop(controls);
                     drop(job);

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.23.4
+
+- Freeze and revalidate queued owner identity with a nonblocking scheduler guard through cancellation commit, preventing a stale queued-owner snapshot from authorizing cancellation after reassignment.
+- Add a deterministic queued-owner replacement race alongside the EOF terminal-state regression; both reject stale authority without reviving jobs or publishing partial files.
+
 ## 0.23.3
 
 - Require the canonical navigation, original context or existing same-generation scheduler owner for unadmitted cancellation; retain exact source generation, reject private unscoped/no-owner requests and preserve terminal owner identity for retries.

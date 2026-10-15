@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.23.3<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.23.4<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 NAV-11 review hardening (0.21.2) isolates private pending origins from regular cleanup and checks fresh native authority after queue admission before opening a source URL. Mutable caller snapshots cannot change frozen navigation intent. Current main's expiry regression and qualification histories are retained.
 
@@ -317,3 +317,5 @@ Installed Chromium scheduler readiness, actual worker-restart alarms, default-th
 Scoped cancellation passed installed Chrome/Edge checks on 0.23.2. Unadmitted cancellation now requires the canonical owner and exact source; its installed qualification remains pending.
 
 Cancellation now preserves the native terminal state across EOF-control registration and finalization races; Retry-After browser-navigation ingestion remains pending.
+
+Queued cancellation revalidates the current scheduler owner at native commit; a replaced queued owner cannot cancel through a stale snapshot.

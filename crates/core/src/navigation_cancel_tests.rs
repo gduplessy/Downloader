@@ -124,3 +124,68 @@ fn cancel_revalidates_new_eof_control_and_never_revives_or_publishes_cancelled_j
         }
     }
 }
+
+#[test]
+fn queued_owner_changed_before_cancel_commit_is_refused_without_mutation() {
+    let dir = tempfile::tempdir().unwrap();
+    let engine = Engine::open(dir.path()).unwrap();
+    let old = uuid::Uuid::new_v4().to_string();
+    let new = uuid::Uuid::new_v4().to_string();
+    let job = engine
+        .command(Command::Navigate(AddJob {
+            request_id: uuid::Uuid::new_v4().to_string(),
+            url: "http://127.0.0.1:9/queued-race".into(),
+            filename: Some("queued-race.bin".into()),
+            directory: Some(dir.path().join("output")),
+            queue: None,
+            checksum: None,
+            paused: true,
+            context: RequestContext::default(),
+            media: None,
+            description: String::new(),
+        }))
+        .unwrap();
+    let id = job["id"].as_str().unwrap().to_owned();
+    engine
+        .command(Command::NavigationScheduler {
+            owner: old.clone(),
+            private_lane: false,
+            scope: None,
+            request: crate::navigation_scheduler::SchedulerRequest::Snapshot,
+        })
+        .unwrap();
+    let pause = crate::fault::install_test_pause("cancel_navigation_before_job", &id);
+    let worker = engine.clone();
+    let target = id.clone();
+    let cancelling = std::thread::spawn(move || {
+        worker.command(Command::CancelNavigation {
+            id: target,
+            owner: old,
+            scope: None,
+            source_generation: 1,
+        })
+    });
+    pause.reached.wait();
+    engine
+        .command(Command::NavigationScheduler {
+            owner: new.clone(),
+            private_lane: false,
+            scope: None,
+            request: crate::navigation_scheduler::SchedulerRequest::Snapshot,
+        })
+        .unwrap();
+    pause.resume.wait();
+    assert!(cancelling.join().unwrap().is_err());
+    let live = engine.job(&id).unwrap().lock().unwrap().clone();
+    assert_eq!(live.state, JobState::WaitingBrowser);
+    assert!(live.navigation_owner.is_none());
+    assert!(!live.destination.exists());
+    engine
+        .command(Command::CancelNavigation {
+            id,
+            owner: new,
+            scope: None,
+            source_generation: 1,
+        })
+        .unwrap();
+}
