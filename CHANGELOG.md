@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.23.5
+
+- Keep exact navigation queue cleanup inside the terminal job fence, revalidate context ownership nonblockingly, and publish refreshed context under its source-generation lock.
+- Add a deterministic context-owner replacement race regression; preserve exact-build installed evidence separately.
+
 ## 0.23.4
 
 - Freeze and revalidate queued owner identity with a nonblocking scheduler guard through cancellation commit, preventing a stale queued-owner snapshot from authorizing cancellation after reassignment.

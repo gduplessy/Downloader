@@ -1157,13 +1157,35 @@ impl Engine {
                         std::thread::sleep(Duration::from_millis(1));
                         continue;
                     };
-                    let Ok(queue) = self.navigation_scheduler.try_lock() else {
+                    let Ok(mut queue) = self.navigation_scheduler.try_lock() else {
                         drop(solvers);
                         drop(controls);
                         drop(job);
                         std::thread::sleep(Duration::from_millis(1));
                         continue;
                     };
+                    let Ok(contexts) = self.contexts.try_lock() else {
+                        drop(queue);
+                        drop(solvers);
+                        drop(controls);
+                        drop(job);
+                        std::thread::sleep(Duration::from_millis(1));
+                        continue;
+                    };
+                    let current_context_owner = contexts
+                        .get(&id)
+                        .and_then(|context| context.profile.as_ref());
+                    if job.navigation_owner.is_none()
+                        && current_context_owner != context_owner.as_ref()
+                    {
+                        drop(contexts);
+                        drop(queue);
+                        drop(solvers);
+                        drop(controls);
+                        drop(job);
+                        std::thread::sleep(Duration::from_millis(1));
+                        continue;
+                    }
                     let current_queue_owner = queue
                         .tasks
                         .iter()
@@ -1173,6 +1195,7 @@ impl Engine {
                         && context_owner.is_none()
                         && current_queue_owner != queued_owner.as_deref()
                     {
+                        drop(contexts);
                         drop(queue);
                         drop(solvers);
                         drop(controls);
@@ -1183,6 +1206,7 @@ impl Engine {
                     if !same_control(&control, controls.get(&id))
                         || !same_control(&solver, solvers.get(&id))
                     {
+                        drop(contexts);
                         drop(queue);
                         drop(solvers);
                         drop(controls);
@@ -1201,6 +1225,13 @@ impl Engine {
                     job.state = JobState::Cancelled;
                     job.error = None;
                     self.store.lock().unwrap().put("job", &id, &*job)?;
+                    queue.tasks.retain(|task| {
+                        !(task.id == id
+                            && task.owner == owner
+                            && task.generation == source_generation)
+                    });
+                    queue.persist(&self.store.lock().unwrap())?;
+                    drop(contexts);
                     drop(queue);
                     drop(solvers);
                     drop(controls);
@@ -1211,9 +1242,6 @@ impl Engine {
                 if !committed {
                     bail!("navigation_cancel_busy: Retry cancellation in the current session");
                 }
-                let mut scheduler = self.navigation_scheduler.lock().unwrap();
-                scheduler.tasks.retain(|task| task.id != id);
-                scheduler.persist(&self.store.lock().unwrap())?;
                 Ok(serde_json::json!({"id": id, "cancelled": true}))
             }
             Command::Cancel { id } => {
@@ -1356,8 +1384,8 @@ impl Engine {
                                 .into(),
                         );
                     }
+                    self.contexts.lock().unwrap().insert(id, context);
                 }
-                self.contexts.lock().unwrap().insert(id, context);
                 self.persist(&j)?;
                 let result = serde_json::to_value(j.lock().unwrap().clone())?;
                 Ok(result)
