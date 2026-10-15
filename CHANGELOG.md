@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.26.0
+
+- Bind qualified 429/503 Retry-After navigation responses to exact request, committed document, owned scope and source generation before recording a durable server wait.
+- Preserve server deadlines against shorter DOM countdowns and block resolver preparation/commit until monotonic elapsed time permits a fresh readiness observation.
+- Add strict numeric/HTTP-date parsing, asynchronous request race/session tests and an installed loopback qualification driver. Installed and initial pre-claim response acceptance remain pending.
+
 ## 0.25.2
 
 - Record final combined 3b808ae/native0.25.1 installed Chrome/Edge scoped cancellation and Chrome queued authority/peer-preservation passes, preserving historical fingerprints and failed preconditions.

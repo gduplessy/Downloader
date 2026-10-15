@@ -1,6 +1,6 @@
-# Retry-After ingestion recommendation (pending)
+# Retry-After ingestion implementation and remaining qualification
 
-The production `retryAfter()` parser currently has no caller outside tests. Core file-transfer retries already read HTTP Retry-After; this does not implement durable browser-navigation waits.
+The 0.26.0 implementation connects the production parser to exact main-frame 429/503 request/header observations and consumes a bounded candidate only after live isolated-world document and native scope/source validation. Server waits resist shorter DOM countdowns and block both resolver action stages. Installed qualification is pending. Initial responses before destination session claiming remain separately pending; ownership is never guessed from a URL. Core file-transfer retry handling is a separate path.
 
 ## Proposed integration
 
@@ -16,4 +16,4 @@ The production `retryAfter()` parser currently has no caller outside tests. Core
 - Count original submissions; require zero early/duplicate POSTs and zero automatic payload refetch. Alarm/worker recovery must preserve the original server deadline and revalidate readiness.
 - Reject stale request IDs, replaced documents, redirects into a different scope, private/regular mixing and same-site competing tabs. Confirm invalidation/cancellation removes the wait and alarm without touching a retained user-origin tab.
 
-This is a source trace and implementation recommendation. No Retry-After browser-navigation acceptance is claimed.
+The design and remaining evidence requirements above remain the acceptance contract. No installed Retry-After browser-navigation acceptance is claimed by implementation or unit tests alone.

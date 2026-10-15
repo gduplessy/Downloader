@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.25.2<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.26.0<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -406,3 +406,5 @@ NAV integration 0.25.0 combines adapter recovery, browser-reader liveness and au
 NAV-05 recovery 0.24.5: Cancel/Escape invalidates pending retained-preview replacement and pre-Cancel coalesced refreshes through the actual close lifetime. Later explicit Continue still obtains fresh owned context; deterministic context/worker-step cancellation cases cover no resurrection or stale-authority submission. Historical installed evidence retains its exact checked versions.
 
 Installed scheduler cancellation (0.25.2 evidence) passes actual Chrome/Edge scoped cleanup and Chrome unadmitted 21st-row authority/peer preservation on exact combined runtime/native3b808ae (0.25.1). Both scoped runs and queued repetition exit zero; fixture-only esbuild cleanup and audit corrections preserve historical readiness/resource boundaries. No native0.25.2 rebuild is claimed.
+
+NAV-04 Retry-After ingestion (0.26.0) adds exact request/document/session binding, durable server deadlines and resolver prepare/commit gates. Unit regressions and the owned-navigation loopback driver are implemented; installed browser and initial pre-claim response qualification remain pending.
