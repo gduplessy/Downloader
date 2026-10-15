@@ -70,9 +70,11 @@ export function page(provider, scenario, { account = 'alice', authenticated = fa
 export async function startAccountFixtureServer({
   port = 18783,
   harness = '.local/nav-accounts/account-harness.js',
+  accountPayloads = {},
 } = {}) {
   const counts = { login: 0, file: 0, purchase: 0 };
   const sessions = new Map();
+  const requests = [];
   const server = createServer(async (req, res) => {
     const url = new URL(req.url, 'http://127.0.0.1');
     const [, prefix, provider, scenario] = url.pathname.split('/');
@@ -91,6 +93,7 @@ export async function startAccountFixtureServer({
     }
     const cookie = (req.headers.cookie ?? '').match(/(?:^|; )nav_account=([^;]+)/)?.[1];
     const session = sessions.get(cookie);
+    requests.push({ method: req.method, path: url.pathname, account: session?.account ?? null });
     if (scenario === 'login' && req.method === 'POST') {
       counts.login++;
       let body = '';
@@ -130,12 +133,13 @@ export async function startAccountFixtureServer({
         return;
       }
       counts.file++;
+      const filePayload = accountPayloads[session.account] ?? payload;
       res.writeHead(200, {
         'Content-Type': 'application/octet-stream',
         'Content-Disposition': 'attachment; filename="account-fixture.bin"',
-        'Content-Length': payload.length,
+        'Content-Length': filePayload.length,
       });
-      res.end(payload);
+      res.end(filePayload);
       return;
     }
     if (scenario === 'purchase' || scenario === 'trap.bin') {
@@ -150,6 +154,7 @@ export async function startAccountFixtureServer({
   return {
     base: 'http://127.0.0.1:' + server.address().port,
     counts,
+    requests,
     close: () =>
       new Promise((resolve) => {
         server.closeAllConnections();
