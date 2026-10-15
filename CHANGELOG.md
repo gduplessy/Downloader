@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.0
+
+- Qualify actual installed Chrome/Edge Cancel during worker-paused refresh and later explicit Continue on final merged adapter source, without context/authorization substitution.
+- Preserve frozen driver/source/native fingerprints, zero payload/trap requests and no-publication acceptance; keep live/provider/platform boundaries explicit.
+
 ## 0.25.2
 
 - Record final combined 3b808ae/native0.25.1 installed Chrome/Edge scoped cancellation and Chrome queued authority/peer-preservation passes, preserving historical fingerprints and failed preconditions.

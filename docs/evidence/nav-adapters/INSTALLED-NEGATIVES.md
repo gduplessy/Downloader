@@ -27,3 +27,9 @@ Some attempts lost the preview during asynchronous adapter-disable refresh. Succ
 The four `postfix-*.json` records repeat both controls on Chrome 155 and Edge 155 at exact checked runtime `2656b52d2e1866d8ff6f28d7fd487b370b821ca2`. Disabled cases ended `waiting_user`; changed-layout cases showed the required stale-selection refresh UI and ended `waiting_browser`. All four had zero payload/trap requests and no native publication. These exact native state observations are preserved rather than inferred from UI text.
 
 The correction retains stale recovery controls through all asynchronous replacement validation and coalesces overlapping Refresh requests. Three deterministic regressions cover failed context, overlapping refresh/generation advance, and worker-step rejection, with no action/authorization from stale authority. The full extension suite passes 187 tests; typecheck and fixture syntax/version checks pass. Native remains the explicitly recorded historical 0.18.3 pair.
+
+## Installed Cancel during pending refresh
+
+Chrome 155 and Edge 155 passed the real final-source Cancel race at main `d99c2f889c8d7819196b5790ed4f66f93e5a84e6`. The fixture pauses the actual installed production service worker with CDP, activates actual AX Refresh while its context reply is pending, activates actual AX Cancel, then resumes the worker. The preview stays closed after completion; a later trusted extension Continue produces a new actual preview. No context, native response or authorization is substituted. Both tasks remain `waiting_user`, with zero payload/purchase requests and no publication.
+
+The two `installed-*-cancel-refresh.json` records preserve the frozen driver/source/bundle fingerprints and matching native 0.25.1 binaries built from `3b808ae1967a210fc5b3a3e461488b9f2ab6cb61`; hashes are checked after completion. This does not qualify native context-menu/desktop activation or Firefox pending-refresh pause control.
