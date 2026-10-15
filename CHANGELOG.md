@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.29.0
+
+- Add isolated installed discovery cancellation, owning-tab loss and authentication-expiry fixtures using unchanged production modules, exact copied native hashes and admission-aware document checks.
+- Keep actual installed acceptance pending until the fixture completes its assertions; no desktop GUI or live-provider acceptance is implied.
+
 ## 0.25.2
 
 - Record final combined 3b808ae/native0.25.1 installed Chrome/Edge scoped cancellation and Chrome queued authority/peer-preservation passes, preserving historical fingerprints and failed preconditions.
