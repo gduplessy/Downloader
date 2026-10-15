@@ -162,7 +162,7 @@ export async function startAccountFixtureServer({
         'data-nav-fixture-control data-nav-premium-control download href="',
         'id="premium-download" download href="',
       );
-      document += `<button id="prepare-download" type="button">Prepare permitted download</button><script>(()=>{const link=document.getElementById('premium-download');const url=link.href;link.removeAttribute('href');document.getElementById('prepare-download').addEventListener('click',async()=>{const response=await fetch(url);if(!response.ok)throw Error('Fixture file refused');const blob=await response.blob();link.href=URL.createObjectURL(blob);link.setAttribute('data-nav-fixture-control','');link.setAttribute('data-nav-premium-control','');document.documentElement.dataset.fixtureBlobReady='true'},{once:true})})()</script>`;
+      document += `<button id="prepare-download" type="button">Prepare</button><script>(()=>{const link=document.getElementById('premium-download');const url=link.href;link.removeAttribute('href');document.getElementById('prepare-download').addEventListener('click',async()=>{document.getElementById('prepare-download').remove();const response=await fetch(url);if(!response.ok)throw Error('Fixture file refused');const blob=await response.blob();link.href=URL.createObjectURL(blob);link.setAttribute('data-nav-fixture-control','');link.setAttribute('data-nav-premium-control','');document.documentElement.dataset.fixtureBlobReady='true'},{once:true})})()</script>`;
     }
     res.end(document);
   });

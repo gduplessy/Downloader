@@ -95,6 +95,8 @@ const report = {
   initialActivation:
     'Synthetic invocation of unchanged registered production context-menu listener using actual browser.tabs.get metadata',
   nativeContextMenuUiQualified: false,
+  resolverRefresh:
+    'Actual resolver_continue message after original page Blob readiness, followed by trusted preview keyboard selection',
   supportedDownloadLane:
     'Authenticated original page fetch to owned Blob, streamed directly to desktop',
   productionSourceChanges: ['Unique native host address substitution only'],
@@ -506,10 +508,21 @@ try {
       );
       return result[0];
     }, 'Original page permitted download preparation');
+    await wait(async () => {
+      const result = await json(
+        `browser.tabs.executeScript(${record.tabId},{frameId:0,code:"document.documentElement.dataset.fixtureBlobReady==='true'"}).then(JSON.stringify)`,
+      );
+      return result[0];
+    }, 'Original page Blob ready');
+    const refreshTag = randomUUID();
+    await evaluate(
+      `browser.tabs.executeScript(${record.tabId},{frameId:0,code:${JSON.stringify(`(()=>{const preview=document.getElementById('__downloader_adapter_preview');if(preview)preview.dataset.fixtureBeforeRefresh=${JSON.stringify(refreshTag)}})()`)}})`,
+    );
+    await evaluate(`browser.tabs.sendMessage(${record.tabId},{type:'resolver_continue'})`);
     const documentTag = randomUUID();
     await wait(async () => {
       const result = await json(
-        `browser.tabs.executeScript(${record.tabId},{frameId:0,code:${JSON.stringify(`(()=>{if(document.documentElement.dataset.fixtureBlobReady!=='true'||!document.getElementById('__downloader_adapter_preview'))return false;document.documentElement.dataset.fixtureOwnedDocument=${JSON.stringify(documentTag)};return true})()`)}}).then(JSON.stringify)`,
+        `browser.tabs.executeScript(${record.tabId},{frameId:0,code:${JSON.stringify(`(()=>{if(document.documentElement.dataset.fixtureBlobReady!=='true'||!document.getElementById('__downloader_adapter_preview')||document.getElementById('__downloader_adapter_preview').dataset.fixtureBeforeRefresh===${JSON.stringify(refreshTag)})return false;document.documentElement.dataset.fixtureOwnedDocument=${JSON.stringify(documentTag)};return true})()`)}}).then(JSON.stringify)`,
       );
       return result[0];
     }, 'Production premium Blob preview');
