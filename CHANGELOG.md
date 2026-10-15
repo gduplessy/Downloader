@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.1
+
+- Qualify actual installed Firefox158 disabled-adapter generic fallback and changed-layout refusal through real keyboard controls, read-only rendered UI inspection and inspected screenshots.
+- Record zero payload/trap requests, no publication, exact frozen source/driver/native hashes and regular-window/private-addon/platform boundaries; update only the proven local NAV-05 audit gates.
+
 ## 0.27.0
 
 - Qualify actual installed Chrome/Edge Cancel during worker-paused refresh and later explicit Continue on final merged adapter source, without context/authorization substitution.

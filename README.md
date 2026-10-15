@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.27.0<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.27.1<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -408,3 +408,5 @@ NAV-05 recovery 0.24.5: Cancel/Escape invalidates pending retained-preview repla
 Installed scheduler cancellation (0.25.2 evidence) passes actual Chrome/Edge scoped cleanup and Chrome unadmitted 21st-row authority/peer preservation on exact combined runtime/native3b808ae (0.25.1). Both scoped runs and queued repetition exit zero; fixture-only esbuild cleanup and audit corrections preserve historical readiness/resource boundaries. No native0.25.2 rebuild is claimed.
 
 NAV-05 installed context acceptance (0.27.0): actual Chrome/Edge AX Cancel during a worker-paused pending Refresh stays closed after worker resume, and later explicit Continue recovers a fresh preview. Final-source and immutable native25.1 evidence is under docs/evidence/nav-adapters; live inputs and other platform claims remain pending.
+
+NAV-05 Firefox local negatives (0.27.1): actual Firefox158 keyboard controls passed disabled-adapter generic preview and changed-layout refusal. Read-only production UI snapshots and inspected screenshots accompany exact driver/source/native25.1 hashes in docs/evidence/nav-adapters. Private-addon, ESR, other OS and live-host rows remain pending.

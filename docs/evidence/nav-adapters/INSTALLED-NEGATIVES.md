@@ -33,3 +33,12 @@ The correction retains stale recovery controls through all asynchronous replacem
 Chrome 155 and Edge 155 passed the real final-source Cancel race at main `d99c2f889c8d7819196b5790ed4f66f93e5a84e6`. The fixture pauses the actual installed production service worker with CDP, activates actual AX Refresh while its context reply is pending, activates actual AX Cancel, then resumes the worker. The preview stays closed after completion; a later trusted extension Continue produces a new actual preview. No context, native response or authorization is substituted. Both tasks remain `waiting_user`, with zero payload/purchase requests and no publication.
 
 The two `installed-*-cancel-refresh.json` records preserve the frozen driver/source/bundle fingerprints and matching native 0.25.1 binaries built from `3b808ae1967a210fc5b3a3e461488b9f2ab6cb61`; hashes are checked after completion. This does not qualify native context-menu/desktop activation or Firefox pending-refresh pause control.
+
+## Firefox installed adapter negatives
+
+Firefox 158 on Windows x64 passed both supported local adapter negatives at checked revision `bb4912a18cd4bd21bd53b143e31bca84cb19985a`, with unchanged production runtime from merged main d99c2f8 and the copied matching native 0.25.1 pair. Actual BiDi keyboard input invokes the closed-shadow production controls; Firefox extension-world `openOrClosedShadowRoot` only reads the resulting UI. No control selection, click, context response or authorization is synthesized.
+
+- Disable: trusted keyboard activation persists the disabled local adapter; wait for the actual refreshed generic preview with two enabled unchecked radios, disabled Continue and retained Cancel/Refresh. The old preview sampled before refresh completion is not acceptance.
+- Changed layout: select a production radio, mutate the original fixture link to the purchase trap, then activate actual Continue. The rendered preview requires refresh and disables submission/radios.
+
+Both cases remain `waiting_user`, with zero payload/trap requests and no publication. Exact driver, source, bundle and matching native hashes are in `installed-firefox-*.json`; screenshots were separately inspected and retained. Source diagnostic instrumentation is absent. Native context-menu/desktop activation, Firefox pending-refresh pause, private-addon/ESR/other-OS rows and live providers/accounts remain separate pending gates.
