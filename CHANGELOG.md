@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.24.5
+
+- Fence pending retained-preview refreshes with the actual preview close lifetime, preventing Cancel/Escape from reopening a replacement after asynchronous ownership checks finish.
+- Invalidate coalesced work issued before Cancel while allowing a later explicit Continue to revalidate and render a fresh preview.
+- Add context-wait and worker-step-wait cancellation regressions without reusing stale authority.
+
 ## 0.24.4
 
 - Reconcile reviewed adapter preview recovery with original-reader liveness and interruption recovery, retaining both acceptance histories and synchronized product metadata.

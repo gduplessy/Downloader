@@ -356,3 +356,41 @@ it('keeps the stale preview until a replacement has passed its worker step', asy
   expect(fixture.preview).toHaveBeenCalledTimes(1);
   for (const element of fixture.elements.values()) expect(element.click).not.toHaveBeenCalled();
 });
+
+
+it.each(['context', 'worker-step'] as const)(
+  'does not resurrect a cancelled preview after pending %s refresh; later explicit Continue works',
+  async (phase) => {
+    control('first'); control('second');
+    const lifetime = new AbortController();
+    const close = vi.fn(() => lifetime.abort());
+    fixture.preview.mockReturnValue({ close, stale: vi.fn(), signal: lifetime.signal });
+    await import('./resolver');
+    await vi.waitFor(() => expect(fixture.preview).toHaveBeenCalledTimes(1));
+    let release!: () => void;
+    let held = false;
+    fixture.send.mockImplementation(async (message) => {
+      if (!held && message.type === (phase === 'context' ? 'resolver_context' : 'resolver_step')) {
+        held = true;
+        await new Promise<void>(resolve => { release = resolve; });
+      }
+      return message.type === 'resolver_context'
+        ? { ...context, documentGeneration: message.document.generation, disabledAdapters: ['local-fixture'] }
+        : message.type === 'resolver_account' ? null : { click: false };
+    });
+    const refresh = fixture.preview.mock.calls[0][4] as () => void;
+    refresh();
+    await vi.waitFor(() => expect(release).toBeTypeOf('function'));
+    refresh(); // A coalesced request issued before Cancel must be invalidated too.
+    close();
+    release();
+    await new Promise(resolve => setTimeout(resolve, 30));
+    expect(fixture.preview).toHaveBeenCalledTimes(1);
+    for (const element of fixture.elements.values()) expect(element.click).not.toHaveBeenCalled();
+    expect(fixture.send.mock.calls.some(([m]) => m.type === 'resolver_prepare' || m.type === 'resolver_commit')).toBe(false);
+    const listener = fixture.listener.mock.calls[0][0] as (message: unknown) => Promise<boolean>;
+    await listener({ type: 'resolver_continue' });
+    await vi.waitFor(() => expect(fixture.preview).toHaveBeenCalledTimes(2));
+    expect(fixture.preview.mock.calls[1][1].binding.adapterId).toBe('generic');
+  },
+);

@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.24.4<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.24.5<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -392,3 +392,5 @@ NAV-05 recovery correction (0.24.1): keep stale Refresh controls visible when ow
 NAV-05 recovery 0.24.2 preserves stale controls through the full asynchronous preview replacement, including worker-step rejection. Installed post-fix acceptance remains separately tracked.
 
 NAV-05 local post-fix qualification (0.24.3): both adapter-disable fallback and changed-layout refusal passed actual installed Chrome/Edge controls at checked runtime 2656b52. Exact native states, historical build hashes and remaining live-host/platform boundaries are recorded in docs/evidence/nav-adapters/INSTALLED-NEGATIVES.md.
+
+NAV-05 recovery 0.24.5: Cancel/Escape invalidates pending retained-preview replacement and pre-Cancel coalesced refreshes through the actual close lifetime. Later explicit Continue still obtains fresh owned context; deterministic context/worker-step cancellation cases cover no resurrection or stale-authority submission. Historical installed evidence retains its exact checked versions.
