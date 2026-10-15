@@ -226,6 +226,7 @@ let daemon,
   stage = 'startup';
 const pending = new Map(),
   accountIds = [];
+let safePageDiagnostic;
 function processes() {
   const script =
     'Get-CimInstance Win32_Process | Where-Object {$_.Name -in @("firefox.exe","downloader-service.exe")} | Select-Object ProcessId,ParentProcessId,ExecutablePath,CommandLine,@{n="Created";e={$_.CreationDate.ToUniversalTime().ToString("o")}} | ConvertTo-Json -Compress';
@@ -472,10 +473,25 @@ try {
         `(async()=>{const a=await browser.storage.local.get();const b=browser.storage.session?await browser.storage.session.get():{};return JSON.stringify({...a,...b}[${JSON.stringify('resolver-' + job.id)}]??null)})()`,
       );
       if (!stored) return null;
+      const current = list().find((candidate) => candidate.id === job.id);
+      if (
+        !current ||
+        current.source_generation <= job.source_generation ||
+        stored.sourceGeneration !== current.source_generation ||
+        stored.scope?.claim_generation !== current.navigation_scope?.claim_generation
+      )
+        return null;
       const tab = await json(`browser.tabs.get(${stored.tabId}).then(JSON.stringify)`);
+      if (tab.status !== 'complete') return null;
       assert.equal(tab.cookieStoreId, context.cookieStoreId);
       return stored;
     }, 'Actual scoped resolver');
+    safePageDiagnostic = async () => {
+      const values = await json(
+        `browser.tabs.executeScript(${record.tabId},{frameId:0,code:${JSON.stringify(`JSON.stringify({page:location.pathname,auth:document.querySelector('[data-nav-account-state]')?.getAttribute('data-nav-account-state'),failure:document.querySelector('[data-downloader-ui="account"]')?.dataset.downloaderAccountFailure,blobReady:document.documentElement.dataset.fixtureBlobReady==='true'})`)}}).then(JSON.stringify)`,
+      );
+      return values[0] ? JSON.parse(values[0]) : null;
+    };
     if (context.name === 'alice') {
       await wait(async () => {
         const result = await json(
@@ -572,6 +588,9 @@ try {
     ),
   );
 } catch (error) {
+  try {
+    report.accountPage = await safePageDiagnostic?.();
+  } catch {}
   await writeFile(
     resolve(dir, 'failure.json'),
     JSON.stringify({ ...report, stage, error: String(error), requests: fixture.requests }, null, 2),
