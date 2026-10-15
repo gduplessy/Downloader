@@ -464,7 +464,8 @@ pub enum Command {
     CancelNavigation {
         id: String,
         owner: String,
-        scope: crate::navigation::SessionScope,
+        #[serde(default)]
+        scope: Option<crate::navigation::SessionScope>,
         source_generation: u64,
     },
     Remove {

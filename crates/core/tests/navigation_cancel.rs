@@ -70,7 +70,7 @@ fn cancel(
     engine.command(Command::CancelNavigation {
         id: id.into(),
         owner: identity.scope.profile.clone(),
-        scope: identity.scope.clone(),
+        scope: Some(identity.scope.clone()),
         source_generation: identity.source_generation,
     })
 }
@@ -184,4 +184,102 @@ fn stale_foreign_private_and_recovery_fences_cannot_cancel() {
         assert!(cancel(&engine, &id, &identity).is_err());
         assert_eq!(shared.lock().unwrap().state, JobState::WaitingBrowser);
     }
+}
+
+fn queued(engine: &std::sync::Arc<Engine>, owner: Option<&str>, private: bool) -> String {
+    engine
+        .command(Command::Navigate(AddJob {
+            request_id: uuid::Uuid::new_v4().to_string(),
+            url: "http://127.0.0.1:9/queued".into(),
+            filename: Some("queued.bin".into()),
+            directory: None,
+            queue: None,
+            checksum: None,
+            paused: true,
+            context: RequestContext {
+                profile: owner.map(str::to_owned),
+                private,
+                ..Default::default()
+            },
+            media: None,
+            description: String::new(),
+        }))
+        .unwrap()["id"]
+        .as_str()
+        .unwrap()
+        .into()
+}
+fn cancel_queued(
+    engine: &std::sync::Arc<Engine>,
+    id: &str,
+    owner: &str,
+    generation: u64,
+) -> anyhow::Result<serde_json::Value> {
+    engine.command(Command::CancelNavigation {
+        id: id.into(),
+        owner: owner.into(),
+        scope: None,
+        source_generation: generation,
+    })
+}
+#[test]
+fn queued_cancel_requires_canonical_owner_exact_source_and_existing_authority() {
+    let dir = tempfile::tempdir().unwrap();
+    let engine = Engine::open(dir.path()).unwrap();
+    let owner = uuid::Uuid::new_v4().to_string();
+    let foreign = uuid::Uuid::new_v4().to_string();
+    let id = queued(&engine, Some(&owner), false);
+    assert!(cancel_queued(&engine, &id, &foreign, 1).is_err());
+    assert!(cancel_queued(&engine, &id, &owner, 2).is_err());
+    assert_eq!(
+        engine.job(&id).unwrap().lock().unwrap().state,
+        JobState::WaitingBrowser
+    );
+    cancel_queued(&engine, &id, &owner, 1).unwrap();
+    assert_eq!(
+        engine.job(&id).unwrap().lock().unwrap().state,
+        JobState::Cancelled
+    );
+    let context_only = queued(&engine, Some(&owner), false);
+    engine
+        .job(&context_only)
+        .unwrap()
+        .lock()
+        .unwrap()
+        .navigation_owner = None;
+    assert!(cancel_queued(&engine, &context_only, &foreign, 1).is_err());
+    cancel_queued(&engine, &context_only, &owner, 1).unwrap();
+    let canonical = queued(&engine, Some(&owner), false);
+    engine
+        .command(Command::ClaimNavigation {
+            id: canonical.clone(),
+            owner: foreign.clone(),
+            force: true,
+            scope: None,
+            source_generation: None,
+        })
+        .unwrap();
+    assert!(cancel_queued(&engine, &canonical, &owner, 1).is_err());
+    cancel_queued(&engine, &canonical, &foreign, 1).unwrap();
+    let unowned = queued(&engine, None, false);
+    assert!(cancel_queued(&engine, &unowned, &owner, 1).is_err());
+    engine
+        .command(Command::NavigationScheduler {
+            owner: owner.clone(),
+            private_lane: false,
+            scope: None,
+            request: SchedulerRequest::Snapshot,
+        })
+        .unwrap();
+    assert!(cancel_queued(&engine, &unowned, &foreign, 1).is_err());
+    cancel_queued(&engine, &unowned, &owner, 1).unwrap();
+    cancel_queued(&engine, &unowned, &owner, 1).unwrap();
+    assert!(cancel_queued(&engine, &unowned, &foreign, 1).is_err());
+    let private = queued(&engine, Some(&owner), true);
+    assert!(cancel_queued(&engine, &private, &owner, 1).is_err());
+    assert!(cancel_queued(&engine, &private, &foreign, 1).is_err());
+    assert_eq!(
+        engine.job(&private).unwrap().lock().unwrap().state,
+        JobState::WaitingBrowser
+    );
 }

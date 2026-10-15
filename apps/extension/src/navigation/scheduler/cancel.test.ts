@@ -72,10 +72,15 @@ describe('fenced navigation cancellation', () => {
     expect(a.closeTab).not.toHaveBeenCalled();
     expect(a.release).toHaveBeenCalled();
   });
-  it('uses legacy cancellation only for an unclaimed job and never closes a referenced origin tab', async () => {
+  it('keeps an unclaimed navigation cancellation owner/source fenced and retains the origin tab', async () => {
     const a = actions();
     await cancelNavigationTask({ ...job, navigation_scope: null }, undefined, a);
-    expect(a.native).toHaveBeenCalledWith('cancel', { id: 'job' });
+    expect(a.native).toHaveBeenCalledWith('cancel_navigation', {
+      id: 'job',
+      owner: 'owner',
+      scope: null,
+      source_generation: 4,
+    });
     expect(a.closeTab).not.toHaveBeenCalled();
   });
 });

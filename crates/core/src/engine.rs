@@ -1085,7 +1085,10 @@ impl Engine {
                 scope,
                 source_generation,
             } => {
-                scope.validate()?;
+                uuid::Uuid::parse_str(&owner).context("Invalid browser profile identifier")?;
+                if let Some(scope) = &scope {
+                    scope.validate()?;
+                }
                 let shared = self.job(&id)?;
                 let same_control =
                     |cached: &Option<Arc<AtomicU8>>, current: Option<&Arc<AtomicU8>>| match (
@@ -1102,15 +1105,41 @@ impl Engine {
                     let solver = self.solver_tasks.lock().unwrap().get(&id).cloned();
                     #[cfg(test)]
                     crate::fault::pause_for_test("cancel_navigation_prelock", &id);
+                    let context_owner = self
+                        .contexts
+                        .lock()
+                        .unwrap()
+                        .get(&id)
+                        .and_then(|context| context.profile.clone());
+                    let queued_owner = self
+                        .navigation_scheduler
+                        .lock()
+                        .unwrap()
+                        .tasks
+                        .iter()
+                        .find(|task| task.id == id && task.generation == source_generation)
+                        .map(|task| task.owner.clone());
                     let mut job = shared.lock().unwrap();
-                    self.check_navigation_fence(&job, Some(&scope), Some(source_generation))?;
-                    if owner != scope.profile
-                        || job.navigation_owner.as_deref() != Some(&owner)
-                        || job.navigation_scope.as_ref() != Some(&scope)
-                        || job.private != scope.private
+                    self.check_navigation_fence(&job, scope.as_ref(), Some(source_generation))?;
+                    let canonical_owner = job
+                        .navigation_owner
+                        .as_ref()
+                        .or(context_owner.as_ref())
+                        .or(queued_owner.as_ref());
+                    if job.source_generation != source_generation
+                        || canonical_owner.map(String::as_str) != Some(owner.as_str())
                         || job.page_url.is_none()
                     {
-                        bail!("Cancellation requires the current navigation owner and scope");
+                        bail!("Cancellation requires the current navigation owner and source generation");
+                    }
+                    match &scope {
+                        Some(scope)
+                            if owner == scope.profile
+                                && job.navigation_owner.as_deref() == Some(owner.as_str())
+                                && job.navigation_scope.as_ref() == Some(scope)
+                                && job.private == scope.private => {}
+                        None if job.navigation_scope.is_none() && !job.private => {}
+                        _ => bail!("Cancellation requires the current navigation session scope"),
                     }
                     if matches!(job.state, JobState::Complete | JobState::BrowserComplete) {
                         bail!("Completed navigation cannot be cancelled");
@@ -1141,6 +1170,8 @@ impl Engine {
                     if let Some(solver) = solver {
                         solver.store(1, Ordering::Relaxed);
                     }
+                    // Preserve the canonical queued owner for exact idempotent retries after releasing its task row.
+                    job.navigation_owner.get_or_insert_with(|| owner.clone());
                     job.state = JobState::Cancelled;
                     job.error = None;
                     self.store.lock().unwrap().put("job", &id, &*job)?;

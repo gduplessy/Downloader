@@ -70,7 +70,7 @@ fn cancel_revalidates_new_eof_control_and_never_revives_or_publishes_cancelled_j
         cancel_engine.command(Command::CancelNavigation {
             id: cancel_id,
             owner,
-            scope,
+            scope: Some(scope),
             source_generation: 1,
         })
     });

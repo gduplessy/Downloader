@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.23.3
+
+- Require the canonical navigation, original context or existing same-generation scheduler owner for unadmitted cancellation; retain exact source generation, reject private unscoped/no-owner requests and preserve terminal owner identity for retries.
+- Route all navigation queue cancellation through the fenced command, and refuse legacy native cancellation for every navigation job while preserving ordinary download controls.
+- Preserve actual Chrome/Edge scoped cancellation evidence on checked 0.23.2 and add the queued 21st-task/foreign authority fixture; its installed qualification follows separately.
+
 ## 0.23.2
 
 - Revalidate cancellation control identities with nonblocking registry locks under the exact job fence, avoiding lock-order inversion and stale EOF control registration.

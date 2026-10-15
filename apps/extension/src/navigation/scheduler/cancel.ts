@@ -40,7 +40,13 @@ export async function cancelNavigationTask<J extends CancelJob, R extends Cancel
       scope: record.scope,
       source_generation: record.sourceGeneration,
     });
-  } else await actions.native('cancel', { id: job.id });
+  } else
+    await actions.native('cancel_navigation', {
+      id: job.id,
+      owner: actions.owner,
+      scope: null,
+      source_generation: job.source_generation,
+    });
   await actions.invalidate(job);
   await actions.release(job.id);
   await actions.removeRecord(job.id);

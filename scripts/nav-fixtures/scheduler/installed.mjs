@@ -6,6 +6,7 @@ import { resolve } from 'node:path';
 import { createHash, generateKeyPairSync, randomUUID } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { startSchedulerServer } from './installed-server.mjs';
+import { qualifyQueuedCancellation } from './installed-queued-cancel.mjs';
 const require = createRequire(new URL('../../../apps/extension/package.json', import.meta.url)),
   { build } = require('esbuild');
 const executable =
@@ -351,11 +352,78 @@ try {
     0,
     'Elapsed local deadline submitted prematurely',
   );
-  if (process.env.NAV_CANCEL_ONLY === '1') {
+  if (process.env.NAV_CANCEL_QUEUED === '1') {
+    const rows = await qualifyQueuedCancellation({
+      fixture,
+      call,
+      snapshot,
+      evaluate,
+      optionsSession,
+      command,
+      job,
+      page,
+      host,
+    });
+    const evidence = {
+      fixture: 'installed-production-unadmitted-queue-cancel-v1',
+      source_revision: execFileSync('git', ['rev-parse', 'HEAD'], {
+        encoding: 'utf8',
+        windowsHide: true,
+      }).trim(),
+      browser: version.product,
+      native_version: call('diagnostics').version,
+      cli_version: execFileSync(cli, ['--version'], { encoding: 'utf8', windowsHide: true }).trim(),
+      native_build_revision: process.env.NAV_NATIVE_REVISION ?? null,
+      native_binary_sha256: createHash('sha256')
+        .update(await readFile(service))
+        .digest('hex'),
+      cli_binary_sha256: createHash('sha256')
+        .update(await readFile(cli))
+        .digest('hex'),
+      fixture_sha256: createHash('sha256').update(fixtureSource).digest('hex'),
+      queue_helper_sha256: createHash('sha256')
+        .update(await readFile('scripts/nav-fixtures/scheduler/installed-queued-cancel.mjs'))
+        .digest('hex'),
+      production_background_sha256: createHash('sha256')
+        .update(await readFile('apps/extension/src/background.ts'))
+        .digest('hex'),
+      production_cancel_sha256: createHash('sha256')
+        .update(await readFile('apps/extension/src/navigation/scheduler/cancel.ts'))
+        .digest('hex'),
+      os: process.platform,
+      arch: process.arch,
+      rows,
+      limits: [
+        'Synthetic local queue with actual production extension/native messaging; pregranted loopback permissions',
+        'No-owner and private-unclaimed kernel refusal and owner precedence have deterministic native tests; this installed row has existing scheduler authority',
+        'Native desktop/window UI and unavailable platform matrix remain pending',
+      ],
+    };
+    await writeFile(
+      resolve(root, 'queued-cancellation-evidence.json'),
+      JSON.stringify(evidence, null, 2) + '\n',
+    );
+    await writeFile(
+      'docs/evidence/nav-scheduling/installed-queued-cancellation.json',
+      JSON.stringify(evidence, null, 2) + '\n',
+    );
+    console.log(JSON.stringify(evidence, null, 2));
+  } else if (process.env.NAV_CANCEL_ONLY === '1') {
     const beforeTargets = (await command('Target.getTargets')).targetInfos;
     const ownedTab = beforeTargets.find((t) => t.type === 'page' && t.url === page);
     assert.ok(ownedTab);
     const userOrigin = await command('Target.createTarget', { url: page + '&retained-user-tab=1' });
+    const legacy = await evaluate(
+      optionsSession,
+      'chrome.runtime.sendNativeMessage(' +
+        JSON.stringify(host) +
+        ',' +
+        JSON.stringify({ version: 1, id: randomUUID(), command: 'cancel', args: { id: job.id } }) +
+        ')',
+    );
+    assert.equal(legacy.ok, false);
+    assert.match(legacy.error.message, /active session fence/);
+    assert.notEqual(call('list').jobs.find((j) => j.id === job.id).state, 'cancelled');
     await evaluate(
       optionsSession,
       'chrome.runtime.sendMessage(' +
@@ -383,6 +451,8 @@ try {
       }).trim(),
       browser: version.product,
       native_version: call('diagnostics').version,
+      cli_version: execFileSync(cli, ['--version'], { windowsHide: true, encoding: 'utf8' }).trim(),
+      checked_product_version: JSON.parse(await readFile('package.json', 'utf8')).version,
       native_build_revision: process.env.NAV_NATIVE_REVISION ?? null,
       native_binary_sha256: createHash('sha256')
         .update(await readFile(service))
@@ -408,6 +478,7 @@ try {
         unrelated_user_tab_retained: true,
         original_submissions: 0,
         desktop_cancel_fallback: false,
+        legacy_scoped_cancel_refused: true,
       },
       limits: [
         'Synthetic local wait page and pregranted permissions; production extension/native messaging except unique host address',

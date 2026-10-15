@@ -423,8 +423,12 @@ pub fn native(args: &[String]) -> Result<()> {
                             | downloader_core::Command::Resume { .. }
                             | downloader_core::Command::Cancel { .. }
                     ) && snapshot["jobs"].as_array().is_some_and(|jobs| {
-                        jobs.iter()
-                            .any(|j| j["id"] == id.as_str() && !j["navigation_scope"].is_null())
+                        jobs.iter().any(|j| {
+                            j["id"] == id.as_str()
+                                && (!j["navigation_scope"].is_null()
+                                    || (matches!(&c, downloader_core::Command::Cancel { .. })
+                                        && !j["page_url"].is_null()))
+                        })
                     }) {
                         bail!("Scoped browser controls require the active session fence");
                     }
