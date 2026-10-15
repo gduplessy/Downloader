@@ -1088,6 +1088,171 @@ impl Engine {
                 self.persist(&j)?;
                 Ok(serde_json::json!({"id":id}))
             }
+            Command::CancelNavigation {
+                id,
+                owner,
+                scope,
+                source_generation,
+            } => {
+                uuid::Uuid::parse_str(&owner).context("Invalid browser profile identifier")?;
+                if let Some(scope) = &scope {
+                    scope.validate()?;
+                }
+                let shared = self.job(&id)?;
+                let same_control =
+                    |cached: &Option<Arc<AtomicU8>>, current: Option<&Arc<AtomicU8>>| match (
+                        cached, current,
+                    ) {
+                        (Some(cached), Some(current)) => Arc::ptr_eq(cached, current),
+                        (None, None) => true,
+                        _ => false,
+                    };
+                let mut committed = false;
+                for _ in 0..32 {
+                    // Never block on the control registries while holding a job lock.
+                    let control = self.controls.lock().unwrap().get(&id).cloned();
+                    let solver = self.solver_tasks.lock().unwrap().get(&id).cloned();
+                    #[cfg(test)]
+                    crate::fault::pause_for_test("cancel_navigation_prelock", &id);
+                    let context_owner = self
+                        .contexts
+                        .lock()
+                        .unwrap()
+                        .get(&id)
+                        .and_then(|context| context.profile.clone());
+                    let queued_owner = self
+                        .navigation_scheduler
+                        .lock()
+                        .unwrap()
+                        .tasks
+                        .iter()
+                        .find(|task| task.id == id && task.generation == source_generation)
+                        .map(|task| task.owner.clone());
+                    #[cfg(test)]
+                    crate::fault::pause_for_test("cancel_navigation_before_job", &id);
+                    let mut job = shared.lock().unwrap();
+                    self.check_navigation_fence(&job, scope.as_ref(), Some(source_generation))?;
+                    let canonical_owner = job
+                        .navigation_owner
+                        .as_ref()
+                        .or(context_owner.as_ref())
+                        .or(queued_owner.as_ref());
+                    if job.source_generation != source_generation
+                        || canonical_owner.map(String::as_str) != Some(owner.as_str())
+                        || job.page_url.is_none()
+                    {
+                        bail!("Cancellation requires the current navigation owner and source generation");
+                    }
+                    match &scope {
+                        Some(scope)
+                            if owner == scope.profile
+                                && job.navigation_owner.as_deref() == Some(owner.as_str())
+                                && job.navigation_scope.as_ref() == Some(scope)
+                                && job.private == scope.private => {}
+                        None if job.navigation_scope.is_none() && !job.private => {}
+                        _ => bail!("Cancellation requires the current navigation session scope"),
+                    }
+                    if matches!(job.state, JobState::Complete | JobState::BrowserComplete) {
+                        bail!("Completed navigation cannot be cancelled");
+                    }
+                    let Ok(controls) = self.controls.try_lock() else {
+                        drop(job);
+                        std::thread::sleep(Duration::from_millis(1));
+                        continue;
+                    };
+                    let Ok(solvers) = self.solver_tasks.try_lock() else {
+                        drop(controls);
+                        drop(job);
+                        std::thread::sleep(Duration::from_millis(1));
+                        continue;
+                    };
+                    let Ok(mut queue) = self.navigation_scheduler.try_lock() else {
+                        drop(solvers);
+                        drop(controls);
+                        drop(job);
+                        std::thread::sleep(Duration::from_millis(1));
+                        continue;
+                    };
+                    let Ok(contexts) = self.contexts.try_lock() else {
+                        drop(queue);
+                        drop(solvers);
+                        drop(controls);
+                        drop(job);
+                        std::thread::sleep(Duration::from_millis(1));
+                        continue;
+                    };
+                    let current_context_owner = contexts
+                        .get(&id)
+                        .and_then(|context| context.profile.as_ref());
+                    if job.navigation_owner.is_none()
+                        && current_context_owner != context_owner.as_ref()
+                    {
+                        drop(contexts);
+                        drop(queue);
+                        drop(solvers);
+                        drop(controls);
+                        drop(job);
+                        std::thread::sleep(Duration::from_millis(1));
+                        continue;
+                    }
+                    let current_queue_owner = queue
+                        .tasks
+                        .iter()
+                        .find(|task| task.id == id && task.generation == source_generation)
+                        .map(|task| task.owner.as_str());
+                    if job.navigation_owner.is_none()
+                        && context_owner.is_none()
+                        && current_queue_owner != queued_owner.as_deref()
+                    {
+                        drop(contexts);
+                        drop(queue);
+                        drop(solvers);
+                        drop(controls);
+                        drop(job);
+                        std::thread::sleep(Duration::from_millis(1));
+                        continue;
+                    }
+                    if !same_control(&control, controls.get(&id))
+                        || !same_control(&solver, solvers.get(&id))
+                    {
+                        drop(contexts);
+                        drop(queue);
+                        drop(solvers);
+                        drop(controls);
+                        drop(job);
+                        std::thread::sleep(Duration::from_millis(1));
+                        continue;
+                    }
+                    if let Some(control) = control {
+                        control.store(2, Ordering::Relaxed);
+                    }
+                    if let Some(solver) = solver {
+                        solver.store(1, Ordering::Relaxed);
+                    }
+                    // Preserve the canonical queued owner for exact idempotent retries after releasing its task row.
+                    job.navigation_owner.get_or_insert_with(|| owner.clone());
+                    job.state = JobState::Cancelled;
+                    job.error = None;
+                    self.store.lock().unwrap().put("job", &id, &*job)?;
+                    queue.tasks.retain(|task| {
+                        !(task.id == id
+                            && task.owner == owner
+                            && task.generation == source_generation)
+                    });
+                    queue.persist(&self.store.lock().unwrap())?;
+                    drop(contexts);
+                    drop(queue);
+                    drop(solvers);
+                    drop(controls);
+                    drop(job);
+                    committed = true;
+                    break;
+                }
+                if !committed {
+                    bail!("navigation_cancel_busy: Retry cancellation in the current session");
+                }
+                Ok(serde_json::json!({"id": id, "cancelled": true}))
+            }
             Command::Cancel { id } => {
                 let j = self.job(&id)?;
                 if let Some(c) = self.controls.lock().unwrap().get(&id) {
@@ -1228,8 +1393,8 @@ impl Engine {
                                 .into(),
                         );
                     }
+                    self.contexts.lock().unwrap().insert(id, context);
                 }
-                self.contexts.lock().unwrap().insert(id, context);
                 self.persist(&j)?;
                 let result = serde_json::to_value(j.lock().unwrap().clone())?;
                 Ok(result)
@@ -2106,3 +2271,7 @@ mod tests {
         assert_eq!(refreshed.segments.len(), j.segments.len());
     }
 }
+
+#[cfg(test)]
+#[path = "navigation_cancel_tests.rs"]
+mod navigation_cancel_tests;

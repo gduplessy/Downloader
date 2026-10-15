@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.25.2
+
+- Record final combined 3b808ae/native0.25.1 installed Chrome/Edge scoped cancellation and Chrome queued authority/peer-preservation passes, preserving historical fingerprints and failed preconditions.
+- Stop the fixture esbuild service explicitly after owned cleanup; all three final repeats exit zero without changing production runtime.
+- Align NAV-04/NAV-05/NAV-10 acceptance audit with actual historical installed readiness, adapter negatives, worker/admission and resource observations; retain ingestion, platform, sleep and hard-memory gates. No native0.25.2 rebuild is claimed.
+
+## 0.25.1
+
+- Preserve the final reviewed adapter Cancel lifetime guard in the combined cancellation and reader-recovery integration.
+
+## 0.25.0
+
+- Integrate reviewed adapters and browser-reader liveness with fenced queue cancellation and atomic finalizer publication. Historical installed evidence remains tied to its checked builds.
+
 ## 0.24.5
 
 - Fence pending retained-preview refreshes with the actual preview close lifetime, preventing Cancel/Escape from reopening a replacement after asynchronous ownership checks finish.
@@ -30,6 +44,43 @@
 
 - Record actual installed Chrome/Edge adapter disable and changed-layout refusal gates with exact historical source/native fingerprints, zero payload/trap requests and no publication.
 - Keep fixture activation boundaries, per-case isolation and the intermittent recovery-preview defect explicit for a separate source fix.
+
+## 0.23.6
+
+- Fence atomic hard-link and staging-file publication with the live terminal job/control state, without holding the job lock during copy or hashing.
+- Exercise cancellation after Assembling and before publication through actual browser-stream EOF.
+
+## 0.23.5
+
+- Keep exact navigation queue cleanup inside the terminal job fence, revalidate context ownership nonblockingly, and publish refreshed context under its source-generation lock.
+- Add a deterministic context-owner replacement race regression; preserve exact-build installed evidence separately.
+
+## 0.23.4
+
+- Freeze and revalidate queued owner identity with a nonblocking scheduler guard through cancellation commit, preventing a stale queued-owner snapshot from authorizing cancellation after reassignment.
+- Add a deterministic queued-owner replacement race alongside the EOF terminal-state regression; both reject stale authority without reviving jobs or publishing partial files.
+
+## 0.23.3
+
+- Require the canonical navigation, original context or existing same-generation scheduler owner for unadmitted cancellation; retain exact source generation, reject private unscoped/no-owner requests and preserve terminal owner identity for retries.
+- Route all navigation queue cancellation through the fenced command, and refuse legacy native cancellation for every navigation job while preserving ordinary download controls.
+- Preserve actual Chrome/Edge scoped cancellation evidence on checked 0.23.2 and add the queued 21st-task/foreign authority fixture; its installed qualification follows separately.
+
+## 0.23.2
+
+- Revalidate cancellation control identities with nonblocking registry locks under the exact job fence, avoiding lock-order inversion and stale EOF control registration.
+- Refuse stale finalizer checkpoints that would restore a cancelled job. Add a deterministic real EOF/cancellation barrier regression proving no state revival, file publication or partial loss.
+- Document the still-pending response-header Retry-After integration and its required request/document/session authority.
+
+## 0.23.1
+
+- Add exact owner/session/source-fenced navigation cancellation while keeping legacy scoped cancellation refused. Commit the native terminal state before invalidating browser source, alarms, reservation or resolver tab.
+- Preserve partial bytes, refuse stale/private/foreign/recovery fences and late stream writes; add native and extension cancellation regressions plus an installed cancellation fixture lane. Installed requalification follows separately.
+
+## 0.23.0
+
+- Qualify installed production Chromium scheduler readiness, actual worker replacement, durable alarms and default-three/configured-twenty real tab admission against an enforced local server.
+- Record scoped browser resource samples and same-host serialization with a free global slot; retain Retry-After ingestion, extension cancellation fencing and broader recovery gates as pending.
 
 ## 0.22.14
 

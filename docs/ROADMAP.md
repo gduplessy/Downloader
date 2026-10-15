@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.24.5<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.25.2<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 NAV-11 review hardening (0.21.2) isolates private pending origins from regular cleanup and checks fresh native authority after queue admission before opening a source URL. Mutable caller snapshots cannot change frozen navigation intent. Current main's expiry regression and qualification histories are retained.
 
@@ -344,4 +344,16 @@ NAV-05 recovery 0.24.2 preserves stale controls through the full asynchronous pr
 
 NAV-05 local post-fix qualification (0.24.3): both adapter-disable fallback and changed-layout refusal passed actual installed Chrome/Edge controls at checked runtime 2656b52. Exact native states, historical build hashes and remaining live-host/platform boundaries are recorded in docs/evidence/nav-adapters/INSTALLED-NEGATIVES.md.
 
+Installed Chromium scheduler readiness, actual worker-restart alarms, default-three/configured-twenty admission and sampled resources: [reproduction and remaining gates](evidence/nav-scheduling/INSTALLED.md).
+
+Scoped cancellation passed installed Chrome/Edge checks on 0.23.2. Unadmitted cancellation requires the canonical owner and exact source; its installed 21st-row qualification passed on checked 3d6bd4d/native0.23.4. Combined integration-build repetition remains separate.
+
+Cancellation now preserves the native terminal state across EOF-control registration and finalization races; Retry-After browser-navigation ingestion remains pending.
+
+Queued cancellation revalidates the current scheduler owner at native commit; a replaced queued owner cannot cancel through a stale snapshot.
+
+NAV integration 0.25.0 combines adapter recovery, browser-reader liveness and authority-fenced cancellation. Deterministic context/queue/EOF/publication race tests preserve Cancelled and original partials; installed qualification remains tied to each recorded build.
+
 NAV-05 recovery 0.24.5: Cancel/Escape invalidates pending retained-preview replacement and pre-Cancel coalesced refreshes through the actual close lifetime. Later explicit Continue still obtains fresh owned context; deterministic context/worker-step cancellation cases cover no resurrection or stale-authority submission. Historical installed evidence retains its exact checked versions.
+
+Installed scheduler cancellation (0.25.2 evidence) passes actual Chrome/Edge scoped cleanup and Chrome unadmitted 21st-row authority/peer preservation on exact combined runtime/native3b808ae (0.25.1). Both scoped runs and queued repetition exit zero; fixture-only esbuild cleanup and audit corrections preserve historical readiness/resource boundaries. No native0.25.2 rebuild is claimed.
