@@ -42,3 +42,7 @@ Firefox 158 on Windows x64 passed both supported local adapter negatives at chec
 - Changed layout: select a production radio, mutate the original fixture link to the purchase trap, then activate actual Continue. The rendered preview requires refresh and disables submission/radios.
 
 Both cases remain `waiting_user`, with zero payload/trap requests and no publication. Exact driver, source, bundle and matching native hashes are in `installed-firefox-*.json`; screenshots were separately inspected and retained. Source diagnostic instrumentation is absent. Native context-menu/desktop activation, Firefox pending-refresh pause, private-addon/ESR/other-OS rows and live providers/accounts remain separate pending gates.
+
+## Future-run gate strengthening (0.27.2)
+
+Review strengthened the Firefox driver to require available actual UI inspection, exactly two enabled unchecked generic candidates, disabled Continue and enabled Cancel/Refresh; changed-layout runs require the explicit stale text and disabled candidates. New runs also assert actual regular Firefox profile/cookie-store identity and check both the native destination and exact `.filename.job-id.part` path absent. The existing recorded runs retain the historical driver fingerprint from commit `1a14303` and separate inspected filesystem/screenshot evidence; they are not relabeled as executions of the strengthened driver. Syntax/evidence checks validate this small future-gate correction; historical browser rows were not rerun for it.

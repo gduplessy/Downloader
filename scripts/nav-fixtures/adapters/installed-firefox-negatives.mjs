@@ -2,7 +2,7 @@
 import { spawn, execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile, copyFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { resolve, dirname, relative, isAbsolute } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { startAdapterFixtureServer } from './server.mjs';
@@ -336,13 +336,31 @@ try {
     await new Promise(r=>setTimeout(r,500));
   }
   const actualUi=await inspectUi();
-  if(scenario==='changed'&&!actualUi.inspectionUnavailable){assert.equal(actualUi.status,'Page changed. Refresh the selection.');assert(actualUi.buttons.find(b=>b.text==='Continue')?.disabled);}
+  assert(actualUi.present&&!actualUi.inspectionUnavailable,'Actual production UI inspection is required');
+  assert.equal(actualUi.radios.length,2,'Both ambiguous production candidates must remain visible');
+  assert.equal(actualUi.buttons.find(b=>b.text==='Continue')?.disabled,true);
+  for(const text of ['Cancel','Refresh'])assert.equal(actualUi.buttons.find(b=>b.text===text)?.disabled,false,'Recovery control missing/disabled: '+text);
+  if(scenario==='disabled') {
+    assert(actualUi.radios.every(r=>!r.checked&&!r.disabled),'Generic fallback must have two enabled, unchecked candidates');
+    assert(!actualUi.buttons.some(b=>b.text==='Use generic controls'),'Disabled adapter must be replaced by the generic preview');
+  } else {
+    assert.equal(actualUi.status,'Page changed. Refresh the selection.');
+    assert(actualUi.radios.every(r=>r.disabled),'Stale candidates must be disabled');
+  }
   const shot=await send('browsingContext.captureScreenshot',{context:pageContext.context});
   await writeFile(resolve(dir,'preview.png'),Buffer.from(shot.data,'base64'));
   assert(await at(pageContext.context,'!!document.getElementById("__downloader_adapter_preview")'),'Production preview/recovery control disappeared');
   assert.equal(requests.length,0,'Adapter negative requested file or purchase trap');
   const current=call('list').jobs.find(j=>j.id===jobId);
   assert(current&&current.state!=='complete');assert.equal(current.bytes,0);
+  const liveTab=JSON.parse(await evaluate('(async()=>{const tab=(await browser.tabs.query({})).find(t=>t.url==='+JSON.stringify(base+pagePath)+');const local=await browser.storage.local.get("profileId");return JSON.stringify({private:tab.incognito,cookieStoreId:tab.cookieStoreId,profile:local.profileId});})()'));
+  assert.equal(liveTab.private,false);assert.equal(current.private,false);
+  assert.equal(current.navigation_scope?.private,false);assert.equal(current.navigation_scope?.browser,'firefox');
+  assert.equal(current.navigation_scope?.profile,liveTab.profile);assert.equal(current.navigation_scope?.cookie_store_id,liveTab.cookieStoreId);
+  const destinationRelative=relative(resolve(dir,'downloads'),resolve(current.destination));
+  assert(!isAbsolute(destinationRelative)&&destinationRelative!=='..'&&!destinationRelative.startsWith('..\\')&&!destinationRelative.startsWith('../'),'Native destination escaped the isolated fixture directory');
+  await assert.rejects(readFile(current.destination),{code:'ENOENT'});
+  await assert.rejects(readFile(resolve(dirname(current.destination),'.'+current.filename+'.'+current.id+'.part')),{code:'ENOENT'});
   assert.equal(digest(await readFile(nativeBinary)),initialNativeHash);assert.equal(digest(await readFile(cli)),initialCliHash);
   const sourceHashes={};for(const file of ['apps/extension/src/background.ts','apps/extension/src/resolver.ts','apps/extension/src/navigation/adapters/policy.ts','apps/extension/src/navigation/adapters/selection-ui.ts','apps/extension/src/navigation/adapters/preview.ts'])sourceHashes[file]=digest(await readFile(file));
   const bundleHashes={};for(const file of ['background.js','resolver.js','options.js'])bundleHashes[file]=digest(await readFile(resolve(ext,file)));

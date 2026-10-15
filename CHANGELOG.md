@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.2
+
+- Require complete actual Firefox UI inspection and exact enabled/checked/recovery-control assertions so future negative fixtures cannot pass with missing observation or stale generic controls.
+- Assert actual regular profile/cookie-store identity and filesystem absence of native destination/partial; preserve prior driver provenance and separately inspected historical acceptance.
+
 ## 0.27.1
 
 - Qualify actual installed Firefox158 disabled-adapter generic fallback and changed-layout refusal through real keyboard controls, read-only rendered UI inspection and inspected screenshots.

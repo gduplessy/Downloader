@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.27.1<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.27.2<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 NAV-11 review hardening (0.21.2) isolates private pending origins from regular cleanup and checks fresh native authority after queue admission before opening a source URL. Mutable caller snapshots cannot change frozen navigation intent. Current main's expiry regression and qualification histories are retained.
 
@@ -361,3 +361,5 @@ Installed scheduler cancellation (0.25.2 evidence) passes actual Chrome/Edge sco
 NAV-05 installed context acceptance (0.27.0): actual Chrome/Edge AX Cancel during a worker-paused pending Refresh stays closed after worker resume, and later explicit Continue recovers a fresh preview. Final-source and immutable native25.1 evidence is under docs/evidence/nav-adapters; live inputs and other platform claims remain pending.
 
 NAV-05 Firefox local negatives (0.27.1): actual Firefox158 keyboard controls passed disabled-adapter generic preview and changed-layout refusal. Read-only production UI snapshots and inspected screenshots accompany exact driver/source/native25.1 hashes in docs/evidence/nav-adapters. Private-addon, ESR, other OS and live-host rows remain pending.
+
+NAV-05 fixture review (0.27.2): future Firefox runs require full rendered UI state, actual regular profile/store identity and native destination/partial absence. Historical accepted rows retain their original driver fingerprints and inspected evidence.
