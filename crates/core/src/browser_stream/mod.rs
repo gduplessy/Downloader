@@ -381,6 +381,8 @@ pub fn operation(engine: &Arc<Engine>, operation: StreamOperation) -> Result<Str
             let control = finalizer
                 .clone()
                 .context("Browser stream finalizer missing")?;
+            #[cfg(test)]
+            crate::fault::pause_for_test("browser_stream_before_finalization", &record.job_id);
             let result = crate::finalize::finish(
                 shared.clone(),
                 engine.store.clone(),

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.23.2
+
+- Revalidate cancellation control identities with nonblocking registry locks under the exact job fence, avoiding lock-order inversion and stale EOF control registration.
+- Refuse stale finalizer checkpoints that would restore a cancelled job. Add a deterministic real EOF/cancellation barrier regression proving no state revival, file publication or partial loss.
+- Document the still-pending response-header Retry-After integration and its required request/document/session authority.
+
 ## 0.23.1
 
 - Add exact owner/session/source-fenced navigation cancellation while keeping legacy scoped cancellation refused. Commit the native terminal state before invalidating browser source, alarms, reservation or resolver tab.

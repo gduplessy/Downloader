@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.23.1<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.23.2<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 NAV-11 review hardening (0.21.2) isolates private pending origins from regular cleanup and checks fresh native authority after queue admission before opening a source URL. Mutable caller snapshots cannot change frozen navigation intent. Current main's expiry regression and qualification histories are retained.
 
@@ -315,3 +315,5 @@ NAV reconciliation (0.19.1) preserves reviewed handoff UI/monotonic waits and in
 Installed Chromium scheduler readiness, actual worker-restart alarms, default-three/configured-twenty admission and sampled resources: [reproduction and remaining gates](evidence/nav-scheduling/INSTALLED.md).
 
 Scoped navigation queue cancellation now commits the current native session/source fence before browser cleanup; installed cancellation requalification remains pending.
+
+Cancellation now preserves the native terminal state across EOF-control registration and finalization races; Retry-After browser-navigation ingestion remains pending.

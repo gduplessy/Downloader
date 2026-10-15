@@ -1087,35 +1087,72 @@ impl Engine {
             } => {
                 scope.validate()?;
                 let shared = self.job(&id)?;
-                // Match transfer preparation/finalization order: controls, solver, then job.
-                // Hold the job through persistence so a late stream frame cannot restore it.
-                let controls = self.controls.lock().unwrap();
-                let solvers = self.solver_tasks.lock().unwrap();
-                let mut job = shared.lock().unwrap();
-                self.check_navigation_fence(&job, Some(&scope), Some(source_generation))?;
-                if owner != scope.profile
-                    || job.navigation_owner.as_deref() != Some(&owner)
-                    || job.navigation_scope.as_ref() != Some(&scope)
-                    || job.private != scope.private
-                    || job.page_url.is_none()
-                {
-                    bail!("Cancellation requires the current navigation owner and scope");
+                let same_control =
+                    |cached: &Option<Arc<AtomicU8>>, current: Option<&Arc<AtomicU8>>| match (
+                        cached, current,
+                    ) {
+                        (Some(cached), Some(current)) => Arc::ptr_eq(cached, current),
+                        (None, None) => true,
+                        _ => false,
+                    };
+                let mut committed = false;
+                for _ in 0..32 {
+                    // Never block on the control registries while holding a job lock.
+                    let control = self.controls.lock().unwrap().get(&id).cloned();
+                    let solver = self.solver_tasks.lock().unwrap().get(&id).cloned();
+                    #[cfg(test)]
+                    crate::fault::pause_for_test("cancel_navigation_prelock", &id);
+                    let mut job = shared.lock().unwrap();
+                    self.check_navigation_fence(&job, Some(&scope), Some(source_generation))?;
+                    if owner != scope.profile
+                        || job.navigation_owner.as_deref() != Some(&owner)
+                        || job.navigation_scope.as_ref() != Some(&scope)
+                        || job.private != scope.private
+                        || job.page_url.is_none()
+                    {
+                        bail!("Cancellation requires the current navigation owner and scope");
+                    }
+                    if matches!(job.state, JobState::Complete | JobState::BrowserComplete) {
+                        bail!("Completed navigation cannot be cancelled");
+                    }
+                    let Ok(controls) = self.controls.try_lock() else {
+                        drop(job);
+                        std::thread::sleep(Duration::from_millis(1));
+                        continue;
+                    };
+                    let Ok(solvers) = self.solver_tasks.try_lock() else {
+                        drop(controls);
+                        drop(job);
+                        std::thread::sleep(Duration::from_millis(1));
+                        continue;
+                    };
+                    if !same_control(&control, controls.get(&id))
+                        || !same_control(&solver, solvers.get(&id))
+                    {
+                        drop(solvers);
+                        drop(controls);
+                        drop(job);
+                        std::thread::sleep(Duration::from_millis(1));
+                        continue;
+                    }
+                    if let Some(control) = control {
+                        control.store(2, Ordering::Relaxed);
+                    }
+                    if let Some(solver) = solver {
+                        solver.store(1, Ordering::Relaxed);
+                    }
+                    job.state = JobState::Cancelled;
+                    job.error = None;
+                    self.store.lock().unwrap().put("job", &id, &*job)?;
+                    drop(solvers);
+                    drop(controls);
+                    drop(job);
+                    committed = true;
+                    break;
                 }
-                if matches!(job.state, JobState::Complete | JobState::BrowserComplete) {
-                    bail!("Completed navigation cannot be cancelled");
+                if !committed {
+                    bail!("navigation_cancel_busy: Retry cancellation in the current session");
                 }
-                if let Some(control) = controls.get(&id) {
-                    control.store(2, Ordering::Relaxed);
-                }
-                if let Some(control) = solvers.get(&id) {
-                    control.store(1, Ordering::Relaxed);
-                }
-                job.state = JobState::Cancelled;
-                job.error = None;
-                self.store.lock().unwrap().put("job", &id, &*job)?;
-                drop(job);
-                drop(solvers);
-                drop(controls);
                 let mut scheduler = self.navigation_scheduler.lock().unwrap();
                 scheduler.tasks.retain(|task| task.id != id);
                 scheduler.persist(&self.store.lock().unwrap())?;
@@ -2139,3 +2176,7 @@ mod tests {
         assert_eq!(refreshed.segments.len(), j.segments.len());
     }
 }
+
+#[cfg(test)]
+#[path = "navigation_cancel_tests.rs"]
+mod navigation_cancel_tests;

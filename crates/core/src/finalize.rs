@@ -225,8 +225,12 @@ pub fn finish(
     let recovering = j.verified_sha256.is_some();
     j.state = JobState::Verifying;
     let persist = |j: &Job| -> Result<()> {
+        let mut live = job.lock().unwrap();
+        if live.state == JobState::Cancelled && j.state != JobState::Cancelled {
+            bail!("Finalization cannot overwrite cancelled navigation");
+        }
         store.lock().unwrap().put("job", &j.id, j)?;
-        *job.lock().unwrap() = j.clone();
+        *live = j.clone();
         Ok(())
     };
     persist(&j)?;
