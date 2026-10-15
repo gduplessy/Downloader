@@ -473,67 +473,86 @@ fn expire_readers_at(engine: &Arc<Engine>, now: std::time::Instant) -> Result<()
         .lock()
         .unwrap()
         .expired_identities(now);
+    let mut failures = Vec::new();
     for identity in expired {
-        let serial = engine
-            .browser_stream_locks
-            .lock()
-            .unwrap()
-            .entry(identity.stream_id.clone())
-            .or_insert_with(|| Arc::new(std::sync::Mutex::new(())))
-            .clone();
-        let _serial = serial.lock().unwrap();
-        // A heartbeat or durable frame may have renewed while we waited for this stream.
-        if !engine
-            .browser_reader_leases
-            .lock()
-            .unwrap()
-            .expired(&identity, now)
-        {
-            continue;
+        if let Err(error) = expire_reader_at(engine, identity, now) {
+            failures.push(error.to_string());
         }
-        let checkpoint = checkpoint(engine, &identity.stream_id)?;
-        let shared = checkpoint
-            .as_ref()
-            .and_then(|record| engine.jobs.lock().unwrap().get(&record.job_id).cloned());
-        let eligible = checkpoint.as_ref().is_some_and(|record| {
-            !record.terminal
-                && record.identity.scope == identity.scope
-                && record.identity.source_generation == identity.source_generation
-        }) && shared.as_ref().is_some_and(|shared| {
-            let job = shared.lock().unwrap();
-            matches!(
-                job.state,
-                JobState::BrowserDownloading | JobState::WaitingUser
-            ) && job.navigation_scope.as_ref() == Some(&identity.scope)
-                && job.source_generation == identity.source_generation
-                && job.navigation_owner.as_ref() == Some(&identity.scope.profile)
-                && !job.navigation_transfer_pending
-                && !job.navigation_transfer_recovery
-        });
-        if !eligible {
-            engine
-                .browser_reader_leases
-                .lock()
-                .unwrap()
-                .remove(&identity.stream_id);
-            continue;
-        }
-        // Failed durable abort remains retryable; never report recovery before persistence.
-        operation_locked(
-            engine,
-            StreamOperation::Abort {
-                identity: identity.clone(),
-                reason: "reader_lost".into(),
-            },
-        )?;
+    }
+    if !failures.is_empty() {
+        bail!(
+            "{} browser reader recoveries failed: {}",
+            failures.len(),
+            failures.join("; ")
+        );
+    }
+    Ok(())
+}
+fn expire_reader_at(
+    engine: &Arc<Engine>,
+    identity: StreamIdentity,
+    now: std::time::Instant,
+) -> Result<()> {
+    let serial = engine
+        .browser_stream_locks
+        .lock()
+        .unwrap()
+        .entry(identity.stream_id.clone())
+        .or_insert_with(|| Arc::new(std::sync::Mutex::new(())))
+        .clone();
+    let _serial = serial.lock().unwrap();
+    // A heartbeat or durable frame may have renewed while we waited for this stream.
+    if !engine
+        .browser_reader_leases
+        .lock()
+        .unwrap()
+        .expired(&identity, now)
+    {
+        return Ok(());
+    }
+    let checkpoint = checkpoint(engine, &identity.stream_id)?;
+    let shared = checkpoint
+        .as_ref()
+        .and_then(|record| engine.jobs.lock().unwrap().get(&record.job_id).cloned());
+    let eligible = checkpoint.as_ref().is_some_and(|record| {
+        !record.terminal
+            && record.identity.scope == identity.scope
+            && record.identity.source_generation == identity.source_generation
+    }) && shared.as_ref().is_some_and(|shared| {
+        let job = shared.lock().unwrap();
+        matches!(
+            job.state,
+            JobState::BrowserDownloading | JobState::WaitingUser
+        ) && job.navigation_scope.as_ref() == Some(&identity.scope)
+            && job.source_generation == identity.source_generation
+            && job.navigation_owner.as_ref() == Some(&identity.scope.profile)
+            && !job.navigation_transfer_pending
+            && !job.navigation_transfer_recovery
+    });
+    if !eligible {
         engine
             .browser_reader_leases
             .lock()
             .unwrap()
             .remove(&identity.stream_id);
+        return Ok(());
     }
+    // Failed durable abort remains retryable; never report recovery before persistence.
+    operation_locked(
+        engine,
+        StreamOperation::Abort {
+            identity: identity.clone(),
+            reason: "reader_lost".into(),
+        },
+    )?;
+    engine
+        .browser_reader_leases
+        .lock()
+        .unwrap()
+        .remove(&identity.stream_id);
     Ok(())
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -545,13 +564,21 @@ mod tests {
     ) -> (tempfile::TempDir, Arc<Engine>, String, StreamIdentity) {
         let directory = tempfile::tempdir().unwrap();
         let engine = Engine::open(directory.path()).unwrap();
+        let (id, identity) = add_reader(&engine, directory.path(), private);
+        (directory, engine, id, identity)
+    }
+    fn add_reader(
+        engine: &Arc<Engine>,
+        directory: &std::path::Path,
+        private: bool,
+    ) -> (String, StreamIdentity) {
         let owner = uuid::Uuid::new_v4().to_string();
         let job = engine
             .command(crate::Command::Navigate(crate::AddJob {
                 request_id: uuid::Uuid::new_v4().to_string(),
                 url: "http://127.0.0.1:9/one-use".into(),
                 filename: Some("original.bin".into()),
-                directory: Some(directory.path().join("output")),
+                directory: Some(directory.join("output")),
                 queue: None,
                 checksum: None,
                 paused: true,
@@ -590,7 +617,7 @@ mod tests {
             source_generation: 1,
         };
         operation(
-            &engine,
+            engine,
             StreamOperation::Begin {
                 identity: identity.clone(),
                 target: NavigationTarget::Job { id: id.clone() },
@@ -600,7 +627,7 @@ mod tests {
         )
         .unwrap();
         operation(
-            &engine,
+            engine,
             StreamOperation::Chunk {
                 identity: identity.clone(),
                 offset: 0,
@@ -608,7 +635,7 @@ mod tests {
             },
         )
         .unwrap();
-        (directory, engine, id, identity)
+        (id, identity)
     }
     #[test]
     fn lost_reader_preserves_actual_durable_prefix_and_fences_late_frames() {
@@ -719,6 +746,88 @@ mod tests {
             )
             .unwrap();
         expire_readers_at(&engine, now + lease::READER_TIMEOUT).unwrap();
+    }
+    #[test]
+    fn failed_reader_does_not_starve_other_expired_readers() {
+        let (directory, engine, first_id, first) = reader_fixture();
+        let (second_id, second) = add_reader(&engine, directory.path(), false);
+        let now = std::time::Instant::now();
+        {
+            let mut leases = engine.browser_reader_leases.lock().unwrap();
+            leases.observe(&first, now);
+            leases.observe(&second, now);
+        }
+        let deadline = now + lease::READER_TIMEOUT;
+        // Corrupt the first identity in the actual sweep order, so returning early
+        // would deterministically leave the following healthy reader stranded.
+        let failed = engine
+            .browser_reader_leases
+            .lock()
+            .unwrap()
+            .expired_identities(deadline)[0]
+            .clone();
+        let healthy = if failed.stream_id == first.stream_id {
+            &second
+        } else {
+            &first
+        };
+        let healthy_id = if healthy.stream_id == first.stream_id {
+            &first_id
+        } else {
+            &second_id
+        };
+        let saved = checkpoint(&engine, &failed.stream_id).unwrap().unwrap();
+        let connection =
+            rusqlite::Connection::open(directory.path().join("downloader.db")).unwrap();
+        connection
+            .execute(
+                "UPDATE records SET data='invalid-json' WHERE kind='browser_stream' AND id=?1",
+                [&failed.stream_id],
+            )
+            .unwrap();
+        let error = expire_readers_at(&engine, deadline).unwrap_err();
+        assert!(error
+            .to_string()
+            .contains("1 browser reader recoveries failed"));
+        assert!(engine
+            .browser_reader_leases
+            .lock()
+            .unwrap()
+            .expired(&failed, deadline));
+        assert_eq!(
+            engine.job(healthy_id).unwrap().lock().unwrap().state,
+            JobState::WaitingUser
+        );
+        assert!(
+            checkpoint(&engine, &healthy.stream_id)
+                .unwrap()
+                .unwrap()
+                .terminal
+        );
+        assert!(!engine
+            .browser_reader_leases
+            .lock()
+            .unwrap()
+            .expired(healthy, deadline));
+        connection
+            .execute(
+                "UPDATE records SET data=?1 WHERE kind='browser_stream' AND id=?2",
+                rusqlite::params![serde_json::to_string(&saved).unwrap(), failed.stream_id],
+            )
+            .unwrap();
+        expire_readers_at(&engine, deadline).unwrap();
+        assert!(engine
+            .browser_reader_leases
+            .lock()
+            .unwrap()
+            .expired_identities(deadline)
+            .is_empty());
+        assert!(
+            checkpoint(&engine, &failed.stream_id)
+                .unwrap()
+                .unwrap()
+                .terminal
+        );
     }
     #[test]
     fn replaced_or_cancelled_owner_cannot_be_changed_by_old_reader_expiry() {

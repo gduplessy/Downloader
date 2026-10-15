@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.13
+
+- Isolate expired reader recovery failures so one corrupt checkpoint cannot starve other lost readers; preserve failed leases for retry and report errors after the sweep.
+- Add deterministic two-reader failure isolation and repair/retry coverage; focused native tests, stream integrations, strict Clippy and formatting pass.
+
 ## 0.22.12
 
 - Record installed Firefox full-browser-loss recovery on matching be7484d/native0.22.11: WaitingUser in 50.5 seconds, terminal checkpoint at 659,456 original-prefix hash-verified bytes, stable progress and no publication/refetch.
