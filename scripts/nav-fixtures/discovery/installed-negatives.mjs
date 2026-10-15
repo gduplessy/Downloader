@@ -309,7 +309,7 @@ async function evaluate(sessionId, expression) {
     throw Error(JSON.stringify(response.exceptionDetails));
   return response.result?.value;
 }
-let browserVersion, result;
+let browserVersion, result, inspectFailure;
 try {
   browserProc = spawn(
     executable,
@@ -415,6 +415,21 @@ try {
         JSON.stringify("discovery-" + projectId) +
         "])",
     );
+  await message({ type: "settings_changed" });
+  const pollAlarm = await page('chrome.alarms.get("resolver-poll")');
+  assert.ok(
+    pollAlarm,
+    "Production discovery polling alarm must exist before activation",
+  );
+  assert.equal(pollAlarm.periodInMinutes, 0.5);
+  console.log("Production polling alarm verified");
+  inspectFailure = async () => ({
+    record: await record(),
+    alarms: await page("chrome.alarms.getAll()"),
+    tabs: await page(
+      "chrome.tabs.query({}).then(tabs=>tabs.map(tab=>({id:tab.id,url:tab.url,status:tab.status,windowId:tab.windowId})))",
+    ),
+  });
   const userTab = await page(
     "chrome.tabs.create({url:" +
       JSON.stringify(base + "/user-origin") +
@@ -475,6 +490,7 @@ try {
       : initialState.status === "exploring",
   );
   assert.equal(initialState.resources.length, 0);
+  console.log("Enrolled discovery scope; starting " + mode);
   if (mode === "cancel") {
     const cancelled = await native("discovery_status", {
       id: projectId,
@@ -608,6 +624,7 @@ try {
     productionRuntimeUnchanged: true,
     nativeAddressOnlySubstitution: true,
     fixtureWorkerWakeInterval: false,
+    productionPollAlarmVerified: true,
     initialActivation:
       "Trusted extension-page discovery_start using actual original tab metadata",
     cancellationBoundary:
@@ -634,6 +651,9 @@ try {
   );
   console.log(JSON.stringify(evidence, null, 2));
 } catch (error) {
+  const actual = await inspectFailure?.().catch((error) => ({
+    inspectionError: String(error),
+  }));
   await writeFile(
     resolve(runRoot, "failure.json"),
     JSON.stringify(
@@ -643,6 +663,7 @@ try {
         sourceRevision,
         requests,
         observations: result,
+        actual,
       },
       null,
       2,

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.29.1
+
+- Require completed production initialization and its actual polling alarm before discovery interruption; retain browser-side failure diagnostics.
+- Preserve the initial tab-loss timeout and native frontier observation without inferring a runtime cause from an unverified alarm precondition.
+
 ## 0.29.0
 
 - Add isolated installed discovery cancellation, owning-tab loss and authentication-expiry fixtures using unchanged production modules, exact copied native hashes and admission-aware document checks.
