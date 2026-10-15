@@ -38,6 +38,7 @@ let documentActive = true;
 let challengeHandle: { close(): void } | undefined;
 let previewHandle: PreviewHandle | undefined;
 let running = false;
+let stepPending = false;
 let accountPanel: { close: () => void } | undefined;
 const submissions = new SubmissionGate();
 async function context(): Promise<ResolverContext | null> {
@@ -253,16 +254,22 @@ async function submit(
   if (reply?.repeat) setTimeout(() => void step(), 1000);
 }
 async function step() {
-  if (running || !documentActive) return;
+  if (!documentActive) return;
+  if (running) {
+    stepPending = true;
+    return;
+  }
   running = true;
   try {
     accountPanel?.close();
     accountPanel = undefined;
     challengeHandle?.close();
     challengeHandle = undefined;
-    previewHandle?.close();
-    previewHandle = undefined;
+    // Keep recovery controls visible when a refresh cannot yet revalidate ownership.
+    // A stale preview cannot submit; its Refresh action can request fresh authority.
+    previewHandle?.stale();
     let ctx = await context();
+    if (previewHandle && !ctx) return;
     if (ctx) {
       challengeHandle =
         (await showChallenge(
@@ -298,7 +305,11 @@ async function step() {
             setTimeout(() => void step().catch(() => {}), 500);
           },
         )) ?? undefined;
-      if (challengeHandle) return;
+      if (challengeHandle) {
+        previewHandle?.close();
+        previewHandle = undefined;
+        return;
+      }
     }
     let observed = await observe(ctx);
     const deadline = Date.now() + 10000;
@@ -319,6 +330,8 @@ async function step() {
       );
     if (ctx && observed.inspection.kind === 'click' && observed.inspection.selected) {
       await submit(ctx, observed, observed.inspection.selected);
+      previewHandle?.close();
+      previewHandle = undefined;
       return;
     }
     if (
@@ -342,6 +355,7 @@ async function step() {
         fingerprint: observed.fingerprint,
         binding: preview.binding,
       });
+      previewHandle?.close();
       previewHandle = showPreview(
         document,
         preview,
@@ -361,7 +375,7 @@ async function step() {
         },
         () => {
           documentGeneration++;
-          void step();
+          void step().catch(() => {});
         },
         async () => {
           const disabled = await browser.runtime.sendMessage({
@@ -414,6 +428,10 @@ async function step() {
     if (reply?.repeat) setTimeout(() => void step(), 1000);
   } finally {
     running = false;
+    if (stepPending && documentActive) {
+      stepPending = false;
+      void step().catch(() => {});
+    }
   }
 }
 const root = globalThis as typeof globalThis & { __downloaderResolver?: boolean };

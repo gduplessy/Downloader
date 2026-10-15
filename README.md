@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.23.6<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.25.0<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -385,10 +385,20 @@ NAV-11 queued-source retention (0.21.0) separates pending user origins from owne
 
 NAV-11 Firefox scope qualification (0.21.1): checked af318b9 extension21.0/native16.1 on Firefox158 passes actual sequential and queued container Blob hashes plus lost-source WaitingUser with zero replacement bytes or payload requests. Normal scheduler polling drives recovery; original user tabs remain open. Initial activation invokes the registered context-menu handler with actual browser metadata; native context-menu UI and private-addon permission acceptance remain pending. See docs/evidence/nav-integration/firefox-scope-queued-fixed.json and firefox-scope-missing-source.json.
 
+Installed NAV-05 negative evidence: [Chrome/Edge adapter controls](docs/evidence/nav-adapters/INSTALLED-NEGATIVES.md). Historical acceptance uses explicitly fingerprinted extension/native builds.
+
+NAV-05 recovery correction (0.24.1): keep stale Refresh controls visible when owned-context observation fails, and coalesce overlapping refreshes into a fresh observation after the active step. Old selection authorization remains rejected; post-fix installed repetition is tracked separately.
+
+NAV-05 recovery 0.24.2 preserves stale controls through the full asynchronous preview replacement, including worker-step rejection. Installed post-fix acceptance remains separately tracked.
+
+NAV-05 local post-fix qualification (0.24.3): both adapter-disable fallback and changed-layout refusal passed actual installed Chrome/Edge controls at checked runtime 2656b52. Exact native states, historical build hashes and remaining live-host/platform boundaries are recorded in docs/evidence/nav-adapters/INSTALLED-NEGATIVES.md.
+
 Installed Chromium scheduler readiness, actual worker-restart alarms, default-three/configured-twenty admission and sampled resources: [reproduction and remaining gates](docs/evidence/nav-scheduling/INSTALLED.md).
 
-Scoped cancellation passed installed Chrome/Edge checks on 0.23.2. Unadmitted cancellation now requires the canonical owner and exact source; its installed qualification remains pending.
+Scoped cancellation passed installed Chrome/Edge checks on 0.23.2. Unadmitted cancellation requires the canonical owner and exact source; its installed 21st-row qualification passed on checked 3d6bd4d/native0.23.4. Combined integration-build repetition remains separate.
 
 Cancellation now preserves the native terminal state across EOF-control registration and finalization races; Retry-After browser-navigation ingestion remains pending.
 
 Queued cancellation revalidates the current scheduler owner at native commit; a replaced queued owner cannot cancel through a stale snapshot.
+
+NAV integration 0.25.0 combines adapter recovery, browser-reader liveness and authority-fenced cancellation. Deterministic context/queue/EOF/publication race tests preserve Cancelled and original partials; installed qualification remains tied to each recorded build.

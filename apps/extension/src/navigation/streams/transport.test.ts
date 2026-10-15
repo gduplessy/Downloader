@@ -21,36 +21,66 @@ const identity = {
 describe('persistent bounded durable native transport', () => {
   it('aborts a native checkpoint admitted after cancellation without accepting bytes', async () => {
     let release!: (ack: any) => void;
-    const admitted = new Promise<any>(resolve => { release = resolve; });
+    const admitted = new Promise<any>((resolve) => {
+      release = resolve;
+    });
     const operations: StreamOperation[] = [];
     const operation = vi.fn((value: StreamOperation) => {
       operations.push(value);
-      return value.operation === 'begin' ? admitted : Promise.resolve({
-        ...identity, claim_generation: 1, accepted_offset: 0, terminal: true,
-      });
+      return value.operation === 'begin'
+        ? admitted
+        : Promise.resolve({
+            ...identity,
+            claim_generation: 1,
+            accepted_offset: 0,
+            terminal: true,
+          });
     });
-    const sink = new DurableStreamSink(identity, {
-      operation, close: vi.fn(),
-    } as unknown as NativeStreamPort, async () => {});
-    const begin = sink.begin({kind: 'job', id: 'owned'}, 'x', 1);
+    const sink = new DurableStreamSink(
+      identity,
+      {
+        operation,
+        close: vi.fn(),
+      } as unknown as NativeStreamPort,
+      async () => {},
+    );
+    const begin = sink.begin({ kind: 'job', id: 'owned' }, 'x', 1);
     const outcome = expect(begin).rejects.toThrow('terminal');
     await vi.waitFor(() => expect(operation).toHaveBeenCalledOnce());
     const abort = sink.abort('cancelled');
-    expect(operations.map(value => value.operation)).toEqual(['begin']);
-    release({...identity, claim_generation: 1, accepted_offset: 0, terminal: false});
+    expect(operations.map((value) => value.operation)).toEqual(['begin']);
+    release({ ...identity, claim_generation: 1, accepted_offset: 0, terminal: false });
     await Promise.all([outcome, abort]);
-    expect(operations.map(value => value.operation)).toEqual(['begin', 'abort']);
+    expect(operations.map((value) => value.operation)).toEqual(['begin', 'abort']);
     await expect(sink.chunk(new Uint8Array([1]))).rejects.toThrow('terminal');
   });
   it('a filter cancellation cannot be followed by a late header admission or chunk', async () => {
     let release!: () => void;
-    const gate = new Promise<void>(resolve => { release = resolve; });
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
     let first = true;
-    const verify = async () => { if (first) { first = false; await gate; } };
-    const operation = vi.fn(async (_operation: StreamOperation) => ({...identity, claim_generation: 1, accepted_offset: 0, terminal: true}));
-    const close = vi.fn(), terminal = vi.fn();
-    const sink = new DurableStreamSink(identity, {operation, close} as unknown as NativeStreamPort, verify, terminal);
-    const admission = sink.begin({kind:'job', id:'owned'}, 'x', 1);
+    const verify = async () => {
+      if (first) {
+        first = false;
+        await gate;
+      }
+    };
+    const operation = vi.fn(async (_operation: StreamOperation) => ({
+      ...identity,
+      claim_generation: 1,
+      accepted_offset: 0,
+      terminal: true,
+    }));
+    const close = vi.fn(),
+      terminal = vi.fn();
+    const sink = new DurableStreamSink(
+      identity,
+      { operation, close } as unknown as NativeStreamPort,
+      verify,
+      terminal,
+    );
+    const admission = sink.begin({ kind: 'job', id: 'owned' }, 'x', 1);
     await sink.abort('filter_interrupted');
     release();
     await expect(admission).rejects.toThrow('terminal');
@@ -58,7 +88,7 @@ describe('persistent bounded durable native transport', () => {
     await expect(sink.end()).rejects.toThrow('terminal');
     await sink.abort('cancelled');
     expect(operation).toHaveBeenCalledOnce();
-    expect(operation.mock.calls[0][0]).toMatchObject({operation:'abort'});
+    expect(operation.mock.calls[0][0]).toMatchObject({ operation: 'abort' });
     expect(close).toHaveBeenCalledOnce();
     expect(terminal).toHaveBeenCalledOnce();
   });
@@ -151,5 +181,123 @@ describe('persistent bounded durable native transport', () => {
     await sink.chunk(Uint8Array.of(42));
     expect(chunks[0]).toEqual(chunks[1]);
     expect(sink.offset).toBe(1);
+  });
+});
+
+describe('original reader liveness heartbeat', () => {
+  it('keeps one idle heartbeat in flight using original parameters without advancing offset, then stops on abort', async () => {
+    vi.useFakeTimers();
+    try {
+      let finish!: (value: any) => void;
+      const operation = vi
+        .fn()
+        .mockResolvedValueOnce({
+          stream_id: identity.stream_id,
+          claim_generation: 1,
+          source_generation: 1,
+          accepted_offset: 0,
+          terminal: false,
+        })
+        .mockImplementation(
+          () =>
+            new Promise((resolve) => {
+              finish = resolve;
+            }),
+        );
+      const sink = new DurableStreamSink(
+        identity,
+        { operation, close: vi.fn() } as unknown as NativeStreamPort,
+        async () => {},
+      );
+      const target = { kind: 'job' as const, id: 'original' };
+      await sink.begin(target, 'original.bin', null);
+      target.id = 'mutated';
+      await vi.advanceTimersByTimeAsync(30000);
+      expect(operation).toHaveBeenCalledTimes(2);
+      expect(operation.mock.calls[1][0]).toMatchObject({
+        operation: 'begin',
+        target: { kind: 'job', id: 'original' },
+        filename: 'original.bin',
+        total: null,
+      });
+      finish({
+        stream_id: identity.stream_id,
+        claim_generation: 1,
+        source_generation: 1,
+        accepted_offset: 123,
+        terminal: false,
+      });
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(sink.offset).toBe(0);
+      operation.mockResolvedValue({
+        stream_id: identity.stream_id,
+        claim_generation: 1,
+        source_generation: 1,
+        accepted_offset: 0,
+        terminal: true,
+      });
+      await sink.abort();
+      const calls = operation.mock.calls.length;
+      await vi.advanceTimersByTimeAsync(60000);
+      expect(operation).toHaveBeenCalledTimes(calls);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it('retries transient native disconnect while idle, but stops renewing refused ownership', async () => {
+    vi.useFakeTimers();
+    try {
+      const ack = {
+        stream_id: identity.stream_id,
+        claim_generation: 1,
+        source_generation: 1,
+        accepted_offset: 0,
+        terminal: false,
+      };
+      const operation = vi
+        .fn()
+        .mockResolvedValueOnce(ack)
+        .mockRejectedValueOnce(Error('Native stream disconnected'))
+        .mockResolvedValueOnce(ack)
+        .mockRejectedValueOnce(Error('Stale or foreign browser stream ownership'));
+      const sink = new DurableStreamSink(
+        identity,
+        { operation, close: vi.fn() } as unknown as NativeStreamPort,
+        async () => {},
+      );
+      await sink.begin({ kind: 'job', id: 'original' }, 'original.bin', 10);
+      await vi.advanceTimersByTimeAsync(30000);
+      expect(operation).toHaveBeenCalledTimes(4);
+      await vi.advanceTimersByTimeAsync(60000);
+      expect(operation).toHaveBeenCalledTimes(4);
+      operation.mockResolvedValue({ ...ack, terminal: true });
+      await sink.abort();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it('clears liveness renewal after verified EOF', async () => {
+    vi.useFakeTimers();
+    try {
+      const operation = vi.fn(async (value: StreamOperation) => ({
+        stream_id: identity.stream_id,
+        claim_generation: 1,
+        source_generation: 1,
+        accepted_offset: 0,
+        terminal: value.operation === 'end',
+      }));
+      const sink = new DurableStreamSink(
+        identity,
+        { operation, close: vi.fn() } as unknown as NativeStreamPort,
+        async () => {},
+      );
+      await sink.begin({ kind: 'job', id: 'original' }, 'original.bin', null);
+      await sink.end();
+      await vi.advanceTimersByTimeAsync(60000);
+      expect(operation).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

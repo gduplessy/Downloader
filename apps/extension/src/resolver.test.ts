@@ -271,3 +271,88 @@ it.each(delayedCases)(
     else expect(aborts.some(([m]) => m.token === authorization)).toBe(true);
   },
 );
+
+
+it('keeps stale preview recovery controls when refresh temporarily loses owned context', async () => {
+  control('first');
+  control('second');
+  const close = vi.fn();
+  const stale = vi.fn();
+  fixture.preview.mockReturnValue({ close, stale });
+  await import('./resolver');
+  await vi.waitFor(() => expect(fixture.preview).toHaveBeenCalledTimes(1));
+  const disable = fixture.preview.mock.calls[0][5] as () => Promise<void>;
+  fixture.send.mockImplementation(async (message) => message.type === 'resolver_disable_adapter' ? true : null);
+  await disable();
+  expect(fixture.send).toHaveBeenCalledWith(expect.objectContaining({ type: 'resolver_disable_adapter', adapterId: 'local-fixture' }));
+  fixture.send.mockImplementation(async (message) => {
+    if (message.type === 'resolver_context') throw Error('temporary ownership observation failure');
+    if (message.type === 'resolver_account') return null;
+    return { click: false };
+  });
+  const refresh = fixture.preview.mock.calls[0][4] as () => void;
+  refresh();
+  await vi.waitFor(() => expect(stale).toHaveBeenCalledTimes(1));
+  expect(close).not.toHaveBeenCalled();
+  const select = fixture.preview.mock.calls[0][3] as (id: string, signal: AbortSignal) => Promise<void>;
+  await expect(select('first', new AbortController().signal)).rejects.toThrow('adapter_preview_stale');
+  expect(fixture.send.mock.calls.some(([m]) => m.type === 'resolver_prepare' || m.type === 'resolver_commit')).toBe(false);
+  for (const element of fixture.elements.values()) expect(element.click).not.toHaveBeenCalled();
+  fixture.send.mockImplementation(async (message) => message.type === 'resolver_context'
+    ? { ...context, documentGeneration: message.document.generation, disabledAdapters: ['local-fixture'] }
+    : message.type === 'resolver_account' ? null : { click: false });
+  refresh();
+  await vi.waitFor(() => expect(fixture.preview).toHaveBeenCalledTimes(2));
+  expect(close).toHaveBeenCalledTimes(1);
+  expect(fixture.preview.mock.calls[1][1].binding.adapterId).toBe('generic');
+});
+
+
+it('coalesces refresh during an in-flight ownership observation and rereads fresh authority', async () => {
+  control('first'); control('second');
+  fixture.preview.mockReturnValue({ close: vi.fn(), stale: vi.fn() });
+  await import('./resolver');
+  await vi.waitFor(() => expect(fixture.preview).toHaveBeenCalledTimes(1));
+  let release!: (value: ResolverContext | null) => void;
+  let observations = 0;
+  fixture.send.mockImplementation(async (message) => {
+    if (message.type === 'resolver_context') {
+      observations++;
+      if (observations === 1) return new Promise<ResolverContext | null>(resolve => { release = resolve; });
+      return { ...context, documentGeneration: message.document.generation, disabledAdapters: ['local-fixture'] };
+    }
+    return message.type === 'resolver_account' ? null : { click: false };
+  });
+  const refresh = fixture.preview.mock.calls[0][4] as () => void;
+  refresh();
+  await vi.waitFor(() => expect(observations).toBe(1));
+  refresh();
+  release(null);
+  await vi.waitFor(() => expect(fixture.preview).toHaveBeenCalledTimes(2));
+  expect(observations).toBe(2);
+  expect(fixture.preview.mock.calls[1][1].binding.adapterId).toBe('generic');
+  expect(fixture.preview.mock.calls[1][1].binding.documentGeneration).toBe(3);
+  for (const element of fixture.elements.values()) expect(element.click).not.toHaveBeenCalled();
+});
+
+
+it('keeps the stale preview until a replacement has passed its worker step', async () => {
+  control('first'); control('second');
+  const close = vi.fn(), stale = vi.fn();
+  fixture.preview.mockReturnValue({ close, stale });
+  await import('./resolver');
+  await vi.waitFor(() => expect(fixture.preview).toHaveBeenCalledTimes(1));
+  fixture.send.mockImplementation(async (message) => {
+    if (message.type === 'resolver_context') return { ...context, documentGeneration: message.document.generation, disabledAdapters: ['local-fixture'] };
+    if (message.type === 'resolver_step') throw Error('transient step ownership observation failure');
+    return null;
+  });
+  const refresh = fixture.preview.mock.calls[0][4] as () => void;
+  refresh();
+  await vi.waitFor(() => expect(fixture.send).toHaveBeenCalledWith(expect.objectContaining({ type: 'resolver_step', document: { nonce: documentNonce, generation: 2 } })));
+  await new Promise(resolve => setTimeout(resolve, 10));
+  expect(stale).toHaveBeenCalled();
+  expect(close).not.toHaveBeenCalled();
+  expect(fixture.preview).toHaveBeenCalledTimes(1);
+  for (const element of fixture.elements.values()) expect(element.click).not.toHaveBeenCalled();
+});

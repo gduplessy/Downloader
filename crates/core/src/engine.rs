@@ -23,6 +23,7 @@ pub struct Engine {
     pub(crate) controls: Mutex<HashMap<String, Arc<AtomicU8>>>,
     captcha_lock: Mutex<()>,
     pub(crate) solver_tasks: Mutex<HashMap<String, Arc<AtomicU8>>>,
+    pub(crate) browser_reader_leases: Mutex<crate::browser_stream::ReaderLeases>,
     pub(crate) browser_stream_locks: Mutex<HashMap<String, Arc<Mutex<()>>>>,
     pub stopping: AtomicBool,
 }
@@ -106,6 +107,7 @@ impl Engine {
             })
             .collect();
         let navigation_scheduler = crate::navigation_scheduler::Scheduler::load(&store)?;
+        let browser_reader_leases = crate::browser_stream::ReaderLeases::load(&store)?;
         let engine = Arc::new(Self {
             store: Arc::new(Mutex::new(store)),
             jobs: Mutex::new(jobs),
@@ -119,6 +121,7 @@ impl Engine {
             captcha_lock: Mutex::new(()),
             solver_tasks: Mutex::new(HashMap::new()),
             browser_stream_locks: Mutex::new(HashMap::new()),
+            browser_reader_leases: Mutex::new(browser_reader_leases),
             site_accounts: Mutex::default(),
             stopping: AtomicBool::new(false),
         });
@@ -156,6 +159,12 @@ impl Engine {
         let engine = self.clone();
         std::thread::spawn(move || {
             while !engine.stopping.load(Ordering::Relaxed) {
+                if let Err(e) = crate::browser_stream::expire_readers(&engine) {
+                    eprintln!(
+                        "Browser reader recovery: {}",
+                        security::redact(&e.to_string())
+                    );
+                }
                 if let Err(e) = crate::navigation_transfer::sweep(&engine) {
                     eprintln!("Session transfer: {}", security::redact(&e.to_string()));
                 }

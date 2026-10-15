@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.25.0
+
+- Integrate reviewed adapters and browser-reader liveness with fenced queue cancellation and atomic finalizer publication. Historical installed evidence remains tied to its checked builds.
+
+## 0.24.4
+
+- Reconcile reviewed adapter preview recovery with original-reader liveness and interruption recovery, retaining both acceptance histories and synchronized product metadata.
+
+## 0.24.3
+
+- Record all four post-fix installed Chrome/Edge adapter-negative passes at exact runtime 2656b52, with zero payload/trap requests and no publication.
+- Preserve observed waiting_user versus waiting_browser states and the historical native 0.18.3 fingerprint; 187 extension tests pass.
+
+## 0.24.2
+
+- Retain the stale adapter preview through every asynchronous replacement check, including a rejected worker step; remove it only for a validated replacement or action.
+- Add a rejected-step regression and retry detached accessibility nodes in the installed fixture without weakening UI assertions.
+
+## 0.24.1
+
+- Retain stale preview recovery controls if fresh owned context is temporarily unavailable; refreshing never reuses old authorization.
+- Coalesce refresh requests received during an active resolver observation so the latest document generation gets a fresh authority check.
+- Add deterministic rejected-context and overlapping-refresh regressions; installed post-fix repetition is tracked separately from historical 0.24.0 evidence.
+
+## 0.24.0
+
+- Record actual installed Chrome/Edge adapter disable and changed-layout refusal gates with exact historical source/native fingerprints, zero payload/trap requests and no publication.
+- Keep fixture activation boundaries, per-case isolation and the intermittent recovery-preview defect explicit for a separate source fix.
+
 ## 0.23.6
 
 - Fence atomic hard-link and staging-file publication with the live terminal job/control state, without holding the job lock during copy or hashing.
@@ -36,6 +65,70 @@
 
 - Qualify installed production Chromium scheduler readiness, actual worker replacement, durable alarms and default-three/configured-twenty real tab admission against an enforced local server.
 - Record scoped browser resource samples and same-host serialization with a free global slot; retain Retry-After ingestion, extension cancellation fencing and broader recovery gates as pending.
+
+## 0.22.14
+
+- Qualify an actual Chrome original POST reader through 60.193 seconds of upstream idle, followed by native/external hash-matching completion of 8,388,625 bytes with one POST and no HEAD/refetch.
+- Preserve the standalone fixture and exact source/native fingerprints; other reader lanes and global peak-memory qualification remain separate.
+
+## 0.22.13
+
+- Isolate expired reader recovery failures so one corrupt checkpoint cannot starve other lost readers; preserve failed leases for retry and report errors after the sweep.
+- Add deterministic two-reader failure isolation and repair/retry coverage; focused native tests, stream integrations, strict Clippy and formatting pass.
+
+## 0.22.12
+
+- Record installed Firefox full-browser-loss recovery on matching be7484d/native0.22.11: WaitingUser in 50.5 seconds, terminal checkpoint at 659,456 original-prefix hash-verified bytes, stable progress and no publication/refetch.
+
+## 0.22.11
+
+- Track original browser readers with 45-second monotonic leases and ten-second owner-fenced, single-in-flight Begin keepalives that never replay requests or advance byte offsets.
+- Preserve startup reconnect grace; expired exact checkpoints enter WaitingUser with retained partials and fence late chunks/EOF. Corrupt-store recovery remains retryable and replaced/cancelled authority is untouched.
+
+## 0.22.10
+
+- Preserve installed Firefox full-browser-loss failure: verified browser/native-host exit leaves BrowserDownloading and a nonterminal 880,640-byte original-prefix-verified checkpoint after 120 seconds, with no publication/refetch.
+
+## 0.22.9
+
+- Record current installed Firefox stream cancellation: WaitingUser, 69,632 original-prefix hash-verified retained bytes, stable progress and no publication/refetch.
+- Prepare identity-checked browser stop control before stream selection, avoiding late shutdown observations that occur after legitimate completion.
+
+## 0.22.8
+
+- Add full-browser-loss qualification that stops only verified fixture browser processes, confirms native-host exit, preserves the daemon and records actual retained checkpoints without reconstructing session authority.
+
+## 0.22.7
+
+- Record two installed Firefox revoked-Blob runs on checked 3e7167c after actual capture interruption: stable WaitingUser, zero-byte retained prefix, one original producer GET and no publication/refetch.
+
+## 0.22.6
+
+- Synchronize installed Firefox interruption acceptance with the actual interrupted production capture and native WaitingUser, preventing earlier preview state from satisfying the wait.
+- Preserve native event timing that explains the failed observation before admission; repeat qualification remains pending until the strengthened fixture passes.
+
+## 0.22.5
+
+- Order resolver navigation writes and Blob interruption transitions per owning tab so an in-flight step cannot overwrite final recovery state.
+- Reject pre-issued control authorization for the same interrupted capture; preserve concurrency across unrelated tabs and replacement ownership fences.
+
+## 0.22.4
+
+- Record installed Firefox owning-tab loss acceptance on d18f30e: WaitingUser, 90,112 retained bytes matching the original prefix, stable late progress, one producer GET and no publication/refetch.
+
+## 0.22.3
+
+- Record installed Firefox service-loss acceptance on c6bd315: verified isolated daemon restart, WaitingUser recovery, 6,975,488 retained bytes matching the original prefix, one producer GET and no publication/refetch.
+
+## 0.22.2
+
+- Retry exact-stream native abort after service downtime when a stopped reader's persisted capture marker is interrupted or detached but its native job remains BrowserDownloading.
+- Preserve scope, generation, owner, epoch and tab fences plus existing acknowledged-checkpoint reconnect semantics; no original payload request is replayed.
+
+## 0.22.1
+
+- Preserve installed Firefox revoked-Blob observations and a reusable interruption fixture with exact daemon identity controls and sanitized settling diagnostics.
+- Record the reproduced daemon-restart gap and intermittent state drift as pending; a single passing revocation run does not close either recovery gate.
 
 ## 0.22.0
 

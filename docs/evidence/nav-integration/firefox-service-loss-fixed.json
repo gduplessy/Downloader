@@ -1,0 +1,126 @@
+{
+  "mode": "service-loss",
+  "outcome": "qualified",
+  "sourceRevision": "c6bd3153acd1b6d506868240640d4da77c395215",
+  "nativeBuildRevision": "d83fbbe608f83567d6429793004d449278a54c15",
+  "nativeVersion": "0.18.3",
+  "nativeBinarySha256": "fcfd3188fbd4eadef648b26fe2766bee9f7df6a01022b209779d632d4759759d",
+  "cliBinarySha256": "4de06a6ee01224b97dbc618fcd176e7bd4b733c8e3f302527b516eb3fdf92e80",
+  "browser": "Firefox/158.0",
+  "os": "win32",
+  "fixtureSha256": "f0bd9e86b117eccb73fbceeab5ca85116f4672fc4eb9e264f3755f13938837a6",
+  "diagnosticSourceChanges": false,
+  "diagnosticNativeWrapper": false,
+  "recovery": {
+    "state": "waiting_user",
+    "bytes": 6975488,
+    "originalBytes": 8388625,
+    "partialSha256": "8ee75735970f13d35da156fcf2970c0de43d1e0c6e07023a24bc2c41a3671e9a",
+    "intendedPrefixSha256": "8ee75735970f13d35da156fcf2970c0de43d1e0c6e07023a24bc2c41a3671e9a",
+    "sourceGeneration": 1,
+    "verifiedSha256": null,
+    "recoveryMessage": "browser_worker_interrupted: request a fresh action in the owning browser; original requests are never replayed",
+    "noPublication": true,
+    "noRefetch": true,
+    "lateProgressUnchanged": true,
+    "elapsedMs": 41249
+  },
+  "settledDiagnostic": {
+    "native": {
+      "state": "waiting_user",
+      "bytes": 6975488,
+      "total": null,
+      "sourceGeneration": 1,
+      "verifiedSha256": null,
+      "hasError": true,
+      "errorCode": "browser_worker_interrupted",
+      "navigationScope": {
+        "browser": "firefox",
+        "cookie_store_id": "firefox-container-6",
+        "container_id": "firefox-container-6",
+        "private": false,
+        "claim_generation": 1
+      }
+    },
+    "markers": {
+      "sessionAreaAvailable": true,
+      "local": {
+        "resolver": {
+          "state": null,
+          "tabId": 5,
+          "sourceGeneration": 1,
+          "documentGeneration": 1,
+          "kind": null,
+          "hasDocumentNonce": false,
+          "scope": {
+            "browser": "firefox",
+            "cookie_store_id": "firefox-container-6",
+            "container_id": "firefox-container-6",
+            "private": false,
+            "claim_generation": 1
+          }
+        },
+        "capture": null
+      },
+      "session": {
+        "resolver": {
+          "state": null,
+          "tabId": 5,
+          "sourceGeneration": 1,
+          "documentGeneration": 1,
+          "kind": null,
+          "hasDocumentNonce": true,
+          "scope": {
+            "browser": "firefox",
+            "cookie_store_id": "firefox-container-6",
+            "container_id": "firefox-container-6",
+            "private": false,
+            "claim_generation": 1
+          }
+        },
+        "capture": {
+          "state": "interrupted",
+          "tabId": 5,
+          "sourceGeneration": 1,
+          "documentGeneration": null,
+          "kind": "blob",
+          "hasDocumentNonce": true,
+          "scope": {
+            "browser": "firefox",
+            "cookie_store_id": "firefox-container-6",
+            "container_id": "firefox-container-6",
+            "private": false,
+            "claim_generation": 1
+          }
+        }
+      },
+      "documentNonceEquivalent": true
+    }
+  },
+  "daemonControl": {
+    "terminatedOwnDaemon": true,
+    "originalPid": 11292,
+    "originalCreated": "2026-10-14T13:51:13.681171Z",
+    "replacementPid": 37384,
+    "replacementCreated": "2026-10-14T13:51:51.737319Z"
+  },
+  "payloadRequestCount": 1,
+  "sourceHashes": {
+    "apps/extension/src/background.ts": "948154914acfa2b51f8efb10746e771ee2b256f49f5b4b0e135c09105d98cac7",
+    "apps/extension/src/resolver.ts": "5268153e996f5aee1aa32494c0ea4231aae19b107908aab8d9d310e30a700f8e",
+    "apps/extension/src/navigation/session/scope.ts": "447a6ad3a08067f1a5bc7e63f6656cb70acf1eeaedde2bb92e1e09b84bd34d2c",
+    "apps/extension/src/navigation/session/source.ts": "7260b130785aba5adb8d2b03ea3a834436c6d5bc592087e68cc32c23033ec985",
+    "apps/extension/src/navigation/streams/blob.ts": "752894243a75fa5d77435947e5e8882a76d8e7c3cadd72fc796429c1d9965217",
+    "apps/extension/src/navigation/streams/transport.ts": "db7f24424a6d19101c085e83f7baf0224f514a6a4578cd31700bc9ca56b9979b"
+  },
+  "bundleHashes": {
+    "background": "7747138673550481871bca0c50e48dad5d66516bc9a1ee5de285418301a9bbe9",
+    "resolver": "06be4cae03e91441b33401f9b8f8987d7f1d9802ffd55086c1b0adf85497aebf",
+    "scopeHelper": "005f02e5d14750d2fd24f54fd1fd2bce349f502c7e752a28354dd7f5aaeaacc6"
+  },
+  "limits": [
+    "Initial activation uses registered menu listener rather than native menu UI",
+    "Intermittent revoked-Blob state drift remains pending",
+    "Full browser loss, private-addon permission, ESR, other OS and live-host acceptance remain pending"
+  ]
+}
