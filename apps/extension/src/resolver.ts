@@ -38,6 +38,7 @@ let documentActive = true;
 let challengeHandle: { close(): void } | undefined;
 let previewHandle: PreviewHandle | undefined;
 let running = false;
+let stepPending = false;
 let accountPanel: { close: () => void } | undefined;
 const submissions = new SubmissionGate();
 async function context(): Promise<ResolverContext | null> {
@@ -253,16 +254,24 @@ async function submit(
   if (reply?.repeat) setTimeout(() => void step(), 1000);
 }
 async function step() {
-  if (running || !documentActive) return;
+  if (!documentActive) return;
+  if (running) {
+    stepPending = true;
+    return;
+  }
   running = true;
   try {
     accountPanel?.close();
     accountPanel = undefined;
     challengeHandle?.close();
     challengeHandle = undefined;
+    // Keep recovery controls visible when a refresh cannot yet revalidate ownership.
+    // A stale preview cannot submit; its Refresh action can request fresh authority.
+    previewHandle?.stale();
+    let ctx = await context();
+    if (previewHandle && !ctx) return;
     previewHandle?.close();
     previewHandle = undefined;
-    let ctx = await context();
     if (ctx) {
       challengeHandle =
         (await showChallenge(
@@ -414,6 +423,10 @@ async function step() {
     if (reply?.repeat) setTimeout(() => void step(), 1000);
   } finally {
     running = false;
+    if (stepPending && documentActive) {
+      stepPending = false;
+      void step().catch(() => {});
+    }
   }
 }
 const root = globalThis as typeof globalThis & { __downloaderResolver?: boolean };

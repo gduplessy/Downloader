@@ -185,7 +185,7 @@ export function showPreview(
   submit.disabled = true;
   button(words[3], close);
   button(words[4], () => {
-    close();
+    stale();
     refresh();
   });
   if (disableAdapter && preview.binding.adapterId !== 'generic') {
@@ -200,7 +200,7 @@ export function showPreview(
     button(labels[locale] ?? labels.en, () => {
       void disableAdapter()
         .then(() => {
-          close();
+          stale();
           refresh();
         })
         .catch(() => {

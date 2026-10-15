@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.24.1
+
+- Retain stale preview recovery controls if fresh owned context is temporarily unavailable; refreshing never reuses old authorization.
+- Coalesce refresh requests received during an active resolver observation so the latest document generation gets a fresh authority check.
+- Add deterministic rejected-context and overlapping-refresh regressions; installed post-fix repetition is tracked separately from historical 0.24.0 evidence.
+
 ## 0.24.0
 
 - Record actual installed Chrome/Edge adapter disable and changed-layout refusal gates with exact historical source/native fingerprints, zero payload/trap requests and no publication.
