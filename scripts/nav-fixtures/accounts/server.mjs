@@ -71,6 +71,7 @@ export async function startAccountFixtureServer({
   port = 18783,
   harness = '.local/nav-accounts/account-harness.js',
   accountPayloads = {},
+  pageOwnedBlob = false,
 } = {}) {
   const counts = { login: 0, file: 0, purchase: 0 };
   const sessions = new Map();
@@ -148,7 +149,22 @@ export async function startAccountFixtureServer({
       return;
     }
     res.setHeader('Content-Type', 'text/html');
-    res.end(page(provider, scenario, { account: session?.account, authenticated: !!session }));
+    let document = page(provider, scenario, {
+      account: session?.account,
+      authenticated: !!session,
+    });
+    if (
+      pageOwnedBlob &&
+      session &&
+      ['account', 'expired-entitlement', 'quota', 'unknown'].includes(scenario)
+    ) {
+      document = document.replace(
+        'data-nav-fixture-control data-nav-premium-control download href="',
+        'id="premium-download" download href="',
+      );
+      document += `<button id="prepare-download" type="button">Prepare permitted download</button><script>(()=>{const link=document.getElementById('premium-download');const url=link.href;link.removeAttribute('href');document.getElementById('prepare-download').addEventListener('click',async()=>{const response=await fetch(url);if(!response.ok)throw Error('Fixture file refused');const blob=await response.blob();link.href=URL.createObjectURL(blob);link.setAttribute('data-nav-fixture-control','');link.setAttribute('data-nav-premium-control','');document.documentElement.dataset.fixtureBlobReady='true'},{once:true})})()</script>`;
+    }
+    res.end(document);
   });
   await new Promise((resolve) => server.listen(port, '127.0.0.1', resolve));
   return {

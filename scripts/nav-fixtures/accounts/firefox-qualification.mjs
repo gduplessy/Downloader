@@ -80,6 +80,7 @@ const fixture = await startAccountFixtureServer({
   port: 0,
   harness: resolve(dir, 'absent-mocked-harness.js'),
   accountPayloads: payloads,
+  pageOwnedBlob: true,
 });
 const base = fixture.base;
 const report = {
@@ -93,6 +94,8 @@ const report = {
   initialActivation:
     'Synthetic invocation of unchanged registered production context-menu listener using actual browser.tabs.get metadata',
   nativeContextMenuUiQualified: false,
+  supportedDownloadLane:
+    'Authenticated original page fetch to owned Blob, streamed directly to desktop',
   productionSourceChanges: ['Unique native host address substitution only'],
   rows: [],
   negative: [],
