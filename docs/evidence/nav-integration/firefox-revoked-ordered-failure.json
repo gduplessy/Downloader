@@ -1,0 +1,79 @@
+{
+  "outcome": "fixture observation failed before stream admission; not proof of post-abort state drift",
+  "sourceRevision": "92761583588f7f64678bc54d66b0b50ab87927d1",
+  "mode": "revoked-blob",
+  "nativeBuildRevision": "d83fbbe608f83567d6429793004d449278a54c15",
+  "settledDiagnostic": {
+    "native": {
+      "state": "waiting_browser",
+      "bytes": 0,
+      "total": null,
+      "sourceGeneration": 1,
+      "verifiedSha256": null,
+      "hasError": true,
+      "errorCode": null,
+      "navigationScope": {
+        "browser": "firefox",
+        "cookie_store_id": "firefox-container-6",
+        "container_id": "firefox-container-6",
+        "private": false,
+        "claim_generation": 1
+      }
+    },
+    "markers": {
+      "sessionAreaAvailable": true,
+      "local": {
+        "resolver": {
+          "state": null,
+          "tabId": 5,
+          "sourceGeneration": 1,
+          "documentGeneration": 1,
+          "kind": null,
+          "hasDocumentNonce": false,
+          "scope": {
+            "browser": "firefox",
+            "cookie_store_id": "firefox-container-6",
+            "container_id": "firefox-container-6",
+            "private": false,
+            "claim_generation": 1
+          }
+        },
+        "capture": null
+      },
+      "session": {
+        "resolver": {
+          "state": null,
+          "tabId": 5,
+          "sourceGeneration": 1,
+          "documentGeneration": 1,
+          "kind": null,
+          "hasDocumentNonce": true,
+          "scope": {
+            "browser": "firefox",
+            "cookie_store_id": "firefox-container-6",
+            "container_id": "firefox-container-6",
+            "private": false,
+            "claim_generation": 1
+          }
+        },
+        "capture": null
+      },
+      "documentNonceEquivalent": false
+    }
+  },
+  "payloadRequestCount": 1,
+  "diagnosticSourceChanges": false,
+  "diagnosticNativeWrapper": false,
+  "observation": "The initial WaitingUser was preview state; settled WaitingBrowser preceded first stream admission and abort. Persisted final job is WaitingUser with a terminal zero-byte checkpoint.",
+  "limits": [
+    "Fixture must synchronize with matching interrupted capture before checking stable recovery",
+    "This failed observation does not qualify revocation acceptance or establish capture-marker removal"
+  ],
+  "nativeEventTimesUtc": {
+    "previewWaitingUser": "2026-10-14T14:02:30.408Z",
+    "selectedWaitingBrowser": "2026-10-14T14:02:32.258Z",
+    "fixtureFailureWritten": "2026-10-14T14:02:32.9149652Z",
+    "streamBegin": "2026-10-14T14:02:33.1080611Z",
+    "streamAbort": "2026-10-14T14:02:33.1461239Z"
+  }
+}

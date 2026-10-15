@@ -1,0 +1,50 @@
+{
+  "outcome": "reproduced bounded recovery failure",
+  "mode": "browser-loss",
+  "sourceRevision": "653affed27f23877fd2545e360a06ab7057c4c60",
+  "nativeBuildRevision": "d83fbbe608f83567d6429793004d449278a54c15",
+  "nativeBinarySha256": "fcfd3188fbd4eadef648b26fe2766bee9f7df6a01022b209779d632d4759759d",
+  "cliBinarySha256": "4de06a6ee01224b97dbc618fcd176e7bd4b733c8e3f302527b516eb3fdf92e80",
+  "diagnosticSourceChanges": false,
+  "diagnosticNativeWrapper": false,
+  "control": {
+    "stopRequestedAt": "2026-10-14T17:18:56.14Z",
+    "stopCompletedAt": "2026-10-14T17:18:57.558Z",
+    "browserAndNativeHostsExited": true,
+    "preservedDaemonIdentity": {
+      "pid": 42896,
+      "created": "2026-10-14T17:18:02.980264Z"
+    },
+    "noBrowserRestartOrEpochMutation": true
+  },
+  "observed": {
+    "state": "browser_downloading",
+    "bytes": 880640,
+    "sourceGeneration": 1,
+    "verifiedSha256": null,
+    "checkpoints": [
+      {
+        "offset": 880640,
+        "total": null,
+        "terminal": false,
+        "sourceGeneration": 1
+      }
+    ],
+    "partialLength": 880640,
+    "partialSha256": "eccf15ca137aabd78620070fc726263040b2dc00ec2f104b16f51c09985aa383",
+    "intendedPrefixSha256": "eccf15ca137aabd78620070fc726263040b2dc00ec2f104b16f51c09985aa383",
+    "publishedLength": null,
+    "publishedSha256": null,
+    "controlTooLate": false,
+    "noPublication": true,
+    "originalGetCount": 1,
+    "otherGetCount": 0,
+    "waitDeadlineMs": 120000,
+    "noBrowserRestartOrEpochMutation": true
+  },
+  "limits": [
+    "Failure reproduced with installed Firefox158 Windows fixture and original page-owned Blob",
+    "Initial activation invokes registered menu listener",
+    "No successful full-browser-loss recovery claimed; bounded reader liveness repair pending"
+  ]
+}

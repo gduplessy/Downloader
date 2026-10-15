@@ -1,12 +1,36 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.22.0<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.22.14<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 NAV-11 review hardening (0.21.2) isolates private pending origins from regular cleanup and checks fresh native authority after queue admission before opening a source URL. Mutable caller snapshots cannot change frozen navigation intent. Current main's expiry regression and qualification histories are retained.
 
 NAV-11 reviewed merge (0.21.3) preserves installed transfer qualification and [Firefox queued-container smoke evidence](evidence/nav-integration/firefox-scope-reviewed.json) from checked review fixes. Both native files match their distinct expected hashes; original user tabs remain open and no payload is refetched by native code.
 
 NAV-11/NAV-12 partition qualification (0.22.0) integrates [actual Chrome/Edge partition evidence](evidence/nav-browser-streams/partition-qualification.md): two top-level sites in one profile/store, distinct matching native Blob hashes, and missing-cookie-permission refusal before job creation. Records retain their historical checked source and native revisions. Arbitrary embedded-frame capture and remaining audit gates stay pending.
+
+NAV-08 recovery investigation (0.22.1) records [installed Firefox revoked-Blob evidence](evidence/nav-integration/firefox-revoked-blob.json). One run preserves zero bytes, no publication/refetch and WaitingUser, while an earlier settling run showed intermittent state drift. Actual daemon loss leaves a persisted nonterminal browser stream at BrowserDownloading after restart; repair and repeat acceptance remain pending.
+
+NAV-08 abort recovery (0.22.2) retries an exact interrupted/detached stream after native downtime while preserving existing live-reader checkpoint reconnect semantics. Scope, owner, generation, epoch and tab fences remain required; installed service-loss repeat acceptance and intermittent revoked-Blob state drift are still pending.
+
+NAV-08 service-loss repeat (0.22.3) passes installed Firefox158 on checked c6bd315: exact daemon restart, WaitingUser, 6,975,488 retained bytes with matching original-prefix hash, stable late progress and no publication/refetch. See [recorded evidence](evidence/nav-integration/firefox-service-loss-fixed.json). Intermittent revoked-Blob drift and full browser loss remain pending.
+
+NAV-08 owning-tab loss (0.22.4) passes installed Firefox158 on checked d18f30e: WaitingUser with 90,112 original-prefix hash-verified retained bytes, stable late progress and one original producer GET. The original user source tab remains open. See [evidence](evidence/nav-integration/firefox-reader-loss.json); full browser loss remains pending.
+
+NAV-08 interruption ordering (0.22.5) serializes resolver writes and Blob interruption transitions per owning tab, rejecting old control authorization after the matching interruption marker. Cross-tab concurrency remains available. Installed revoked-Blob repeat acceptance remains pending.
+
+NAV-08 fixture synchronization (0.22.6) requires the actual interrupted capture marker and native WaitingUser before checking retained bytes. Native event timing shows the failed repeat observed preview state before stream admission; it does not prove marker removal or post-abort state drift. Strengthened installed repeat acceptance remains pending.
+
+NAV-08 revoked-Blob repeat (0.22.7) passes two installed Firefox158 runs on checked 3e7167c with actual matching interruption marker, stable WaitingUser, zero-byte original-prefix verification, one original producer GET and no publication/refetch. See [evidence](evidence/nav-integration/firefox-revoked-admitted.json). Full browser loss remains pending.
+
+NAV-07/NAV-08 browser-loss fixture (0.22.8) verifies actual isolated browser/native-host process exit while preserving the daemon, then checks bounded manual recovery and retained partials without browser restart or epoch mutation. Installed acceptance remains pending.
+
+NAV-08 current cancellation (0.22.9) passes installed Firefox158 on checked 173e957: WaitingUser with 69,632 original-prefix hash-verified retained bytes, stable progress, one producer GET and no publication/refetch. Browser-loss shutdown controls are prepared before consumption because the first run completed before shutdown; full browser loss remains pending.
+
+NAV-07/NAV-08 full-browser-loss evidence (0.22.10) reproduces a recovery gap on checked 653affe: verified browser/native-host exit, preserved daemon, and BrowserDownloading/nonterminal checkpoint after 120 seconds. The 880,640-byte retained partial matches the original prefix; no final publication or refetch occurred. See [negative evidence](evidence/nav-integration/firefox-browser-loss-negative.json). Bounded reader liveness repair and repeat acceptance remain pending.
+
+NAV-07/NAV-08 reader liveness (0.22.11) adds 45-second monotonic reader leases, startup reconnect grace and ten-second exact-owner Begin keepalives without payload replay or offset advancement. Expiry retains the partial and fences late chunk/EOF. Focused native and extension regressions pass; full native verification and rebuilt installed browser-loss acceptance remain pending.
+
+NAV-07/NAV-08 Firefox browser loss (0.22.12) passes installed Firefox158/Windows on checked be7484d and matching rebuilt native0.22.11: verified browser/native-host exit, preserved daemon, WaitingUser in 50.5 seconds, terminal checkpoint at 659,456 matching original-prefix bytes, stable progress and no publication/refetch. See [evidence](evidence/nav-integration/firefox-browser-loss-fixed.json). Full native152-test suite, strict Clippy/format and extension199 tests pass. Other browser targets, live-reader idle and peak-buffer acceptance remain separate.
 
 This roadmap tracks implemented capabilities and remaining limitations stated in the README, compatibility matrix, acceptance evidence, and component notices. Optional FlareSolverr browser-challenge resolution is implemented; live-host qualification and custom CAPTCHA adapters remain open.
 

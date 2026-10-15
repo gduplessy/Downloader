@@ -1,0 +1,121 @@
+{
+  "mode": "revoked-blob",
+  "outcome": "passed single diagnostic run; intermittent earlier state drift remains pending",
+  "sourceRevision": "a888dbfad2ab300f33bf0945b5f53871ac071b7c",
+  "nativeBuildRevision": "d83fbbe608f83567d6429793004d449278a54c15",
+  "nativeVersion": "0.18.3",
+  "nativeBinarySha256": "fcfd3188fbd4eadef648b26fe2766bee9f7df6a01022b209779d632d4759759d",
+  "cliBinarySha256": "4de06a6ee01224b97dbc618fcd176e7bd4b733c8e3f302527b516eb3fdf92e80",
+  "browser": "Firefox/158.0",
+  "os": "win32",
+  "fixtureSha256": "5e66d4485f3146c90a4afb5e106bd2a4c99ebc5a49e9cbe8c85a6f923ade09ea",
+  "diagnosticSourceChanges": false,
+  "diagnosticNativeWrapper": false,
+  "initialActivation": "synthetic invocation of unchanged registered context-menu listener with actual browser.tabs.get metadata",
+  "recovery": {
+    "state": "waiting_user",
+    "bytes": 0,
+    "originalBytes": 8388625,
+    "partialSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "intendedPrefixSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sourceGeneration": 1,
+    "verifiedSha256": null,
+    "recoveryMessage": "Browser stream interrupted; request a fresh provider action",
+    "noPublication": true,
+    "noRefetch": true,
+    "lateProgressUnchanged": true,
+    "elapsedMs": 1926
+  },
+  "settledDiagnostic": {
+    "native": {
+      "state": "waiting_user",
+      "bytes": 0,
+      "total": null,
+      "sourceGeneration": 1,
+      "verifiedSha256": null,
+      "hasError": true,
+      "errorCode": null,
+      "navigationScope": {
+        "browser": "firefox",
+        "cookie_store_id": "firefox-container-6",
+        "container_id": "firefox-container-6",
+        "private": false,
+        "claim_generation": 1
+      }
+    },
+    "markers": {
+      "sessionAreaAvailable": true,
+      "local": {
+        "resolver": {
+          "state": null,
+          "tabId": 5,
+          "sourceGeneration": 1,
+          "documentGeneration": 1,
+          "kind": null,
+          "hasDocumentNonce": false,
+          "scope": {
+            "browser": "firefox",
+            "cookie_store_id": "firefox-container-6",
+            "container_id": "firefox-container-6",
+            "private": false,
+            "claim_generation": 1
+          }
+        },
+        "capture": null
+      },
+      "session": {
+        "resolver": {
+          "state": null,
+          "tabId": 5,
+          "sourceGeneration": 1,
+          "documentGeneration": 1,
+          "kind": null,
+          "hasDocumentNonce": true,
+          "scope": {
+            "browser": "firefox",
+            "cookie_store_id": "firefox-container-6",
+            "container_id": "firefox-container-6",
+            "private": false,
+            "claim_generation": 1
+          }
+        },
+        "capture": {
+          "state": "interrupted",
+          "tabId": 5,
+          "sourceGeneration": 1,
+          "documentGeneration": null,
+          "kind": "blob",
+          "hasDocumentNonce": true,
+          "scope": {
+            "browser": "firefox",
+            "cookie_store_id": "firefox-container-6",
+            "container_id": "firefox-container-6",
+            "private": false,
+            "claim_generation": 1
+          }
+        }
+      },
+      "documentNonceEquivalent": true
+    }
+  },
+  "payloadRequestCount": 1,
+  "originalSourceTabsRetained": true,
+  "sourceHashes": {
+    "apps/extension/src/background.ts": "6c3a33851eac93af6d28ec0fed8365643046792e7a1bccdce8e553a36d0abc2e",
+    "apps/extension/src/resolver.ts": "5268153e996f5aee1aa32494c0ea4231aae19b107908aab8d9d310e30a700f8e",
+    "apps/extension/src/navigation/session/scope.ts": "447a6ad3a08067f1a5bc7e63f6656cb70acf1eeaedde2bb92e1e09b84bd34d2c",
+    "apps/extension/src/navigation/session/source.ts": "7260b130785aba5adb8d2b03ea3a834436c6d5bc592087e68cc32c23033ec985",
+    "apps/extension/src/navigation/streams/blob.ts": "752894243a75fa5d77435947e5e8882a76d8e7c3cadd72fc796429c1d9965217",
+    "apps/extension/src/navigation/streams/transport.ts": "db7f24424a6d19101c085e83f7baf0224f514a6a4578cd31700bc9ca56b9979b"
+  },
+  "bundleHashes": {
+    "background": "5671aae5a83c14ffcf9a6ce84a555ba4f5b99d221313718195ce6f3b1906d979",
+    "resolver": "06be4cae03e91441b33401f9b8f8987d7f1d9802ffd55086c1b0adf85497aebf",
+    "scopeHelper": "3889d547766ec4712585283bdc8b4cbf20bf1606eacbe195f3e89c3155908739"
+  },
+  "limits": [
+    "Single passing run does not resolve earlier intermittent WaitingUser to WaitingBrowser drift",
+    "Service-loss recovery remains pending after verified daemon restart timeout",
+    "Native menu UI, private-addon permission, ESR, other OS and live-host qualification remain pending"
+  ]
+}

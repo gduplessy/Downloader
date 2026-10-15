@@ -1,0 +1,276 @@
+{
+  "mode": "revoked-blob",
+  "outcome": "two installed runs passed after admission-aware synchronization",
+  "runs": [
+    {
+      "outcome": "qualified",
+      "sourceRevision": "3e7167cf9688657975331e0b1967869877d873e9",
+      "nativeBuildRevision": "d83fbbe608f83567d6429793004d449278a54c15",
+      "nativeVersion": "0.18.3",
+      "nativeBinarySha256": "fcfd3188fbd4eadef648b26fe2766bee9f7df6a01022b209779d632d4759759d",
+      "cliBinarySha256": "4de06a6ee01224b97dbc618fcd176e7bd4b733c8e3f302527b516eb3fdf92e80",
+      "browser": "Firefox/158.0",
+      "os": "win32",
+      "fixtureSha256": "8c7022842579c455e1a75dc26a6b3007674ce624e275289e23c20fb4d0dda134",
+      "diagnosticSourceChanges": false,
+      "diagnosticNativeWrapper": false,
+      "recovery": {
+        "state": "waiting_user",
+        "bytes": 0,
+        "originalBytes": 8388625,
+        "partialSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "intendedPrefixSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sourceGeneration": 1,
+        "verifiedSha256": null,
+        "recoveryMessage": "Browser stream interrupted; request a fresh provider action",
+        "noPublication": true,
+        "noRefetch": true,
+        "lateProgressUnchanged": true,
+        "elapsedMs": 7967
+      },
+      "settledDiagnostic": {
+        "native": {
+          "state": "waiting_user",
+          "bytes": 0,
+          "total": null,
+          "sourceGeneration": 1,
+          "verifiedSha256": null,
+          "hasError": true,
+          "errorCode": null,
+          "navigationScope": {
+            "browser": "firefox",
+            "cookie_store_id": "firefox-container-6",
+            "container_id": "firefox-container-6",
+            "private": false,
+            "claim_generation": 1
+          }
+        },
+        "markers": {
+          "capture": {
+            "state": "interrupted",
+            "tabId": 5,
+            "sourceGeneration": 1,
+            "documentGeneration": null,
+            "kind": "blob",
+            "hasDocumentNonce": true,
+            "hasStreamId": true,
+            "scope": {
+              "browser": "firefox",
+              "cookie_store_id": "firefox-container-6",
+              "container_id": "firefox-container-6",
+              "private": false,
+              "claim_generation": 1
+            }
+          },
+          "captureScopeMatchesNative": true,
+          "sessionAreaAvailable": true,
+          "local": {
+            "resolver": {
+              "state": null,
+              "tabId": 5,
+              "sourceGeneration": 1,
+              "documentGeneration": 1,
+              "kind": null,
+              "hasDocumentNonce": false,
+              "hasStreamId": false,
+              "scope": {
+                "browser": "firefox",
+                "cookie_store_id": "firefox-container-6",
+                "container_id": "firefox-container-6",
+                "private": false,
+                "claim_generation": 1
+              }
+            },
+            "capture": null
+          },
+          "session": {
+            "resolver": {
+              "state": null,
+              "tabId": 5,
+              "sourceGeneration": 1,
+              "documentGeneration": 1,
+              "kind": null,
+              "hasDocumentNonce": true,
+              "hasStreamId": false,
+              "scope": {
+                "browser": "firefox",
+                "cookie_store_id": "firefox-container-6",
+                "container_id": "firefox-container-6",
+                "private": false,
+                "claim_generation": 1
+              }
+            },
+            "capture": {
+              "state": "interrupted",
+              "tabId": 5,
+              "sourceGeneration": 1,
+              "documentGeneration": null,
+              "kind": "blob",
+              "hasDocumentNonce": true,
+              "hasStreamId": true,
+              "scope": {
+                "browser": "firefox",
+                "cookie_store_id": "firefox-container-6",
+                "container_id": "firefox-container-6",
+                "private": false,
+                "claim_generation": 1
+              }
+            }
+          },
+          "documentNonceEquivalent": true
+        }
+      },
+      "payloadRequestCount": 1,
+      "sourceHashes": {
+        "apps/extension/src/background.ts": "b17383a63aee64ca50f9121174e7879cba8610a0c451b07d853d167c77dc9ed3",
+        "apps/extension/src/resolver.ts": "5268153e996f5aee1aa32494c0ea4231aae19b107908aab8d9d310e30a700f8e",
+        "apps/extension/src/navigation/session/scope.ts": "447a6ad3a08067f1a5bc7e63f6656cb70acf1eeaedde2bb92e1e09b84bd34d2c",
+        "apps/extension/src/navigation/session/source.ts": "7260b130785aba5adb8d2b03ea3a834436c6d5bc592087e68cc32c23033ec985",
+        "apps/extension/src/navigation/streams/blob.ts": "752894243a75fa5d77435947e5e8882a76d8e7c3cadd72fc796429c1d9965217",
+        "apps/extension/src/navigation/streams/transport.ts": "db7f24424a6d19101c085e83f7baf0224f514a6a4578cd31700bc9ca56b9979b"
+      },
+      "bundleHashes": {
+        "background": "77956c6d9856fb1bcfcc82607f435e5fbfdf6625336195533ff65f39fb168fc4",
+        "resolver": "06be4cae03e91441b33401f9b8f8987d7f1d9802ffd55086c1b0adf85497aebf",
+        "scopeHelper": "a897e9238833e3c7e30ed1b20aff7752936b17e9157277b532fc062e835d5018"
+      }
+    },
+    {
+      "outcome": "qualified",
+      "sourceRevision": "3e7167cf9688657975331e0b1967869877d873e9",
+      "nativeBuildRevision": "d83fbbe608f83567d6429793004d449278a54c15",
+      "nativeVersion": "0.18.3",
+      "nativeBinarySha256": "fcfd3188fbd4eadef648b26fe2766bee9f7df6a01022b209779d632d4759759d",
+      "cliBinarySha256": "4de06a6ee01224b97dbc618fcd176e7bd4b733c8e3f302527b516eb3fdf92e80",
+      "browser": "Firefox/158.0",
+      "os": "win32",
+      "fixtureSha256": "8c7022842579c455e1a75dc26a6b3007674ce624e275289e23c20fb4d0dda134",
+      "diagnosticSourceChanges": false,
+      "diagnosticNativeWrapper": false,
+      "recovery": {
+        "state": "waiting_user",
+        "bytes": 0,
+        "originalBytes": 8388625,
+        "partialSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "intendedPrefixSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sourceGeneration": 1,
+        "verifiedSha256": null,
+        "recoveryMessage": "Browser stream interrupted; request a fresh provider action",
+        "noPublication": true,
+        "noRefetch": true,
+        "lateProgressUnchanged": true,
+        "elapsedMs": 3477
+      },
+      "settledDiagnostic": {
+        "native": {
+          "state": "waiting_user",
+          "bytes": 0,
+          "total": null,
+          "sourceGeneration": 1,
+          "verifiedSha256": null,
+          "hasError": true,
+          "errorCode": null,
+          "navigationScope": {
+            "browser": "firefox",
+            "cookie_store_id": "firefox-container-6",
+            "container_id": "firefox-container-6",
+            "private": false,
+            "claim_generation": 1
+          }
+        },
+        "markers": {
+          "capture": {
+            "state": "interrupted",
+            "tabId": 5,
+            "sourceGeneration": 1,
+            "documentGeneration": null,
+            "kind": "blob",
+            "hasDocumentNonce": true,
+            "hasStreamId": true,
+            "scope": {
+              "browser": "firefox",
+              "cookie_store_id": "firefox-container-6",
+              "container_id": "firefox-container-6",
+              "private": false,
+              "claim_generation": 1
+            }
+          },
+          "captureScopeMatchesNative": true,
+          "sessionAreaAvailable": true,
+          "local": {
+            "resolver": {
+              "state": null,
+              "tabId": 5,
+              "sourceGeneration": 1,
+              "documentGeneration": 1,
+              "kind": null,
+              "hasDocumentNonce": false,
+              "hasStreamId": false,
+              "scope": {
+                "browser": "firefox",
+                "cookie_store_id": "firefox-container-6",
+                "container_id": "firefox-container-6",
+                "private": false,
+                "claim_generation": 1
+              }
+            },
+            "capture": null
+          },
+          "session": {
+            "resolver": {
+              "state": null,
+              "tabId": 5,
+              "sourceGeneration": 1,
+              "documentGeneration": 1,
+              "kind": null,
+              "hasDocumentNonce": true,
+              "hasStreamId": false,
+              "scope": {
+                "browser": "firefox",
+                "cookie_store_id": "firefox-container-6",
+                "container_id": "firefox-container-6",
+                "private": false,
+                "claim_generation": 1
+              }
+            },
+            "capture": {
+              "state": "interrupted",
+              "tabId": 5,
+              "sourceGeneration": 1,
+              "documentGeneration": null,
+              "kind": "blob",
+              "hasDocumentNonce": true,
+              "hasStreamId": true,
+              "scope": {
+                "browser": "firefox",
+                "cookie_store_id": "firefox-container-6",
+                "container_id": "firefox-container-6",
+                "private": false,
+                "claim_generation": 1
+              }
+            }
+          },
+          "documentNonceEquivalent": true
+        }
+      },
+      "payloadRequestCount": 1,
+      "sourceHashes": {
+        "apps/extension/src/background.ts": "b17383a63aee64ca50f9121174e7879cba8610a0c451b07d853d167c77dc9ed3",
+        "apps/extension/src/resolver.ts": "5268153e996f5aee1aa32494c0ea4231aae19b107908aab8d9d310e30a700f8e",
+        "apps/extension/src/navigation/session/scope.ts": "447a6ad3a08067f1a5bc7e63f6656cb70acf1eeaedde2bb92e1e09b84bd34d2c",
+        "apps/extension/src/navigation/session/source.ts": "7260b130785aba5adb8d2b03ea3a834436c6d5bc592087e68cc32c23033ec985",
+        "apps/extension/src/navigation/streams/blob.ts": "752894243a75fa5d77435947e5e8882a76d8e7c3cadd72fc796429c1d9965217",
+        "apps/extension/src/navigation/streams/transport.ts": "db7f24424a6d19101c085e83f7baf0224f514a6a4578cd31700bc9ca56b9979b"
+      },
+      "bundleHashes": {
+        "background": "79c008a600dd2be4cb6f6ddd70e634bdcafe7d009a98b1f3b2622de72bec797d",
+        "resolver": "06be4cae03e91441b33401f9b8f8987d7f1d9802ffd55086c1b0adf85497aebf",
+        "scopeHelper": "327c644f2542e19c8338f0b36b41eae0503a906019023fc6fcbe194c3bedb884"
+      }
+    }
+  ],
+  "limits": [
+    "Registered-menu-listener initial activation; native menu UI pending",
+    "Full browser loss, private-addon permission, ESR, other OS and live hosts remain pending"
+  ]
+}

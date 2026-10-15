@@ -84,6 +84,46 @@ export class DurableStreamSink {
   peakBufferedBytes = 0;
   terminal = false;
   private admission?: Promise<StreamAck>;
+  private heartbeat?: ReturnType<typeof setInterval>;
+  private heartbeatPending = false;
+  private stopHeartbeat() {
+    if (this.heartbeat) clearInterval(this.heartbeat);
+    this.heartbeat = undefined;
+  }
+  private startHeartbeat(target: NavigationTarget, filename: string, total: number | null) {
+    this.stopHeartbeat();
+    const original = structuredClone({ target, filename, total });
+    this.heartbeat = setInterval(() => {
+      if (this.terminal || this.heartbeatPending) return;
+      this.heartbeatPending = true;
+      void (async () => {
+        await this.verifyOwner();
+        if (this.terminal) return;
+        const ack = await this.port.operation({
+          ...this.identity,
+          operation: 'begin',
+          ...original,
+        });
+        if (
+          ack.stream_id !== this.identity.stream_id ||
+          ack.claim_generation !== this.identity.scope.claim_generation ||
+          ack.source_generation !== this.identity.source_generation ||
+          ack.terminal
+        )
+          throw Error('Original reader lease was refused');
+        // Keepalive observes only authority; chunk acknowledgements alone advance offset.
+      })()
+        .catch((error) => {
+          // Keep retrying transient bridge loss; ownership/terminal refusals stop renewal.
+          if (!/disconnected|timed out|Engine is not running|Engine closed/i.test(String(error)))
+            this.stopHeartbeat();
+        })
+        .finally(() => {
+          this.heartbeatPending = false;
+        });
+    }, 10000);
+    (this.heartbeat as any).unref?.();
+  }
   constructor(
     readonly identity: StreamIdentity,
     private port: NativeStreamPort,
@@ -103,20 +143,20 @@ export class DurableStreamSink {
     if (this.terminal) throw Error('Stream is terminal');
   }
   async begin(target: NavigationTarget, filename: string, total: number | null) {
+    const original = structuredClone({ target, filename, total });
     this.assertOpen();
     await this.verifyOwner();
     this.assertOpen();
     this.admission = this.port.operation({
       ...this.identity,
       operation: 'begin',
-      target,
-      filename,
-      total,
+      ...original,
     });
     const ack = await this.admission;
     this.assertOpen();
     this.offset = ack.accepted_offset;
     this.validate(ack, this.offset);
+    this.startHeartbeat(original.target, original.filename, original.total);
   }
   async chunk(bytes: Uint8Array) {
     // A single outstanding frame bounds transport memory and propagates durable backpressure.
@@ -159,12 +199,14 @@ export class DurableStreamSink {
     this.validate(ack, this.offset);
     if (!ack.terminal) throw Error('Stream verification did not complete');
     this.terminal = true;
+    this.stopHeartbeat();
     this.port.close();
     this.onTerminal();
   }
   async abort(reason = 'interrupted') {
     if (this.terminal) return;
     this.terminal = true;
+    this.stopHeartbeat();
     try {
       // A dispatched begin may create its native checkpoint after cancellation.
       // Wait for that acknowledgement before sending the matching abort.
