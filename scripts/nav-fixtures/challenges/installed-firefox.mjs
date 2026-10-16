@@ -12,7 +12,7 @@ const require = createRequire(
 const { build } = require('esbuild');
 const scenario = process.env.NAV_CHALLENGE_CASE ?? 'csrf';
 assert(
-  ['fresh', 'cancel', 'csrf', 'image', 'selected-host'].includes(scenario),
+  ['fresh', 'cancel', 'csrf', 'image', 'selected-host', 'selected-host-node'].includes(scenario),
 );
 const driverHash = createHash('sha256')
   .update(await readFile(new URL(import.meta.url)))
@@ -580,6 +580,7 @@ try {
     const mutations = {
       csrf: 'document.querySelector("input[name=csrf]").value="public-fixture-replaced-csrf"',
       image: 'document.querySelector("img").src+="?replacement=1"',
+      'selected-host-node': '(()=>{const old=document.querySelector("input[name=selected_host]");const replacement=old.cloneNode(true);replacement.value="ddownload.com";old.replaceWith(replacement);return {oldConnected:old.isConnected,current:replacement.value}})()',
       'selected-host':
         'document.querySelector("input[name=selected_host]").value="ddownload.com"',
     };

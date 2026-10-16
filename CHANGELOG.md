@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.33.16
+
+- Add installed selected-host-node replacement qualification after the actual production Solve panel appears, retaining exact stale-refusal and zero-submission/publication gates. No authorization hooks or product runtime changes.
+
 ## 0.33.15
 
 - Fence actual CAPTCHA host input identity during freshness and synchronously before submission; require exactly one serialized selected_host matching authorized ownership. Regress initial/final digest node replacement and duplicate successful named controls while retaining unchanged exactly-once submission. Installed repeats remain bound to their actual checked source.
