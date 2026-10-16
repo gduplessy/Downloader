@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.34.3
+
+- Record passing installed Chrome popup controls with matched owned solver session lifecycle.
+
+
 ## 0.34.2
 
 - Record exact installed Chrome popup evidence; enforce matched solver session lifecycle and stable driver provenance for subsequent qualification.
