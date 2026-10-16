@@ -97,7 +97,7 @@ const report = {
     'Synthetic invocation of unchanged registered production context-menu listener using actual browser.tabs.get metadata',
   nativeContextMenuUiQualified: false,
   resolverRefresh:
-    'Actual resolver_continue message after original page Blob readiness, followed by trusted preview keyboard selection',
+    'Actual resolver_continue message after original page Blob readiness, followed by read-only actual closed-shadow layout inspection and trusted pointer selection',
   supportedDownloadLane:
     'Authenticated original page fetch to owned Blob, streamed directly to desktop',
   productionSourceChanges: ['Unique native host address substitution only'],
@@ -377,6 +377,10 @@ try {
   );
   assert.equal(report.nativeDiagnostics.ok, true);
   assert.equal(report.nativeDiagnostics.version, '0.25.1');
+  const actualProfile = await evaluate(
+    "browser.storage.local.get('profileId').then(value=>value.profileId)",
+  );
+  assert.equal(typeof actualProfile, 'string');
   const contexts = [];
   for (const name of ['alice', 'bob']) {
     const user = await send('browser.createUserContext');
@@ -580,23 +584,46 @@ try {
     }
     assert.ok(ownedContext, 'Actual owning account document not found');
     await send('browsingContext.activate', { context: ownedContext });
-    await send('input.performActions', {
-      context: ownedContext,
-      actions: [
-        {
-          type: 'key',
-          id: 'account-preview-choice',
-          actions: [
-            { type: 'keyDown', value: ' ' },
-            { type: 'keyUp', value: ' ' },
-            { type: 'keyDown', value: '\uE004' },
-            { type: 'keyUp', value: '\uE004' },
-            { type: 'keyDown', value: '\uE007' },
-            { type: 'keyUp', value: '\uE007' },
-          ],
-        },
-      ],
-    });
+    const inspectPreview = async () => {
+      const code = `(()=>{const host=document.getElementById('__downloader_adapter_preview');const root=host?.openOrClosedShadowRoot??(host&&browser.dom?.openOrClosedShadowRoot?.(host));if(!root)return null;const point=node=>{const rect=node.getBoundingClientRect();return {x:Math.floor(rect.x+rect.width/2),y:Math.floor(rect.y+rect.height/2)}};return {status:root.querySelector('[role=status]')?.textContent,radios:[...root.querySelectorAll('input[type=radio]')].map(node=>({text:node.closest('label')?.textContent,checked:node.checked,disabled:node.disabled,...point(node)})),buttons:[...root.querySelectorAll('button')].map(node=>({text:node.textContent,disabled:node.disabled,...point(node)}))}})()`;
+      const values = await json(
+        `browser.tabs.executeScript(${record.tabId},{frameId:0,code:${JSON.stringify(code)}}).then(JSON.stringify)`,
+      );
+      return values[0];
+    };
+    const preview = await wait(async () => {
+      const ui = await inspectPreview();
+      return ui?.radios.length === 1 &&
+        ui.radios[0].text.includes('Premium download') &&
+        !ui.radios[0].disabled
+        ? ui
+        : null;
+    }, 'Actual premium-only preview');
+    const pointer = async (point, id) =>
+      send('input.performActions', {
+        context: ownedContext,
+        actions: [
+          {
+            type: 'pointer',
+            id,
+            parameters: { pointerType: 'mouse' },
+            actions: [
+              { type: 'pointerMove', x: point.x, y: point.y, duration: 0, origin: 'viewport' },
+              { type: 'pointerDown', button: 0 },
+              { type: 'pointerUp', button: 0 },
+            ],
+          },
+        ],
+      });
+    await pointer(preview.radios[0], 'premium-radio-pointer');
+    const confirmation = await wait(async () => {
+      const ui = await inspectPreview();
+      return (
+        ui?.radios[0]?.checked &&
+        ui.buttons.find((button) => button.text === 'Continue' && !button.disabled)
+      );
+    }, 'Actual selected premium confirmation');
+    await pointer(confirmation, 'premium-confirm-pointer');
     job = await wait(() => {
       const current = list().find((j) => j.id === job.id);
       if (['failed', 'cancelled'].includes(current?.state))
@@ -606,6 +633,17 @@ try {
     const file = await readFile(job.destination);
     assert.equal(digest(file), digest(payloads[context.name]));
     assert.equal(file.length, payloads[context.name].length);
+    const finalTab = await json(`browser.tabs.get(${record.tabId}).then(JSON.stringify)`);
+    assert.equal(finalTab.cookieStoreId, context.cookieStoreId);
+    assert.equal(finalTab.incognito, false);
+    assert.equal(job.navigation_scope.cookie_store_id, finalTab.cookieStoreId);
+    assert.equal(job.navigation_scope.container_id, finalTab.cookieStoreId);
+    assert.equal(job.navigation_scope.private, false);
+    assert.equal(job.navigation_scope.browser, 'firefox');
+    assert.equal(job.navigation_scope.profile, actualProfile);
+    assert.equal(job.navigation_scope.claim_generation, record.scope.claim_generation);
+    assert.equal(job.source_generation, record.sourceGeneration);
+    assert.equal(job.verified_sha256, digest(payloads[context.name]));
     assert.equal(job.selected_host, 'ddownload.com');
     report.rows.push({
       account: context.name,
@@ -630,6 +668,18 @@ try {
     `(async()=>{try{const w=await browser.windows.create({incognito:true,url:'about:blank'});await browser.windows.remove(w.id);return JSON.stringify({permitted:true})}catch(error){return JSON.stringify({permitted:false,error:String(error)})}})()`,
   );
   report.privatePermission = privateResult;
+  for (const [name, hash] of Object.entries(binaries))
+    assert.equal(
+      digest(await readFile(resolve(dir, 'native', name))),
+      hash,
+      'Native binary changed during actual run',
+    );
+  assert.equal(
+    digest(await readFile(desktopBinary)),
+    report.helperSha256,
+    'Trusted helper changed during run',
+  );
+  report.postRunBinaryHashesVerified = true;
   report.outcome = 'passed';
 } catch (error) {
   try {
