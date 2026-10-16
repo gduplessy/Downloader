@@ -1,9 +1,12 @@
 # Changelog
 
+## 0.32.4
+
+- Integrate reviewed NAV dependencies; preserve product version consistency and historical changelog bytes.
+
 ## 0.32.3
 
 - Preserve historical changelog bytes without altering qualified browser stream behavior.
-
 
 ## 0.32.2
 
@@ -20,6 +23,22 @@
 
 - Add counted original browser-fetch to owned-Blob fixture modes for consume-on-HEAD, first GET, rotating cookies, expiry after consumption and redirect tokens, with exact desktop bytes and no HEAD/range/native replay.
 - Copy and verify immutable matching native executables per run, declare current fixture webNavigation capability and record bundle hashes. Navigation debugger GET, pre-request expiry UI, bounded page buffering and live-provider acceptance remain separate.
+
+## 0.31.4
+
+- Preserve historical changelog bytes and document unchanged-message installed wait qualification.
+
+## 0.31.2
+
+- Coalesce automatic wait wakes during selected navigation authorization so scheduler polling cannot invalidate an otherwise unchanged selected document before commit. Explicit user refresh and ownership/cancellation fences remain enforced. Preserve the reproduced installed failure trace.
+
+## 0.31.1
+
+- Keep bounded resolver diagnostic outcomes across document navigation and expose observer coverage; verify original API promise and callback semantics.
+
+## 0.31.0
+
+- Add bounded failure diagnostics for installed Retry-After action lifecycle investigations; preserve original runtime calls and verify isolated immutable native binaries.
 
 ## 0.30.5
 

@@ -1,0 +1,120 @@
+{
+  "fixture": "installed-production-retry-after-v1",
+  "resolver_trace_instrumented": true,
+  "observer_installations": 1,
+  "observed_resolver_outcomes": 6,
+  "source_revision": "84da977449447c6c3ab8068addc7dc17fc01e8c5",
+  "browser": "Chrome/155.0.8059.40",
+  "native_version": "0.25.1",
+  "native_build_revision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+  "native_binary_sha256": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+  "cli_binary_sha256": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c",
+  "fixture_sha256": "2b41f076238bf3894e7b4efb681452e2ca18821771fcd8ecdc4a2119f5f5486c",
+  "server_sha256": "a12e5886628c6437f076f2abeaf7722fd5077044b89ccf8fe1b7fd08b63b4e96",
+  "production_background_sha256": "b5295ab0ddb809cf8dd9b389057ea6446ab0db0307ea3b0aca41f60218457c5f",
+  "os": "win32",
+  "arch": "x64",
+  "results": [
+    {
+      "name": "date",
+      "initial_response": true,
+      "original_wait": {
+        "basis": "server",
+        "deadline_ms": 1792149638000,
+        "expires_at_ms": null,
+        "generation": 1,
+        "next_recheck_ms": 1792149674142,
+        "notified": false,
+        "observed_at_ms": 1792149628637,
+        "observed_duration_ms": 9363,
+        "reason": "retry_after:wait:f1430d863f0c42015c084bfc3f8283f2a61ae6c97fc40b3032c6aaa273a40be5",
+        "requires_live_tab": true,
+        "source_generation": 1
+      },
+      "distinct_owned_navigation": false,
+      "wait": {
+        "basis": "server",
+        "deadline_ms": 1792149638000,
+        "expires_at_ms": null,
+        "generation": 1,
+        "next_recheck_ms": 1792149674142,
+        "notified": false,
+        "observed_at_ms": 1792149628637,
+        "observed_duration_ms": 9363,
+        "reason": "retry_after:wait:f1430d863f0c42015c084bfc3f8283f2a61ae6c97fc40b3032c6aaa273a40be5",
+        "requires_live_tab": true,
+        "source_generation": 1
+      },
+      "server_deadline": 1792149638000,
+      "original_posts": 1,
+      "original_method": "POST",
+      "head_probes": 0,
+      "early_posts": 0,
+      "duplicate_posts": 0,
+      "navigation_gets": 1,
+      "worker_replaced": false,
+      "lifecycle": [
+        {
+          "event": "request",
+          "requestId": "5",
+          "tabId": 1557506678,
+          "timeStamp": 1792149626860.09,
+          "url": "http://127.0.0.1:40768/nav-adapters/gofile/limited?case=date"
+        },
+        {
+          "event": "navigate",
+          "tabId": 1557506678,
+          "timeStamp": 1792149626813.597,
+          "url": "http://127.0.0.1:40768/nav-adapters/gofile/limited?case=date"
+        },
+        {
+          "event": "committed",
+          "tabId": 1557506678,
+          "timeStamp": 1792149627215.249,
+          "url": "http://127.0.0.1:40768/nav-adapters/gofile/limited?case=date",
+          "documentId": "1D0E66B248A821DDF53EAABAA6EEFB60"
+        },
+        {
+          "event": "navigate",
+          "tabId": 1557506676,
+          "timeStamp": 1792149616744.947,
+          "url": "about:blank"
+        },
+        {
+          "event": "committed",
+          "tabId": 1557506676,
+          "timeStamp": 1792149680546.808,
+          "url": "about:blank",
+          "documentId": "908AB790BCA1F7C105A4C2D8C26AAA14"
+        },
+        {
+          "event": "navigate",
+          "tabId": 1557506678,
+          "timeStamp": 1792149690588.341,
+          "url": "http://127.0.0.1:40768/nav-adapters/gofile/submit?case=date"
+        },
+        {
+          "event": "request",
+          "requestId": "9",
+          "tabId": 1557506678,
+          "timeStamp": 1792149690593.315,
+          "url": "http://127.0.0.1:40768/nav-adapters/gofile/submit?case=date"
+        },
+        {
+          "event": "committed",
+          "tabId": 1557506678,
+          "timeStamp": 1792149690678.473,
+          "url": "http://127.0.0.1:40768/nav-adapters/gofile/submit?case=date",
+          "documentId": "E7512678D18DE049E60ABD10D1651A36"
+        }
+      ],
+      "headers_include_document_id": false,
+      "committed_document_ids_present": true
+    }
+  ],
+  "limits": [
+    "Synthetic original initial429/503; task-created tab receipt and post-load native scope; pregranted permissions; direct capture off",
+    "Firefox/other OS/live providers/private installed matrix remain separately pending; initial-response acceptance is limited to explicitly recorded initial rows",
+    "Readiness HTML acknowledgement, not file-transfer proof"
+  ]
+}
