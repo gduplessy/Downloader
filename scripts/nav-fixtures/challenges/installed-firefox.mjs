@@ -535,7 +535,7 @@ try {
     const code =
       '(()=>{const rootFor=node=>node?.openOrClosedShadowRoot??(node&&browser.dom?.openOrClosedShadowRoot?.(node));const host=document.getElementById(' +
       JSON.stringify(id) +
-      ')??[...document.querySelectorAll("div")].find(node=>rootFor(node)?.querySelector("section[role=dialog][aria-label=\"Image challenge\"]"));const root=rootFor(host);if(!root)return null;const point=node=>{const rect=node.getBoundingClientRect();return {x:Math.floor(rect.x+rect.width/2),y:Math.floor(rect.y+rect.height/2)}};return {status:root.querySelector("[role=status]")?.textContent,radios:[...root.querySelectorAll("input[type=radio]")].map(n=>({checked:n.checked,disabled:n.disabled,...point(n)})),buttons:[...root.querySelectorAll("button")].map(n=>({text:n.textContent,disabled:n.disabled,...point(n)}))}})()';
+      ')??[...document.querySelectorAll("div")].find(node=>rootFor(node)?.querySelector("section[role=dialog]")?.getAttribute("aria-label")==="Image challenge");const root=rootFor(host);if(!root)return null;const point=node=>{const rect=node.getBoundingClientRect();return {x:Math.floor(rect.x+rect.width/2),y:Math.floor(rect.y+rect.height/2)}};return {status:root.querySelector("[role=status]")?.textContent,radios:[...root.querySelectorAll("input[type=radio]")].map(n=>({checked:n.checked,disabled:n.disabled,...point(n)})),buttons:[...root.querySelectorAll("button")].map(n=>({text:n.textContent,disabled:n.disabled,...point(n)}))}})()';
     return (
       await json(
         'browser.tabs.executeScript(' +

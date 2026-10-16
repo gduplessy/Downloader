@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.33.6
+
+- Correct generated privileged inspection selector quoting and verify its executable script syntax before Firefox qualification.
+
 ## 0.33.5
 
 - Inspect the actual production closed-shadow host chooser without relying on nonexistent fixture IDs; Firefox execution remains pending.
