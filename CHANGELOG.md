@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.33.7
+
+- Integrate reviewed scheduler wake-coalescing fix 84da977 for dependent challenge qualification, preserving explicit refresh/cancel/ownership fences and both evidence histories. Installed challenge repeats remain pending.
+
 ## 0.33.6
 
 - Correct generated privileged inspection selector quoting and verify its executable script syntax before Firefox qualification.
@@ -27,6 +31,21 @@
 ## 0.33.0
 
 - Isolate installed CAPTCHA qualification with full-hash-verified native binaries and record production module source provenance. Edge/Firefox lifecycle acceptance remains pending actual runs.
+
+## 0.31.2
+
+- Coalesce automatic wait wakes during selected navigation authorization so scheduler polling cannot invalidate an otherwise unchanged selected document before commit. Explicit user refresh and ownership/cancellation fences remain enforced. Preserve the reproduced installed failure trace.
+
+
+## 0.31.1
+
+- Keep bounded resolver diagnostic outcomes across document navigation and expose observer coverage; verify original API promise and callback semantics.
+
+
+## 0.31.0
+
+- Add bounded failure diagnostics for installed Retry-After action lifecycle investigations; preserve original runtime calls and verify isolated immutable native binaries.
+
 
 ## 0.30.5
 
