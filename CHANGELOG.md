@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.31.1
+
+- Keep bounded resolver diagnostic outcomes across document navigation and expose observer coverage; verify original API promise and callback semantics.
+
+
 ## 0.31.0
 
 - Add bounded failure diagnostics for installed Retry-After action lifecycle investigations; preserve original runtime calls and verify isolated immutable native binaries.

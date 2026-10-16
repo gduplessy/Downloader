@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { writeFile } from 'node:fs/promises';
 
 // Diagnostic runs only: preserve the original call, arguments, promise and callback semantics.
 export const installResolverTrace = `(() => {
@@ -25,7 +25,9 @@ export const installResolverTrace = `(() => {
         fingerprint:message.binding.fingerprint,
       } : undefined};
     trace.push(row); if (trace.length > 500) trace.shift();
-    const finish = value => {row.finished=Date.now();row.response=summary(value);};
+    const emit = () => globalThis.__navWaitEmit?.(JSON.stringify(row));
+    const finish = value => {row.finished=Date.now();row.response=summary(value);emit();};
+    emit();
     const index = args.length - 1;
     if (typeof args[index] === 'function') {
       const callback=args[index]; args[index]=function(...values) {
@@ -35,13 +37,13 @@ export const installResolverTrace = `(() => {
     }
     try {
       const result=Reflect.apply(original,this,args);
-      if (result?.then) result.then(finish,error=>{row.finished=Date.now();row.rejected=String(error);});
+      if (result?.then) result.then(finish,error=>{row.finished=Date.now();row.rejected=String(error);emit();});
       return result;
-    } catch(error) {row.rejected=String(error);throw error;}
+    } catch(error) {row.rejected=String(error);emit();throw error;}
   };
   return true;
 })()`;
 
 export async function saveFailure(path, details) {
-  await writeFile(path, JSON.stringify(details, null, 2) + "\n");
+  await writeFile(path, JSON.stringify(details, null, 2) + '\n');
 }
