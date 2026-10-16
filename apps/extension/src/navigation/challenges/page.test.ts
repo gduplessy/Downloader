@@ -6,7 +6,11 @@ vi.mock('./geometry', () => ({
   toCss: () => ({ x: 45, y: 55 }),
 }));
 afterEach(() => vi.unstubAllGlobals());
-async function fixture(mutateDigest = 0) {
+async function fixture(
+  mutateDigest = 0,
+  replacement: 'value' | 'node' | 'duplicate' = 'value',
+  malformedSubmitter = false,
+) {
   const nodes: any[] = [];
   const node = (tag = 'div'): any => {
     const n: any = {
@@ -123,12 +127,28 @@ async function fixture(mutateDigest = 0) {
       }),
     },
   };
+  const extraHosts: string[] = [];
   vi.stubGlobal(
     'FormData',
     class {
+      constructor(
+        _form: unknown,
+        private submitter?: any,
+      ) {}
+      getAll(name: string) {
+        return name === 'selected_host'
+          ? [
+              controls['input[name=selected_host]'].value,
+              ...extraHosts,
+              ...(this.submitter?.name === name ? [this.submitter.value] : []),
+            ]
+          : [];
+      }
       entries() {
         return [
-          ['selected_host', host.value],
+          ...[controls['input[name=selected_host]'].value, ...extraHosts].map(
+            (value) => ['selected_host', value],
+          ),
           ['csrf', csrf.value],
         ][Symbol.iterator]();
       }
@@ -146,7 +166,16 @@ async function fixture(mutateDigest = 0) {
     subtle: {
       digest: async (_: string, bytes: Uint8Array) => {
         const value = createHash('sha256').update(bytes).digest();
-        if (++digests === mutateDigest) host.value = 'ddownload.com';
+        if (++digests === mutateDigest) {
+          if (replacement === 'duplicate') extraHosts.push('ddownload.com');
+          else if (replacement === 'node') {
+            host.isConnected = false;
+            const next = node('input');
+            next.name = 'selected_host';
+            next.value = 'ddownload.com';
+            controls['input[name=selected_host]'] = next;
+          } else host.value = 'ddownload.com';
+        }
         await Promise.resolve();
         return value.buffer.slice(
           value.byteOffset,
@@ -171,6 +200,10 @@ async function fixture(mutateDigest = 0) {
     selectedHost: 'gofile.io',
     locale: 'en',
   };
+  if (malformedSubmitter) {
+    submit.name = 'selected_host';
+    submit.value = 'ddownload.com';
+  }
   const authorize = vi.fn(async () => true);
   await showChallenge(
     doc,
@@ -223,4 +256,41 @@ it('rejects host replacement during final digest before synchronous submission',
   );
   expect(f.submitted).toBe(0);
   expect(f.authorize).toHaveBeenCalledTimes(1);
+});
+
+for (const [phase, at] of [
+  ['initial', 1],
+  ['final', 11],
+] as const)
+  it(
+    'rejects hidden host node replacement during ' + phase + ' digest',
+    async () => {
+      const f = await fixture(at, 'node');
+      await vi.waitFor(() =>
+        expect(f.status).toBe(
+          'Unsupported or expired challenge. Complete it in the page.',
+        ),
+      );
+      expect(f.submitted).toBe(0);
+    },
+  );
+
+it('rejects a second successful named selected_host control in the serialized form', async () => {
+  const f = await fixture(1, 'duplicate');
+  await vi.waitFor(() =>
+    expect(f.status).toBe(
+      'Unsupported or expired challenge. Complete it in the page.',
+    ),
+  );
+  expect(f.submitted).toBe(0);
+});
+
+it('rejects a successful submitter adding a second posted selected_host', async () => {
+  const f = await fixture(0, 'value', true);
+  await vi.waitFor(() =>
+    expect(f.status).toBe(
+      'Unsupported or expired challenge. Complete it in the page.',
+    ),
+  );
+  expect(f.submitted).toBe(0);
 });

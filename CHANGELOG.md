@@ -1,5 +1,59 @@
 # Changelog
 
+## 0.34.9
+
+- Integrate reviewed actual-submitter host serialization guard and deterministic duplicate-host regression.
+
+## 0.34.8
+
+- Reconcile reviewed challenge host-value, input identity and serialized-host ownership guards with installed solver controls.
+
+## 0.34.7
+
+- Integrate the installed-verified Firefox fixture profile shadowing correction.
+
+## 0.34.6
+
+- Integrate reviewed NAV13 fixture ordering correction and four passing installed Edge negative records.
+
+## 0.34.5
+
+- Record installed Edge solver popup qualification and integrated extension validation.
+
+## 0.34.4
+
+- Integrate reviewed NAV dependencies; preserve product version consistency and historical changelog bytes.
+
+## 0.34.3
+
+- Record passing installed Chrome popup controls with matched owned solver session lifecycle.
+
+## 0.34.2
+
+- Record exact installed Chrome popup evidence; enforce matched solver session lifecycle and stable driver provenance for subsequent qualification.
+
+## 0.34.1
+
+- Match the existing native custom-challenge refusal selector in the synthetic solver fixture; retain the failed setup separately.
+- Preserve historical changelog bytes while inserting new entries.
+
+## 0.34.0
+
+- Add exact-native-pair installed extension popup qualification for Continue, FlareSolverr refusal, routing, stale settings and explicit retry.
+- Preserve synthetic solver protocol versus real challenge clearance and native-settings UI acceptance boundaries.
+
+## 0.33.17
+
+- Include the actual successful CAPTCHA submitter in final selected_host serialization. Regress a submit button adding a second host value and preflight actual browser FormData submitter support before installed qualification. No other binding behavior changes.
+
+## 0.33.16
+
+- Add installed selected-host-node replacement qualification after the actual production Solve panel appears, retaining exact stale-refusal and zero-submission/publication gates. No authorization hooks or product runtime changes.
+
+## 0.33.15
+
+- Fence actual CAPTCHA host input identity during freshness and synchronously before submission; require exactly one serialized selected_host matching authorized ownership. Regress initial/final digest node replacement and duplicate successful named controls while retaining unchanged exactly-once submission. Installed repeats remain bound to their actual checked source.
+
 ## 0.33.14
 
 - Publish two exact-source installed Firefox selected-host rejection records and inspected screenshots for e1f78c2; preserve the historical one-POST failure separately without relabeling earlier fresh-file acceptance. Evidence and synchronized metadata only.
@@ -12,21 +66,17 @@
 
 - Remove Firefox fixture profile shadowing that prevented actual browser startup.
 
-
 ## 0.33.11
 
 - Record four passing exact-source installed Edge challenge lifecycle negatives after correcting fixture ordering.
-
 
 ## 0.33.10
 
 - Fence challenge mutation fixtures on the actual bound panel after asynchronous host selection.
 
-
 ## 0.33.9
 
 - Wait for exact installed challenge refusal instead of assuming asynchronous work completes after1500ms; retain unsuccessful Edge observation.
-
 
 ## 0.33.8
 

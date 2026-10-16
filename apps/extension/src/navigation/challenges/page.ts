@@ -216,7 +216,8 @@ export async function showChallenge(
       submitted ||
       !found.image.isConnected ||
       !found.form.isConnected ||
-      discover(doc)?.image !== found.image
+      discover(doc)?.image !== found.image ||
+      discover(doc)?.hostInput !== found.hostInput
     )
       throw Error('challenge_stale');
     const current = await bridge.context();
@@ -266,11 +267,16 @@ export async function showChallenge(
       },
     );
     if (doc.elementFromPoint(css.x, css.y) !== found.image) throw Error('occluded_target');
+    // Check the actual posted field, not only a captured input that the page may have detached.
+    const selectedHosts = new FormData(found.form, found.submit).getAll('selected_host');
     // Coordinates submitted in intrinsic image space, as the qualified form specifies.
     if (
       controller.signal.aborted ||
       found.hostInput.value !== initial.selectedHost ||
-      current.selectedHost !== initial.selectedHost
+      current.selectedHost !== initial.selectedHost ||
+      discover(doc)?.hostInput !== found.hostInput ||
+      selectedHosts.length !== 1 ||
+      selectedHosts[0] !== initial.selectedHost
     ) throw Error('challenge_stale');
     submitted = true;
     found.x.value = String(Math.round(point.x));
