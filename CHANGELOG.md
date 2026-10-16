@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.35.6
+
+- Add bounded actual radio/Continue transition observations and a passive runtime-message chronology for the remaining Edge fresh-preview invalidation. The observer sends no messages or replies and does not change production code or authorization.
+
 ## 0.35.5
 
 - Require the current actual preview root to be stale before invoking Refresh; historical accessibility text cannot trigger repeated refresh of a fresh replacement. Record any AX/DOM disagreement and retain current enabled selection checks.

@@ -296,7 +296,7 @@ async function click(session, name, role = "button") {
   );
   return true;
 }
-async function currentContinue(session, provider) {
+async function currentContinue(session, provider, optionsSession) {
   const deadline = Date.now() + 30000;
   let last;
   let refreshingNode;
@@ -333,14 +333,17 @@ async function currentContinue(session, provider) {
     const radio=visible.find(node=>node.role?.value==="radio"&&node.backendDOMNodeId);
     if(radio) {
       const current=await inspect(radio); last=current.state;
+      if(controlObservations.length<256) controlObservations.push({provider,action:"radio before actual input",state:current.state});
       if(current.state.connected&&!current.state.disabled) {
         if(!current.state.checked) await waitClick(session,null,"radio");
         const selected=await inspect(radio);
+        if(controlObservations.length<256) controlObservations.push({provider,action:"radio after actual input",state:selected.state});
         if(selected.state.connected&&!selected.state.disabled&&selected.state.checked) {
           const fresh=(await command("Accessibility.getFullAXTree",{},session)).nodes;
           const button=fresh.find(node=>!node.ignored&&node.role?.value==="button"&&node.name?.value==="Continue"&&node.backendDOMNodeId);
           if(button) {
             const ready=await inspect(button); last=ready.state;
+            if(controlObservations.length<256) controlObservations.push({provider,action:"Continue after actual selection",state:ready.state});
             if(ready.state.connected&&!ready.state.disabled&&ready.state.selected&&!ready.state.stale) {
               controlObservations.push({provider,action:"current selection ready",state:ready.state});
               return {objectId:ready.objectId,tree:fresh};
@@ -351,6 +354,8 @@ async function currentContinue(session, provider) {
     }
     await new Promise(resolve=>setTimeout(resolve,100));
   }
+  const runtimeTrace=await evaluate(optionsSession,"globalThis.__challengeRuntimeTrace??[]");
+  controlObservations.push({provider,action:"passive runtime chronology at readiness failure",runtimeTrace});
   throw Error("Current enabled selected preview did not become ready: "+JSON.stringify({provider,last}));
 }
 async function waitClick(session, name, role = "button") {
@@ -446,6 +451,7 @@ try {
     optionsSession,
     'chrome.runtime.sendMessage({type:"settings_changed"})',
   );
+  await evaluate(optionsSession,'globalThis.__challengeRuntimeTrace=[];chrome.runtime.onMessage.addListener((message,sender)=>{if(!sender.tab||!message.type?.startsWith("resolver_"))return;const trace=globalThis.__challengeRuntimeTrace;trace.push({at:Date.now(),type:message.type,tabId:sender.tab.id,documentGeneration:message.document?.generation,bindingGeneration:message.binding?.documentGeneration,decision:message.decision?.kind});if(trace.length>128)trace.shift();});true');
   const rows = [];
   for (const provider of ["g4u", "ddownload", "rapidgator", "gofile"]) {
     const page = fixture.base + "/nav-challenges/" + provider + "/page";
@@ -587,7 +593,7 @@ try {
     console.log("Form result ", JSON.stringify(fixture.submits));
     await evaluate(optionsSession,"chrome.runtime.sendMessage("+JSON.stringify({type:"navigation_queue_continue",id:job.id})+")");
     const currentTreeSession = await targetSession(tab.targetId);
-    const {objectId,tree} = await currentContinue(currentTreeSession,provider);
+    const {objectId,tree} = await currentContinue(currentTreeSession,provider,optionsSession);
     await command("Runtime.callFunctionOn",{
       objectId,
       functionDeclaration:'function(){const observe=()=>{const root=this.getRootNode();return {connected:this.isConnected,disabled:this.disabled,selected:[...root.querySelectorAll("input[type=radio]")].some(input=>input.isConnected&&!input.disabled&&input.checked),stale:root.textContent.includes("Page changed. Refresh the selection.")}};const trace={prepared:observe()};globalThis.__navChallengeControlTrace=trace;globalThis.__navChallengeActivate=()=>{trace.activated=observe();if(!trace.activated.connected||trace.activated.disabled||!trace.activated.selected||trace.activated.stale){trace.refused=true;return trace}this.click();trace.clicked=true;return trace};return trace.prepared}',
