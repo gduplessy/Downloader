@@ -39,6 +39,11 @@ const tokenModes = [
   "redirect-token",
 ];
 const tokenMode = tokenModes.includes(mode);
+const browserLoss = mode === "browser-loss";
+assert.ok(
+  !browserLoss || !privateMode,
+  "Browser-loss fixture currently qualifies regular profiles only",
+);
 const filename = "original-雪.bin";
 const observations = {};
 const runStarted = Date.now();
@@ -53,6 +58,7 @@ const interruptionModes = [
   "worker-loss",
   "service-reconnect",
   "tab-close",
+  "browser-loss",
 ];
 const executable =
   process.env.NAV_BROWSER ||
@@ -426,6 +432,7 @@ execFileSync(
   },
 );
 let browserProc, ws, heapMonitor, restartedDaemon;
+let browserClosed = false;
 const heapSamples = [];
 let seq = 0;
 const pending = new Map();
@@ -849,6 +856,7 @@ try {
     "source-replacement",
     "worker-loss",
     "tab-close",
+    "browser-loss",
   ].includes(mode);
   let interruptionApplied = false;
   let interruptAt;
@@ -932,6 +940,36 @@ try {
         );
       if (mode === "tab-close")
         await evaluate("chrome.tabs.remove(" + ownedTab.id + ")");
+      if (browserLoss) {
+        observations.captureStatesBeforeLoss = (
+          await evaluate('chrome.runtime.sendMessage({type:"capture_status"})')
+        ).map((row) => row.state);
+        observations.sourceGenerationAtLoss = job.source_generation;
+        observations.claimGenerationAtLoss =
+          job.navigation_scope?.claim_generation;
+        clearInterval(heapMonitor);
+        await command("Browser.close").catch((error) => {
+          observations.browserCloseResult = String(error);
+        });
+        await new Promise((resolveExit, rejectExit) => {
+          if (browserProc.exitCode !== null || browserProc.signalCode !== null)
+            return resolveExit();
+          const timer = setTimeout(
+            () => rejectExit(Error("Owned browser did not exit after close")),
+            10000,
+          );
+          browserProc.once("exit", () => {
+            clearTimeout(timer);
+            resolveExit();
+          });
+        });
+        browserClosed = true;
+        observations.browserProcessExited = true;
+        observations.browserExitCode = browserProc.exitCode;
+        observations.browserExitSignal = browserProc.signalCode;
+        // Windows crashpad may retain inherited stderr after the owned browser exits.
+        browserProc.stderr.destroy();
+      }
       if (mode === "worker-loss") {
         clearInterval(heapMonitor);
         await command("Target.detachFromTarget", { sessionId });
@@ -960,6 +998,7 @@ try {
     }
     if (
       negative &&
+      !browserLoss &&
       ((!interruptionModes.includes(mode) && attempt >= 10) ||
         (interruptionApplied && Date.now() - interruptAt > 3500))
     )
@@ -968,6 +1007,15 @@ try {
       mode === "service-reconnect" &&
       interruptionApplied &&
       job?.state === "waiting_user"
+    ) {
+      observations.recoveryObservedAfterMs = Date.now() - interruptAt;
+      break;
+    }
+    if (
+      browserLoss &&
+      interruptionApplied &&
+      job?.state === "waiting_user" &&
+      job?.error?.startsWith("browser_reader_lost:")
     ) {
       observations.recoveryObservedAfterMs = Date.now() - interruptAt;
       break;
@@ -989,11 +1037,11 @@ try {
       ? Math.round((job.bytes * 1000) / observations.transferElapsedMs)
       : null;
   observations.originalClicks =
-    mode === "tab-close"
+    mode === "tab-close" || browserClosed
       ? null
       : await page("window.originalClicks").catch(() => null);
   observations.previewStillVisible =
-    mode === "tab-close"
+    mode === "tab-close" || browserClosed
       ? false
       : Boolean(await shadow().catch(() => undefined));
   observations.interruptionApplied = interruptionApplied;
@@ -1018,7 +1066,9 @@ try {
       }),
     );
   }
-  const currentPreview = await shadow().catch(() => undefined);
+  const currentPreview = browserClosed
+    ? undefined
+    : await shadow().catch(() => undefined);
   observations.previewText = currentPreview
     ? nodes(currentPreview)
         .filter((n) => n.nodeName === "#text")
@@ -1026,14 +1076,16 @@ try {
         .join(" ")
     : null;
   observations.consoleEvents = privateMode ? [] : consoleEvents;
-  observations.lastError =
-    (await evaluate('chrome.storage.local.get("lastError")')).lastError ?? null;
+  observations.lastError = browserClosed
+    ? null
+    : ((await evaluate('chrome.storage.local.get("lastError")')).lastError ??
+      null);
   observations.nativeOriginRequests = originRequests.filter(
     (row) => !row.browser,
   ).length;
-  const fixtureChecks = await evaluate(
-    'chrome.runtime.sendMessage({type:"capture_status"})',
-  );
+  const fixtureChecks = browserClosed
+    ? []
+    : await evaluate('chrome.runtime.sendMessage({type:"capture_status"})');
   observations.captureStates = fixtureChecks.map((row) => row.state);
   observations.typedRecoveryReason =
     job?.error?.match(/^([a-z_]+):/)?.[1] ?? null;
@@ -1051,7 +1103,10 @@ try {
       throw error;
     },
   );
-  if (mode === "service-reconnect" && job?.state === "waiting_user") {
+  if (
+    (mode === "service-reconnect" || browserLoss) &&
+    job?.state === "waiting_user"
+  ) {
     const partial = await readFile(
       resolve(
         dir,
@@ -1065,6 +1120,8 @@ try {
       digest(payload.subarray(0, job.bytes)),
     );
     observations.durablePrefixVerified = true;
+    observations.durablePrefixSha256 = digest(partial.subarray(0, job.bytes));
+    observations.expectedPrefixSha256 = digest(payload.subarray(0, job.bytes));
     observations.partialFileBytes = partial.length;
     observations.recoveryOutcome = "manual_reauthorization";
   } else if (mode === "service-reconnect" && job?.state === "complete")
@@ -1098,6 +1155,11 @@ try {
     requests,
     [],
     "Blob path must not issue POST/HEAD/GET to response URL",
+  );
+  assert.equal(
+    observations.nativeOriginRequests,
+    0,
+    "Browser stream must never refetch at native origin",
   );
   if (tokenMode) {
     const paths =
@@ -1145,7 +1207,16 @@ try {
     });
   const accepted =
     (negative
-      ? typedRecovery
+      ? typedRecovery &&
+        (!browserLoss ||
+          (observations.browserProcessExited &&
+            observations.durablePrefixVerified &&
+            observations.typedRecoveryReason === "browser_reader_lost" &&
+            job.source_generation === observations.sourceGenerationAtLoss &&
+            job.navigation_scope?.claim_generation ===
+              observations.claimGenerationAtLoss &&
+            job.bytes >= observations.bytesAtInterruption &&
+            job.bytes < payload.length))
       : job?.state === "complete" ||
         (mode === "service-reconnect" &&
           job?.state === "waiting_user" &&
@@ -1273,6 +1344,7 @@ try {
     ws.close();
   }
   browserProc?.kill();
+  browserProc?.stderr?.destroy();
   try {
     execFileSync(cli, ["quit"], {
       env,
@@ -1282,13 +1354,23 @@ try {
     });
   } catch {}
   daemon.kill();
+  daemon.stderr?.destroy();
   restartedDaemon?.kill();
-  server.close();
+  server.closeAllConnections();
+  await new Promise((resolveClose, rejectClose) => {
+    const timer = setTimeout(
+      () => rejectClose(Error("Fixture server cleanup timed out")),
+      10000,
+    );
+    server.close((error) => {
+      clearTimeout(timer);
+      error ? rejectClose(error) : resolveClose();
+    });
+  });
   // Remove only the unique fixture-created registration; user host registrations are never modified.
   execFileSync("reg", ["DELETE", registry, "/f"], {
     windowsHide: true,
     stdio: "ignore",
   });
+  stop();
 }
-
-stop();

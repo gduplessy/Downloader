@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.32.2
+
+- Add whole-browser-loss Blob qualification requiring actual browser exit, native reader-lost recovery, unchanged authority and exact durable-prefix retention without publication or replay. Installed acceptance remains pending.
+- Release fixture-owned inherited stderr and HTTP connections during cleanup, stop esbuild after transfer failure, and assert zero native-origin requests across Blob cases. No product runtime changes.
+- Restore the missing0.32.0 and0.32.1 changelog headings after detecting a CRLF-sensitive documentation edit; historical commits remain unchanged.
+
+## 0.32.1
+
+- Preserve five exact-source installed Chrome original-fetch to Blob token results: expected desktop hashes, one GET per token/hop, zero HEAD/range/native origin requests and immutable native/bundle fingerprints.
+- Record complete matrix exit0 and delayed natural crashpad cleanup observations; retain navigation-response, pre-request-expiry, Firefox, memory and browser-loss acceptance boundaries. Evidence/version metadata only.
+
+## 0.32.0
+
+- Add counted original browser-fetch to owned-Blob fixture modes for consume-on-HEAD, first GET, rotating cookies, expiry after consumption and redirect tokens, with exact desktop bytes and no HEAD/range/native replay.
+- Copy and verify immutable matching native executables per run, declare current fixture webNavigation capability and record bundle hashes. Navigation debugger GET, pre-request expiry UI, bounded page buffering and live-provider acceptance remain separate.
+
 ## 0.30.5
 
 - State exact Retry-After date grammar: canonical IMF-fixdate plus decimal delay-seconds. Obsolete RFC850/asctime forms remain unsupported compatibility work; installed date evidence does not claim those formats. Documentation/version metadata only.
