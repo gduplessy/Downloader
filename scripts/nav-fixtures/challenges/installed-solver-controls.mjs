@@ -9,6 +9,7 @@ const require = createRequire(new URL('../../../apps/extension/package.json', im
 const esbuild = require('esbuild');
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const hashFile = async (path) => digest(await readFile(path));
+const driverSha256 = await hashFile(import.meta.filename);
 const revision = execFileSync('git', ['rev-parse', 'HEAD'], {
   encoding: 'utf8',
   windowsHide: true,
@@ -149,6 +150,8 @@ async function until(check, label, timeout = 45000) {
   throw Error(label + ' timed out');
 }
 const payload = Buffer.from('Permitted local solver UI transfer\n'.repeat(8192));
+const sessionEvents = [];
+const seenSessions = new Set();
 const sessions = new Set(),
   commands = [],
   fileRequests = [];
@@ -165,11 +168,21 @@ const server = createServer(async (req, res) => {
       commands.push(body.cmd);
       let reply = { status: 'ok' };
       if (body.cmd === 'sessions.create') {
+        assert.equal(typeof body.session, 'string');
+        assert.ok(body.session.length > 0 && !seenSessions.has(body.session), 'Session must be unique');
+        seenSessions.add(body.session);
+        sessionEvents.push({ command: body.cmd, sessionSha256: digest(body.session) });
         sessions.add(body.session);
         reply.session = body.session;
-      } else if (body.cmd === 'sessions.destroy') sessions.delete(body.session);
+      } else if (body.cmd === 'sessions.destroy') {
+        assert.ok(sessions.has(body.session), 'Destroy requires owned active session');
+        sessionEvents.push({ command: body.cmd, sessionSha256: digest(body.session) });
+        sessions.delete(body.session);
+      }
       else if (body.cmd === 'sessions.list') reply.sessions = [...sessions];
       else if (body.cmd === 'request.get') {
+        assert.ok(sessions.has(body.session), 'Request requires owned active session');
+        sessionEvents.push({ command: body.cmd, sessionSha256: digest(body.session) });
         requestsToSolver++;
         reply.solution = {
           status: 200,
@@ -503,6 +516,12 @@ try {
     solverRequests: 2,
     sessionsRemaining: 0,
   });
+  assert.equal(seenSessions.size, 2);
+  for (const session of seenSessions) {
+    assert.deepEqual(sessionEvents.filter((e) => e.sessionSha256 === digest(session)).map((e) => e.command), ['sessions.create', 'request.get', 'sessions.destroy']);
+  }
+  assert.equal(await hashFile(import.meta.filename), driverSha256, 'Driver changed during run');
+  assert.equal(execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8', windowsHide:true}).trim(), revision, 'Revision changed during run');
   const evidence = {
     result: 'passed',
     fixture: 'installed-production-solver-popup-controls-v1',
@@ -513,7 +532,8 @@ try {
     browser: browserVersion,
     os: process.platform,
     arch: process.arch,
-    driverSha256: await hashFile(import.meta.filename),
+    driverSha256,
+    sessionEvents,
     sourceHashes,
     bundleHashes: Object.fromEntries(
       await Promise.all(
@@ -555,7 +575,7 @@ try {
   await writeFile(
     resolve(root, 'failure.json'),
     JSON.stringify(
-      { stage, error: String(error), commands, fileRequests, requestsToSolver },
+      { stage, error: String(error), sourceRevision: revision, driverSha256, sourceHashes, observations, commands, sessionEvents, fileRequests, requestsToSolver },
       null,
       2,
     ),

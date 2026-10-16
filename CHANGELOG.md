@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.34.2
+
+- Record exact installed Chrome popup evidence; enforce matched solver session lifecycle and stable driver provenance for subsequent qualification.
+
+
 ## 0.34.1
 
 - Match the existing native custom-challenge refusal selector in the synthetic solver fixture; retain the failed setup separately.
