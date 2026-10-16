@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.33.1
+
+- Add installed cancel and stale CSRF/image/selected-host rejection cases, align fixture permissions with current production and preserve failed attempts before cleanup. Qualification remains pending actual completed runs.
+
 ## 0.33.0
 
 - Isolate installed CAPTCHA qualification with full-hash-verified native binaries and record production module source provenance. Edge/Firefox lifecycle acceptance remains pending actual runs.

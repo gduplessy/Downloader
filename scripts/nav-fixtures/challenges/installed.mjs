@@ -8,6 +8,8 @@ import assert from 'node:assert/strict';
 import { startChallengeServer, expectedHash } from './server.mjs';
 const require = createRequire(new URL('../../../apps/extension/package.json', import.meta.url)),
   { build } = require('esbuild');
+const scenario = process.env.NAV_CHALLENGE_CASE ?? 'fresh';
+assert(['fresh','cancel','csrf','image','selected-host'].includes(scenario));
 const executable =
   process.env.NAV_BROWSER ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const root = resolve('.fixture-challenges', 'installed-' + randomUUID()),
@@ -47,6 +49,7 @@ const buildResult = await build({
     'apps/extension/src/resolver.ts',
     'apps/extension/src/options.ts',
     'apps/extension/src/content.ts',
+    'apps/extension/src/discovery.ts',
   ],
   outdir: extension,
   bundle: true,
@@ -86,6 +89,7 @@ await writeFile(
       'debugger',
       'cookies',
       'webRequest',
+      'webNavigation',
       'scripting',
       'tabs',
       'notifications',
@@ -376,6 +380,27 @@ try {
     const session = await targetSession(tab.targetId);
     await command('Runtime.enable', {}, session);
     await waitClick(session, 'Use this file host: gofile.io');
+    if (scenario !== 'fresh') {
+      if(scenario==='cancel') await waitClick(session,'Cancel');
+      else {
+        const expressions = {
+          csrf: 'document.querySelector("input[name=csrf]").value="public-fixture-replaced-csrf"',
+          image: 'document.querySelector("img").src += "?replacement=1"',
+          'selected-host': 'document.querySelector("input[name=selected_host]").value="ddownload.com"'
+        };
+        await evaluate(session,expressions[scenario]);
+        await waitClick(session,'Solve locally');
+      }
+      await new Promise(r=>setTimeout(r,1500));
+      const observed=(await command('Accessibility.getFullAXTree',{},session)).nodes.filter(n=>!n.ignored).map(n=>({role:n.role?.value,name:n.name?.value}));
+      if(scenario==='cancel') assert(!observed.some(n=>n.role==='dialog'&&n.name==='Image challenge'));
+      else assert(observed.some(n=>n.role==='status'&&n.name==='Unsupported or expired challenge. Complete it in the page.'), 'No explicit stale refusal');
+      assert.equal(fixture.submits.length,0,'Stale/cancelled challenge submitted');
+      const jobs=call('list').jobs;
+      assert(jobs.every(j=>j.state==='waiting_user'&&j.bytes===0),'Negative path started transfer');
+      rows.push({scenario,provider,original_submissions:fixture.submits.length,job_states:jobs.map(j=>j.state),observed});
+      break;
+    }
     await waitClick(session, 'Solve locally');
     console.log('Local solve invoked for ' + provider);
     await command('Target.detachFromTarget', { sessionId: session });
@@ -392,6 +417,9 @@ try {
         JSON.stringify({ type: 'navigation_queue_continue', id: job.id }) +
         ')',
     );
+    await new Promise(r=>setTimeout(r,1000));
+    await evaluate(optionsSession, '(async()=>{const tabs=await chrome.tabs.query({});const tab=tabs.find(t=>t.url==='+JSON.stringify(page.replace('/page','/submit'))+');if(!tab)throw Error("Fresh result tab missing");return chrome.tabs.sendMessage(tab.id,{type:"resolver_continue"})})()');
+    await new Promise(r=>setTimeout(r,500));
     const currentTreeSession = await targetSession(tab.targetId);
     const tree = (await command('Accessibility.getFullAXTree', {}, currentTreeSession)).nodes;
     await waitClick(currentTreeSession, null, 'radio');
@@ -476,7 +504,7 @@ try {
     });
     console.log('Verified production challenge ' + provider);
   }
-  assert.equal(fixture.submits.filter((s) => s.accepted).length, 4);
+  assert.equal(fixture.submits.filter((s) => s.accepted).length, scenario==='fresh'?4:0);
   const evidence = {
     source_revision: sourceRevision,
     driver_sha256: createHash('sha256').update(await readFile(new URL(import.meta.url))).digest('hex'),
@@ -493,7 +521,8 @@ try {
       .digest('hex'),
     diagnostic_source_changes: false,
     rows,
-    accepted_original_submissions: 4,
+    scenario,
+    accepted_original_submissions: fixture.submits.filter(s=>s.accepted).length,
     paid_calls: 0,
     limits: [
       'Synthetic open-circle protocol only; live providers/accounts and paid provider pending',
@@ -505,6 +534,10 @@ try {
   await writeFile(resolve(root, 'evidence.json'), JSON.stringify(evidence, null, 2));
   await writeFile('.local/nav-challenges/installed-result.json', JSON.stringify(evidence, null, 2));
   console.log(JSON.stringify(evidence, null, 2));
+} catch (error) {
+  await writeFile(resolve(root, 'failure.json'), JSON.stringify({source_revision:sourceRevision,error:String(error),stack:error.stack,submits:fixture.submits},null,2));
+  console.error(error);
+  process.exitCode=1;
 } finally {
   if (ws) {
     await command('Browser.close').catch(() => {});
@@ -516,6 +549,7 @@ try {
   } catch {}
   daemon.kill();
   await fixture.close();
+  await require('esbuild').stop();
   // Exactly the unique fixture-created key; no user native host registration is altered.
   execFileSync('reg', ['DELETE', registry, '/f'], { windowsHide: true, stdio: 'ignore' });
 }
