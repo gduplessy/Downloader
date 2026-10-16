@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.33.15
+
+- Fence actual CAPTCHA host input identity during freshness and synchronously before submission; require exactly one serialized selected_host matching authorized ownership. Regress initial/final digest node replacement and duplicate successful named controls while retaining unchanged exactly-once submission. Installed repeats remain bound to their actual checked source.
+
 ## 0.33.14
 
 - Publish two exact-source installed Firefox selected-host rejection records and inspected screenshots for e1f78c2; preserve the historical one-POST failure separately without relabeling earlier fresh-file acceptance. Evidence and synchronized metadata only.
