@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.33.14
+
+- Publish two exact-source installed Firefox selected-host rejection records and inspected screenshots for e1f78c2; preserve the historical one-POST failure separately without relabeling earlier fresh-file acceptance. Evidence and synchronized metadata only.
+
 ## 0.33.13
 
 - Reject CAPTCHA selected-host replacement during asynchronous binding and immediately before submission. Add deterministic initial/final digest race regressions preserving the valid exactly-once path; retain failed installed Firefox POST evidence separately.
