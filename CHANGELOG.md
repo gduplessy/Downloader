@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.35.5
+
+- Require the current actual preview root to be stale before invoking Refresh; historical accessibility text cannot trigger repeated refresh of a fresh replacement. Record any AX/DOM disagreement and retain current enabled selection checks.
+
 ## 0.35.4
 
 - Wait for actual stale-preview replacement after one Refresh per backend node identity; do not repeatedly invalidate an asynchronous selection refresh. The previous readiness fixture failed safely without starting a file transfer.

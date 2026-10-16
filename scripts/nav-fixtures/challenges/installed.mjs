@@ -300,6 +300,7 @@ async function currentContinue(session, provider) {
   const deadline = Date.now() + 30000;
   let last;
   let refreshingNode;
+  let ignoredAXStaleNode;
   async function inspect(node) {
     const resolved = await command("DOM.resolveNode", {backendNodeId:node.backendDOMNodeId}, session);
     const result = await command("Runtime.callFunctionOn", {objectId:resolved.object.objectId,functionDeclaration:'function(){const root=this.getRootNode();return {connected:this.isConnected,disabled:this.disabled,checked:this.checked,selected:[...root.querySelectorAll("input[type=radio]")].some(input=>input.isConnected&&!input.disabled&&input.checked),stale:root.textContent.includes("Page changed. Refresh the selection.")}}',returnByValue:true},session);
@@ -309,18 +310,25 @@ async function currentContinue(session, provider) {
     const tree=(await command("Accessibility.getFullAXTree",{},session)).nodes;
     const visible=tree.filter(node=>!node.ignored);
     if(visible.some(node=>node.name?.value?.includes("Page changed. Refresh the selection."))) {
+      let actualStale=false;
       const refresh=visible.find(node=>node.role?.value==="button"&&node.name?.value==="Refresh"&&node.backendDOMNodeId);
       if(refresh) {
         const current=await inspect(refresh);
-        last={phase:"waiting for stale-preview replacement",refreshNode:refresh.backendDOMNodeId,...current.state};
-        if(current.state.connected&&!current.state.disabled&&refreshingNode!==refresh.backendDOMNodeId) {
+        actualStale=current.state.connected&&current.state.stale;
+        last={phase:actualStale?"waiting for stale-preview replacement":"AX stale text with current fresh root",refreshNode:refresh.backendDOMNodeId,...current.state};
+        if(actualStale&&!current.state.disabled&&refreshingNode!==refresh.backendDOMNodeId) {
           refreshingNode=refresh.backendDOMNodeId;
           await waitClick(session,"Refresh");
-          controlObservations.push({provider,action:"actual stale preview Refresh"});
+          controlObservations.push({provider,action:"actual stale preview Refresh",state:current.state});
+        } else if(current.state.connected&&!current.state.stale&&ignoredAXStaleNode!==refresh.backendDOMNodeId) {
+          ignoredAXStaleNode=refresh.backendDOMNodeId;
+          controlObservations.push({provider,action:"ignore AX stale text for actual fresh root",state:current.state});
         }
       }
-      await new Promise(resolve=>setTimeout(resolve,100));
-      continue;
+      if(actualStale) {
+        await new Promise(resolve=>setTimeout(resolve,100));
+        continue;
+      }
     }
     const radio=visible.find(node=>node.role?.value==="radio"&&node.backendDOMNodeId);
     if(radio) {
