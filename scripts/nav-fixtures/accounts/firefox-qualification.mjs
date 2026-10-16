@@ -546,6 +546,11 @@ try {
       });
     }
     await wait(async () => {
+      const tab = await json(`browser.tabs.get(${record.tabId}).then(JSON.stringify)`);
+      assert.equal(tab.cookieStoreId, context.cookieStoreId);
+      return tab.url === base + '/nav-adapters/ddownload/account' && tab.status === 'complete';
+    }, 'Authenticated owning page navigation');
+    await wait(async () => {
       const result = await json(
         `browser.tabs.executeScript(${record.tabId},{frameId:0,code:${JSON.stringify(`(()=>{const button=document.getElementById('prepare-download');if(!button)return false;button.click();return true})()`)}}).then(JSON.stringify)`,
       );
