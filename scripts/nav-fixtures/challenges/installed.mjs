@@ -299,6 +299,7 @@ async function click(session, name, role = "button") {
 async function currentContinue(session, provider) {
   const deadline = Date.now() + 30000;
   let last;
+  let refreshingNode;
   async function inspect(node) {
     const resolved = await command("DOM.resolveNode", {backendNodeId:node.backendDOMNodeId}, session);
     const result = await command("Runtime.callFunctionOn", {objectId:resolved.object.objectId,functionDeclaration:'function(){const root=this.getRootNode();return {connected:this.isConnected,disabled:this.disabled,checked:this.checked,selected:[...root.querySelectorAll("input[type=radio]")].some(input=>input.isConnected&&!input.disabled&&input.checked),stale:root.textContent.includes("Page changed. Refresh the selection.")}}',returnByValue:true},session);
@@ -311,7 +312,9 @@ async function currentContinue(session, provider) {
       const refresh=visible.find(node=>node.role?.value==="button"&&node.name?.value==="Refresh"&&node.backendDOMNodeId);
       if(refresh) {
         const current=await inspect(refresh);
-        if(current.state.connected&&!current.state.disabled) {
+        last={phase:"waiting for stale-preview replacement",refreshNode:refresh.backendDOMNodeId,...current.state};
+        if(current.state.connected&&!current.state.disabled&&refreshingNode!==refresh.backendDOMNodeId) {
+          refreshingNode=refresh.backendDOMNodeId;
           await waitClick(session,"Refresh");
           controlObservations.push({provider,action:"actual stale preview Refresh"});
         }

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.35.4
+
+- Wait for actual stale-preview replacement after one Refresh per backend node identity; do not repeatedly invalidate an asynchronous selection refresh. The previous readiness fixture failed safely without starting a file transfer.
+
 ## 0.35.3
 
 - Fix the challenge fixture stale-control flow: use actual Refresh when required, verify current enabled radio selection and Continue readiness, and activate the guarded actual control after debugger detachment without duplicate manual continuation or fixed sleeps. Preserve production authentication and byte transfer unchanged; exact Edge acceptance follows separately.
