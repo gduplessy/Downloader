@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.35.2
+
+- Persist actual delayed challenge-control diagnostics in success and failure artifacts. Correct missing CRLF-sensitive trace readback; the prior diagnostic failure reproduced zero-byte waiting-user behavior but did not establish its cause.
+
 ## 0.35.1
 
 - Observe actual final challenge controls at scheduling and delayed activation without changing production behavior, preserving connected, disabled and radio state to diagnose the retained Edge fresh failure. Installed acceptance remains pending.

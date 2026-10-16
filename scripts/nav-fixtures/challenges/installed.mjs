@@ -585,8 +585,16 @@ try {
     );
 
     let complete;
+    let controlTraceObserved = false;
+    const completionStarted = Date.now();
     const completionDeadline = Date.now() + 60000;
     while (Date.now() < completionDeadline) {
+      if (!controlTraceObserved && Date.now() - completionStarted >= 1000) {
+        const trace = await evaluate(optionsSession, '(async()=>{const tabs=await chrome.tabs.query({});const tab=tabs.find(t=>t.url==='+JSON.stringify(page.replace("/page","/submit"))+');if(!tab)return {missingTab:true};const result=await chrome.scripting.executeScript({target:{tabId:tab.id},world:"MAIN",func:()=>globalThis.__navChallengeControlTrace??null});return result[0]?.result??null})()');
+        controlObservations.push({provider,trace});
+        console.log("Actual final control trace "+JSON.stringify({provider,trace}));
+        controlTraceObserved = true;
+      }
       const current = call("list").jobs.find((j) => j.id === job.id);
       if (current?.state === "complete") {
         complete = current;
@@ -672,6 +680,7 @@ try {
       .digest("hex"),
     diagnostic_source_changes: false,
     rows,
+    control_observations: controlObservations,
     scenario,
     request_counts: fixture.requests.reduce((counts,r)=>{const key=r.method+" "+r.path;counts[key]=(counts[key]??0)+1;return counts},{}),
     accepted_original_submissions: fixture.submits.filter((s) => s.accepted)
@@ -702,6 +711,7 @@ try {
         error: String(error),
         stack: error.stack,
         submits: fixture.submits,
+        control_observations: controlObservations,
       },
       null,
       2,
