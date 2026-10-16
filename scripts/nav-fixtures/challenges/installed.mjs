@@ -448,6 +448,15 @@ try {
     if (scenario !== "fresh") {
       if (scenario === "cancel") await waitClick(session, "Cancel");
       else {
+        const panelDeadline = Date.now() + 30000;
+        let boundPanel = false;
+        while (Date.now() < panelDeadline) {
+          const tree = await command("Accessibility.getFullAXTree", {}, session);
+          boundPanel = tree.nodes.some((n) => !n.ignored && n.role?.value === "button" && n.name?.value === "Solve locally");
+          if (boundPanel) break;
+          await new Promise((r) => setTimeout(r, 100));
+        }
+        assert.ok(boundPanel, "Bound challenge panel missing before mutation");
         const expressions = {
           csrf: 'document.querySelector("input[name=csrf]").value="public-fixture-replaced-csrf"',
           image: 'document.querySelector("img").src += "?replacement=1"',
