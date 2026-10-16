@@ -5,6 +5,7 @@ import { mkdir, readFile, writeFile, copyFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createHash, generateKeyPairSync, randomUUID } from 'node:crypto';
 import assert from 'node:assert/strict';
+import { installResolverTrace, saveFailure } from './resolver-trace.mjs';
 import { startRetryAfterServer } from './retry-after-server.mjs';
 const require = createRequire(new URL('../../../apps/extension/package.json', import.meta.url)),
   { build, stop } = require('esbuild');
@@ -14,13 +15,41 @@ const root = resolve('.fixture-streams', 'retry-after-installed-' + randomUUID()
   extension = resolve(root, 'extension'),
   state = resolve(root, 'state'),
   output = resolve(root, 'output'),
-  service = resolve(process.env.NAV_NATIVE_BINARY ?? 'target/debug/downloader-service.exe'),
-  cli = resolve(process.env.NAV_CLI_BINARY ?? 'target/debug/downloader.exe');
+  serviceSource = resolve(
+    process.env.NAV_NATIVE_BINARY ??
+      'C:/Users/gduplessy/code/Downloader/.fixture-streams/native-pairs/3b808ae-0.25.1/downloader-service.exe',
+  ),
+  cliSource = resolve(
+    process.env.NAV_CLI_BINARY ??
+      'C:/Users/gduplessy/code/Downloader/.fixture-streams/native-pairs/3b808ae-0.25.1/downloader.exe',
+  ),
+  service = resolve(root, 'downloader-service.exe'),
+  cli = resolve(root, 'downloader.exe');
 const fixtureSource = await readFile(import.meta.filename),
   serverSource = await readFile('scripts/nav-fixtures/scheduler/retry-after-server.mjs');
 await mkdir(extension, { recursive: true });
 await mkdir(state, { recursive: true });
 await mkdir(output, { recursive: true });
+for (const [source, target, expected] of [
+  [serviceSource, service, '3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2'],
+  [cliSource, cli, '43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c'],
+]) {
+  assert.equal(
+    createHash('sha256')
+      .update(await readFile(source))
+      .digest('hex'),
+    expected,
+    'Immutable native pair source mismatch',
+  );
+  await copyFile(source, target);
+  assert.equal(
+    createHash('sha256')
+      .update(await readFile(target))
+      .digest('hex'),
+    expected,
+    'Copied native pair mismatch',
+  );
+}
 const fixture = await startRetryAfterServer(),
   host = 'org.downloader.fixture_' + randomUUID().replaceAll('-', ''),
   env = { ...process.env, DOWNLOADER_DATA_DIR: state };
@@ -154,6 +183,12 @@ let browserProc,
   ws,
   sequence = 0;
 const pending = new Map();
+const resolverEvents = [];
+let observerInstallations = 0;
+const contexts = new Map(),
+  observedSessions = new Map();
+let optionsSession, currentCase, version;
+const instrumented = process.env.NAV_RETRY_TRACE === '1';
 function command(method, params = {}, sessionId) {
   const id = ++sequence;
   return new Promise((resolveResult, reject) => {
@@ -171,7 +206,14 @@ function command(method, params = {}, sessionId) {
         reject(e);
       },
     });
-    ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
+    ws.send(
+      JSON.stringify({
+        id,
+        method,
+        params,
+        ...(sessionId ? { sessionId } : {}),
+      }),
+    );
   });
 }
 async function evaluate(session, expression) {
@@ -180,7 +222,12 @@ async function evaluate(session, expression) {
     try {
       result = await command(
         'Runtime.evaluate',
-        { expression, awaitPromise: true, returnByValue: true, userGesture: true },
+        {
+          expression,
+          awaitPromise: true,
+          returnByValue: true,
+          userGesture: true,
+        },
         session,
       );
     } catch (error) {
@@ -295,21 +342,44 @@ try {
   });
   ws.onmessage = ({ data }) => {
     const event = JSON.parse(data);
-    if (!event.id) return;
+    if (!event.id) {
+      if (event.method === 'Runtime.executionContextDestroyed')
+        contexts.set(
+          event.sessionId,
+          (contexts.get(event.sessionId) ?? []).filter(
+            (c) => c.id !== event.params.executionContextId,
+          ),
+        );
+      if (event.method === 'Runtime.executionContextsCleared') contexts.set(event.sessionId, []);
+      if (event.method === 'Runtime.bindingCalled' && event.params.name === '__navWaitEmit') {
+        resolverEvents.push({
+          session: event.sessionId,
+          context: event.params.executionContextId,
+          ...JSON.parse(event.params.payload),
+        });
+        if (resolverEvents.length > 1000) resolverEvents.shift();
+      }
+      if (event.method === 'Runtime.executionContextCreated') {
+        const entries = contexts.get(event.sessionId) ?? [];
+        entries.push(event.params.context);
+        contexts.set(event.sessionId, entries);
+      }
+      return;
+    }
     const waiter = pending.get(event.id);
     pending.delete(event.id);
     event.error ? waiter?.reject(Error(event.error.message)) : waiter?.resolve(event.result);
   };
-  const version = await command('Browser.getVersion'),
-    loaded = await command('Extensions.loadUnpacked', { path: extension });
+  version = await command('Browser.getVersion');
+  const loaded = await command('Extensions.loadUnpacked', { path: extension });
   if (loaded.id && loaded.id !== extensionId) {
     extensionId = loaded.id;
     await registration();
   }
   const options = await command('Target.createTarget', {
-      url: 'chrome-extension://' + extensionId + '/options.html',
-    }),
-    optionsSession = await targetSession(options.targetId);
+    url: 'chrome-extension://' + extensionId + '/options.html',
+  });
+  optionsSession = await targetSession(options.targetId);
   await evaluate(optionsSession, 'new Promise(r=>setTimeout(r,1000))');
   await evaluate(
     optionsSession,
@@ -329,6 +399,7 @@ try {
   for (const name of (
     process.env.NAV_RETRY_CASES ?? 'numeric,date,repeated,malformed,oversized'
   ).split(',')) {
+    currentCase = name;
     const initialResponse = process.env.NAV_RETRY_INITIAL === '1';
     const page =
       fixture.base +
@@ -420,9 +491,32 @@ try {
           (t.url === page || t.url === limited || t.url === limited + '&extension=1'),
       );
       if (target) {
-        const session = await targetSession(target.targetId);
+        let session = observedSessions.get(target.targetId);
+        if (!session) {
+          session = await targetSession(target.targetId);
+          observedSessions.set(target.targetId, session);
+          await command('Runtime.enable', {}, session);
+        }
+        if (instrumented)
+          for (const ctx of contexts.get(session) ?? []) {
+            if (
+              ctx.auxData?.type === 'isolated' &&
+              ctx.origin === 'chrome-extension://' + extensionId
+            ) {
+              await command(
+                'Runtime.addBinding',
+                { name: '__navWaitEmit', executionContextId: ctx.id },
+                session,
+              );
+              const installed = await command(
+                'Runtime.evaluate',
+                { expression: installResolverTrace, contextId: ctx.id, returnByValue: true },
+                session,
+              );
+              if (installed.result?.value === true) observerInstallations++;
+            }
+          }
         if (await click(session, null, 'radio')) await click(session, 'Continue');
-        await command('Target.detachFromTarget', { sessionId: session });
       }
       await new Promise((r) => setTimeout(r, 200));
     }
@@ -513,6 +607,9 @@ try {
   }
   const evidence = {
     fixture: 'installed-production-retry-after-v1',
+    resolver_trace_instrumented: instrumented,
+    observer_installations: observerInstallations,
+    observed_resolver_outcomes: resolverEvents.filter((e) => e.finished).length,
     source_revision: execFileSync('git', ['rev-parse', 'HEAD'], {
       encoding: 'utf8',
       windowsHide: true,
@@ -554,6 +651,59 @@ try {
     JSON.stringify(evidence, null, 2) + '\n',
   );
   console.log(JSON.stringify(evidence, null, 2));
+} catch (error) {
+  const failure = {
+    error: String(error),
+    case: currentCase,
+    instrumented,
+    resolverEvents,
+    observerInstallations,
+    requests: fixture.requests,
+    ui: [],
+    native: null,
+    browser: version?.product,
+  };
+  if (optionsSession)
+    try {
+      failure.native = await evaluate(
+        optionsSession,
+        'chrome.runtime.sendMessage({type:"navigation_scheduler",request:{action:"snapshot"}})',
+      );
+      failure.records = await evaluate(
+        optionsSession,
+        "chrome.storage.local.get(null).then(s=>Object.fromEntries(Object.entries(s).filter(([k])=>k.startsWith('resolver-')||k.startsWith('server-response-'))))",
+      );
+    } catch (e) {
+      failure.snapshot_error = String(e);
+    }
+  for (const [targetId, session] of observedSessions) {
+    const ui = { targetId, contexts: [], tree: null };
+    try {
+      ui.tree = (await command('Accessibility.getFullAXTree', {}, session)).nodes
+        .filter((n) => !n.ignored)
+        .map((n) => ({ role: n.role?.value, name: n.name?.value }));
+    } catch (e) {
+      ui.error = String(e);
+    }
+    for (const ctx of contexts.get(session) ?? [])
+      if (ctx.auxData?.type === 'isolated')
+        try {
+          const r = await command(
+            'Runtime.evaluate',
+            {
+              expression: 'globalThis.__navWaitTrace ?? null',
+              contextId: ctx.id,
+              returnByValue: true,
+            },
+            session,
+          );
+          if (r.result?.value) ui.contexts.push({ id: ctx.id, trace: r.result.value });
+        } catch {}
+    failure.ui.push(ui);
+  }
+  await saveFailure(resolve(root, 'failure.json'), failure);
+  console.error('Failure artifact: ' + resolve(root, 'failure.json'));
+  throw error;
 } finally {
   if (ws) {
     await command('Browser.close').catch(() => {});
@@ -566,6 +716,9 @@ try {
   daemon.kill();
   await fixture.close();
   // Exactly the unique fixture-created key; no user native host registration is altered.
-  execFileSync('reg', ['DELETE', registry, '/f'], { windowsHide: true, stdio: 'ignore' });
+  execFileSync('reg', ['DELETE', registry, '/f'], {
+    windowsHide: true,
+    stdio: 'ignore',
+  });
   stop();
 }

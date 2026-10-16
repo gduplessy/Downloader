@@ -1,14 +1,16 @@
 # Changelog
 
+## 0.34.4
+
+- Integrate reviewed NAV dependencies; preserve product version consistency and historical changelog bytes.
+
 ## 0.34.3
 
 - Record passing installed Chrome popup controls with matched owned solver session lifecycle.
 
-
 ## 0.34.2
 
 - Record exact installed Chrome popup evidence; enforce matched solver session lifecycle and stable driver provenance for subsequent qualification.
-
 
 ## 0.34.1
 
@@ -19,6 +21,82 @@
 
 - Add exact-native-pair installed extension popup qualification for Continue, FlareSolverr refusal, routing, stale settings and explicit retry.
 - Preserve synthetic solver protocol versus real challenge clearance and native-settings UI acceptance boundaries.
+
+## 0.33.8
+
+- Integrate reviewed NAV dependencies; preserve product version consistency and historical changelog bytes.
+
+## 0.33.7
+
+- Integrate reviewed scheduler wake-coalescing fix 84da977 for dependent challenge qualification, preserving explicit refresh/cancel/ownership fences and both evidence histories. Installed challenge repeats remain pending.
+
+## 0.33.6
+
+- Correct generated privileged inspection selector quoting and verify its executable script syntax before Firefox qualification.
+
+## 0.33.5
+
+- Inspect the actual production closed-shadow host chooser without relying on nonexistent fixture IDs; Firefox execution remains pending.
+
+## 0.33.4
+
+- Prepare actual installed Firefox challenge lifecycle controls and original-page fetch-to-owned-Blob downstream qualification. Production bundles/native hashes and local HTTP contract verified; browser acceptance remains pending execution.
+
+## 0.33.3
+
+- Preserve historical changelog bytes while publishing challenge fixture qualification notes.
+
+## 0.33.2
+
+- Capture startup driver hashes, raw installed accessibility observations and local request method/path counters. Preserve unsuccessful Edge qualification separately; no installed acceptance claim is inferred from zero submissions alone.
+
+## 0.33.1
+
+- Add installed cancel and stale CSRF/image/selected-host rejection cases, align fixture permissions with current production and preserve failed attempts before cleanup. Qualification remains pending actual completed runs.
+
+## 0.33.0
+
+- Isolate installed CAPTCHA qualification with full-hash-verified native binaries and record production module source provenance. Edge/Firefox lifecycle acceptance remains pending actual runs.
+
+## 0.32.4
+
+- Integrate reviewed NAV dependencies; preserve product version consistency and historical changelog bytes.
+
+## 0.32.3
+
+- Preserve historical changelog bytes without altering qualified browser stream behavior.
+
+## 0.32.2
+
+- Add whole-browser-loss Blob qualification requiring actual browser exit, native reader-lost recovery, unchanged authority and exact durable-prefix retention without publication or replay. Installed acceptance remains pending.
+- Release fixture-owned inherited stderr and HTTP connections during cleanup, stop esbuild after transfer failure, and assert zero native-origin requests across Blob cases. No product runtime changes.
+- Restore the missing0.32.0 and0.32.1 changelog headings after detecting a CRLF-sensitive documentation edit; historical commits remain unchanged.
+
+## 0.32.1
+
+- Preserve five exact-source installed Chrome original-fetch to Blob token results: expected desktop hashes, one GET per token/hop, zero HEAD/range/native origin requests and immutable native/bundle fingerprints.
+- Record complete matrix exit0 and delayed natural crashpad cleanup observations; retain navigation-response, pre-request-expiry, Firefox, memory and browser-loss acceptance boundaries. Evidence/version metadata only.
+
+## 0.32.0
+
+- Add counted original browser-fetch to owned-Blob fixture modes for consume-on-HEAD, first GET, rotating cookies, expiry after consumption and redirect tokens, with exact desktop bytes and no HEAD/range/native replay.
+- Copy and verify immutable matching native executables per run, declare current fixture webNavigation capability and record bundle hashes. Navigation debugger GET, pre-request expiry UI, bounded page buffering and live-provider acceptance remain separate.
+
+## 0.31.4
+
+- Preserve historical changelog bytes and document unchanged-message installed wait qualification.
+
+## 0.31.2
+
+- Coalesce automatic wait wakes during selected navigation authorization so scheduler polling cannot invalidate an otherwise unchanged selected document before commit. Explicit user refresh and ownership/cancellation fences remain enforced. Preserve the reproduced installed failure trace.
+
+## 0.31.1
+
+- Keep bounded resolver diagnostic outcomes across document navigation and expose observer coverage; verify original API promise and callback semantics.
+
+## 0.31.0
+
+- Add bounded failure diagnostics for installed Retry-After action lifecycle investigations; preserve original runtime calls and verify isolated immutable native binaries.
 
 ## 0.30.5
 
