@@ -752,7 +752,7 @@ try {
   await writeFile(
     resolve(dir, 'failure.json'),
     JSON.stringify(
-      { stage: fixtureStage, error: String(error), requests },
+      { stage: fixtureStage, error: String(error), requests, submissions:fixture.submits },
       null,
       2,
     ),

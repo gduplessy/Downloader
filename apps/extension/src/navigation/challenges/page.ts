@@ -220,7 +220,11 @@ export async function showChallenge(
     )
       throw Error('challenge_stale');
     const current = await bridge.context();
-    if (!current) throw Error('challenge_stale');
+    if (
+      !current ||
+      current.selectedHost !== initial.selectedHost ||
+      found.hostInput.value !== current.selectedHost
+    ) throw Error('challenge_stale');
     const freshCanvas = doc.createElement('canvas');
     freshCanvas.width = found.width;
     freshCanvas.height = found.height;
@@ -263,7 +267,11 @@ export async function showChallenge(
     );
     if (doc.elementFromPoint(css.x, css.y) !== found.image) throw Error('occluded_target');
     // Coordinates submitted in intrinsic image space, as the qualified form specifies.
-    if (controller.signal.aborted) throw Error('challenge_stale');
+    if (
+      controller.signal.aborted ||
+      found.hostInput.value !== initial.selectedHost ||
+      current.selectedHost !== initial.selectedHost
+    ) throw Error('challenge_stale');
     submitted = true;
     found.x.value = String(Math.round(point.x));
     found.y.value = String(Math.round(point.y));
