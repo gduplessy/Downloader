@@ -13,3 +13,9 @@ node scripts/nav-fixtures/discovery/installed-negatives.mjs
 Cancellation and tab loss require actual native document enrollment before interruption. Normal production alarm/poll handling drives cleanup/recovery. Authentication expiry removes only the synthetic fixture cookie; login resumes the same owned browser context. No resource is selected: every case must retain original/unrelated user tabs, create zero jobs, and make zero payload/HEAD requests.
 
 Actual installed rows remain pending. The fixture writes evidence only after all assertions pass; failures remain separate artifacts. Local fixture results do not qualify live hosts/accounts, Firefox, other OS targets or owner GUI acceptance.
+
+## Lost-tab lease correction
+
+The production-alarm-verified Chrome run at 703850a created a replacement tab but retained the scheduler lease bound to the old tab ID. Native rejected the replacement heartbeat with Navigation tab mismatch; the project retained its frontier in waiting_browser, with zero resource/HEAD requests or published jobs. This is a failed recovery observation, not acceptance.
+
+The correction verifies the original source session, then uses the existing wait_browser action to release the stale lease before readmission. This action preserves the original discovery time budget; automatic recovery does not use resume. Missing or changed original sessions and native generation refusal retain the frontier without opening a replacement. Deterministic regressions cover these cases. Installed acceptance of the correction remains pending.

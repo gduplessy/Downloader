@@ -611,8 +611,28 @@ export class RenderedDiscovery {
         if (state.status !== 'exploring') continue;
         const tab =
           record.tabId >= 0 ? await browser.tabs.get(record.tabId).catch(() => null) : null;
-        if (!tab) await this.advance(record);
-        else {
+        if (!tab) {
+          if (record.tabId >= 0) {
+            // A lost owned tab leaves the native scheduler lease bound to its old ID.
+            // Verify the original session before releasing it; never recover in a default session.
+            const source = await scopeForTab(
+              browser,
+              BROWSER,
+              record.scope.profile,
+              record.sourceTabId,
+              record.scope.claim_generation,
+            );
+            if (!sameScope(source, record.scope)) throw Error('Discovery source session changed');
+            // wait_browser releases the stale lease without resetting the discovery time budget.
+            await this.native('discovery_status', {
+              id: record.id,
+              scope: record.scope,
+              generation: record.generation,
+              action: 'wait_browser',
+            });
+          }
+          await this.advance(record);
+        } else {
           await this.native('discovery_claim', {
             id: record.id,
             scope: record.scope,
