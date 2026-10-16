@@ -54,6 +54,16 @@ export class RetryAfterRequests {
   constructor(private now: () => number = Date.now) {}
   begin(request: Request, authority: Promise<ServerAuthority | null>) {
     if (request.type !== 'main_frame' || request.frameId !== 0 || request.tabId < 0) return;
+    const previous = this.pending.get(request.tabId)?.request;
+    // Duplicate listener delivery is the same request, not a new navigation intent.
+    if (
+      previous &&
+      previous.requestId === request.requestId &&
+      previous.url === request.url &&
+      previous.timeStamp === request.timeStamp &&
+      !!previous.incognito === !!request.incognito
+    )
+      return;
     const count = (this.counts.get(request.tabId) ?? 0) + 1;
     this.counts.set(request.tabId, count);
     const first = count === 1;

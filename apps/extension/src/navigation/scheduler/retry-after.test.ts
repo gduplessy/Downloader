@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { RetryAfterRequests, serverResponseWait, enqueueServerResponseWrite, type ServerAuthority } from './retry-after';
+import {
+  RetryAfterRequests,
+  serverResponseWait,
+  enqueueServerResponseWrite,
+  type ServerAuthority,
+} from './retry-after';
 import { observeWait, observeServerWait, retryAfter, WaitClock } from './waits';
 const scope = {
   browser: 'chromium' as const,
@@ -41,6 +46,30 @@ function begin(
   void requests.committed(commit);
 }
 describe('exact navigation Retry-After authority', () => {
+  it('retains first-request header authority through duplicate browser delivery', async () => {
+    const requests = new RetryAfterRequests(() => 1000);
+    const initial = { ...request, timeStamp: 1000 };
+    requests.begin(initial, Promise.resolve(null));
+    await requests.headers(response);
+    requests.begin({ ...initial }, Promise.resolve(null));
+    await requests.committed(commit);
+    const candidate = await requests.adoptInitial(authority, {
+      id: authority.id,
+      sourceGeneration: authority.sourceGeneration,
+      url: request.url,
+      createdAt: 999,
+    });
+    expect(candidate?.deadline).toBe(61000);
+    expect(
+      await requests.adoptInitial(authority, {
+        id: authority.id,
+        sourceGeneration: authority.sourceGeneration,
+        url: request.url,
+        createdAt: 999,
+      }),
+    ).toBeNull();
+  });
+
   it('buffers headers behind pending owner lookup without losing their observed deadline', async () => {
     let now = 1000,
       resolve!: (value: ServerAuthority) => void;

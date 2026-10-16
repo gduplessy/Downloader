@@ -324,7 +324,7 @@ try {
   const results = [];
   await evaluate(
     optionsSession,
-    `globalThis.retryCommits=[]; chrome.webNavigation.onCommitted.addListener(d=>{if(d.frameId===0)globalThis.retryCommits.push({tabId:d.tabId,documentId:d.documentId});}); globalThis.retryHeaders=[]; chrome.webRequest.onHeadersReceived.addListener(d=>{if(d.type==='main_frame'&&[429,503].includes(d.statusCode))globalThis.retryHeaders.push({requestId:d.requestId,documentId:d.documentId,tabId:d.tabId,status:d.statusCode});},{urls:['http://*/*']},['responseHeaders']);`,
+    `globalThis.retryLifecycle=[]; chrome.webRequest.onBeforeRequest.addListener(d=>{if(d.type==='main_frame')globalThis.retryLifecycle.push({event:'request',requestId:d.requestId,tabId:d.tabId,timeStamp:d.timeStamp,url:d.url});},{urls:['http://*/*']}); chrome.webNavigation.onBeforeNavigate.addListener(d=>{if(d.frameId===0)globalThis.retryLifecycle.push({event:'navigate',tabId:d.tabId,timeStamp:d.timeStamp,url:d.url});}); chrome.webNavigation.onCommitted.addListener(d=>{if(d.frameId===0)globalThis.retryLifecycle.push({event:'committed',tabId:d.tabId,timeStamp:d.timeStamp,url:d.url,documentId:d.documentId});}); globalThis.retryCommits=[]; chrome.webNavigation.onCommitted.addListener(d=>{if(d.frameId===0)globalThis.retryCommits.push({tabId:d.tabId,documentId:d.documentId});}); globalThis.retryHeaders=[]; chrome.webRequest.onHeadersReceived.addListener(d=>{if(d.type==='main_frame'&&[429,503].includes(d.statusCode))globalThis.retryHeaders.push({requestId:d.requestId,documentId:d.documentId,tabId:d.tabId,status:d.statusCode});},{urls:['http://*/*']},['responseHeaders']);`,
   );
   for (const name of (
     process.env.NAV_RETRY_CASES ?? 'numeric,date,repeated,malformed,oversized'
@@ -428,6 +428,8 @@ try {
     }
     const posts = fixture.requests.filter((r) => r.name === name && r.path.endsWith('/submit'));
     const headers = await evaluate(optionsSession, 'globalThis.retryHeaders');
+    const lifecycle = await evaluate(optionsSession, 'globalThis.retryLifecycle');
+    console.log('Actual lifecycle: ' + JSON.stringify(lifecycle));
     assert.equal(posts[0]?.method, 'POST', 'The final original request must be POST');
     assert.equal(
       fixture.requests.filter((r) => r.name === name && r.method === 'HEAD').length,
@@ -495,6 +497,7 @@ try {
       duplicate_posts: 0,
       navigation_gets: name === 'extended' ? 2 : 1,
       worker_replaced: replacement,
+      lifecycle,
       headers_include_document_id: headers.every((h) => !!h.documentId),
       committed_document_ids_present: (
         await evaluate(optionsSession, 'globalThis.retryCommits')

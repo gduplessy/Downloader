@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.30.3
+
+- Register request/navigation observers atomically after permission checks and preserve exact duplicate request deliveries without losing initial Retry-After authority.
+- Add initial-header duplicate-delivery regression and actual browser lifecycle diagnostics; initial live qualification remains pending until a successful recorded run.
+
 ## 0.30.2
 
 - Serialize pending Retry-After candidate removal with response writes after cancellation acknowledgement, source renewal and tab loss; a late old write cannot restore invalid metadata or erase a fresh response.

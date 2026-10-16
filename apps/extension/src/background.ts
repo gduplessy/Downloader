@@ -272,6 +272,8 @@ async function serverNavigationObservers() {
     !(await browser.permissions.contains({ permissions: ['webNavigation'] }))
   )
     return;
+  if (serverNavigationInstalled) return;
+  serverNavigationInstalled = true;
   browser.webNavigation.onBeforeNavigate.addListener((details) => {
     if (details.frameId === 0) serverRequests.navigating(details.tabId, details.timeStamp);
   });
@@ -279,7 +281,6 @@ async function serverNavigationObservers() {
     if (details.frameId === 0)
       trackServerResponse(details.tabId, serverRequests.committed(details));
   });
-  serverNavigationInstalled = true;
 }
 async function serverRequestAuthority(tabId: number): Promise<ServerAuthority | null> {
   const records = await navigationStore.get(null);
@@ -779,6 +780,11 @@ async function observers() {
     }))
   )
     return;
+  if (observerInstalled) {
+    await mediaScripts();
+    return;
+  }
+  observerInstalled = true;
   const observe = (details: any) =>
     void (async () => {
       if (details.tabId < 0 || details.frameId < 0) return;
@@ -880,7 +886,6 @@ async function observers() {
       ]);
     } catch {}
   }
-  observerInstalled = true;
 }
 async function mediaScripts() {
   if (BROWSER !== 'chromium') return;
