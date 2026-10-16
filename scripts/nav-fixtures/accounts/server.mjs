@@ -70,9 +70,12 @@ export function page(provider, scenario, { account = 'alice', authenticated = fa
 export async function startAccountFixtureServer({
   port = 18783,
   harness = '.local/nav-accounts/account-harness.js',
+  accountPayloads = {},
+  pageOwnedBlob = false,
 } = {}) {
   const counts = { login: 0, file: 0, purchase: 0 };
   const sessions = new Map();
+  const requests = [];
   const server = createServer(async (req, res) => {
     const url = new URL(req.url, 'http://127.0.0.1');
     const [, prefix, provider, scenario] = url.pathname.split('/');
@@ -91,6 +94,7 @@ export async function startAccountFixtureServer({
     }
     const cookie = (req.headers.cookie ?? '').match(/(?:^|; )nav_account=([^;]+)/)?.[1];
     const session = sessions.get(cookie);
+    requests.push({ method: req.method, path: url.pathname, account: session?.account ?? null });
     if (scenario === 'login' && req.method === 'POST') {
       counts.login++;
       let body = '';
@@ -130,12 +134,13 @@ export async function startAccountFixtureServer({
         return;
       }
       counts.file++;
+      const filePayload = accountPayloads[session.account] ?? payload;
       res.writeHead(200, {
         'Content-Type': 'application/octet-stream',
         'Content-Disposition': 'attachment; filename="account-fixture.bin"',
-        'Content-Length': payload.length,
+        'Content-Length': filePayload.length,
       });
-      res.end(payload);
+      res.end(filePayload);
       return;
     }
     if (scenario === 'purchase' || scenario === 'trap.bin') {
@@ -144,12 +149,28 @@ export async function startAccountFixtureServer({
       return;
     }
     res.setHeader('Content-Type', 'text/html');
-    res.end(page(provider, scenario, { account: session?.account, authenticated: !!session }));
+    let document = page(provider, scenario, {
+      account: session?.account,
+      authenticated: !!session,
+    });
+    if (
+      pageOwnedBlob &&
+      session &&
+      ['account', 'expired-entitlement', 'quota', 'unknown'].includes(scenario)
+    ) {
+      document = document.replace(
+        'data-nav-fixture-control data-nav-premium-control download href="',
+        'id="premium-download" download href="',
+      );
+      document += `<button id="prepare-download" type="button">Prepare</button><script>(()=>{const link=document.getElementById('premium-download');const url=link.href;link.removeAttribute('href');document.getElementById('prepare-download').addEventListener('click',async()=>{document.getElementById('prepare-download').remove();const response=await fetch(url);if(!response.ok)throw Error('Fixture file refused');const blob=await response.blob();link.href=URL.createObjectURL(blob);link.setAttribute('data-nav-fixture-control','');link.setAttribute('data-nav-premium-control','');document.documentElement.dataset.fixtureBlobReady='true'},{once:true})})()</script>`;
+    }
+    res.end(document);
   });
   await new Promise((resolve) => server.listen(port, '127.0.0.1', resolve));
   return {
     base: 'http://127.0.0.1:' + server.address().port,
     counts,
+    requests,
     close: () =>
       new Promise((resolve) => {
         server.closeAllConnections();

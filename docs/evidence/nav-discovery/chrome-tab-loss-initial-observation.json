@@ -1,0 +1,52 @@
+{
+  "result": "failed qualification",
+  "error": "Error: Owned tab loss did not recover the original frontier null",
+  "mode": "tab-loss",
+  "sourceRevision": "07e3b1b546639b6f80cb6cf37e902cd25f104d94",
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/user-origin",
+      "authenticated": false
+    },
+    {
+      "method": "GET",
+      "path": "/login",
+      "authenticated": false
+    },
+    {
+      "method": "GET",
+      "path": "/nav-adapters/gofile/project",
+      "authenticated": true
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico",
+      "authenticated": true
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico",
+      "authenticated": true
+    },
+    {
+      "method": "GET",
+      "path": "/nav-adapters/gofile/project",
+      "authenticated": true
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico",
+      "authenticated": true
+    }
+  ],
+  "persistedNativeStateAfterFailure": {
+    "status": "exploring",
+    "generation": 1,
+    "leasedDocument": true,
+    "pendingPages": 1,
+    "visitedPages": 0,
+    "resources": 0
+  },
+  "limitation": "The initial fixture did not await full production load or verify resolver-poll alarm creation before interruption; runtime root cause is not established by this observation."
+}
