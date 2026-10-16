@@ -479,6 +479,19 @@ try {
       command: 'site_account',
       args: { action: 'select', job_id: job.id, account_id: accountId, mode: 'premium' },
     });
+    const selectedNative = list().find((row) => row.id === job.id);
+    assert.ok(selectedNative?.navigation_scope);
+    await wait(async () => {
+      const snapshot = await json(
+        "browser.runtime.sendMessage({type:'snapshot'}).then(JSON.stringify)",
+      );
+      const visible = snapshot.jobs.find((row) => row.id === job.id);
+      return (
+        visible?.navigation_scope?.claim_generation ===
+          selectedNative.navigation_scope.claim_generation &&
+        visible.source_generation === selectedNative.source_generation
+      );
+    }, 'Production account-selection projection');
     await evaluate(
       `browser.runtime.sendMessage({type:'navigation_queue_continue',id:${JSON.stringify(job.id)}})`,
     );
