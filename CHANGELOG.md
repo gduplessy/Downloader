@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.33.5
+
+- Inspect the actual production closed-shadow host chooser without relying on nonexistent fixture IDs; Firefox execution remains pending.
+
 ## 0.33.4
 
 - Prepare actual installed Firefox challenge lifecycle controls and original-page fetch-to-owned-Blob downstream qualification. Production bundles/native hashes and local HTTP contract verified; browser acceptance remains pending execution.
