@@ -14,9 +14,20 @@ const root = resolve('.fixture-challenges', 'installed-' + randomUUID()),
   extension = resolve(root, 'extension'),
   state = resolve(root, 'state'),
   output = resolve(root, 'output'),
-  service = resolve('target/debug/downloader-service.exe'),
-  cli = resolve('target/debug/downloader.exe');
+  service = resolve(root, 'downloader-service.exe'),
+  cli = resolve(root, 'downloader.exe');
+const nativePair = process.env.NAV_NATIVE_PAIR ?? 'C:/Users/gduplessy/code/Downloader/.fixture-streams/native-pairs/3b808ae-0.25.1';
+const nativeHashes = { 'downloader-service.exe': '3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2', 'downloader.exe': '43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c' };
+for (const [name, expected] of Object.entries(nativeHashes)) {
+  const source = resolve(nativePair, name);
+  assert.equal(createHash('sha256').update(await readFile(source)).digest('hex'), expected, 'Immutable native source mismatch');
+  await mkdir(root, { recursive: true });
+  await copyFile(source, resolve(root, name));
+  assert.equal(createHash('sha256').update(await readFile(resolve(root, name))).digest('hex'), expected, 'Copied native mismatch');
+}
+const sourceRevision = execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim();
 await mkdir(extension, { recursive: true });
+await mkdir('.local/nav-challenges', { recursive: true });
 await mkdir(state, { recursive: true });
 await mkdir(output, { recursive: true });
 const fixture = await startChallengeServer(),
@@ -29,7 +40,8 @@ let extensionId = [
 ]
   .map((n) => String.fromCharCode(97 + (n >> 4), 97 + (n & 15)))
   .join('');
-await build({
+const buildResult = await build({
+  metafile: true,
   entryPoints: [
     'apps/extension/src/background.ts',
     'apps/extension/src/resolver.ts',
@@ -466,6 +478,11 @@ try {
   }
   assert.equal(fixture.submits.filter((s) => s.accepted).length, 4);
   const evidence = {
+    source_revision: sourceRevision,
+    driver_sha256: createHash('sha256').update(await readFile(new URL(import.meta.url))).digest('hex'),
+    source_graph: await Promise.all(Object.keys(buildResult.metafile.inputs).sort().map(async path => ({path,sha256:createHash('sha256').update(await readFile(path)).digest('hex')}))),
+    native_build_revision: '3b808ae1967a210fc5b3a3e461488b9f2ab6cb61',
+    native_hashes: nativeHashes,
     fixture: 'production-installed-challenges-v1',
     browser: version.product,
     os: process.platform,
@@ -502,3 +519,5 @@ try {
   // Exactly the unique fixture-created key; no user native host registration is altered.
   execFileSync('reg', ['DELETE', registry, '/f'], { windowsHide: true, stdio: 'ignore' });
 }
+
+await require('esbuild').stop();
