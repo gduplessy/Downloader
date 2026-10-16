@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.34.7
+
+- Integrate the installed-verified Firefox fixture profile shadowing correction.
+
 ## 0.34.6
 
 - Integrate reviewed NAV13 fixture ordering correction and four passing installed Edge negative records.
@@ -29,6 +33,10 @@
 
 - Add exact-native-pair installed extension popup qualification for Continue, FlareSolverr refusal, routing, stale settings and explicit retry.
 - Preserve synthetic solver protocol versus real challenge clearance and native-settings UI acceptance boundaries.
+
+## 0.33.12
+
+- Remove Firefox fixture profile shadowing that prevented actual browser startup.
 
 ## 0.33.11
 
