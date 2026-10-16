@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.28.9
+
+- Qualify actual Firefox158 saved credentials and existing entitled sessions in two real containers through original-page fetch/owned-Blob direct streaming, with two consecutive exact-source file-hash passes.
+- Require exact cross-container account refusal, final native/browser authority, unchanged native/helper hashes and successful persisted account cleanup. Preserve explicit synthetic/trusted fixture boundaries and pending private, attachment-response, live-provider and platform gates.
+
 ## 0.27.2
 
 - Require complete actual Firefox UI inspection and exact enabled/checked/recovery-control assertions so future negative fixtures cannot pass with missing observation or stale generic controls.
