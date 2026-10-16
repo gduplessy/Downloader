@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.30.2
+
+- Serialize pending Retry-After candidate removal with response writes after cancellation acknowledgement, source renewal and tab loss; a late old write cannot restore invalid metadata or erase a fresh response.
+- Add deterministic pending-write/clear/fresh-write ordering coverage and require original POST method plus zero HEAD probes in installed qualification.
+- Preserve full six-row Chrome/Edge30.1 matrices as historical checked evidence; current-source initial and matrix repeats follow separately.
+
 ## 0.30.1
 
 - Preserve server monotonic elapsed proof between confirmed readiness and commit after a backward UTC jump; deterministic regression fails before this fix.

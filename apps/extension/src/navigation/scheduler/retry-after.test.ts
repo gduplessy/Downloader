@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RetryAfterRequests, serverResponseWait, type ServerAuthority } from './retry-after';
+import { RetryAfterRequests, serverResponseWait, enqueueServerResponseWrite, type ServerAuthority } from './retry-after';
 import { observeWait, observeServerWait, retryAfter, WaitClock } from './waits';
 const scope = {
   browser: 'chromium' as const,
@@ -210,4 +210,32 @@ it('a distinct bound response extends, never shortens, a server deadline includi
   const afterElapsed = observeServerWait(first, 8, 132000, 72000, 'third');
   expect(afterElapsed.deadline_ms).toBe(132000);
   expect(afterElapsed.observed_duration_ms).toBe(60000);
+});
+
+it('serializes cancellation after a pending storage write without erasing a fresh subsequent response', async () => {
+  const writes = new Map<number, Promise<void>>(),
+    order: string[] = [];
+  let release!: () => void, stored: string | undefined;
+  const blocked = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const old = enqueueServerResponseWrite(writes, 7, async () => {
+    await blocked;
+    stored = 'old';
+    order.push('old');
+  });
+  const cancelled = enqueueServerResponseWrite(writes, 7, async () => {
+    stored = undefined;
+    order.push('clear');
+  });
+  const fresh = enqueueServerResponseWrite(writes, 7, async () => {
+    stored = 'fresh';
+    order.push('fresh');
+  });
+  await Promise.resolve();
+  expect(order).toEqual([]);
+  release();
+  await Promise.all([old, cancelled, fresh]);
+  expect(order).toEqual(['old', 'clear', 'fresh']);
+  expect(stored).toBe('fresh');
 });

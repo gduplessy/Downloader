@@ -38,6 +38,7 @@ import { cancelNavigationTask } from './navigation/scheduler/cancel';
 import { observeWait, waitFingerprint, type DurableWait } from './navigation/scheduler/waits';
 import {
   RetryAfterRequests,
+  enqueueServerResponseWrite,
   serverResponseWait,
   type ServerAuthority,
   type ServerResponse,
@@ -116,6 +117,9 @@ async function renewAuthority(key: string, record: ResolverRecord) {
   ) {
     navigationAuthorizations.invalidateTab(record.tabId);
     premiumAuthorizations.invalidateTab(record.tabId);
+    // Renewal can run inside a queued response's native snapshot; enqueue without awaiting itself.
+    void clearServerResponse(record.tabId).catch(() => {});
+    delete record.serverWaitDocumentId;
     await captureCancels.get(record.tabId)?.();
     captureCancels.delete(record.tabId);
     record.scope = authority.scope;
@@ -240,28 +244,27 @@ const serverHeaderWrites = new Map<number, Promise<void>>();
 let serverNavigationInstalled = false;
 function trackServerResponse(tabId: number, response: Promise<ServerResponse | null>) {
   // Compute event identity immediately; serialize persistence so a later commit cannot overtake a header write.
-  const previous = serverHeaderWrites.get(tabId) ?? Promise.resolve();
-  const write = previous
-    .catch(() => {})
-    .then(async () => {
-      const candidate = await response;
-      if (!candidate || !serverRequests.current(candidate)) return;
-      const current = await serverRequestAuthority(tabId);
-      if (
-        current &&
-        candidate.id === current.id &&
-        candidate.sourceGeneration === current.sourceGeneration &&
-        candidate.sessionEpoch === current.sessionEpoch &&
-        sameScope(candidate.scope, current.scope)
-      )
-        await navigationStore.set({ ['server-response-' + tabId]: candidate });
-    })
-    .catch(() => {});
-  serverHeaderWrites.set(tabId, write);
-  void write.finally(() => {
-    if (serverHeaderWrites.get(tabId) === write) serverHeaderWrites.delete(tabId);
-  });
+  void enqueueServerResponseWrite(serverHeaderWrites, tabId, async () => {
+    const candidate = await response;
+    if (!candidate || !serverRequests.current(candidate)) return;
+    const current = await serverRequestAuthority(tabId);
+    if (
+      current &&
+      candidate.id === current.id &&
+      candidate.sourceGeneration === current.sourceGeneration &&
+      candidate.sessionEpoch === current.sessionEpoch &&
+      sameScope(candidate.scope, current.scope)
+    )
+      await navigationStore.set({ ['server-response-' + tabId]: candidate });
+  }).catch(() => {});
 }
+function clearServerResponse(tabId: number): Promise<void> {
+  serverRequests.removeTab(tabId);
+  return enqueueServerResponseWrite(serverHeaderWrites, tabId, () =>
+    navigationStore.remove('server-response-' + tabId),
+  );
+}
+
 async function serverNavigationObservers() {
   if (
     BROWSER !== 'chromium' ||
@@ -1358,7 +1361,10 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
         owner: await profile,
         native,
         owns: ownsCurrentTab,
-        invalidate: (job) => navigationSources.invalidate(job),
+        invalidate: async (job) => {
+          if (record) await clearServerResponse(record.tabId);
+          await navigationSources.invalidate(job);
+        },
         release: (id) => scheduler.release(id),
         removeRecord: (id) => navigationStore.remove('resolver-' + id),
         closeTab: (tabId) => browser.tabs.remove(tabId),
@@ -2288,8 +2294,7 @@ browser.tabs.onRemoved.addListener(
       premiumAuthorizations.invalidateTab(tabId);
       await captureCancels.get(tabId)?.();
       captureCancels.delete(tabId);
-      serverRequests.removeTab(tabId);
-      await navigationStore.remove('server-response-' + tabId);
+      await clearServerResponse(tabId);
       for (const [key, r] of requests) if (r.tabId === tabId) requests.delete(key);
       const storage: Record<string, any> = await navigationStore.get(null);
       for (const [key, r] of Object.entries(storage)) {

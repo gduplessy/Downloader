@@ -222,3 +222,20 @@ export function serverResponseWait(
     response.fingerprint,
   );
 }
+
+/** Keep invalidation in the same storage queue as response writes so neither late nor fresh writes are erased out of order. */
+export function enqueueServerResponseWrite(
+  writes: Map<number, Promise<void>>,
+  tabId: number,
+  operation: () => Promise<void>,
+): Promise<void> {
+  const previous = writes.get(tabId) ?? Promise.resolve();
+  const write = previous.catch(() => {}).then(operation);
+  writes.set(tabId, write);
+  void write
+    .catch(() => {})
+    .finally(() => {
+      if (writes.get(tabId) === write) writes.delete(tabId);
+    });
+  return write;
+}

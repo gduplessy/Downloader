@@ -428,6 +428,12 @@ try {
     }
     const posts = fixture.requests.filter((r) => r.name === name && r.path.endsWith('/submit'));
     const headers = await evaluate(optionsSession, 'globalThis.retryHeaders');
+    assert.equal(posts[0]?.method, 'POST', 'The final original request must be POST');
+    assert.equal(
+      fixture.requests.filter((r) => r.name === name && r.method === 'HEAD').length,
+      0,
+      'No HEAD probe',
+    );
     assert.equal(
       posts.length,
       1,
@@ -483,6 +489,8 @@ try {
       wait: observed ?? null,
       server_deadline: fixture.cases.get(name).readyAt,
       original_posts: 1,
+      original_method: posts[0].method,
+      head_probes: 0,
       early_posts: 0,
       duplicate_posts: 0,
       navigation_gets: name === 'extended' ? 2 : 1,
