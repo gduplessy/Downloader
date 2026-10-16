@@ -1,0 +1,548 @@
+{
+  "error": "AssertionError [ERR_ASSERTION]: The final original request must be POST\n+ actual - expected\n\n+ undefined\n- 'POST'\n",
+  "case": "date",
+  "instrumented": true,
+  "resolverEvents": [
+    {
+      "session": "F7A73B4631FDEA1F0FBF991238B071B8",
+      "context": 2,
+      "at": 1792148918694,
+      "type": "resolver_context",
+      "document": {
+        "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+        "generation": 1
+      }
+    },
+    {
+      "session": "F7A73B4631FDEA1F0FBF991238B071B8",
+      "context": 2,
+      "at": 1792148918694,
+      "type": "resolver_context",
+      "document": {
+        "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+        "generation": 1
+      },
+      "finished": 1792148919695,
+      "response": {
+        "authorization_present": false,
+        "documentId": "EE95FF22790A071A937BED3B3D1B5EE5",
+        "sourceGeneration": 1,
+        "tabId": 266461072,
+        "frameId": 0,
+        "scope": {
+          "claim_generation": 1,
+          "private": false
+        }
+      }
+    },
+    {
+      "session": "F7A73B4631FDEA1F0FBF991238B071B8",
+      "context": 2,
+      "at": 1792148919696,
+      "type": "resolver_context",
+      "document": {
+        "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+        "generation": 1
+      }
+    },
+    {
+      "session": "F7A73B4631FDEA1F0FBF991238B071B8",
+      "context": 2,
+      "at": 1792148919696,
+      "type": "resolver_context",
+      "document": {
+        "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+        "generation": 1
+      },
+      "finished": 1792148920925,
+      "response": {
+        "authorization_present": false,
+        "documentId": "EE95FF22790A071A937BED3B3D1B5EE5",
+        "sourceGeneration": 1,
+        "tabId": 266461072,
+        "frameId": 0,
+        "scope": {
+          "claim_generation": 1,
+          "private": false
+        }
+      }
+    },
+    {
+      "session": "F7A73B4631FDEA1F0FBF991238B071B8",
+      "context": 2,
+      "at": 1792148923169,
+      "type": "resolver_step",
+      "decision": "click",
+      "document": {
+        "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+        "generation": 1
+      },
+      "binding": {
+        "sourceGeneration": 1,
+        "documentGeneration": 1,
+        "documentNonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+        "fingerprint": "b4233d9bc9ea0d96ce859fe3ebb66c3077add2f3c532487879991f8f1da33948"
+      }
+    },
+    {
+      "session": "F7A73B4631FDEA1F0FBF991238B071B8",
+      "context": 2,
+      "at": 1792148923169,
+      "type": "resolver_step",
+      "decision": "click",
+      "document": {
+        "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+        "generation": 1
+      },
+      "binding": {
+        "sourceGeneration": 1,
+        "documentGeneration": 1,
+        "documentNonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+        "fingerprint": "b4233d9bc9ea0d96ce859fe3ebb66c3077add2f3c532487879991f8f1da33948"
+      },
+      "finished": 1792148948610,
+      "response": {
+        "click": false,
+        "repeat": false,
+        "authorization_present": true
+      }
+    },
+    {
+      "session": "F7A73B4631FDEA1F0FBF991238B071B8",
+      "context": 2,
+      "at": 1792148948610,
+      "type": "resolver_context",
+      "document": {
+        "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+        "generation": 2
+      }
+    },
+    {
+      "session": "F7A73B4631FDEA1F0FBF991238B071B8",
+      "context": 2,
+      "at": 1792148948610,
+      "type": "resolver_context",
+      "document": {
+        "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+        "generation": 2
+      },
+      "finished": 1792148950099,
+      "response": {
+        "authorization_present": false,
+        "documentId": "EE95FF22790A071A937BED3B3D1B5EE5",
+        "sourceGeneration": 1,
+        "tabId": 266461072,
+        "frameId": 0,
+        "scope": {
+          "claim_generation": 1,
+          "private": false
+        }
+      }
+    },
+    {
+      "session": "F7A73B4631FDEA1F0FBF991238B071B8",
+      "context": 2,
+      "at": 1792148951762,
+      "type": "resolver_abort",
+      "document": {
+        "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+        "generation": 2
+      }
+    },
+    {
+      "session": "F7A73B4631FDEA1F0FBF991238B071B8",
+      "context": 2,
+      "at": 1792148951763,
+      "type": "resolver_context",
+      "document": {
+        "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+        "generation": 2
+      }
+    },
+    {
+      "session": "F7A73B4631FDEA1F0FBF991238B071B8",
+      "context": 2,
+      "at": 1792148951762,
+      "type": "resolver_abort",
+      "document": {
+        "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+        "generation": 2
+      },
+      "finished": 1792148951783,
+      "response": {
+        "authorization_present": false
+      }
+    },
+    {
+      "session": "F7A73B4631FDEA1F0FBF991238B071B8",
+      "context": 2,
+      "at": 1792148951763,
+      "type": "resolver_context",
+      "document": {
+        "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+        "generation": 2
+      },
+      "finished": 1792148952779,
+      "response": {
+        "authorization_present": false,
+        "documentId": "EE95FF22790A071A937BED3B3D1B5EE5",
+        "sourceGeneration": 1,
+        "tabId": 266461072,
+        "frameId": 0,
+        "scope": {
+          "claim_generation": 1,
+          "private": false
+        }
+      }
+    },
+    {
+      "session": "F7A73B4631FDEA1F0FBF991238B071B8",
+      "context": 2,
+      "at": 1792148952779,
+      "type": "resolver_context",
+      "document": {
+        "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+        "generation": 2
+      }
+    },
+    {
+      "session": "F7A73B4631FDEA1F0FBF991238B071B8",
+      "context": 2,
+      "at": 1792148952779,
+      "type": "resolver_context",
+      "document": {
+        "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+        "generation": 2
+      },
+      "finished": 1792148961417,
+      "response": {
+        "authorization_present": false,
+        "documentId": "EE95FF22790A071A937BED3B3D1B5EE5",
+        "sourceGeneration": 1,
+        "tabId": 266461072,
+        "frameId": 0,
+        "scope": {
+          "claim_generation": 1,
+          "private": false
+        }
+      }
+    },
+    {
+      "session": "F7A73B4631FDEA1F0FBF991238B071B8",
+      "context": 2,
+      "at": 1792148968172,
+      "type": "resolver_step",
+      "decision": "click",
+      "document": {
+        "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+        "generation": 2
+      },
+      "binding": {
+        "sourceGeneration": 1,
+        "documentGeneration": 2,
+        "documentNonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+        "fingerprint": "b4233d9bc9ea0d96ce859fe3ebb66c3077add2f3c532487879991f8f1da33948"
+      }
+    }
+  ],
+  "observerInstallations": 1,
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/nav-adapters/gofile/limited",
+      "name": "date",
+      "at": 1792148906378,
+      "ready": false
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico",
+      "name": "numeric",
+      "at": 1792148906585,
+      "ready": false
+    }
+  ],
+  "ui": [
+    {
+      "targetId": "161224388C0994E34E55E1523953D9AD",
+      "contexts": [
+        {
+          "id": 2,
+          "trace": [
+            {
+              "at": 1792148918694,
+              "type": "resolver_context",
+              "document": {
+                "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+                "generation": 1
+              },
+              "finished": 1792148919695,
+              "response": {
+                "authorization_present": false,
+                "documentId": "EE95FF22790A071A937BED3B3D1B5EE5",
+                "sourceGeneration": 1,
+                "tabId": 266461072,
+                "frameId": 0,
+                "scope": {
+                  "claim_generation": 1,
+                  "private": false
+                }
+              }
+            },
+            {
+              "at": 1792148919696,
+              "type": "resolver_context",
+              "document": {
+                "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+                "generation": 1
+              },
+              "finished": 1792148920925,
+              "response": {
+                "authorization_present": false,
+                "documentId": "EE95FF22790A071A937BED3B3D1B5EE5",
+                "sourceGeneration": 1,
+                "tabId": 266461072,
+                "frameId": 0,
+                "scope": {
+                  "claim_generation": 1,
+                  "private": false
+                }
+              }
+            },
+            {
+              "at": 1792148923169,
+              "type": "resolver_step",
+              "decision": "click",
+              "document": {
+                "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+                "generation": 1
+              },
+              "binding": {
+                "sourceGeneration": 1,
+                "documentGeneration": 1,
+                "documentNonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+                "fingerprint": "b4233d9bc9ea0d96ce859fe3ebb66c3077add2f3c532487879991f8f1da33948"
+              },
+              "finished": 1792148948610,
+              "response": {
+                "click": false,
+                "repeat": false,
+                "authorization_present": true
+              }
+            },
+            {
+              "at": 1792148948610,
+              "type": "resolver_context",
+              "document": {
+                "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+                "generation": 2
+              },
+              "finished": 1792148950099,
+              "response": {
+                "authorization_present": false,
+                "documentId": "EE95FF22790A071A937BED3B3D1B5EE5",
+                "sourceGeneration": 1,
+                "tabId": 266461072,
+                "frameId": 0,
+                "scope": {
+                  "claim_generation": 1,
+                  "private": false
+                }
+              }
+            },
+            {
+              "at": 1792148951762,
+              "type": "resolver_abort",
+              "document": {
+                "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+                "generation": 2
+              },
+              "finished": 1792148951783,
+              "response": {
+                "authorization_present": false
+              }
+            },
+            {
+              "at": 1792148951763,
+              "type": "resolver_context",
+              "document": {
+                "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+                "generation": 2
+              },
+              "finished": 1792148952779,
+              "response": {
+                "authorization_present": false,
+                "documentId": "EE95FF22790A071A937BED3B3D1B5EE5",
+                "sourceGeneration": 1,
+                "tabId": 266461072,
+                "frameId": 0,
+                "scope": {
+                  "claim_generation": 1,
+                  "private": false
+                }
+              }
+            },
+            {
+              "at": 1792148952779,
+              "type": "resolver_context",
+              "document": {
+                "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+                "generation": 2
+              },
+              "finished": 1792148961417,
+              "response": {
+                "authorization_present": false,
+                "documentId": "EE95FF22790A071A937BED3B3D1B5EE5",
+                "sourceGeneration": 1,
+                "tabId": 266461072,
+                "frameId": 0,
+                "scope": {
+                  "claim_generation": 1,
+                  "private": false
+                }
+              }
+            },
+            {
+              "at": 1792148968172,
+              "type": "resolver_step",
+              "decision": "click",
+              "document": {
+                "nonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+                "generation": 2
+              },
+              "binding": {
+                "sourceGeneration": 1,
+                "documentGeneration": 2,
+                "documentNonce": "3dbf43a1-e2a3-42a5-ae6c-b2bebea23801",
+                "fingerprint": "b4233d9bc9ea0d96ce859fe3ebb66c3077add2f3c532487879991f8f1da33948"
+              }
+            }
+          ]
+        }
+      ],
+      "tree": [
+        {
+          "role": "RootWebArea",
+          "name": ""
+        },
+        {
+          "role": "heading",
+          "name": "Server limit date"
+        },
+        {
+          "role": "form",
+          "name": ""
+        },
+        {
+          "role": "StaticText",
+          "name": "Server limit date"
+        },
+        {
+          "role": "button",
+          "name": "Download intended file"
+        },
+        {
+          "role": "InlineTextBox",
+          "name": "Server limit date"
+        },
+        {
+          "role": "StaticText",
+          "name": "Download intended file"
+        },
+        {
+          "role": "InlineTextBox",
+          "name": "Download intended file"
+        }
+      ]
+    }
+  ],
+  "native": {
+    "active": 1,
+    "settings": {
+      "max_active": 3,
+      "notifications": false,
+      "paused": false
+    },
+    "tasks": [
+      {
+        "generation": 1,
+        "host_keys": [],
+        "id": "9fc24e7b-f89b-4577-bb67-504ecfcafb2a",
+        "lease": {
+          "expires_at_ms": 1792149062661,
+          "generation": 1,
+          "owner": "9f51d27a-59e4-43f2-bf55-70a543508473",
+          "tab_id": 266461072
+        },
+        "order": 1,
+        "owner": "9f51d27a-59e4-43f2-bf55-70a543508473",
+        "priority": 0,
+        "private": false,
+        "reason": "ready_confirmed",
+        "scope": {
+          "browser": "chromium",
+          "claim_generation": 1,
+          "container_id": null,
+          "cookie_store_id": "0",
+          "partition_key": {
+            "has_cross_site_ancestor": false,
+            "top_level_site": "http://127.0.0.1"
+          },
+          "private": false,
+          "profile": "9f51d27a-59e4-43f2-bf55-70a543508473"
+        },
+        "status": "active",
+        "wait": {
+          "basis": "server",
+          "deadline_ms": 1792148918000,
+          "expires_at_ms": null,
+          "generation": 1,
+          "next_recheck_ms": 1792148927747,
+          "notified": false,
+          "observed_at_ms": 1792148907699,
+          "observed_duration_ms": 10301,
+          "reason": "retry_after:wait:8ae141e9a8accf2205544386f56d705f9bfd77f96053ac8f3e6a6de1a977cf8f",
+          "requires_live_tab": true,
+          "source_generation": 1
+        }
+      }
+    ]
+  },
+  "browser": "Chrome/155.0.8059.40",
+  "records": {
+    "resolver-9fc24e7b-f89b-4577-bb67-504ecfcafb2a": {
+      "documentGeneration": 2,
+      "documentId": "EE95FF22790A071A937BED3B3D1B5EE5",
+      "generation": 1,
+      "lastOrigin": "http://127.0.0.1:31474",
+      "scope": {
+        "browser": "chromium",
+        "claim_generation": 1,
+        "container_id": null,
+        "cookie_store_id": "0",
+        "partition_key": {
+          "has_cross_site_ancestor": false,
+          "top_level_site": "http://127.0.0.1"
+        },
+        "private": false,
+        "profile": "9f51d27a-59e4-43f2-bf55-70a543508473"
+      },
+      "sessionEpoch": "e833f708-c5b5-45eb-98e4-84ee2f9d1abc",
+      "sourceGeneration": 1,
+      "started": 1792148910447,
+      "steps": 0,
+      "tabId": 266461072,
+      "waitedMs": 40307
+    }
+  },
+  "provenance": {
+    "source_revision": "e1d2fd3",
+    "native_build_revision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+    "native_binary_sha256": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+    "cli_binary_sha256": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c",
+    "limits": [
+      "Instrumented diagnostic run during five concurrent browser fixtures; not unchanged-runtime qualification",
+      "No commit outcome was recorded before the generation mismatch; no final action inferred from native ready_confirmed"
+    ]
+  }
+}

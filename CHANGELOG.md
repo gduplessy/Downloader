@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.31.2
+
+- Coalesce automatic wait wakes during selected navigation authorization so scheduler polling cannot invalidate an otherwise unchanged selected document before commit. Explicit user refresh and ownership/cancellation fences remain enforced. Preserve the reproduced installed failure trace.
+
+
 ## 0.31.1
 
 - Keep bounded resolver diagnostic outcomes across document navigation and expose observer coverage; verify original API promise and callback semantics.

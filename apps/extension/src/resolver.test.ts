@@ -234,6 +234,9 @@ it.each(delayedCases)(
             action === 'cancel' ? 'adapter_selection_cancelled' : 'adapter_preview_stale',
           );
     await vi.waitFor(() => expect(release).toBeTypeOf('function'));
+    // A queued automatic wake must not suppress a later real invalidation.
+    const wake = fixture.listener.mock.calls[0][0] as (message: unknown) => unknown;
+    await wake({ type: 'resolver_continue', automatic: true });
     if (action === 'cancel') cancellation.abort();
     if (action === 'claim-change')
       currentContext = { ...context, scope: { ...scope, claim_generation: 2 } };
@@ -272,7 +275,6 @@ it.each(delayedCases)(
   },
 );
 
-
 it('keeps stale preview recovery controls when refresh temporarily loses owned context', async () => {
   control('first');
   control('second');
@@ -282,9 +284,13 @@ it('keeps stale preview recovery controls when refresh temporarily loses owned c
   await import('./resolver');
   await vi.waitFor(() => expect(fixture.preview).toHaveBeenCalledTimes(1));
   const disable = fixture.preview.mock.calls[0][5] as () => Promise<void>;
-  fixture.send.mockImplementation(async (message) => message.type === 'resolver_disable_adapter' ? true : null);
+  fixture.send.mockImplementation(async (message) =>
+    message.type === 'resolver_disable_adapter' ? true : null,
+  );
   await disable();
-  expect(fixture.send).toHaveBeenCalledWith(expect.objectContaining({ type: 'resolver_disable_adapter', adapterId: 'local-fixture' }));
+  expect(fixture.send).toHaveBeenCalledWith(
+    expect.objectContaining({ type: 'resolver_disable_adapter', adapterId: 'local-fixture' }),
+  );
   fixture.send.mockImplementation(async (message) => {
     if (message.type === 'resolver_context') throw Error('temporary ownership observation failure');
     if (message.type === 'resolver_account') return null;
@@ -294,22 +300,39 @@ it('keeps stale preview recovery controls when refresh temporarily loses owned c
   refresh();
   await vi.waitFor(() => expect(stale).toHaveBeenCalledTimes(1));
   expect(close).not.toHaveBeenCalled();
-  const select = fixture.preview.mock.calls[0][3] as (id: string, signal: AbortSignal) => Promise<void>;
-  await expect(select('first', new AbortController().signal)).rejects.toThrow('adapter_preview_stale');
-  expect(fixture.send.mock.calls.some(([m]) => m.type === 'resolver_prepare' || m.type === 'resolver_commit')).toBe(false);
+  const select = fixture.preview.mock.calls[0][3] as (
+    id: string,
+    signal: AbortSignal,
+  ) => Promise<void>;
+  await expect(select('first', new AbortController().signal)).rejects.toThrow(
+    'adapter_preview_stale',
+  );
+  expect(
+    fixture.send.mock.calls.some(
+      ([m]) => m.type === 'resolver_prepare' || m.type === 'resolver_commit',
+    ),
+  ).toBe(false);
   for (const element of fixture.elements.values()) expect(element.click).not.toHaveBeenCalled();
-  fixture.send.mockImplementation(async (message) => message.type === 'resolver_context'
-    ? { ...context, documentGeneration: message.document.generation, disabledAdapters: ['local-fixture'] }
-    : message.type === 'resolver_account' ? null : { click: false });
+  fixture.send.mockImplementation(async (message) =>
+    message.type === 'resolver_context'
+      ? {
+          ...context,
+          documentGeneration: message.document.generation,
+          disabledAdapters: ['local-fixture'],
+        }
+      : message.type === 'resolver_account'
+        ? null
+        : { click: false },
+  );
   refresh();
   await vi.waitFor(() => expect(fixture.preview).toHaveBeenCalledTimes(2));
   expect(close).toHaveBeenCalledTimes(1);
   expect(fixture.preview.mock.calls[1][1].binding.adapterId).toBe('generic');
 });
 
-
 it('coalesces refresh during an in-flight ownership observation and rereads fresh authority', async () => {
-  control('first'); control('second');
+  control('first');
+  control('second');
   fixture.preview.mockReturnValue({ close: vi.fn(), stale: vi.fn() });
   await import('./resolver');
   await vi.waitFor(() => expect(fixture.preview).toHaveBeenCalledTimes(1));
@@ -318,8 +341,15 @@ it('coalesces refresh during an in-flight ownership observation and rereads fres
   fixture.send.mockImplementation(async (message) => {
     if (message.type === 'resolver_context') {
       observations++;
-      if (observations === 1) return new Promise<ResolverContext | null>(resolve => { release = resolve; });
-      return { ...context, documentGeneration: message.document.generation, disabledAdapters: ['local-fixture'] };
+      if (observations === 1)
+        return new Promise<ResolverContext | null>((resolve) => {
+          release = resolve;
+        });
+      return {
+        ...context,
+        documentGeneration: message.document.generation,
+        disabledAdapters: ['local-fixture'],
+      };
     }
     return message.type === 'resolver_account' ? null : { click: false };
   });
@@ -335,33 +365,47 @@ it('coalesces refresh during an in-flight ownership observation and rereads fres
   for (const element of fixture.elements.values()) expect(element.click).not.toHaveBeenCalled();
 });
 
-
 it('keeps the stale preview until a replacement has passed its worker step', async () => {
-  control('first'); control('second');
-  const close = vi.fn(), stale = vi.fn();
+  control('first');
+  control('second');
+  const close = vi.fn(),
+    stale = vi.fn();
   fixture.preview.mockReturnValue({ close, stale });
   await import('./resolver');
   await vi.waitFor(() => expect(fixture.preview).toHaveBeenCalledTimes(1));
   fixture.send.mockImplementation(async (message) => {
-    if (message.type === 'resolver_context') return { ...context, documentGeneration: message.document.generation, disabledAdapters: ['local-fixture'] };
-    if (message.type === 'resolver_step') throw Error('transient step ownership observation failure');
+    if (message.type === 'resolver_context')
+      return {
+        ...context,
+        documentGeneration: message.document.generation,
+        disabledAdapters: ['local-fixture'],
+      };
+    if (message.type === 'resolver_step')
+      throw Error('transient step ownership observation failure');
     return null;
   });
   const refresh = fixture.preview.mock.calls[0][4] as () => void;
   refresh();
-  await vi.waitFor(() => expect(fixture.send).toHaveBeenCalledWith(expect.objectContaining({ type: 'resolver_step', document: { nonce: documentNonce, generation: 2 } })));
-  await new Promise(resolve => setTimeout(resolve, 10));
+  await vi.waitFor(() =>
+    expect(fixture.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'resolver_step',
+        document: { nonce: documentNonce, generation: 2 },
+      }),
+    ),
+  );
+  await new Promise((resolve) => setTimeout(resolve, 10));
   expect(stale).toHaveBeenCalled();
   expect(close).not.toHaveBeenCalled();
   expect(fixture.preview).toHaveBeenCalledTimes(1);
   for (const element of fixture.elements.values()) expect(element.click).not.toHaveBeenCalled();
 });
 
-
 it.each(['context', 'worker-step'] as const)(
   'does not resurrect a cancelled preview after pending %s refresh; later explicit Continue works',
   async (phase) => {
-    control('first'); control('second');
+    control('first');
+    control('second');
     const lifetime = new AbortController();
     const close = vi.fn(() => lifetime.abort());
     fixture.preview.mockReturnValue({ close, stale: vi.fn(), signal: lifetime.signal });
@@ -372,11 +416,19 @@ it.each(['context', 'worker-step'] as const)(
     fixture.send.mockImplementation(async (message) => {
       if (!held && message.type === (phase === 'context' ? 'resolver_context' : 'resolver_step')) {
         held = true;
-        await new Promise<void>(resolve => { release = resolve; });
+        await new Promise<void>((resolve) => {
+          release = resolve;
+        });
       }
       return message.type === 'resolver_context'
-        ? { ...context, documentGeneration: message.document.generation, disabledAdapters: ['local-fixture'] }
-        : message.type === 'resolver_account' ? null : { click: false };
+        ? {
+            ...context,
+            documentGeneration: message.document.generation,
+            disabledAdapters: ['local-fixture'],
+          }
+        : message.type === 'resolver_account'
+          ? null
+          : { click: false };
     });
     const refresh = fixture.preview.mock.calls[0][4] as () => void;
     refresh();
@@ -384,13 +436,139 @@ it.each(['context', 'worker-step'] as const)(
     refresh(); // A coalesced request issued before Cancel must be invalidated too.
     close();
     release();
-    await new Promise(resolve => setTimeout(resolve, 30));
+    await new Promise((resolve) => setTimeout(resolve, 30));
     expect(fixture.preview).toHaveBeenCalledTimes(1);
     for (const element of fixture.elements.values()) expect(element.click).not.toHaveBeenCalled();
-    expect(fixture.send.mock.calls.some(([m]) => m.type === 'resolver_prepare' || m.type === 'resolver_commit')).toBe(false);
+    expect(
+      fixture.send.mock.calls.some(
+        ([m]) => m.type === 'resolver_prepare' || m.type === 'resolver_commit',
+      ),
+    ).toBe(false);
     const listener = fixture.listener.mock.calls[0][0] as (message: unknown) => Promise<boolean>;
     await listener({ type: 'resolver_continue' });
     await vi.waitFor(() => expect(fixture.preview).toHaveBeenCalledTimes(2));
     expect(fixture.preview.mock.calls[1][1].binding.adapterId).toBe('generic');
+  },
+);
+
+it.each(['prepare', 'commit'] as const)(
+  'does not stale an in-flight selected %s on an automatic wait wake',
+  async (phase) => {
+    const click = control('first');
+    control('second');
+    let release!: (value: { authorization?: string; click?: boolean }) => void;
+    fixture.send.mockImplementation((message) => {
+      if (message.type === 'resolver_context') return Promise.resolve(context);
+      if (message.type === 'resolver_account') return Promise.resolve(null);
+      if (message.type === 'resolver_step' && message.decision.kind === 'click')
+        return phase === 'prepare'
+          ? new Promise((resolve) => {
+              release = resolve;
+            })
+          : Promise.resolve({ authorization });
+      if (message.type === 'resolver_commit')
+        return phase === 'commit'
+          ? new Promise((resolve) => {
+              release = resolve;
+            })
+          : Promise.resolve({ click: true });
+      return Promise.resolve({ click: false });
+    });
+    await import('./resolver');
+    await vi.waitFor(() => expect(fixture.preview).toHaveBeenCalledOnce());
+    const selected = fixture.preview.mock.calls[0][3] as (
+      id: string,
+      signal: AbortSignal,
+    ) => Promise<void>;
+    const selection = selected('first', new AbortController().signal);
+    const outcome = expect(selection).resolves.toBeUndefined();
+    await vi.waitFor(() => expect(release).toBeTypeOf('function'));
+    const listener = fixture.listener.mock.calls[0][0] as (message: unknown) => unknown;
+    await listener({ type: 'resolver_continue', automatic: true });
+    release(phase === 'prepare' ? { authorization } : { click: true });
+    await outcome;
+    expect(click).toHaveBeenCalledOnce();
+    expect(fixture.send.mock.calls.filter(([m]) => m.type === 'resolver_abort')).toHaveLength(0);
+    const commit = fixture.send.mock.calls.find(([m]) => m.type === 'resolver_commit')![0];
+    expect(commit.document).toEqual({ nonce: documentNonce, generation: 1 });
+  },
+);
+
+it('coalesces automatic wakes after refusal and reobserves once without replaying the selection', async () => {
+  const click = control('first');
+  control('second');
+  fixture.preview.mockReturnValue({ close: vi.fn(), stale: vi.fn() });
+  let release!: (value: { authorization: string }) => void;
+  let source = 1;
+  fixture.send.mockImplementation((message) => {
+    if (message.type === 'resolver_context')
+      return Promise.resolve({ ...context, sourceGeneration: source });
+    if (message.type === 'resolver_account') return Promise.resolve(null);
+    if (message.type === 'resolver_step' && message.decision.kind === 'click')
+      return new Promise((resolve) => {
+        release = resolve;
+      });
+    return Promise.resolve({ click: false });
+  });
+  await import('./resolver');
+  await vi.waitFor(() => expect(fixture.preview).toHaveBeenCalledOnce());
+  const selected = fixture.preview.mock.calls[0][3] as (
+    id: string,
+    signal: AbortSignal,
+  ) => Promise<void>;
+  const selection = selected('first', new AbortController().signal);
+  const outcome = expect(selection).rejects.toThrow('adapter_preview_stale');
+  await vi.waitFor(() => expect(release).toBeTypeOf('function'));
+  const listener = fixture.listener.mock.calls[0][0] as (message: unknown) => unknown;
+  await listener({ type: 'resolver_continue', automatic: true });
+  await listener({ type: 'resolver_continue', automatic: true });
+  await listener({ type: 'resolver_continue', automatic: true });
+  source = 2;
+  release({ authorization });
+  await outcome;
+  await vi.waitFor(() => expect(fixture.preview).toHaveBeenCalledTimes(2));
+  expect(fixture.preview.mock.calls[1][1].binding.documentGeneration).toBe(2);
+  expect(fixture.preview.mock.calls[1][1].binding.sourceGeneration).toBe(2);
+  expect(click).not.toHaveBeenCalled();
+  expect(
+    fixture.send.mock.calls.filter(
+      ([m]) => m.type === 'resolver_step' && m.decision.kind === 'click',
+    ),
+  ).toHaveLength(1);
+  expect(fixture.send.mock.calls.filter(([m]) => m.type === 'resolver_commit')).toHaveLength(0);
+});
+
+it.each(['prepare', 'commit'] as const)(
+  'keeps automatic single-control %s authority across wait wake',
+  async (phase) => {
+    const click = control('only');
+    let release!: (value: { authorization?: string; click?: boolean }) => void;
+    fixture.send.mockImplementation((message) => {
+      if (message.type === 'resolver_context') return Promise.resolve(context);
+      if (message.type === 'resolver_account') return Promise.resolve(null);
+      if (message.type === 'resolver_step' && message.decision.kind === 'click')
+        return phase === 'prepare'
+          ? new Promise((resolve) => {
+              release = resolve;
+            })
+          : Promise.resolve({ authorization });
+      if (message.type === 'resolver_commit')
+        return phase === 'commit'
+          ? new Promise((resolve) => {
+              release = resolve;
+            })
+          : Promise.resolve({ click: true });
+      return Promise.resolve({ click: false });
+    });
+    await import('./resolver');
+    await vi.waitFor(() => expect(release).toBeTypeOf('function'));
+    const listener = fixture.listener.mock.calls[0][0] as (message: unknown) => unknown;
+    await listener({ type: 'resolver_continue', automatic: true });
+    release(phase === 'prepare' ? { authorization } : { click: true });
+    await vi.waitFor(() => expect(click).toHaveBeenCalledOnce());
+    expect(fixture.preview).not.toHaveBeenCalled();
+    expect(fixture.send.mock.calls.filter(([m]) => m.type === 'resolver_abort')).toHaveLength(0);
+    const commit = fixture.send.mock.calls.find(([m]) => m.type === 'resolver_commit')![0];
+    expect(commit.document).toEqual({ nonce: documentNonce, generation: 1 });
   },
 );

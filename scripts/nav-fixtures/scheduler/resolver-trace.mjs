@@ -25,7 +25,7 @@ export const installResolverTrace = `(() => {
         fingerprint:message.binding.fingerprint,
       } : undefined};
     trace.push(row); if (trace.length > 500) trace.shift();
-    const emit = () => globalThis.__navWaitEmit?.(JSON.stringify(row));
+    const emit = () => { try { globalThis.__navWaitEmit?.(JSON.stringify(row)); } catch {} };
     const finish = value => {row.finished=Date.now();row.response=summary(value);emit();};
     emit();
     const index = args.length - 1;
