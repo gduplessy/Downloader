@@ -1,6 +1,6 @@
 # Retry-After ingestion implementation and remaining qualification
 
-The 0.26.0 implementation connects the production parser to exact main-frame 429/503 request/header observations and consumes a bounded candidate only after live isolated-world document and native scope/source validation. Server waits resist shorter DOM countdowns and block both resolver action stages. Installed qualification is pending. Initial responses before destination session claiming remain separately pending; ownership is never guessed from a URL. Core file-transfer retry handling is a separate path.
+Production navigation-header ingestion is implemented and locally qualified on the recorded Windows Chrome/Edge builds in [RETRY_AFTER_INSTALLED.md](RETRY_AFTER_INSTALLED.md). Exact request and committed-document identity, fresh native scope/source authority, bounded initial-request adoption and monotonic server deadlines remain mandatory. Initial429 numeric and503 HTTP-date rows passed; broader owned-navigation matrices include malformed/oversized/repeated/distinct-longer deadlines and real worker replacement. Historical failed attempts and remaining acceptance boundaries are recorded separately. Core file-transfer retry handling is a separate path.
 
 ## Proposed integration
 

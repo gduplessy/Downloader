@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.30.4
+
+- Publish exact-source Windows Chrome/Edge initial429/503 Retry-After evidence and historical owned-navigation matrices, retaining failed attempts and unqualified acceptance boundaries.
+- Align NAV-04 audit with actual ingestion/deadline/worker evidence; retain the intermittent Chrome503 action stall before its unchanged passing repeat. Documentation/version metadata only; checked extension30.3 and native25.1 remain explicit.
+
 ## 0.30.3
 
 - Register request/navigation observers atomically after permission checks and preserve exact duplicate request deliveries without losing initial Retry-After authority.
