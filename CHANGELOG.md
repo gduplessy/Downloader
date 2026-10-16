@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.30.0
+
+- Reconcile the committed-navigation Retry-After correction with merged account/challenge qualification while preserving both evidence histories.
+
+## 0.27.2
+
+- Require complete actual Firefox UI inspection and exact enabled/checked/recovery-control assertions so future negative fixtures cannot pass with missing observation or stale generic controls.
+- Assert actual regular profile/cookie-store identity and filesystem absence of native destination/partial; preserve prior driver provenance and separately inspected historical acceptance.
+
+## 0.27.1
+
+- Qualify actual installed Firefox158 disabled-adapter generic fallback and changed-layout refusal through real keyboard controls, read-only rendered UI inspection and inspected screenshots.
+- Record zero payload/trap requests, no publication, exact frozen source/driver/native hashes and regular-window/private-addon/platform boundaries; update only the proven local NAV-05 audit gates.
+
+## 0.27.0
+
+- Qualify actual installed Chrome/Edge Cancel during worker-paused refresh and later explicit Continue on final merged adapter source, without context/authorization substitution.
+- Preserve frozen driver/source/native fingerprints, zero payload/trap requests and no-publication acceptance; keep live/provider/platform boundaries explicit.
+
 ## 0.26.1
 
 - Correct actual Chromium navigation headers lacking documentId by joining exact request identity to optional webNavigation committed-document lifecycle and verifying the live isolated world.

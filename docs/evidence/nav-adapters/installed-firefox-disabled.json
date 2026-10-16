@@ -1,0 +1,78 @@
+{
+  "fixture": "production-installed-firefox-adapter-negatives-v1",
+  "checked_runtime_revision": "bb4912a18cd4bd21bd53b143e31bca84cb19985a",
+  "native_build_revision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+  "native_version": "0.25.1",
+  "native_binary_sha256": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+  "cli_binary_sha256": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c",
+  "sourceHashes": {
+    "apps/extension/src/background.ts": "377d6884f27ebe2cb0aac18b32077e5798322862678206febeab7dba4d508a0a",
+    "apps/extension/src/resolver.ts": "29e570b52a797e6cc0b46c54f0d353e2312df6fb2cf7ee2590a8338ea8f2499c",
+    "apps/extension/src/navigation/adapters/policy.ts": "accc3594102592862e5fdbefbbaf56d1adb125488bcc6798b37d07d5b19700d0",
+    "apps/extension/src/navigation/adapters/selection-ui.ts": "0a9bb33f98264c70af66d1a7c67056f4ce1765df00861cd9409a1f026d42a516",
+    "apps/extension/src/navigation/adapters/preview.ts": "478b5c171f9fb7990cb6371065959be1fa8f78a217f415ef2b498846da1d587d"
+  },
+  "bundleHashes": {
+    "background.js": "d36908bda7d6f13e98931dd9df5e7659c9418f0a1fa6197f9b94f2c83172a7fe",
+    "resolver.js": "557a3f124534aea016c8323e8ba544ea6432b08d81910811d908894ede25029d",
+    "options.js": "4b5f0ae006ab6f999c38f13b0ba558d42f91da944b0160462d0d4179f2128cbe"
+  },
+  "driver": {
+    "path": "scripts/nav-fixtures/adapters/installed-firefox-negatives.mjs",
+    "sha256": "48b6017c41e436e5005cb758b5f3e1fe41e4f8efe6cf70530a8c5ecd627d4d78"
+  },
+  "browser": "158.0",
+  "os": "win32",
+  "arch": "x64",
+  "scenario": "disabled",
+  "actualUi": {
+    "present": true,
+    "status": "",
+    "radios": [
+      {
+        "checked": false,
+        "disabled": false
+      },
+      {
+        "checked": false,
+        "disabled": false
+      }
+    ],
+    "buttons": [
+      {
+        "text": "Continue",
+        "disabled": true
+      },
+      {
+        "text": "Cancel",
+        "disabled": false
+      },
+      {
+        "text": "Refresh",
+        "disabled": false
+      }
+    ]
+  },
+  "state": "waiting_user",
+  "payload_requests": 0,
+  "unauthorized_requests": 0,
+  "published": false,
+  "screenshot": "firefox-disabled-preview.png",
+  "visible_status_observed": true,
+  "limits": [
+    "Actual BiDi keyboard input; read-only Firefox extension-world openOrClosedShadowRoot inspection; local screenshot separately inspected. No JS click, selection or authorization shim.",
+    "CLI + trusted extension message starts navigation; desktop/native context-menu UI activation is not qualified",
+    "Synthetic loopback layout only; live hosts/accounts, private-addon, ESR and other OS rows remain pending",
+    "Unique native host and pregranted loopback fixture permissions; no context/authorization shim"
+  ],
+  "visual_review": {
+    "method": "Inspected local BiDi screenshot after the actual run",
+    "sha256": "1f3b19cb2a6a867a144bf2c2627caa7e57aef5ce74f904b0ff20e3bcf2b6a158",
+    "observed": "Two enabled unchecked radios; Continue disabled; Cancel/Refresh; no Use generic controls button"
+  },
+  "publication_check": {
+    "configured_isolated_destination_absent": true,
+    "configured_partial_absent": true,
+    "method": "After-run filesystem inspection of the fixture settings directory and requested filename"
+  }
+}

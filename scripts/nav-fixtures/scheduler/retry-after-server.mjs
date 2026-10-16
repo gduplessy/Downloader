@@ -43,8 +43,8 @@ export async function startRetryAfterServer() {
         header = name === 'malformed' ? 'invalid-delay' : '9'.repeat(129);
         row.readyAt = Date.now() + 4000;
       } else {
-        header = '12';
-        row.readyAt = Date.now() + 12000;
+        header = name === 'extended' && url.searchParams.has('extension') ? '20' : '12';
+        row.readyAt = Date.now() + Number(header) * 1000;
       }
       res.writeHead(name === 'date' ? 503 : 429, { 'Retry-After': header });
       const guarded = ['malformed', 'oversized'].includes(name);

@@ -155,6 +155,7 @@ let browserProc,
   ws,
   sequence = 0;
 const pending = new Map();
+const pausedSessions = new Set();
 function command(method, params = {}, sessionId) {
   const id = ++sequence;
   return new Promise((resolveResult, reject) => {
@@ -292,6 +293,8 @@ try {
   });
   ws.onmessage = ({ data }) => {
     const event = JSON.parse(data);
+    if(event.method==='Debugger.paused')pausedSessions.add(event.sessionId);
+    if(event.method==='Debugger.resumed')pausedSessions.delete(event.sessionId);
     if (!event.id) return;
     const waiter = pending.get(event.id);
     pending.delete(event.id);
@@ -331,7 +334,38 @@ try {
     for(let attempt=0;attempt<3;attempt++){try{await evaluate(optionsSession,'chrome.runtime.sendMessage('+JSON.stringify({type:'navigation_queue_continue',id:job.id})+')');break;}catch(error){if(!String(error).includes('changed during admission')||attempt===2)throw error;await new Promise(r=>setTimeout(r,300));}}
     const session=await targetSession(tab.targetId);
     await waitClick(session,null,'radio');
-    if(scenario==='disabled') {
+    let cancelEvidence;
+    if(scenario==='cancel-refresh') {
+      const worker=(await command('Target.getTargets')).targetInfos.find(t=>t.type==='service_worker'&&t.url.startsWith('chrome-extension://'+extensionId+'/'));
+      assert(worker,'Actual production service worker unavailable');
+      const workerSession=await targetSession(worker.targetId);
+      await command('Debugger.enable',{},workerSession);
+      await command('Debugger.pause',{},workerSession);
+      try {
+        await waitClick(session,'Refresh');
+        for(let i=0;i<100&&!pausedSessions.has(workerSession);i++)await new Promise(r=>setTimeout(r,20));
+        assert(pausedSessions.has(workerSession),'Production worker did not pause during actual Refresh');
+        await waitClick(session,'Cancel');
+        const tree=(await command('Accessibility.getFullAXTree',{},session)).nodes;
+        assert(!tree.some(n=>!n.ignored&&n.role?.value==='dialog'),'Actual Cancel did not close retained preview');
+      } finally {
+        await command('Debugger.resume',{},workerSession);
+        await command('Debugger.disable',{},workerSession);
+        await command('Target.detachFromTarget',{sessionId:workerSession});
+      }
+      // Native/worker completion is observed through the trusted options context,
+      // not fabricated in the page or through an authorization stub.
+      await evaluate(optionsSession,'chrome.runtime.sendMessage({type:"snapshot"})');
+      for(let i=0;i<10;i++) {
+        const tree=(await command('Accessibility.getFullAXTree',{},session)).nodes;
+        assert(!tree.some(n=>!n.ignored&&n.role?.value==='dialog'),'Pending refresh resurrected Cancelled preview');
+        await new Promise(r=>setTimeout(r,100));
+      }
+      await evaluate(optionsSession,'chrome.runtime.sendMessage('+JSON.stringify({type:'navigation_queue_continue',id:job.id})+')');
+      await waitClick(session,null,'radio');
+      await waitClick(session,'Cancel');
+      cancelEvidence={actual_worker_pause:true,actual_refresh_and_cancel:true,no_resurrection_after_resume:true,later_explicit_continue_preview:true};
+    } else if(scenario==='disabled') {
       await waitClick(session,'Use generic controls');
       await new Promise(r=>setTimeout(r,500));
       let stored;
@@ -359,14 +393,14 @@ try {
     const current=call('list').jobs.find(j=>j.id===job.id);
     assert(current.state!=='complete','Negative case published a file');
     assert.equal(fixture.requests.length,0,'Negative case issued a payload or purchase request');
-    rows.push({scenario,state:current.state,unauthorized_requests:0,payload_requests:0,published:false});
+    rows.push({scenario,state:current.state,unauthorized_requests:0,payload_requests:0,published:false,...cancelEvidence});
     console.log('Verified '+scenario);
     // Entire isolated daemon/profile is disposed in finally; cancellation UI is not qualified here.
   }
   const sha=async(path)=>createHash('sha256').update(await readFile(path)).digest('hex');
   const sourceHashes={};for(const file of ['apps/extension/src/background.ts','apps/extension/src/resolver.ts','apps/extension/src/navigation/adapters/policy.ts','apps/extension/src/navigation/adapters/selection-ui.ts','apps/extension/src/navigation/adapters/preview.ts'])sourceHashes[file]=await sha(file);
   const bundleHashes={};for(const file of ['background.js','resolver.js','options.js','content.js'])bundleHashes[file]=await sha(resolve(extension,file));
-  const evidence={checked_runtime_revision:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8',windowsHide:true}).trim(),native_build_revision:process.env.NAV_NATIVE_REVISION??null,cli_binary_sha256:await sha(cli),sourceHashes,bundleHashes,fixture:'production-installed-adapter-negatives-v1',browser:version.product,os:process.platform,arch:process.arch,native_version:call('diagnostics').version,native_binary_sha256:createHash('sha256').update(await readFile(service)).digest('hex'),rows,limits:['Synthetic loopback layouts; no live provider qualification','CLI creates the task; trusted production extension messages initiate owned navigation and resume completed HTML; desktop and context-menu UI activation are not qualified','Preview controls use actual AX/Input; no authorization shim and no payload bytes through CDP','Unique native fixture host and pregranted loopback permissions; production modules otherwise unchanged']};
+  const evidence={checked_runtime_revision:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8',windowsHide:true}).trim(),native_build_revision:process.env.NAV_NATIVE_REVISION??null,cli_binary_sha256:await sha(cli),sourceHashes,bundleHashes,fixture:'production-installed-adapter-negatives-v1',browser:version.product,os:process.platform,arch:process.arch,native_version:call('diagnostics').version,native_binary_sha256:createHash('sha256').update(await readFile(service)).digest('hex'),rows,limits:['Synthetic loopback layouts; no live provider qualification','Cancel-refresh pauses the actual installed worker with CDP while actual AX Refresh awaits its reply; no response/context/authorization is substituted','CLI creates the task; trusted production extension messages initiate owned navigation and resume completed HTML; desktop and context-menu UI activation are not qualified','Preview controls use actual AX/Input; no authorization shim and no payload bytes through CDP','Unique native fixture host and pregranted loopback permissions; production modules otherwise unchanged']};
   await writeFile(resolve(root,'evidence.json'),JSON.stringify(evidence,null,2));
   await mkdir('.local/nav-adapters',{recursive:true});
   await writeFile('.local/nav-adapters/installed-negatives-'+(/msedge/i.test(executable)?'edge':'chrome')+'-'+(process.env.NAV_ADAPTER_CASE??'disabled')+'-result.json',JSON.stringify(evidence,null,2));

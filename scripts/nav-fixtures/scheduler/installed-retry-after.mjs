@@ -329,7 +329,13 @@ try {
   for (const name of (
     process.env.NAV_RETRY_CASES ?? 'numeric,date,repeated,malformed,oversized'
   ).split(',')) {
-    const page = fixture.base + '/nav-adapters/gofile/start?case=' + name;
+    const initialResponse = process.env.NAV_RETRY_INITIAL === '1';
+    const page =
+      fixture.base +
+      '/nav-adapters/gofile/' +
+      (initialResponse ? 'limited' : 'start') +
+      '?case=' +
+      name;
     const limited = fixture.base + '/nav-adapters/gofile/limited?case=' + name;
     const job = call('add', page, '--navigate', '--filename', 'retry-' + name + '.bin');
     await evaluate(
@@ -341,7 +347,8 @@ try {
     let observed,
       originalWait,
       replacement = false,
-      oldWorkerId;
+      oldWorkerId,
+      extendedNavigation = false;
     const deadline = Date.now() + 90000;
     while (
       Date.now() < deadline &&
@@ -350,13 +357,30 @@ try {
       const state = await snapshot(),
         task = state.tasks.find((t) => t.id === job.id);
       if (task?.wait?.basis === 'server') {
-        observed ??= structuredClone(task.wait);
-        assert.equal(
-          task.wait.deadline_ms,
-          observed.deadline_ms,
-          'Repeated/DOM observations extended the server deadline',
-        );
-        assert.equal(task.wait.generation, observed.generation);
+        originalWait ??= structuredClone(task.wait);
+        if (name === 'extended') {
+          if (observed) assert.ok(task.wait.deadline_ms >= observed.deadline_ms);
+          observed = structuredClone(task.wait);
+          if (!extendedNavigation) {
+            const target = (await command('Target.getTargets')).targetInfos.find(
+              (t) => t.type === 'page' && t.url === limited,
+            );
+            assert.ok(target);
+            const session = await targetSession(target.targetId);
+            await command('Page.navigate', { url: limited + '&extension=1' }, session);
+            await command('Target.detachFromTarget', { sessionId: session });
+            extendedNavigation = true;
+            continue;
+          }
+        } else {
+          observed ??= structuredClone(task.wait);
+          assert.equal(
+            task.wait.deadline_ms,
+            observed.deadline_ms,
+            'Repeated/DOM observations extended the server deadline',
+          );
+          assert.equal(task.wait.generation, observed.generation);
+        }
         if (name === 'repeated' && !replacement) {
           const old = (await command('Target.getTargets')).targetInfos.find(
             (t) =>
@@ -391,7 +415,9 @@ try {
       }
       const targets = (await command('Target.getTargets')).targetInfos;
       const target = targets.find(
-        (t) => t.type === 'page' && (t.url === page || t.url === limited),
+        (t) =>
+          t.type === 'page' &&
+          (t.url === page || t.url === limited || t.url === limited + '&extension=1'),
       );
       if (target) {
         const session = await targetSession(target.targetId);
@@ -428,10 +454,10 @@ try {
     );
     assert.equal(
       fixture.requests.filter((r) => r.name === name && r.path.endsWith('/limited')).length,
-      1,
+      name === 'extended' ? 2 : 1,
       'No navigation replay',
     );
-    if (['numeric', 'date', 'repeated'].includes(name))
+    if (['numeric', 'date', 'repeated', 'extended'].includes(name))
       assert.ok(observed, 'No actual Retry-After ingestion: ' + JSON.stringify(headers));
     else
       assert.equal(
@@ -445,14 +471,21 @@ try {
       1,
       'No duplicate original POST',
     );
+    if (name === 'extended') {
+      assert.ok(extendedNavigation && observed.deadline_ms > originalWait.deadline_ms);
+      assert.ok(observed.generation > originalWait.generation);
+    }
     results.push({
       name,
+      initial_response: initialResponse,
+      original_wait: originalWait ?? null,
+      distinct_owned_navigation: extendedNavigation,
       wait: observed ?? null,
       server_deadline: fixture.cases.get(name).readyAt,
       original_posts: 1,
       early_posts: 0,
       duplicate_posts: 0,
-      navigation_gets: 1,
+      navigation_gets: name === 'extended' ? 2 : 1,
       worker_replaced: replacement,
       headers_include_document_id: headers.every((h) => !!h.documentId),
       committed_document_ids_present: (
@@ -491,8 +524,10 @@ try {
     arch: process.arch,
     results,
     limits: [
-      'Synthetic local owned landing then original user-selected main-frame429/503; pregranted permissions; direct capture off',
-      'Initial pre-claim response, Firefox/other OS/live providers/private installed matrix remain separately pending',
+      process.env.NAV_RETRY_INITIAL === '1'
+        ? 'Synthetic original initial429/503; task-created tab receipt and post-load native scope; pregranted permissions; direct capture off'
+        : 'Synthetic owned landing then original user-selected main-frame429/503; pregranted permissions; direct capture off',
+      'Firefox/other OS/live providers/private installed matrix remain separately pending; initial-response acceptance is limited to explicitly recorded initial rows',
       'Readiness HTML acknowledgement, not file-transfer proof',
     ],
   };
@@ -503,6 +538,7 @@ try {
   await writeFile(
     'docs/evidence/nav-scheduling/retry-after-' +
       (version.product.startsWith('Edg/') ? 'edge' : 'chrome') +
+      (process.env.NAV_RETRY_INITIAL === '1' ? '-initial' : '') +
       '.json',
     JSON.stringify(evidence, null, 2) + '\n',
   );
