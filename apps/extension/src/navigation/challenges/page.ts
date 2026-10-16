@@ -268,7 +268,7 @@ export async function showChallenge(
     );
     if (doc.elementFromPoint(css.x, css.y) !== found.image) throw Error('occluded_target');
     // Check the actual posted field, not only a captured input that the page may have detached.
-    const selectedHosts = new FormData(found.form).getAll('selected_host');
+    const selectedHosts = new FormData(found.form, found.submit).getAll('selected_host');
     // Coordinates submitted in intrinsic image space, as the qualified form specifies.
     if (
       controller.signal.aborted ||

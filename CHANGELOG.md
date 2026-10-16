@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.34.9
+
+- Integrate reviewed actual-submitter host serialization guard and deterministic duplicate-host regression.
+
 ## 0.34.8
 
 - Reconcile reviewed challenge host-value, input identity and serialized-host ownership guards with installed solver controls.
@@ -37,6 +41,10 @@
 
 - Add exact-native-pair installed extension popup qualification for Continue, FlareSolverr refusal, routing, stale settings and explicit retry.
 - Preserve synthetic solver protocol versus real challenge clearance and native-settings UI acceptance boundaries.
+
+## 0.33.17
+
+- Include the actual successful CAPTCHA submitter in final selected_host serialization. Regress a submit button adding a second host value and preflight actual browser FormData submitter support before installed qualification. No other binding behavior changes.
 
 ## 0.33.16
 

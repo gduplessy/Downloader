@@ -12,7 +12,14 @@ const require = createRequire(
 const { build } = require('esbuild');
 const scenario = process.env.NAV_CHALLENGE_CASE ?? 'csrf';
 assert(
-  ['fresh', 'cancel', 'csrf', 'image', 'selected-host', 'selected-host-node'].includes(scenario),
+  [
+    'fresh',
+    'cancel',
+    'csrf',
+    'image',
+    'selected-host',
+    'selected-host-node',
+  ].includes(scenario),
 );
 const driverHash = createHash('sha256')
   .update(await readFile(new URL(import.meta.url)))
@@ -467,6 +474,17 @@ try {
     ),
   );
 
+  const submitterSerialization = JSON.parse(
+    await evaluate(
+      'JSON.stringify((()=>{const form=document.createElement("form");const input=document.createElement("input");input.type="hidden";input.name="selected_host";input.value="gofile.io";const button=document.createElement("button");button.type="submit";button.name="selected_host";button.value="ddownload.com";form.append(input,button);return {regular:new FormData(form).getAll("selected_host"),withSubmitter:new FormData(form,button).getAll("selected_host")}})())',
+    ),
+  );
+  assert.deepEqual(
+    submitterSerialization,
+    { regular: ['gofile.io'], withSubmitter: ['gofile.io', 'ddownload.com'] },
+    'Actual browser FormData successful submitter capability',
+  );
+  console.log('Actual FormData submitter capability verified');
   const at = async (context, expression) => {
     const result = await send('script.evaluate', {
       expression,
@@ -517,10 +535,7 @@ try {
     const contexts = (await send('browsingContext.getTree', {})).contexts;
     const page = contexts.find((c) => c.url === base + pagePath);
     return page &&
-      (await at(
-        page.context,
-        'document.activeElement?.tagName==="DIV"',
-      ))
+      (await at(page.context, 'document.activeElement?.tagName==="DIV"'))
       ? page
       : null;
   }, 'Actual owned production challenge');
@@ -580,7 +595,8 @@ try {
     const mutations = {
       csrf: 'document.querySelector("input[name=csrf]").value="public-fixture-replaced-csrf"',
       image: 'document.querySelector("img").src+="?replacement=1"',
-      'selected-host-node': '(()=>{const old=document.querySelector("input[name=selected_host]");const replacement=old.cloneNode(true);replacement.value="ddownload.com";old.replaceWith(replacement);return {oldConnected:old.isConnected,current:replacement.value}})()',
+      'selected-host-node':
+        '(()=>{const old=document.querySelector("input[name=selected_host]");const replacement=old.cloneNode(true);replacement.value="ddownload.com";old.replaceWith(replacement);return {oldConnected:old.isConnected,current:replacement.value}})()',
       'selected-host':
         'document.querySelector("input[name=selected_host]").value="ddownload.com"',
     };
@@ -710,6 +726,7 @@ try {
     browser: session.capabilities.browserVersion,
     os: process.platform,
     scenario,
+    submitterSerialization,
     actualUi,
     state: finalJob.state,
     bytes: finalJob.bytes,
@@ -753,7 +770,12 @@ try {
   await writeFile(
     resolve(dir, 'failure.json'),
     JSON.stringify(
-      { stage: fixtureStage, error: String(error), requests, submissions:fixture.submits },
+      {
+        stage: fixtureStage,
+        error: String(error),
+        requests,
+        submissions: fixture.submits,
+      },
       null,
       2,
     ),
