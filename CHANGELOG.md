@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.33.11
+
+- Record four passing exact-source installed Edge challenge lifecycle negatives after correcting fixture ordering.
+
+
 ## 0.33.10
 
 - Fence challenge mutation fixtures on the actual bound panel after asynchronous host selection.
