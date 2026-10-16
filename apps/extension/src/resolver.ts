@@ -39,6 +39,32 @@ let challengeHandle: { close(): void } | undefined;
 let previewHandle: PreviewHandle | undefined;
 let running = false;
 let stepPending = false;
+let selectionPending = false;
+let automaticWakePending = false;
+function automaticWake() {
+  if (selectionPending) {
+    automaticWakePending = true;
+    return;
+  }
+  documentGeneration++;
+  void step().catch(() => {});
+}
+async function selectedAttempt(action: () => Promise<void>, cancelled: () => boolean) {
+  if (selectionPending) throw Error('adapter_selection_pending');
+  selectionPending = true;
+  let completed = false;
+  try {
+    await action();
+    completed = true;
+  } finally {
+    selectionPending = false;
+    const recheck = automaticWakePending;
+    automaticWakePending = false;
+    // The committed action owns its navigation; a queued alarm must never replay it.
+    // A refused action may reobserve once if its original lifetime remains active.
+    if (recheck && !completed && !cancelled() && documentActive) queueMicrotask(automaticWake);
+  }
+}
 let accountPanel: { close: () => void } | undefined;
 const submissions = new SubmissionGate();
 async function context(): Promise<ResolverContext | null> {
@@ -142,16 +168,22 @@ async function observe(ctx: ResolverContext | null) {
   const accountState = accountDecision(account);
   const collected = collectControls(document),
     signals = blockers(allElements(document));
-  const inspection = inspectCandidates(location.href, ctx?.selectedResource ? collected.controls.filter((c) => c.target === ctx.selectedResource) : collected.controls, {
-    disabledAdapters: ctx?.disabledAdapters,
-    selectedHost: ctx?.selectedHost,
-    allowPageBlob: ctx?.capabilities?.pageBlob === true,
-    allowPremium: accountState.premium,
-    blocked:
-      (!!signals.blocker && signals.blocker !== 'countdown') ||
-      (account?.mode === 'premium' && !accountState.premium),
-    countdown: signals.countdown,
-  });
+  const inspection = inspectCandidates(
+    location.href,
+    ctx?.selectedResource
+      ? collected.controls.filter((c) => c.target === ctx.selectedResource)
+      : collected.controls,
+    {
+      disabledAdapters: ctx?.disabledAdapters,
+      selectedHost: ctx?.selectedHost,
+      allowPageBlob: ctx?.capabilities?.pageBlob === true,
+      allowPremium: accountState.premium,
+      blocked:
+        (!!signals.blocker && signals.blocker !== 'countdown') ||
+        (account?.mode === 'premium' && !accountState.premium),
+      countdown: signals.countdown,
+    },
+  );
   if (account?.mode === 'premium' && !accountState.premium) {
     signals.blocker = 'authentication';
     inspection.reason = accountLabel(
@@ -262,7 +294,9 @@ async function step() {
   running = true;
   const previousPreview = previewHandle;
   const cancelled = () => !documentActive || previousPreview?.signal?.aborted === true;
-  const cancelPending = () => { stepPending = false; };
+  const cancelPending = () => {
+    stepPending = false;
+  };
   previousPreview?.signal?.addEventListener('abort', cancelPending, { once: true });
   const closePreview = () => {
     // Replacing a validated preview is not a user cancellation of queued refreshes.
@@ -315,7 +349,11 @@ async function step() {
             setTimeout(() => void step().catch(() => {}), 500);
           },
         )) ?? undefined;
-      if (cancelled()) { challengeHandle?.close(); challengeHandle = undefined; return; }
+      if (cancelled()) {
+        challengeHandle?.close();
+        challengeHandle = undefined;
+        return;
+      }
       if (challengeHandle) {
         closePreview();
         return;
@@ -324,7 +362,12 @@ async function step() {
     let observed = await observe(ctx);
     if (cancelled()) return;
     const deadline = Date.now() + 10000;
-    while (ctx?.selectedResource && !observed.inspection.candidates.length && !observed.signals.blocker && Date.now() < deadline) {
+    while (
+      ctx?.selectedResource &&
+      !observed.inspection.candidates.length &&
+      !observed.signals.blocker &&
+      Date.now() < deadline
+    ) {
       await new Promise((resolve) => setTimeout(resolve, 100));
       ctx = await context();
       if (cancelled() || !ctx) return;
@@ -340,9 +383,16 @@ async function step() {
         currentAccountBinding,
         accountAction,
       );
-    if (cancelled()) { accountPanel?.close(); accountPanel = undefined; return; }
+    if (cancelled()) {
+      accountPanel?.close();
+      accountPanel = undefined;
+      return;
+    }
     if (ctx && observed.inspection.kind === 'click' && observed.inspection.selected) {
-      await submit(ctx, observed, observed.inspection.selected, previousPreview?.signal);
+      await selectedAttempt(
+        () => submit(ctx, observed, observed.inspection.selected!, previousPreview?.signal),
+        cancelled,
+      );
       closePreview();
       return;
     }
@@ -374,17 +424,22 @@ async function step() {
         preview,
         ctx.locale,
         async (id, signal) => {
-          if (signal.aborted) throw Error('adapter_selection_cancelled');
-          const freshContext = await context();
-          if (!freshContext) throw Error('adapter_preview_stale');
-          const fresh = await observe(freshContext);
-          const selected = validateSelection(
-            preview,
-            binding(freshContext, fresh.inspection, fresh.fingerprint),
-            fresh.inspection,
-            id,
+          await selectedAttempt(
+            async () => {
+              if (signal.aborted) throw Error('adapter_selection_cancelled');
+              const freshContext = await context();
+              if (!freshContext) throw Error('adapter_preview_stale');
+              const fresh = await observe(freshContext);
+              const selected = validateSelection(
+                preview,
+                binding(freshContext, fresh.inspection, fresh.fingerprint),
+                fresh.inspection,
+                id,
+              );
+              await submit(freshContext, fresh, selected, signal);
+            },
+            () => signal.aborted || !documentActive,
           );
-          await submit(freshContext, fresh, selected, signal);
         },
         () => {
           documentGeneration++;
@@ -465,6 +520,10 @@ if (!root.__downloaderResolver) {
   );
   browser.runtime.onMessage.addListener((message: any) => {
     if (message.type === 'resolver_continue') {
+      if (message.automatic === true) {
+        automaticWake();
+        return Promise.resolve(true);
+      }
       documentGeneration++;
       void step().catch(() => {});
       return Promise.resolve(true);

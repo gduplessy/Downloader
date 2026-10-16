@@ -1,0 +1,239 @@
+{
+  "fixture": "installed-production-retry-after-v1",
+  "resolver_trace_instrumented": false,
+  "observer_installations": 0,
+  "observed_resolver_outcomes": 0,
+  "source_revision": "84da977449447c6c3ab8068addc7dc17fc01e8c5",
+  "browser": "Edg/155.0.4283.45",
+  "native_version": "0.25.1",
+  "native_build_revision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+  "native_binary_sha256": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+  "cli_binary_sha256": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c",
+  "fixture_sha256": "2b41f076238bf3894e7b4efb681452e2ca18821771fcd8ecdc4a2119f5f5486c",
+  "server_sha256": "a12e5886628c6437f076f2abeaf7722fd5077044b89ccf8fe1b7fd08b63b4e96",
+  "production_background_sha256": "b5295ab0ddb809cf8dd9b389057ea6446ab0db0307ea3b0aca41f60218457c5f",
+  "os": "win32",
+  "arch": "x64",
+  "results": [
+    {
+      "name": "numeric",
+      "initial_response": true,
+      "original_wait": {
+        "basis": "server",
+        "deadline_ms": 1792149893818,
+        "expires_at_ms": null,
+        "generation": 1,
+        "next_recheck_ms": 1792149896733,
+        "notified": false,
+        "observed_at_ms": 1792149881818,
+        "observed_duration_ms": 12000,
+        "reason": "retry_after:wait:36bccbecb2aafff951e79d30069dea1ae634d67c9e1016da45371516c22bd7d7",
+        "requires_live_tab": true,
+        "source_generation": 1
+      },
+      "distinct_owned_navigation": false,
+      "wait": {
+        "basis": "server",
+        "deadline_ms": 1792149893818,
+        "expires_at_ms": null,
+        "generation": 1,
+        "next_recheck_ms": 1792149896733,
+        "notified": false,
+        "observed_at_ms": 1792149881818,
+        "observed_duration_ms": 12000,
+        "reason": "retry_after:wait:36bccbecb2aafff951e79d30069dea1ae634d67c9e1016da45371516c22bd7d7",
+        "requires_live_tab": true,
+        "source_generation": 1
+      },
+      "server_deadline": 1792149891608,
+      "original_posts": 1,
+      "original_method": "POST",
+      "head_probes": 0,
+      "early_posts": 0,
+      "duplicate_posts": 0,
+      "navigation_gets": 1,
+      "worker_replaced": false,
+      "lifecycle": [
+        {
+          "event": "request",
+          "requestId": "24",
+          "tabId": 1061491995,
+          "timeStamp": 1792149879588.967,
+          "url": "http://127.0.0.1:10281/nav-adapters/gofile/limited?case=numeric"
+        },
+        {
+          "event": "navigate",
+          "tabId": 1061491995,
+          "timeStamp": 1792149879546.512,
+          "url": "http://127.0.0.1:10281/nav-adapters/gofile/limited?case=numeric"
+        },
+        {
+          "event": "committed",
+          "tabId": 1061491995,
+          "timeStamp": 1792149879869.792,
+          "url": "http://127.0.0.1:10281/nav-adapters/gofile/limited?case=numeric",
+          "documentId": "ED4FCB62BB506481F3CE491507285094"
+        },
+        {
+          "event": "navigate",
+          "tabId": 1061491995,
+          "timeStamp": 1792149911029.922,
+          "url": "http://127.0.0.1:10281/nav-adapters/gofile/submit?case=numeric"
+        },
+        {
+          "event": "request",
+          "requestId": "26",
+          "tabId": 1061491995,
+          "timeStamp": 1792149911049.508,
+          "url": "http://127.0.0.1:10281/nav-adapters/gofile/submit?case=numeric"
+        },
+        {
+          "event": "committed",
+          "tabId": 1061491995,
+          "timeStamp": 1792149911170.648,
+          "url": "http://127.0.0.1:10281/nav-adapters/gofile/submit?case=numeric",
+          "documentId": "FC7053C5D2DF38B7C29F3327BAA3F511"
+        }
+      ],
+      "headers_include_document_id": false,
+      "committed_document_ids_present": true
+    },
+    {
+      "name": "date",
+      "initial_response": true,
+      "original_wait": {
+        "basis": "server",
+        "deadline_ms": 1792149936000,
+        "expires_at_ms": null,
+        "generation": 1,
+        "next_recheck_ms": 1792149936000,
+        "notified": false,
+        "observed_at_ms": 1792149924570,
+        "observed_duration_ms": 11430,
+        "reason": "retry_after:wait:67f1aa1e1a94f5de25a5e36632f6e2f226b0dd3791f98b5794f178f6ffa8e5d2",
+        "requires_live_tab": true,
+        "source_generation": 1
+      },
+      "distinct_owned_navigation": false,
+      "wait": {
+        "basis": "server",
+        "deadline_ms": 1792149936000,
+        "expires_at_ms": null,
+        "generation": 1,
+        "next_recheck_ms": 1792149936000,
+        "notified": false,
+        "observed_at_ms": 1792149924570,
+        "observed_duration_ms": 11430,
+        "reason": "retry_after:wait:67f1aa1e1a94f5de25a5e36632f6e2f226b0dd3791f98b5794f178f6ffa8e5d2",
+        "requires_live_tab": true,
+        "source_generation": 1
+      },
+      "server_deadline": 1792149936000,
+      "original_posts": 1,
+      "original_method": "POST",
+      "head_probes": 0,
+      "early_posts": 0,
+      "duplicate_posts": 0,
+      "navigation_gets": 1,
+      "worker_replaced": false,
+      "lifecycle": [
+        {
+          "event": "request",
+          "requestId": "24",
+          "tabId": 1061491995,
+          "timeStamp": 1792149879588.967,
+          "url": "http://127.0.0.1:10281/nav-adapters/gofile/limited?case=numeric"
+        },
+        {
+          "event": "navigate",
+          "tabId": 1061491995,
+          "timeStamp": 1792149879546.512,
+          "url": "http://127.0.0.1:10281/nav-adapters/gofile/limited?case=numeric"
+        },
+        {
+          "event": "committed",
+          "tabId": 1061491995,
+          "timeStamp": 1792149879869.792,
+          "url": "http://127.0.0.1:10281/nav-adapters/gofile/limited?case=numeric",
+          "documentId": "ED4FCB62BB506481F3CE491507285094"
+        },
+        {
+          "event": "navigate",
+          "tabId": 1061491995,
+          "timeStamp": 1792149911029.922,
+          "url": "http://127.0.0.1:10281/nav-adapters/gofile/submit?case=numeric"
+        },
+        {
+          "event": "request",
+          "requestId": "26",
+          "tabId": 1061491995,
+          "timeStamp": 1792149911049.508,
+          "url": "http://127.0.0.1:10281/nav-adapters/gofile/submit?case=numeric"
+        },
+        {
+          "event": "committed",
+          "tabId": 1061491995,
+          "timeStamp": 1792149911170.648,
+          "url": "http://127.0.0.1:10281/nav-adapters/gofile/submit?case=numeric",
+          "documentId": "FC7053C5D2DF38B7C29F3327BAA3F511"
+        },
+        {
+          "event": "request",
+          "requestId": "28",
+          "tabId": 1061492409,
+          "timeStamp": 1792149924542.4,
+          "url": "http://127.0.0.1:10281/nav-adapters/gofile/limited?case=date"
+        },
+        {
+          "event": "navigate",
+          "tabId": 1061492409,
+          "timeStamp": 1792149924490.172,
+          "url": "http://127.0.0.1:10281/nav-adapters/gofile/limited?case=date"
+        },
+        {
+          "event": "committed",
+          "tabId": 1061492409,
+          "timeStamp": 1792149924598.553,
+          "url": "http://127.0.0.1:10281/nav-adapters/gofile/limited?case=date",
+          "documentId": "362C0DBC5B07BDA5349BF8751EC2CC83"
+        },
+        {
+          "event": "navigate",
+          "tabId": 1061492409,
+          "timeStamp": 1792149945747.585,
+          "url": "http://127.0.0.1:10281/nav-adapters/gofile/submit?case=date"
+        },
+        {
+          "event": "request",
+          "requestId": "30",
+          "tabId": 1061492409,
+          "timeStamp": 1792149945756.81,
+          "url": "http://127.0.0.1:10281/nav-adapters/gofile/submit?case=date"
+        },
+        {
+          "event": "committed",
+          "tabId": 1061492409,
+          "timeStamp": 1792149945839.486,
+          "url": "http://127.0.0.1:10281/nav-adapters/gofile/submit?case=date",
+          "documentId": "7662AB9D191A51B8386E79897838B22D"
+        }
+      ],
+      "headers_include_document_id": false,
+      "committed_document_ids_present": true
+    }
+  ],
+  "limits": [
+    "Synthetic original initial429/503; task-created tab receipt and post-load native scope; pregranted permissions; direct capture off",
+    "Firefox/other OS/live providers/private installed matrix remain separately pending; initial-response acceptance is limited to explicitly recorded initial rows",
+    "Readiness HTML acknowledgement, not file-transfer proof"
+  ],
+  "production_resolver_sha256": "6c7abfc62e51d906a5ee533057b4a5f179c967914e4db0e53d672eeabec3812e",
+  "production_bundle_sha256": {
+    "background.js": "3d043c5fd9f1c590cc70c017d12b9fe7517aafd512e5256534214e3cf3f2fcf6",
+    "resolver.js": "7abae0ca003396cee7bf8038ec4fbcdb12cf3d34d50e3e315b11f86984f49b5c",
+    "content.js": "daa6cf00b6951a869b1cf29a73a22bd9d698257bfdafb921450c1fce7d833b4d",
+    "options.js": "92888d71c395add344e1ee8896010ccc4f1afa7b2cd692c6514b4cb143820433"
+  },
+  "resolver_trace_helper_sha256": "cfd9ce0d8039c898ff4e09ffaca4c1e1205180a5fababca5e65bfc2ef2be8bda",
+  "validation_load": "Chrome and Edge initial429/503 fixtures run concurrently; one separate root Chrome fixture was also active for part of the run"
+}

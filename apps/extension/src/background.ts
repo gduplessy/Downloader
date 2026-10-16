@@ -63,7 +63,7 @@ const scheduler = new NavigationScheduler(
     if (record && (await ownsCurrentTab(record))) {
       await scheduler.heartbeat(id, record.tabId);
       await browser.tabs
-        .sendMessage(record.tabId, { type: 'resolver_continue' })
+        .sendMessage(record.tabId, { type: 'resolver_continue', automatic: true })
         .catch(() => injectResolver(record.tabId));
     }
   },

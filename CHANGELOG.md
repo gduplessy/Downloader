@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.31.4
+
+- Preserve historical changelog bytes and document unchanged-message installed wait qualification.
+
+
+## 0.31.2
+
+- Coalesce automatic wait wakes during selected navigation authorization so scheduler polling cannot invalidate an otherwise unchanged selected document before commit. Explicit user refresh and ownership/cancellation fences remain enforced. Preserve the reproduced installed failure trace.
+
+
+## 0.31.1
+
+- Keep bounded resolver diagnostic outcomes across document navigation and expose observer coverage; verify original API promise and callback semantics.
+
+
+## 0.31.0
+
+- Add bounded failure diagnostics for installed Retry-After action lifecycle investigations; preserve original runtime calls and verify isolated immutable native binaries.
+
+
 ## 0.30.5
 
 - State exact Retry-After date grammar: canonical IMF-fixdate plus decimal delay-seconds. Obsolete RFC850/asctime forms remain unsupported compatibility work; installed date evidence does not claim those formats. Documentation/version metadata only.
