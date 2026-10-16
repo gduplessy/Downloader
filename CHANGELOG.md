@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.33.9
+
+- Wait for exact installed challenge refusal instead of assuming asynchronous work completes after1500ms; retain unsuccessful Edge observation.
+
+
 ## 0.33.8
 
 - Integrate reviewed NAV dependencies; preserve product version consistency and historical changelog bytes.

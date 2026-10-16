@@ -457,12 +457,19 @@ try {
         await evaluate(session, expressions[scenario]);
         await waitClick(session, "Solve locally");
       }
-      await new Promise((r) => setTimeout(r, 1500));
-      const observed = (
-        await command("Accessibility.getFullAXTree", {}, session)
-      ).nodes
-        .filter((n) => !n.ignored)
-        .map((n) => ({ role: n.role?.value, name: n.name?.value }));
+      let observed = [];
+      const refusalDeadline = Date.now() + 45000;
+      do {
+        observed = (await command("Accessibility.getFullAXTree", {}, session)).nodes
+          .filter((n) => !n.ignored)
+          .map((n) => ({ role: n.role?.value, name: n.name?.value }));
+        const finished = scenario === "cancel"
+          ? !observed.some((n) => n.role === "dialog" && n.name === "Image challenge")
+          : observed.some((n) => n.name === "Unsupported or expired challenge. Complete it in the page.");
+        if (finished) break;
+        assert.equal(fixture.submits.length, 0, "Stale/cancelled challenge submitted during refusal wait");
+        await new Promise((r) => setTimeout(r, 200));
+      } while (Date.now() < refusalDeadline);
       await writeFile(resolve(root,"observed-controls.json"),JSON.stringify(observed,null,2));
       if (scenario === "cancel")
         assert(
