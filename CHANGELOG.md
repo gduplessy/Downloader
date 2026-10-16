@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.33.4
+
+- Prepare actual installed Firefox challenge lifecycle controls and original-page fetch-to-owned-Blob downstream qualification. Production bundles/native hashes and local HTTP contract verified; browser acceptance remains pending execution.
+
 ## 0.33.3
 
 - Preserve historical changelog bytes while publishing challenge fixture qualification notes.

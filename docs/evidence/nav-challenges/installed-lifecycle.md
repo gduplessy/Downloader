@@ -21,3 +21,9 @@ Exact commit 28b4ea77c4119bf85acdfb68fb871082d0000861 ran the installed Edge CSR
 ## Boundaries
 
 Installed Firefox, claim-generation races, late-result cancellation, true selected-host context replacement and native desktop-window controls remain pending. Mutating a hidden host field proves only form-binding refusal. No live provider/account or paid-provider requests occur; budget and opt-in remain zero/off. The existing renderer mocks and unit tests remain separate evidence.
+
+## Prepared Firefox driver
+
+`scripts/nav-fixtures/challenges/installed-firefox.mjs` prepares an actual Firefox MV2 addon from production modules, uses BiDi pointer input and read-only privileged closed-shadow inspection, and compares actual tab/store/profile ownership with the native job. Set NAV_NATIVE_BINARY and NAV_CLI_BINARY to the immutable 0.25.1 pair and NAV_NATIVE_REVISION to 3b808ae1967a210fc5b3a3e461488b9f2ab6cb61; both full copied executable hashes are enforced. Set NAV_CHALLENGE_CASE to fresh, cancel, csrf, image or selected-host. NAV_PREPARE_ONLY=1 verifies bundling/native hashes and exits before starting a daemon or browser.
+
+Preparation-only bundling passed. A local HTTP contract check submitted the original synthetic challenge, verified selected gofile.io result HTML with its permitted preparation control, and fetched the exact SHA256 payload used by the original-page Blob path. This does not establish browser acceptance. The fresh lane uses original-page fetch to Blob plus the production direct desktop stream; Firefox binary navigation capture remains explicitly pending. No browser was launched during this preparation increment.

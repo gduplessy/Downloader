@@ -1,16 +1,21 @@
 import { createServer } from 'node:http';
 import { createHash } from 'node:crypto';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
-export const payload = Buffer.from('nav-challenge-intended-file-v1\n'.repeat(8192));
+export const payload = Buffer.from(
+  'nav-challenge-intended-file-v1\n'.repeat(8192),
+);
 export const expectedHash = createHash('sha256').update(payload).digest('hex');
-export async function startChallengeServer() {
-  const requests = [], submits = [],
+export async function startChallengeServer({
+  downloadLane = 'attachment',
+} = {}) {
+  const requests = [],
+    submits = [],
     tokens = new Map();
   const server = createServer(async (req, res) => {
     const url = new URL(req.url, 'http://fixture'),
       parts = url.pathname.split('/'),
       provider = parts[2] ?? 'g4u';
-    requests.push({method:req.method,path:url.pathname});
+    requests.push({ method: req.method, path: url.pathname });
     if (url.pathname === '/harness.js') {
       res.setHeader('Content-Type', 'text/javascript');
       res.end(await readFile('.local/nav-challenges/harness.js'));
@@ -63,6 +68,19 @@ export async function startChallengeServer() {
       tokens.set(token, { provider, host });
       submits.push({ provider, host, accepted: true });
       res.setHeader('Content-Type', 'text/html');
+      if (downloadLane === 'blob') {
+        const path = '/nav-challenges/' + provider + '/file.bin?token=' + token;
+        res.end(
+          '<html><body><h1>Accepted selected-host challenge</h1><button id="prepare-download">Prepare permitted fixture download</button><section id="fresh-links" data-download-host="' +
+            host +
+            '" data-group="fresh"></section><script>document.getElementById("prepare-download").onclick=async()=>{const response=await fetch(' +
+            JSON.stringify(path) +
+            ');if(!response.ok)throw Error("Fixture file refused");const blob=await response.blob();const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.textContent="Download intended file";link.dataset.provider=' +
+            JSON.stringify(host) +
+            ';link.download="challenge-fixture.bin";document.getElementById("fresh-links").append(link);document.documentElement.dataset.fixtureBlobReady="true"}</script></body></html>',
+        );
+        return;
+      }
       res.end(
         '<section data-download-host="' +
           host +
@@ -85,7 +103,10 @@ export async function startChallengeServer() {
       }
       res.setHeader('Content-Type', 'application/octet-stream');
       res.setHeader('Content-Length', payload.length);
-      res.setHeader('Content-Disposition', 'attachment; filename=challenge-fixture.bin');
+      res.setHeader(
+        'Content-Disposition',
+        'attachment; filename=challenge-fixture.bin',
+      );
       res.setHeader('Accept-Ranges', 'bytes');
       const range = req.headers.range?.match(/^bytes=(\d+)-(\d+)$/);
       if (range) {
@@ -95,7 +116,9 @@ export async function startChallengeServer() {
           'Content-Range': 'bytes ' + start + '-' + end + '/' + payload.length,
           'Content-Length': end - start + 1,
         });
-        res.end(req.method === 'HEAD' ? undefined : payload.subarray(start, end + 1));
+        res.end(
+          req.method === 'HEAD' ? undefined : payload.subarray(start, end + 1),
+        );
       } else res.end(req.method === 'HEAD' ? undefined : payload);
       return;
     }
@@ -114,7 +137,12 @@ export async function startChallengeServer() {
   });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const base = 'http://127.0.0.1:' + server.address().port;
-  return { base, submits, requests, close: () => new Promise((resolve) => server.close(resolve)) };
+  return {
+    base,
+    submits,
+    requests,
+    close: () => new Promise((resolve) => server.close(resolve)),
+  };
 }
 if (process.argv[1]?.endsWith('server.mjs')) {
   const fixture = await startChallengeServer();
