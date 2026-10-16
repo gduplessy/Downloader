@@ -425,7 +425,7 @@
 - Integrate final account batch evidence and provider/provenance assertions: actual Chrome saved-fill, Edge saved-fill and Chrome existing-session downloads publish verified bytes with one login/file request and no purchases.
 - Preserve the recorded live-provider/API, Firefox-account, other-platform, permission-prompt and private/container acceptance boundaries.
 
-## 0.9.10 — Qualify integrated scoped accounts
+## 0.9.10 ï¿½ Qualify integrated scoped accounts
 
 - Adopt the checked combined account/challenge/stream lifecycle and removal-event privacy contracts.
 - Assert selected downstream provider and original provenance through authenticated redirect, original-response capture and native publication.
@@ -457,7 +457,7 @@
 - Add a real engine regression for regular/private removal isolation and stale claims.
 - Make the scheduler assertion compatible with both installed Vitest mock type variants.
 
-## 0.9.9 — Integrate monotonic navigation record ownership
+## 0.9.9 ï¿½ Integrate monotonic navigation record ownership
 
 - Adopt checked shared record write fencing and actual Chromium cookie-store reconciliation.
 - Preserve account, challenge and adapter document claims with distinct expiring credential/capture purposes.
@@ -520,55 +520,55 @@
 
 - Add atomically persisted rendered discovery frontiers, provenance, bounded results, scoped command fences, duplicate-report fingerprints, and shared navigation admission.
 - Keep new private projects and frontier metadata ephemeral. Local backend qualification is in progress; browser/native rendered fixture qualification is pending.
-## 0.9.8 — Bind account and capture authority to the actual document
+## 0.9.8 ï¿½ Bind account and capture authority to the actual document
 
 - Verify the live isolated document nonce before account observation, credential grant/consume and adapter authorization; native credential proof includes the exact nonce.
 - Preserve Chromium document IDs when supported and provide explicit nonce proof for Firefox same-URL replacement.
 - Record corrected installed Edge 155 saved-fill/premium acceptance separately from the earlier failed row; unavailable targets and live accounts remain pending.
 
-## 0.9.7 — Integrate checked production browser projection
+## 0.9.7 ï¿½ Integrate checked production browser projection
 
 - Include authority-qualified incremental snapshot cursor and null projection fixes from the checked staging base.
 - Add isolated production Chrome account/premium qualification using actual extension/native transports, both saved-fill and existing-session paths, verified desktop bytes and test-account cleanup.
 - Serialize startup per native job, persist fresh claimed scope before heartbeat, and renew live scheduler authority without relaxing request generations.
 - Record the failed Edge continuation row separately; live accounts, Firefox and other OS targets remain pending.
 
-## 0.9.6 — Keep selected accounts through explicit same-session recovery
+## 0.9.6 ï¿½ Keep selected accounts through explicit same-session recovery
 
 - Successful same-session claim continuation and scoped source refresh retain the selected nonsecret account association at the new source/claim fence.
 - Clear previous authentication/entitlement observations and revoke older credential grants; Continue does not reset the once-per-source/account-revision login limit.
 - Retain exact browser/profile/private/store/container/partition checks and require fresh document observations before premium capture.
 
-## 0.9.5 — Canonical account session authority and private queue lane
+## 0.9.5 ï¿½ Canonical account session authority and private queue lane
 
 - Merge coordinator `093a447`, compare account/browser session partitions canonically, and carry the exact private scheduler lane.
 - Keep actual Chrome document checks, typed account recovery and separate premium commit checks intact. Installed auth/premium source-to-desktop qualification remains in progress.
 
-## 0.9.4 — Adopt intentional account changes in the original browser context
+## 0.9.4 ï¿½ Adopt intentional account changes in the original browser context
 
 - Merge verified coordinator `d6594d3` readonly authority renewal and preserve the exact owning tab/profile/container/private session while old readers and capture authorizations are invalidated.
 - Explicit account selection/removal waits for visible user action, keeping the existing admitted navigation lifecycle. Typed login/MFA/entitlement states remain account observations; no automatic login retry loop or replay permission expansion.
 - Saved account revisions fence concurrent credential edits; installed browser/native publication qualification follows this integration.
 
-## 0.9.3 — Preserve account checks through two-phase capture authorization
+## 0.9.3 ï¿½ Preserve account checks through two-phase capture authorization
 
 - Merge coordinator `dc63865`, bind adapter actions to source generation, and retain credential grants as a separate scoped authorization purpose.
 - Keep account observations and premium checks in the production resolver while fresh prepare/commit/cancel controls fence browser capture.
 - Readonly authority adoption and full installed-worker qualification remain the next integration gate.
 
-## 0.9.2 — Integrate accounts with scoped browser streams and adapters
+## 0.9.2 ï¿½ Integrate accounts with scoped browser streams and adapters
 
 - Merge verified coordinator prerequisite `1da6fa6` and retain adapter cancellation, scoped native streams, scheduler qualification and selected downstream provenance.
 - Wire account observations, explicit credential-fill controls and typed authentication/entitlement recovery into the actual owned resolver and worker. Premium actions receive a fresh native selected-account check before authorization.
 - Installed worker publication and coordinator two-phase/authority adoption qualification remain in progress; local/native evidence keeps each transport boundary explicit.
 
-## 0.9.1 — Harden account grants and qualify Windows credential lifecycle
+## 0.9.1 ï¿½ Harden account grants and qualify Windows credential lifecycle
 
 - Reject submitter request overrides and revalidate context/form identity after input events; cancellation immediately clears transient fields and returned credentials.
 - Add MFA, expiry, competing-store, document-replacement, terminal-removal and diagnostic redaction regressions; localize actionable account errors across all six locales.
 - Qualify the actual Engine save/select/grant/consume/remove path against Windows Credential Manager, including duplicate-consume rejection and fixture credential cleanup. Real browser DOM checks and HTTP file hashes retain their separate mocked-grant/HTTP evidence boundaries.
 
-## 0.9.0 — Scoped browser account foundation
+## 0.9.0 ï¿½ Scoped browser account foundation
 
 - Add desktop-selected site accounts keyed by exact origin and browser session, OS-keyring credential references, ephemeral private session metadata, typed authentication/entitlement observations and expiring one-use form grants.
 - Add six-language desktop account controls and browser form/cancellation modules. Qualified premium controls require the explicitly selected active session; purchase, advertisements and unqualified live layouts remain excluded.
@@ -641,33 +641,33 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Persist prepared provider selection through scoped native metadata; support owned adapter disable and selected-resource navigation with original provenance retained.
 - Full installed-worker acceptance remains pending; local module checks do not establish complete browser flows.
 
-## 0.8.9 — Integrate original-response capture and scoped recovery
+## 0.8.9 ï¿½ Integrate original-response capture and scoped recovery
 
 - Combine Chromium/Firefox response capture, page-owned blob reads and persistent native byte transport with scheduler admission, wait recovery and adapter previews.
 - Preserve nonsecret regular resolver references and normalized waits, fence reused browser-session tab IDs, prevent regular views from reading private overlays and keep private recovery/errors transient.
 - Include stable Chrome/Edge local original-response hash evidence; installed full-worker preview/session acceptance and actual Firefox capture remain separate qualification gates.
 
-## 0.8.8 — Persist scoped downstream-host selection
+## 0.8.8 ï¿½ Persist scoped downstream-host selection
 
 - Record bundled adapter identity and explicit downstream host under exact owner/session/source fences while retaining the original hosted page.
 - Preserve normal selections across service reopen, reject stale/foreign authority and unsupported host/adapter metadata, and keep private selections transient. Worker dispatch wiring remains an integration check.
 
-## 0.8.7 — Define one-use navigation authorization lifecycle
+## 0.8.7 ï¿½ Define one-use navigation authorization lifecycle
 
 - Add bounded, expiring grants tied to the exact session, source, claim, document, adapter and inspected fingerprint; preparation has no capture or request side effects.
 - Verify replay, cancellation, tab replacement, changed authority and unsafe destinations. Worker prepare/commit/cancel wiring remains the next integration increment.
 
-## 0.8.6 — Integrate adapter preview cancellation and qualification
+## 0.8.6 ï¿½ Integrate adapter preview cancellation and qualification
 
 - Preserve preview lifetime cancellation across asynchronous worker authorization, keyboard recovery and control highlight restoration alongside durable scheduler waits.
 - Include final synthetic adapter evidence and its explicit pending installed-worker/live-provider acceptance boundaries.
 
-## 0.8.5 — Integrate final scheduler lifecycle checks
+## 0.8.5 ï¿½ Integrate final scheduler lifecycle checks
 
 - Preserve generation-qualified alarms, explicit current-wait observations, opaque fingerprints and unresolved-task readmission alongside exact recovered session scopes.
 - Include real-engine renderer resource/lifecycle fixtures and retain their explicit installed-extension and live-host evidence boundaries.
 
-## 0.8.4 — Fence combined stream and scheduler recovery
+## 0.8.4 ï¿½ Fence combined stream and scheduler recovery
 
 - Integrate the durable browser stream receiver with adapter/scheduler work and reconcile native dispatch/module registrations.
 - Derive queue ownership and generation from persisted jobs, carry each recovered tab's exact scope, reject stale/container-mismatched reports and revalidate source fences after inspection.
@@ -679,7 +679,7 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Re-admit unresolved released navigation without reviving cancelled jobs; hash durable wait fingerprints into opaque bounded values.
 - Add isolated real Engine/browser queue and lifecycle fixtures, resource observations and explicit ownership/browser/live-host qualification boundaries.
 
-## 0.8.2 — Integrate adapters with durable waits
+## 0.8.2 ï¿½ Integrate adapters with durable waits
 
 - Combine service-owned scheduling with versioned adapter previews and use one validated visible countdown parser for observations and blockers.
 - Preserve both batch histories and queue controls. Installed browser acceptance and stream-batch source/session generation reconciliation remain pending.
@@ -693,97 +693,97 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 
 - Add durable navigation queue admission, conservative host locks, fenced tab leases and restart-safe wait metadata with deterministic regression fixtures.
 
-## 0.7.1 — Direct browser stream runtime and recovery fences
+## 0.7.1 ï¿½ Direct browser stream runtime and recovery fences
 
 - Add default-off Chromium debugger capture, Firefox response metadata admission, isolated page Blob streaming and persistent bounded native transport with localized capture state/cancel controls.
 - Qualify original POST and Blob hashes on installed stable Chrome and Edge using isolated native fixtures; keep integrated preview cancellation, Firefox/browser-context matrices, live providers and large-file performance explicit pending gates.
 - Atomically commit durable stream progress, job metadata and quota; repair concurrent EOF and publication-checkpoint crash replay. Fence challenge/claim/source refresh, profile/private/container projections and browser-session restart.
 - Retain regular nonsecret task references while keeping private/session secrets ephemeral. Detect existing private history without deleting or claiming to sanitize it.
 
-## 0.7.0 — Owner-fenced browser stream foundations
+## 0.7.0 ï¿½ Owner-fenced browser stream foundations
 
 - Add direct-response begin/chunk/end/abort storage with strict bounded framing, durable acknowledgements, quotas, EOF verification, scanning and no-overwrite publication.
 - Classify replay risk before probing and fence scoped navigation status/resolve operations by profile, cookie store, partition and generation.
 - Keep new private task/stream metadata and event payloads in memory; existing private history cleanup remains a separate approval gate. Browser runtime/live-provider qualification remains pending.
 
-## 0.6.2 — Stage adapter and shared-contract integration
+## 0.6.2 ï¿½ Stage adapter and shared-contract integration
 
 - Integrate the verified adapter increments with the shared navigation contracts on the coordinator staging branch, preserving their individual commits and qualification boundaries.
 - Reconcile product-version surfaces and documentation; installed extension/native stream binding acceptance remains dependent on the browser-stream batch.
 
-## 0.6.1 — Qualify local adapter layouts and request outcomes
+## 0.6.1 ï¿½ Qualify local adapter layouts and request outcomes
 
 - Add sanitized four-provider synthetic DOM/HTTP fixtures, one-use POST traps, intended filename/hash verification, evidence expiry/schema checks and observation-only opt-in gstack smoke tooling.
 - Adopt shared navigation scope contracts; integrate visible timer metadata, generation-bound explicit same-origin blob capability and actual submitter form semantics.
 - Qualify 80 Chromium 149 DOM/request/hash checks and keyboard selection/stale-preview recovery on Windows x64. Live providers and native transfer acceptance remain pending.
 
-## 0.6.0 — Versioned hosted-page adapters and explicit selection
+## 0.6.0 ï¿½ Versioned hosted-page adapters and explicit selection
 
 - Add exact-host bundled adapters, evidence-backed candidate selection, unsafe/ad/purchase/torrent rejection and conservative live-provider fallback.
 - Add generation/session/DOM-bound preview validation, one-authorization submission gates and accessible selection controls in all six locales.
 - Integrate the content resolver with an ownership-aware context hook; retain conservative behavior until worker integration is present. Provider layouts remain unqualified.
 - Verify 44 extension regressions and extension TypeScript checks.
 
-## 0.5.7 — Shared navigation contracts
+## 0.5.7 ï¿½ Shared navigation contracts
 
 - Define matching Rust/TypeScript session scope, fenced navigation task, wait metadata, replay policy and bounded browser-stream envelopes for the parallel implementation batches.
 - Validate profile/generation/partition metadata and test native-frame size and serialization. Feature behavior remains in its respective NAV batch.
 
-## 0.5.6 — Plan remaining hosted-page navigation work
+## 0.5.6 ï¿½ Plan remaining hosted-page navigation work
 
 - Add thirteen NAV plans grounded in refreshed main, covering remaining FlareSolverr qualification and NAV-02 through NAV-13 implementation.
 - Record owner-selected hosts, direct POST/blob streaming, required Chromium debugger declaration with capture off by default, local-first CAPTCHA with a $0 paid-test budget, and navigation limits of three by default/up to twenty.
 - Define six implementation owners, shared contracts, isolated worktrees, frequent verified commits, dependent PRs and explicit acceptance boundaries. Planning does not close implementation or live-qualification roadmap items.
 
-## 0.5.5 — Correct challenge roadmap status
+## 0.5.5 ï¿½ Correct challenge roadmap status
 
 - Mark NAV-01 FlareSolverr browser-challenge resolution as implemented with live qualification pending; track custom/image CAPTCHA adapters separately as NAV-13 research.
 - Align README navigation behavior and remaining-work descriptions with those implementation and qualification boundaries.
 
-## 0.5.4 — Integrate real-realm and filesystem acceptance
+## 0.5.4 ï¿½ Integrate real-realm and filesystem acceptance
 
 - Preserve the merged FlareSolverr functionality and combine the qualification branch without regressing product versions.
 - Add real Docker AD NTLM/Kerberos job acceptance, repair the Windows filesystem fixture and publish sanitized PAC/filesystem/realm records.
 - Close ENG-06 for the documented filesystem image matrix; retain native SSO, managed proxy policy, installer and IDM comparison gates.
 
-## 0.5.3 — Align solver resolution with the latest transfer base
+## 0.5.3 ï¿½ Align solver resolution with the latest transfer base
 
 - Incorporate ordered PAC route/failover and disposable-filesystem fixtures from the updated transfer-engine branch without changing the solver's Direct-only boundary.
 - Preserve scoped solver cookies, matching User-Agent and session isolation through the route-aware engine configuration.
 - Confirm session absence after a provider restart so an already-removed session cannot leave cleanup blocked; retain failures when the owned session still exists.
 
-## 0.5.2 — Preserve final transfer-engine fixes
+## 0.5.2 ï¿½ Preserve final transfer-engine fixes
 
 - Incorporate the final transfer-engine branch tip, including weak-ETag/Last-Modified validation and published platform evidence, into the solver integration.
 - Keep solver qualification separate from the existing platform acceptance results.
 
-## 0.5.1 — Qualified Docker setup and challenge limits
+## 0.5.1 ï¿½ Qualified Docker setup and challenge limits
 
 - Publish the pinned Compose deployment, Docker walkthrough, measured real-service fixture evidence and g4u/CoordinatesTask research gates.
 - Add an opt-in isolated qualification script for rendered GET resolution, cookie/User-Agent propagation, range pause/resume, SHA-256 and zero-byte unsupported-page refusal.
 - Verify stalled/cancelled API handling and reject epoch-expired cookies. Live Cloudflare clearance, fresh g4u links and downstream hosts remain unqualified; no paid calls were made.
 
-## 0.5.0 — Solver configuration and recovery
+## 0.5.0 ï¿½ Solver configuration and recovery
 
 - Add desktop enablement, loopback endpoint and timeout controls, connection testing with service version, and manual desktop/extension solver actions.
 - Translate solver states, settings and recovery messages across all six locales.
 - Invalidate in-flight results on routing/configuration changes, isolate cross-origin page sessions, and retain failed cleanup identifiers for restart/connection-test cleanup.
 - Live custom CAPTCHA and downstream-host compatibility remain qualification limits.
 
-## 0.4.0 — Owned challenge navigation
+## 0.4.0 ï¿½ Owned challenge navigation
 
 - Run asynchronous, globally serialized solver jobs through the service; preserve profile ownership, cancellation and restart recovery, and reject stale page results.
 - Automatically attempt recognized browser challenges once after opt-in. Keep custom CAPTCHA, authentication, expiry, countdowns and ambiguous controls in browser navigation.
 - Preserve temporary cookies and the matching User-Agent in ranged transfers; reject hosted HTML before publication, including pages labeled as binary.
 - Desktop controls and live qualification remain in progress.
 
-## 0.3.4 — Published qualification records (qualification branch)
+## 0.3.4 ï¿½ Published qualification records (qualification branch)
 
 - Publish sanitized three-platform PAC/network and NTFS/HFS+/ext4 filesystem results with their exact source revisions and CI runs.
 - Publish the successful real-realm CI job and local Windows/Linux authentication records, distinguishing native clients, Docker clients and overlapping scenarios.
 - Synchronize README, roadmap and acceptance links; keep native SSO, managed proxy policies, installer provenance and the IDM comparison pending.
 
-## 0.3.3 — Real AD authentication acceptance (qualification branch)
+## 0.3.3 ï¿½ Real AD authentication acceptance (qualification branch)
 
 - Add a disposable Samba AD realm, Kerberos-only Apache service and domain-backed NTLM endpoint; exercise real authenticated jobs with a volatile fixture credential adapter.
 - Pass nine Linux NTLM/Kerberos checks and four native Windows NTLM checks, including wrong-password/missing-ticket recovery without published output.
@@ -791,67 +791,67 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Record passing three-platform PAC and filesystem acceptance; close ENG-06 for the documented NTFS/HFS+/ext4 image matrix. Native SSO/enterprise policy and installer provenance remain explicit.
 - Report the local-only omission of the CI hostname/direct-fallback case and reject invalid fixture selectors.
 
-## 0.3.2 — Windows fixture stack repair (qualification branch)
+## 0.3.2 ï¿½ Windows fixture stack repair (qualification branch)
 
 - Move the filesystem filler buffer to the heap after real Windows CI exposed its default-stack overflow.
 - Record successful Linux/macOS disk-full, permission, collision and cross-volume recovery acceptance; Windows remains pending until the repaired fixture passes.
 
-## 0.3.1 — Disposable filesystem qualification
+## 0.3.1 ï¿½ Disposable filesystem qualification
 
 - Add bounded 128 MiB image fixtures for actual disk-full, readonly-file refusal, cross-volume publication, collisions and recovery after service restart.
 - Refuse to fill the workspace device or format an existing/system disk; qualification detaches only its own image.
 - Add an opt-in platform CI acceptance run. Actual platform results remain pending until that run succeeds.
 
-## 0.3.0 — Ordered proxy failover (transfer-engine branch)
+## 0.3.0 ï¿½ Ordered proxy failover (transfer-engine branch)
 
 - Preserve bounded, ordered PAC/system route lists across Windows, macOS and Linux, including explicit direct fallback.
 - Advance metadata, range reads and download workers only after pre-response connection failures; keep TLS, authentication, source and partial-body failures on their original recovery path.
 - Isolate pooled handles by their selected route and use cancellable Windows PAC discovery. Explicit PAC refuses WinHTTP's implicit loopback bypass rather than silently selecting direct access.
 - Verify actual proxy traversal with named loopback fixtures, exhausted-route failures, TLS/authentication rejection and route-order regressions. Disposable CI runners receive a fixture-only hostname; developer host settings stay untouched.
 
-## 0.3.0 — Local challenge adapter foundation (solver branch)
+## 0.3.0 ï¿½ Local challenge adapter foundation (solver branch)
 
 - Add a bounded loopback FlareSolverr client, conservative GET page resolution, temporary cookie/User-Agent context, and deterministic response/policy regressions.
 - Browser navigation integration and live host qualification remain in progress.
 
-## 0.2.7 — Clarify remaining proxy work
+## 0.2.7 ï¿½ Clarify remaining proxy work
 
 - Distinguish planned ordered PAC proxy failover from implemented routing whose enterprise policies still require qualification.
 - Keep README, roadmap and implementation/evidence documentation aligned with that support boundary.
 
-## 0.2.6 — Acceptance records and synchronized documentation
+## 0.2.6 ï¿½ Acceptance records and synchronized documentation
 
 - Publish post-repair platform transfer, large-file and real native-messaging/CLI evidence with exact source versions and CI runs.
 - Complete the deterministic control-protocol roadmap gate; retain external realms, enterprise proxy policies, native filesystem matrices and the unsuccessful IDM comparison as open qualification work.
 - Align README, roadmap, compatibility, implementation plan and acceptance records with the verified increment and product version.
 
-## 0.2.5 — Validate Last-Modified alongside weak ETags
+## 0.2.5 ï¿½ Validate Last-Modified alongside weak ETags
 
 - Use Last-Modified when an ETag is weak, including actual range responses and redirect identity checks.
 - Reject a changed response date before writing its body even when the weak ETag stays unchanged; retain the explicit safe-restart workflow.
 
-## 0.2.4 — Windows system proxy protocol maps
+## 0.2.4 ï¿½ Windows system proxy protocol maps
 
 - Parse system proxy protocol labels case-insensitively and trim map entries, so an uppercase HTTPS mapping does not silently select direct routing.
 - Verify distinct HTTP/HTTPS mappings and explicit HTTPS proxy URLs without changing intentional direct routing for an unmapped scheme.
 
-## 0.2.3 — Preserve primary transfer failures
+## 0.2.3 ï¿½ Preserve primary transfer failures
 
 - Keep the first worker failure when sibling libcurl requests abort, preserving storage/source recovery actions instead of replacing them with a secondary network error.
 - Retain the storage-failure assertions and repeat the real write/flush subprocess fixture; a Windows CI failure exposed the race.
 
-## 0.2.2 — Browser response privacy
+## 0.2.2 ï¿½ Browser response privacy
 
 - Project native creation, navigation and refresh responses through the same browser-safe field allowlist as snapshots/events.
 - Exercise a real native-messaging process in the isolated CLI fixture, including repeated creation, response correlation and absence of desktop paths/credential metadata.
 
-## 0.2.1 — Routing and hostile-response regressions
+## 0.2.1 ï¿½ Routing and hostile-response regressions
 
 - Match Windows manual proxy bypass host wildcards and `<local>` consistently, including case-insensitive matching and whole-host boundaries.
 - Verify actual malformed range responses fall back without corrupting output, and encoded Unicode server filenames remain portable.
 - Keep README, roadmap and package versions synchronized; enterprise proxy policy qualification remains open.
 
-## 0.2.0 — Transfer engine and control contract
+## 0.2.0 ï¿½ Transfer engine and control contract
 
 - Validate range responses and remote revisions; recover durable checkpoints, interrupted verification, and no-overwrite publication without false completion.
 - Reuse isolated libcurl connections with host/global limits and concurrency backoff. Add HTTP/2, FTP/FTPS, routing/authentication/TLS controls and capability diagnostics.
@@ -860,7 +860,7 @@ Product versions follow [0.MINOR.PATCH](CONTRIBUTING.md#versioning). Major stays
 - Publish reproducible performance measurements and remaining qualification gates. IDM comparison remains pending because the installed executable produced no fixture download.
 - Synchronize desktop, CLI, service, extension and documentation versions; check drift in CI. Use pathname permissions for macOS IPC because Darwin does not support socket-descriptor chmod.
 
-## 0.1.0 — Initial development preview
+## 0.1.0 ï¿½ Initial development preview
 
 - Original GPL-3.0 desktop, CLI and extension foundation, hosted-page navigation fixtures, media/grabber adapters and public roadmap.
 
