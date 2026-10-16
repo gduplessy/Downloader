@@ -32,6 +32,14 @@ const response = {
   responseHeaders: [{ name: 'Retry-After', value: '60' }],
 };
 const bound = { ...authority, documentId: 'document' };
+const commit = { tabId: 7, frameId: 0, documentId: 'document', url: request.url, timeStamp: 1000 };
+function begin(
+  requests: RetryAfterRequests,
+  owner = Promise.resolve<ServerAuthority | null>(authority),
+) {
+  requests.begin(request, owner);
+  void requests.committed(commit);
+}
 describe('exact navigation Retry-After authority', () => {
   it('buffers headers behind pending owner lookup without losing their observed deadline', async () => {
     let now = 1000,
@@ -40,7 +48,7 @@ describe('exact navigation Retry-After authority', () => {
       resolve = r;
     });
     const requests = new RetryAfterRequests(() => now);
-    requests.begin(request, owner);
+    begin(requests, owner);
     const pending = requests.headers(response);
     now = 5000;
     resolve(authority);
@@ -52,8 +60,8 @@ describe('exact navigation Retry-After authority', () => {
   it('refuses a late response after exact request replacement even when URLs match', async () => {
     let resolve!: (value: ServerAuthority) => void;
     const requests = new RetryAfterRequests(() => 1000);
-    requests.begin(
-      request,
+    begin(
+      requests,
       new Promise((r) => {
         resolve = r;
       }),
@@ -72,7 +80,6 @@ describe('exact navigation Retry-After authority', () => {
     { url: 'https://other.test/wait' },
     { incognito: true },
     { statusCode: 200 },
-    { documentId: undefined },
     {
       responseHeaders: [
         { name: 'Retry-After', value: '5' },
@@ -81,12 +88,12 @@ describe('exact navigation Retry-After authority', () => {
     },
   ])('rejects foreign or ambiguous response %j', async (patch) => {
     const requests = new RetryAfterRequests(() => 1000);
-    requests.begin(request, Promise.resolve(authority));
+    begin(requests);
     expect(await requests.headers({ ...response, ...patch })).toBeNull();
   });
   it('accepts qualified 503 dates and refuses reused tab IDs after removal', async () => {
     const requests = new RetryAfterRequests(() => 1000);
-    requests.begin(request, Promise.resolve(authority));
+    begin(requests);
     const date = new Date(61000).toUTCString();
     expect(
       (
@@ -102,7 +109,7 @@ describe('exact navigation Retry-After authority', () => {
   });
   it('revalidates committed document/native scope/source/epoch and does not persist header or URL', async () => {
     const requests = new RetryAfterRequests(() => 1000);
-    requests.begin(request, Promise.resolve(authority));
+    begin(requests);
     const observed = (await requests.headers(response))!;
     for (const patch of [
       { id: 'foreign' },
@@ -156,4 +163,51 @@ describe('server deadlines', () => {
   ])('rejects malformed/oversized header %s', (value) => {
     expect(retryAfter(value, 1000)).toBeNull();
   });
+});
+
+it('bridges absent header documentId only through the exact committed lifecycle', async () => {
+  const requests = new RetryAfterRequests(() => 1000);
+  requests.begin(request, Promise.resolve(authority));
+  expect(await requests.headers({ ...response, documentId: undefined })).toBeNull();
+  expect(await requests.committed({ ...commit, frameId: 1 })).toBeNull();
+  expect(await requests.committed({ ...commit, timeStamp: 999 })).toBeNull();
+  const observed = await requests.committed(commit);
+  expect(observed?.documentId).toBe('document');
+  expect(await requests.committed(commit)).toBeNull();
+});
+it('later browser navigation intent fences a response even without a replacement request', async () => {
+  const requests = new RetryAfterRequests(() => 1000);
+  requests.begin({ ...request, timeStamp: 1000 }, Promise.resolve(authority));
+  await requests.headers({ ...response, documentId: undefined });
+  requests.navigating(7, 1001);
+  expect(await requests.committed({ ...commit, timeStamp: 1002 })).toBeNull();
+});
+it('adopts only a newly created tab first request after exact original source/native claiming', async () => {
+  const requests = new RetryAfterRequests(() => 1000);
+  requests.begin(request, Promise.resolve(null));
+  await requests.headers({ ...response, documentId: undefined });
+  await requests.committed(commit);
+  const intent = { id: 'job', sourceGeneration: 8, url: request.url, createdAt: 999 };
+  expect(await requests.adoptInitial(authority, { ...intent, createdAt: 1001 })).toBeNull();
+  expect(await requests.adoptInitial(authority, { ...intent, sourceGeneration: 9 })).toBeNull();
+  expect((await requests.adoptInitial(authority, intent))?.deadline).toBe(61000);
+  expect(await requests.adoptInitial(authority, intent)).toBeNull();
+  const replaced = new RetryAfterRequests(() => 1000);
+  replaced.begin(request, Promise.resolve(null));
+  replaced.begin({ ...request, requestId: 'second' }, Promise.resolve(null));
+  await replaced.headers({ ...response, requestId: 'second' });
+  await replaced.committed(commit);
+  expect(await replaced.adoptInitial(authority, intent)).toBeNull();
+});
+
+it('a distinct bound response extends, never shortens, a server deadline including an elapsed wait', () => {
+  const first = observeServerWait(undefined, 8, 61000, 1000, 'first');
+  expect(observeServerWait(first, 8, 65000, 5000, 'first')).toBe(first);
+  expect(observeServerWait(first, 8, 60000, 2000, 'shorter')).toBe(first);
+  const extended = observeServerWait(first, 8, 125000, 5000, 'second');
+  expect(extended.deadline_ms).toBe(125000);
+  expect(extended.generation).toBe(first.generation + 1);
+  const afterElapsed = observeServerWait(first, 8, 132000, 72000, 'third');
+  expect(afterElapsed.deadline_ms).toBe(132000);
+  expect(afterElapsed.observed_duration_ms).toBe(60000);
 });

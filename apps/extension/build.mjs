@@ -55,7 +55,7 @@ for (const target of ['chromium', 'firefox']) {
           key,
           background: { service_worker: 'background.js' },
           action: { default_popup: 'popup.html' },
-          optional_permissions: ['cookies', 'webRequest', 'scripting', 'tabs', 'notifications'],
+          optional_permissions: ['cookies', 'webRequest', 'webNavigation', 'scripting', 'tabs', 'notifications'],
           optional_host_permissions: ['http://*/*', 'https://*/*'],
         }
       : {

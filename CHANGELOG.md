@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.26.1
+
+- Correct actual Chromium navigation headers lacking documentId by joining exact request identity to optional webNavigation committed-document lifecycle and verifying the live isolated world.
+- Buffer only a new task-created tab first request for post-load native claiming; reject replaced/BFCache requests, scope/source changes and unavailable navigation permission.
+- Hash exact response identity to deduplicate observations while allowing distinct responses only to extend server deadlines, including elapsed previous waits.
+- Initial0.26.0 installed numeric reproduction submitted early and is not acceptance; corrected installed qualification follows separately.
+
 ## 0.26.0
 
 - Bind qualified 429/503 Retry-After navigation responses to exact request, committed document, owned scope and source generation before recording a durable server wait.

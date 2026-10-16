@@ -59,12 +59,14 @@ export function observeServerWait(
   sourceGeneration: number,
   deadline: number,
   observedAt: number,
+  responseIdentity = 'retry_after',
 ): DurableWait {
   const duration = deadline - observedAt;
   if (!Number.isSafeInteger(duration) || duration < 0 || duration > 604800000)
     throw Error('Invalid server wait');
-  if (previous?.basis === 'server' && previous.source_generation === sourceGeneration)
-    return previous;
+  const reason = responseIdentity === 'retry_after' ? responseIdentity : 'retry_after:' + responseIdentity;
+  if (previous?.basis === 'server' && previous.source_generation === sourceGeneration
+    && (previous.reason === reason || deadline <= previous.deadline_ms)) return previous;
   return {
     generation: (previous?.generation ?? 0) + 1,
     source_generation: sourceGeneration,
@@ -75,7 +77,7 @@ export function observeServerWait(
     basis: 'server',
     requires_live_tab: true,
     expires_at_ms: null,
-    reason: 'retry_after',
+    reason,
     notified: false,
   };
 }

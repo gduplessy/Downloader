@@ -17,3 +17,9 @@ The 0.26.0 implementation connects the production parser to exact main-frame 429
 - Reject stale request IDs, replaced documents, redirects into a different scope, private/regular mixing and same-site competing tabs. Confirm invalidation/cancellation removes the wait and alarm without touching a retained user-origin tab.
 
 The design and remaining evidence requirements above remain the acceptance contract. No installed Retry-After browser-navigation acceptance is claimed by implementation or unit tests alone.
+
+## Chromium lifecycle correction (0.26.1)
+
+Actual Chrome155 main-frame header events omit documentId; the initial strict header-only0.26.0 run rejected them and submitted early, so it is not acceptance. The corrected bridge requires optional webNavigation permission, links the latest exact request to an active committed top-frame document, and revalidates that document through the isolated world and fresh native authority. Later navigation intent/BFCache and replaced requests invalidate pending identity. Denied permission cannot provide resolver context.
+
+For a freshly task-created tab, only its first bounded request may be adopted after the actual tabs.create receipt and native post-load scope/source claim; an intervening redirect/replacement fails closed. This does not reload or probe the original request. Duplicate response identity retains its deadline; distinct responses may extend but never shorten a surviving server deadline. Installed proof remains pending.

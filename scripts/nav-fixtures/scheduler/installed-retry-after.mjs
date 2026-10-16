@@ -76,6 +76,7 @@ await writeFile(
       'debugger',
       'cookies',
       'webRequest',
+      'webNavigation',
       'scripting',
       'tabs',
       'notifications',
@@ -323,7 +324,7 @@ try {
   const results = [];
   await evaluate(
     optionsSession,
-    `globalThis.retryHeaders=[]; chrome.webRequest.onHeadersReceived.addListener(d=>{if(d.type==='main_frame'&&[429,503].includes(d.statusCode))globalThis.retryHeaders.push({requestId:d.requestId,documentId:d.documentId,tabId:d.tabId,status:d.statusCode});},{urls:['http://*/*']},['responseHeaders']);`,
+    `globalThis.retryCommits=[]; chrome.webNavigation.onCommitted.addListener(d=>{if(d.frameId===0)globalThis.retryCommits.push({tabId:d.tabId,documentId:d.documentId});}); globalThis.retryHeaders=[]; chrome.webRequest.onHeadersReceived.addListener(d=>{if(d.type==='main_frame'&&[429,503].includes(d.statusCode))globalThis.retryHeaders.push({requestId:d.requestId,documentId:d.documentId,tabId:d.tabId,status:d.statusCode});},{urls:['http://*/*']},['responseHeaders']);`,
   );
   for (const name of (
     process.env.NAV_RETRY_CASES ?? 'numeric,date,repeated,malformed,oversized'
@@ -412,7 +413,19 @@ try {
           requests: fixture.requests.filter((r) => r.name === name),
         }),
     );
-    assert.equal(posts[0].ready, true, 'Early POST');
+    assert.equal(
+      posts[0].ready,
+      true,
+      'Early POST: ' +
+        JSON.stringify({
+          observed,
+          headers,
+          rows: await evaluate(
+            optionsSession,
+            "chrome.storage.local.get(null).then(s=>Object.fromEntries(Object.entries(s).filter(([k])=>k.startsWith('resolver-')||k.startsWith('server-response-'))))",
+          ),
+        }),
+    );
     assert.equal(
       fixture.requests.filter((r) => r.name === name && r.path.endsWith('/limited')).length,
       1,
@@ -441,9 +454,10 @@ try {
       duplicate_posts: 0,
       navigation_gets: 1,
       worker_replaced: replacement,
-      header_identity_present: headers
-        .filter((h) => h.tabId !== undefined)
-        .every((h) => !!h.documentId),
+      headers_include_document_id: headers.every((h) => !!h.documentId),
+      committed_document_ids_present: (
+        await evaluate(optionsSession, 'globalThis.retryCommits')
+      ).every((c) => !!c.documentId),
     });
     await evaluate(
       optionsSession,

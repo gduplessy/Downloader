@@ -237,6 +237,47 @@ const directOwners = new DirectCaptureOwners();
 const captureTransitions = new CaptureTransitions();
 const serverRequests = new RetryAfterRequests();
 const serverHeaderWrites = new Map<number, Promise<void>>();
+let serverNavigationInstalled = false;
+function trackServerResponse(tabId: number, response: Promise<ServerResponse | null>) {
+  // Compute event identity immediately; serialize persistence so a later commit cannot overtake a header write.
+  const previous = serverHeaderWrites.get(tabId) ?? Promise.resolve();
+  const write = previous
+    .catch(() => {})
+    .then(async () => {
+      const candidate = await response;
+      if (!candidate || !serverRequests.current(candidate)) return;
+      const current = await serverRequestAuthority(tabId);
+      if (
+        current &&
+        candidate.id === current.id &&
+        candidate.sourceGeneration === current.sourceGeneration &&
+        candidate.sessionEpoch === current.sessionEpoch &&
+        sameScope(candidate.scope, current.scope)
+      )
+        await navigationStore.set({ ['server-response-' + tabId]: candidate });
+    })
+    .catch(() => {});
+  serverHeaderWrites.set(tabId, write);
+  void write.finally(() => {
+    if (serverHeaderWrites.get(tabId) === write) serverHeaderWrites.delete(tabId);
+  });
+}
+async function serverNavigationObservers() {
+  if (
+    BROWSER !== 'chromium' ||
+    serverNavigationInstalled ||
+    !(await browser.permissions.contains({ permissions: ['webNavigation'] }))
+  )
+    return;
+  browser.webNavigation.onBeforeNavigate.addListener((details) => {
+    if (details.frameId === 0) serverRequests.navigating(details.tabId, details.timeStamp);
+  });
+  browser.webNavigation.onCommitted.addListener((details: any) => {
+    if (details.frameId === 0)
+      trackServerResponse(details.tabId, serverRequests.committed(details));
+  });
+  serverNavigationInstalled = true;
+}
 async function serverRequestAuthority(tabId: number): Promise<ServerAuthority | null> {
   const records = await navigationStore.get(null);
   const entry = Object.entries(records).find(
@@ -244,7 +285,7 @@ async function serverRequestAuthority(tabId: number): Promise<ServerAuthority | 
   );
   if (!entry) return null;
   const record = entry[1] as ResolverRecord;
-  const job = (await browserSnapshot()).jobs.find((job: any) => job.id === entry[0].slice(9));
+  const job = (await native('snapshot')).jobs.find((job: any) => job.id === entry[0].slice(9));
   if (
     !record.scope ||
     !record.sourceGeneration ||
@@ -284,17 +325,6 @@ async function applyServerWait(id: string, record: ResolverRecord, documentId?: 
   );
   if (!live || live.documentId !== documentId) return;
   let changed = false;
-  if (record.wait?.basis === 'server' && record.serverWaitDocumentId !== documentId) {
-    record.wait = observeWait(
-      { ...record.wait, basis: 'page' },
-      record.sourceGeneration,
-      0,
-      Date.now(),
-      'document_replaced',
-    );
-    delete record.serverWaitDocumentId;
-    changed = true;
-  }
   const key = 'server-response-' + record.tabId;
   const candidate = (await navigationStore.get(key))[key] as ServerResponse | undefined;
   if (candidate) {
@@ -311,6 +341,17 @@ async function applyServerWait(id: string, record: ResolverRecord, documentId?: 
       record.waitStarted ??= wait.observed_at_ms;
       changed = true;
     }
+  }
+  if (!changed && record.wait?.basis === 'server' && record.serverWaitDocumentId !== documentId) {
+    record.wait = observeWait(
+      { ...record.wait, basis: 'page' },
+      record.sourceGeneration,
+      0,
+      Date.now(),
+      'document_replaced',
+    );
+    delete record.serverWaitDocumentId;
+    changed = true;
   }
   if (changed && record.wait) {
     navigationAuthorizations.invalidateTab(record.tabId);
@@ -724,6 +765,7 @@ async function menus() {
   });
 }
 async function observers() {
+  await serverNavigationObservers();
   if (observerInstalled) {
     await mediaScripts();
     return;
@@ -804,16 +846,7 @@ async function observers() {
         details.frameId === 0 &&
         [429, 503].includes(details.statusCode)
       ) {
-        const write = (async () => {
-          const response = await serverRequests.headers(details);
-          if (response && serverRequests.current(response))
-            await navigationStore.set({ ['server-response-' + details.tabId]: response });
-        })().catch(() => {});
-        serverHeaderWrites.set(details.tabId, write);
-        void write.finally(() => {
-          if (serverHeaderWrites.get(details.tabId) === write)
-            serverHeaderWrites.delete(details.tabId);
-        });
+        trackServerResponse(details.tabId, serverRequests.headers(details));
       }
       const type =
         details.responseHeaders?.find(
@@ -1502,7 +1535,9 @@ async function navigationPermissions(url: string) {
     permissions: [
       'webRequest',
       'cookies',
-      ...(BROWSER === 'chromium' ? ['scripting' as const] : ['webRequestBlocking' as const]),
+      ...(BROWSER === 'chromium'
+        ? ['scripting' as const, 'webNavigation' as const]
+        : ['webRequestBlocking' as const]),
     ],
     origins: [sitePattern(url)],
   };
@@ -1660,6 +1695,7 @@ async function startOwnedResolver(job: any, force = false, sourceTabId?: number)
     );
   if (source && Boolean(source.incognito) !== Boolean(job.private))
     throw Error('Source tab private context does not match task');
+  const createdAt = Date.now();
   const tab = await browser.tabs.create({
     url: startUrl,
     active: true,
@@ -1701,6 +1737,20 @@ async function startOwnedResolver(job: any, force = false, sourceTabId?: number)
       private: job.private ?? false,
     } satisfies ResolverRecord,
   });
+  trackServerResponse(
+    tab.id!,
+    serverRequests.adoptInitial(
+      {
+        id: job.id,
+        tabId: tab.id!,
+        scope: claim.scope,
+        sourceGeneration: claim.source_generation,
+        sessionEpoch: await browserEpoch,
+      },
+      { id: job.id, sourceGeneration: job.source_generation, url: startUrl, createdAt },
+    ),
+  );
+  await serverHeaderWrites.get(tab.id!);
   await native('browser_status', {
     id: job.id,
     state: 'waiting_browser',
@@ -2353,6 +2403,11 @@ async function resolverContext(
   document?: DocumentClaim,
 ) {
   if (frameId !== 0 || (await browser.tabs.get(tabId)).status !== 'complete') return null;
+  if (
+    BROWSER === 'chromium' &&
+    !(await browser.permissions.contains({ permissions: ['webNavigation'] }))
+  )
+    return null;
   const snapshot = await browserSnapshot();
   const records = await navigationStore.get(null);
   const entry = Object.entries(records).find(
