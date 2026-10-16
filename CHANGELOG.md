@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.33.12
+
+- Remove Firefox fixture profile shadowing that prevented actual browser startup.
+
+
 ## 0.33.11
 
 - Record four passing exact-source installed Edge challenge lifecycle negatives after correcting fixture ordering.

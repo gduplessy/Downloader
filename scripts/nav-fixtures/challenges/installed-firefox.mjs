@@ -683,11 +683,11 @@ try {
   const tab = await json(
     'browser.tabs.get(' + record.tabId + ').then(JSON.stringify)',
   );
-  const profile = await json(
+  const extensionProfile = await json(
     'browser.storage.local.get("profileId").then(JSON.stringify)',
   );
   assert.equal(finalJob.navigation_scope.browser, 'firefox');
-  assert.equal(finalJob.navigation_scope.profile, profile.profileId);
+  assert.equal(finalJob.navigation_scope.profile, extensionProfile.profileId);
   assert.equal(finalJob.navigation_scope.cookie_store_id, tab.cookieStoreId);
   assert.equal(finalJob.navigation_scope.private, tab.incognito);
   assert.equal(initialNativeHash, digest(await readFile(nativeBinary)));
