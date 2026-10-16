@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.34.5
+
+- Record installed Edge solver popup qualification and integrated extension validation.
+
+
 ## 0.34.4
 
 - Integrate reviewed NAV dependencies; preserve product version consistency and historical changelog bytes.
