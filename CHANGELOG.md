@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.34.8
+
+- Reconcile reviewed challenge host-value, input identity and serialized-host ownership guards with installed solver controls.
+
 ## 0.34.7
 
 - Integrate the installed-verified Firefox fixture profile shadowing correction.
@@ -33,6 +37,22 @@
 
 - Add exact-native-pair installed extension popup qualification for Continue, FlareSolverr refusal, routing, stale settings and explicit retry.
 - Preserve synthetic solver protocol versus real challenge clearance and native-settings UI acceptance boundaries.
+
+## 0.33.16
+
+- Add installed selected-host-node replacement qualification after the actual production Solve panel appears, retaining exact stale-refusal and zero-submission/publication gates. No authorization hooks or product runtime changes.
+
+## 0.33.15
+
+- Fence actual CAPTCHA host input identity during freshness and synchronously before submission; require exactly one serialized selected_host matching authorized ownership. Regress initial/final digest node replacement and duplicate successful named controls while retaining unchanged exactly-once submission. Installed repeats remain bound to their actual checked source.
+
+## 0.33.14
+
+- Publish two exact-source installed Firefox selected-host rejection records and inspected screenshots for e1f78c2; preserve the historical one-POST failure separately without relabeling earlier fresh-file acceptance. Evidence and synchronized metadata only.
+
+## 0.33.13
+
+- Reject CAPTCHA selected-host replacement during asynchronous binding and immediately before submission. Add deterministic initial/final digest race regressions preserving the valid exactly-once path; retain failed installed Firefox POST evidence separately.
 
 ## 0.33.12
 
