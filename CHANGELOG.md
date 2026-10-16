@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.35.0
+
+- Record installed Chrome and Edge whole-browser Blob loss, exact durable partial hashes and reader-lease recovery; refresh NAV acceptance audit without broadening proof.
+
+
 ## 0.34.6
 
 - Integrate reviewed NAV13 fixture ordering correction and four passing installed Edge negative records.
