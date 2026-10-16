@@ -448,6 +448,15 @@ try {
     if (scenario !== "fresh") {
       if (scenario === "cancel") await waitClick(session, "Cancel");
       else {
+        const panelDeadline = Date.now() + 30000;
+        let boundPanel = false;
+        while (Date.now() < panelDeadline) {
+          const tree = await command("Accessibility.getFullAXTree", {}, session);
+          boundPanel = tree.nodes.some((n) => !n.ignored && n.role?.value === "button" && n.name?.value === "Solve locally");
+          if (boundPanel) break;
+          await new Promise((r) => setTimeout(r, 100));
+        }
+        assert.ok(boundPanel, "Bound challenge panel missing before mutation");
         const expressions = {
           csrf: 'document.querySelector("input[name=csrf]").value="public-fixture-replaced-csrf"',
           image: 'document.querySelector("img").src += "?replacement=1"',
@@ -457,12 +466,19 @@ try {
         await evaluate(session, expressions[scenario]);
         await waitClick(session, "Solve locally");
       }
-      await new Promise((r) => setTimeout(r, 1500));
-      const observed = (
-        await command("Accessibility.getFullAXTree", {}, session)
-      ).nodes
-        .filter((n) => !n.ignored)
-        .map((n) => ({ role: n.role?.value, name: n.name?.value }));
+      let observed = [];
+      const refusalDeadline = Date.now() + 45000;
+      do {
+        observed = (await command("Accessibility.getFullAXTree", {}, session)).nodes
+          .filter((n) => !n.ignored)
+          .map((n) => ({ role: n.role?.value, name: n.name?.value }));
+        const finished = scenario === "cancel"
+          ? !observed.some((n) => n.role === "dialog" && n.name === "Image challenge")
+          : observed.some((n) => n.name === "Unsupported or expired challenge. Complete it in the page.");
+        if (finished) break;
+        assert.equal(fixture.submits.length, 0, "Stale/cancelled challenge submitted during refusal wait");
+        await new Promise((r) => setTimeout(r, 200));
+      } while (Date.now() < refusalDeadline);
       await writeFile(resolve(root,"observed-controls.json"),JSON.stringify(observed,null,2));
       if (scenario === "cancel")
         assert(

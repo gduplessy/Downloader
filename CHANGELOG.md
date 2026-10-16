@@ -1,9 +1,12 @@
 # Changelog
 
+## 0.34.6
+
+- Integrate reviewed NAV13 fixture ordering correction and four passing installed Edge negative records.
+
 ## 0.34.5
 
 - Record installed Edge solver popup qualification and integrated extension validation.
-
 
 ## 0.34.4
 
@@ -26,6 +29,18 @@
 
 - Add exact-native-pair installed extension popup qualification for Continue, FlareSolverr refusal, routing, stale settings and explicit retry.
 - Preserve synthetic solver protocol versus real challenge clearance and native-settings UI acceptance boundaries.
+
+## 0.33.11
+
+- Record four passing exact-source installed Edge challenge lifecycle negatives after correcting fixture ordering.
+
+## 0.33.10
+
+- Fence challenge mutation fixtures on the actual bound panel after asynchronous host selection.
+
+## 0.33.9
+
+- Wait for exact installed challenge refusal instead of assuming asynchronous work completes after1500ms; retain unsuccessful Edge observation.
 
 ## 0.33.8
 
