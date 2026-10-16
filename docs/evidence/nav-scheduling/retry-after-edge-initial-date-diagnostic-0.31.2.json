@@ -1,0 +1,107 @@
+{
+  "fixture": "installed-production-retry-after-v1",
+  "resolver_trace_instrumented": true,
+  "observer_installations": 1,
+  "observed_resolver_outcomes": 6,
+  "source_revision": "84da977449447c6c3ab8068addc7dc17fc01e8c5",
+  "browser": "Edg/155.0.4283.45",
+  "native_version": "0.25.1",
+  "native_build_revision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+  "native_binary_sha256": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+  "cli_binary_sha256": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c",
+  "fixture_sha256": "2b41f076238bf3894e7b4efb681452e2ca18821771fcd8ecdc4a2119f5f5486c",
+  "server_sha256": "a12e5886628c6437f076f2abeaf7722fd5077044b89ccf8fe1b7fd08b63b4e96",
+  "production_background_sha256": "b5295ab0ddb809cf8dd9b389057ea6446ab0db0307ea3b0aca41f60218457c5f",
+  "os": "win32",
+  "arch": "x64",
+  "results": [
+    {
+      "name": "date",
+      "initial_response": true,
+      "original_wait": {
+        "basis": "server",
+        "deadline_ms": 1792149662000,
+        "expires_at_ms": null,
+        "generation": 1,
+        "next_recheck_ms": 1792149675368,
+        "notified": false,
+        "observed_at_ms": 1792149651600,
+        "observed_duration_ms": 10400,
+        "reason": "retry_after:wait:739d69762d90f32adf1ddb8b7f297f2cd5952c4976ddbda59552076e9bebfe63",
+        "requires_live_tab": true,
+        "source_generation": 1
+      },
+      "distinct_owned_navigation": false,
+      "wait": {
+        "basis": "server",
+        "deadline_ms": 1792149662000,
+        "expires_at_ms": null,
+        "generation": 1,
+        "next_recheck_ms": 1792149675368,
+        "notified": false,
+        "observed_at_ms": 1792149651600,
+        "observed_duration_ms": 10400,
+        "reason": "retry_after:wait:739d69762d90f32adf1ddb8b7f297f2cd5952c4976ddbda59552076e9bebfe63",
+        "requires_live_tab": true,
+        "source_generation": 1
+      },
+      "server_deadline": 1792149662000,
+      "original_posts": 1,
+      "original_method": "POST",
+      "head_probes": 0,
+      "early_posts": 0,
+      "duplicate_posts": 0,
+      "navigation_gets": 1,
+      "worker_replaced": false,
+      "lifecycle": [
+        {
+          "event": "request",
+          "requestId": "4",
+          "tabId": 754866472,
+          "timeStamp": 1792149650801.602,
+          "url": "http://127.0.0.1:56392/nav-adapters/gofile/limited?case=date"
+        },
+        {
+          "event": "navigate",
+          "tabId": 754866472,
+          "timeStamp": 1792149650718.141,
+          "url": "http://127.0.0.1:56392/nav-adapters/gofile/limited?case=date"
+        },
+        {
+          "event": "committed",
+          "tabId": 754866472,
+          "timeStamp": 1792149651023.438,
+          "url": "http://127.0.0.1:56392/nav-adapters/gofile/limited?case=date",
+          "documentId": "14EBD83AC3F227806793AB0D0AC42F42"
+        },
+        {
+          "event": "navigate",
+          "tabId": 754866472,
+          "timeStamp": 1792149692959.689,
+          "url": "http://127.0.0.1:56392/nav-adapters/gofile/submit?case=date"
+        },
+        {
+          "event": "request",
+          "requestId": "7",
+          "tabId": 754866472,
+          "timeStamp": 1792149692991.44,
+          "url": "http://127.0.0.1:56392/nav-adapters/gofile/submit?case=date"
+        },
+        {
+          "event": "committed",
+          "tabId": 754866472,
+          "timeStamp": 1792149693145.075,
+          "url": "http://127.0.0.1:56392/nav-adapters/gofile/submit?case=date",
+          "documentId": "484BC80723B17E7BAABC067EB6FC1F85"
+        }
+      ],
+      "headers_include_document_id": false,
+      "committed_document_ids_present": true
+    }
+  ],
+  "limits": [
+    "Synthetic original initial429/503; task-created tab receipt and post-load native scope; pregranted permissions; direct capture off",
+    "Firefox/other OS/live providers/private installed matrix remain separately pending; initial-response acceptance is limited to explicitly recorded initial rows",
+    "Readiness HTML acknowledgement, not file-transfer proof"
+  ]
+}

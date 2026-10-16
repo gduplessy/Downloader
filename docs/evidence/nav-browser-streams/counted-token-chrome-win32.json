@@ -1,0 +1,267 @@
+{
+  "checkedSource": "a70294d31924cc6eabf5e5906653c5e0cae01253",
+  "sourceLane": "original browser fetch materialized as page-owned Blob, then production direct desktop stream",
+  "rows": [
+    {
+      "mode": "consume-head",
+      "browser": "Chrome/155.0.8059.40",
+      "os": "win32",
+      "architecture": "x64",
+      "sourceRevision": "a70294d31924cc6eabf5e5906653c5e0cae01253",
+      "driverSha256": "2b8ec6ef69f2bfc7e26ad758b720c5311d02b4863c0809d28d4428ba81086561",
+      "privateContextSha256": "b2426b9eec04ec1354eff7e1d43c157542b75103ddfa33c967aa71466331d12b",
+      "productionBundles": {
+        "background.js": "bd1cbe6a16fd0ed977d94b7ea5975638fba1aeacb406bb524ca085c51c5d6139",
+        "resolver.js": "557a3f124534aea016c8323e8ba544ea6432b08d81910811d908894ede25029d"
+      },
+      "nativePairRevision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+      "nativeExecutables": {
+        "hostAndDaemon": {
+          "workspaceRelativePath": "run/native/downloader-service.exe",
+          "sha256": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+          "bytes": 17476096,
+          "modifiedUtc": "2026-10-15T12:30:20.736Z",
+          "selfReportedVersion": null,
+          "sameExecutable": true
+        },
+        "cli": {
+          "workspaceRelativePath": "run/native/downloader.exe",
+          "sha256": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c",
+          "bytes": 6320128,
+          "modifiedUtc": "2026-10-15T12:30:22.112Z",
+          "selfReportedVersion": "downloader-cli 0.25.1"
+        }
+      },
+      "acceptance": "passed",
+      "expectedBytes": 1048593,
+      "actualBytes": 1048593,
+      "sha256": "016dda9740d1ce7161d4e53fd1f5eea4558b0a1c8429ac4961dc11338f2bc348",
+      "state": "complete",
+      "tokenRequests": [
+        {
+          "method": "GET",
+          "path": "/token",
+          "cookie": "missing",
+          "range": false
+        }
+      ],
+      "nativeOriginRequests": 0,
+      "originalClicks": 0,
+      "limitations": [
+        "Local fixtures; live providers and permission prompt pending",
+        "Page-owned fetch materializes a Blob before desktop streaming; does not qualify navigation-response debugger GET, pre-request expiry UI, or file-size-independent page memory",
+        "No Firefox ESR or unavailable OS qualification from this run"
+      ]
+    },
+    {
+      "mode": "first-get",
+      "browser": "Chrome/155.0.8059.40",
+      "os": "win32",
+      "architecture": "x64",
+      "sourceRevision": "a70294d31924cc6eabf5e5906653c5e0cae01253",
+      "driverSha256": "2b8ec6ef69f2bfc7e26ad758b720c5311d02b4863c0809d28d4428ba81086561",
+      "privateContextSha256": "b2426b9eec04ec1354eff7e1d43c157542b75103ddfa33c967aa71466331d12b",
+      "productionBundles": {
+        "background.js": "69ca17e37e828e879c039120fdbcc7358ded1ffa8975364f1632fdc11f044711",
+        "resolver.js": "557a3f124534aea016c8323e8ba544ea6432b08d81910811d908894ede25029d"
+      },
+      "nativePairRevision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+      "nativeExecutables": {
+        "hostAndDaemon": {
+          "workspaceRelativePath": "run/native/downloader-service.exe",
+          "sha256": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+          "bytes": 17476096,
+          "modifiedUtc": "2026-10-15T12:30:20.736Z",
+          "selfReportedVersion": null,
+          "sameExecutable": true
+        },
+        "cli": {
+          "workspaceRelativePath": "run/native/downloader.exe",
+          "sha256": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c",
+          "bytes": 6320128,
+          "modifiedUtc": "2026-10-15T12:30:22.112Z",
+          "selfReportedVersion": "downloader-cli 0.25.1"
+        }
+      },
+      "acceptance": "passed",
+      "expectedBytes": 1048593,
+      "actualBytes": 1048593,
+      "sha256": "016dda9740d1ce7161d4e53fd1f5eea4558b0a1c8429ac4961dc11338f2bc348",
+      "state": "complete",
+      "tokenRequests": [
+        {
+          "method": "GET",
+          "path": "/token",
+          "cookie": "missing",
+          "range": false
+        }
+      ],
+      "nativeOriginRequests": 0,
+      "originalClicks": 0,
+      "limitations": [
+        "Local fixtures; live providers and permission prompt pending",
+        "Page-owned fetch materializes a Blob before desktop streaming; does not qualify navigation-response debugger GET, pre-request expiry UI, or file-size-independent page memory",
+        "No Firefox ESR or unavailable OS qualification from this run"
+      ]
+    },
+    {
+      "mode": "rotating-cookie",
+      "browser": "Chrome/155.0.8059.40",
+      "os": "win32",
+      "architecture": "x64",
+      "sourceRevision": "a70294d31924cc6eabf5e5906653c5e0cae01253",
+      "driverSha256": "2b8ec6ef69f2bfc7e26ad758b720c5311d02b4863c0809d28d4428ba81086561",
+      "privateContextSha256": "b2426b9eec04ec1354eff7e1d43c157542b75103ddfa33c967aa71466331d12b",
+      "productionBundles": {
+        "background.js": "ebabf598802f27696375e71f551e257eaf05514040c48b19a95893ec8a094076",
+        "resolver.js": "557a3f124534aea016c8323e8ba544ea6432b08d81910811d908894ede25029d"
+      },
+      "nativePairRevision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+      "nativeExecutables": {
+        "hostAndDaemon": {
+          "workspaceRelativePath": "run/native/downloader-service.exe",
+          "sha256": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+          "bytes": 17476096,
+          "modifiedUtc": "2026-10-15T12:30:20.736Z",
+          "selfReportedVersion": null,
+          "sameExecutable": true
+        },
+        "cli": {
+          "workspaceRelativePath": "run/native/downloader.exe",
+          "sha256": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c",
+          "bytes": 6320128,
+          "modifiedUtc": "2026-10-15T12:30:22.112Z",
+          "selfReportedVersion": "downloader-cli 0.25.1"
+        }
+      },
+      "acceptance": "passed",
+      "expectedBytes": 1048593,
+      "actualBytes": 1048593,
+      "sha256": "016dda9740d1ce7161d4e53fd1f5eea4558b0a1c8429ac4961dc11338f2bc348",
+      "state": "complete",
+      "tokenRequests": [
+        {
+          "method": "GET",
+          "path": "/token",
+          "cookie": "initial",
+          "range": false
+        }
+      ],
+      "nativeOriginRequests": 0,
+      "originalClicks": 0,
+      "limitations": [
+        "Local fixtures; live providers and permission prompt pending",
+        "Page-owned fetch materializes a Blob before desktop streaming; does not qualify navigation-response debugger GET, pre-request expiry UI, or file-size-independent page memory",
+        "No Firefox ESR or unavailable OS qualification from this run"
+      ]
+    },
+    {
+      "mode": "expiring-url",
+      "browser": "Chrome/155.0.8059.40",
+      "os": "win32",
+      "architecture": "x64",
+      "sourceRevision": "a70294d31924cc6eabf5e5906653c5e0cae01253",
+      "driverSha256": "2b8ec6ef69f2bfc7e26ad758b720c5311d02b4863c0809d28d4428ba81086561",
+      "privateContextSha256": "b2426b9eec04ec1354eff7e1d43c157542b75103ddfa33c967aa71466331d12b",
+      "productionBundles": {
+        "background.js": "9369f21b952acd411acbf22895fc0ccb82dd661fb8596056c62aee159ae64f58",
+        "resolver.js": "557a3f124534aea016c8323e8ba544ea6432b08d81910811d908894ede25029d"
+      },
+      "nativePairRevision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+      "nativeExecutables": {
+        "hostAndDaemon": {
+          "workspaceRelativePath": "run/native/downloader-service.exe",
+          "sha256": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+          "bytes": 17476096,
+          "modifiedUtc": "2026-10-15T12:30:20.736Z",
+          "selfReportedVersion": null,
+          "sameExecutable": true
+        },
+        "cli": {
+          "workspaceRelativePath": "run/native/downloader.exe",
+          "sha256": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c",
+          "bytes": 6320128,
+          "modifiedUtc": "2026-10-15T12:30:22.112Z",
+          "selfReportedVersion": "downloader-cli 0.25.1"
+        }
+      },
+      "acceptance": "passed",
+      "expectedBytes": 1048593,
+      "actualBytes": 1048593,
+      "sha256": "016dda9740d1ce7161d4e53fd1f5eea4558b0a1c8429ac4961dc11338f2bc348",
+      "state": "complete",
+      "tokenRequests": [
+        {
+          "method": "GET",
+          "path": "/token",
+          "cookie": "missing",
+          "range": false
+        }
+      ],
+      "nativeOriginRequests": 0,
+      "originalClicks": 0,
+      "limitations": [
+        "Local fixtures; live providers and permission prompt pending",
+        "Page-owned fetch materializes a Blob before desktop streaming; does not qualify navigation-response debugger GET, pre-request expiry UI, or file-size-independent page memory",
+        "No Firefox ESR or unavailable OS qualification from this run"
+      ]
+    },
+    {
+      "mode": "redirect-token",
+      "browser": "Chrome/155.0.8059.40",
+      "os": "win32",
+      "architecture": "x64",
+      "sourceRevision": "a70294d31924cc6eabf5e5906653c5e0cae01253",
+      "driverSha256": "2b8ec6ef69f2bfc7e26ad758b720c5311d02b4863c0809d28d4428ba81086561",
+      "privateContextSha256": "b2426b9eec04ec1354eff7e1d43c157542b75103ddfa33c967aa71466331d12b",
+      "productionBundles": {
+        "background.js": "0fd0e6aff6576466f258e9d36b64de37ddbc13ff4604d77046676c68d731be94",
+        "resolver.js": "557a3f124534aea016c8323e8ba544ea6432b08d81910811d908894ede25029d"
+      },
+      "nativePairRevision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+      "nativeExecutables": {
+        "hostAndDaemon": {
+          "workspaceRelativePath": "run/native/downloader-service.exe",
+          "sha256": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+          "bytes": 17476096,
+          "modifiedUtc": "2026-10-15T12:30:20.736Z",
+          "selfReportedVersion": null,
+          "sameExecutable": true
+        },
+        "cli": {
+          "workspaceRelativePath": "run/native/downloader.exe",
+          "sha256": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c",
+          "bytes": 6320128,
+          "modifiedUtc": "2026-10-15T12:30:22.112Z",
+          "selfReportedVersion": "downloader-cli 0.25.1"
+        }
+      },
+      "acceptance": "passed",
+      "expectedBytes": 1048593,
+      "actualBytes": 1048593,
+      "sha256": "016dda9740d1ce7161d4e53fd1f5eea4558b0a1c8429ac4961dc11338f2bc348",
+      "state": "complete",
+      "tokenRequests": [
+        {
+          "method": "GET",
+          "path": "/redirect",
+          "cookie": "missing",
+          "range": false
+        },
+        {
+          "method": "GET",
+          "path": "/final",
+          "cookie": "missing",
+          "range": false
+        }
+      ],
+      "nativeOriginRequests": 0,
+      "originalClicks": 0,
+      "limitations": [
+        "Local fixtures; live providers and permission prompt pending",
+        "Page-owned fetch materializes a Blob before desktop streaming; does not qualify navigation-response debugger GET, pre-request expiry UI, or file-size-independent page memory",
+        "No Firefox ESR or unavailable OS qualification from this run"
+      ]
+    }
+  ]
+}

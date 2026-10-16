@@ -30,3 +30,7 @@
 ## Automatic wake race (0.31.2)
 
 Exact e1d2fd3/0.31.1 [instrumented failed Chrome503 trace](retry-after-chrome-initial-date-race-0.31.1.json) records a selected generation1 prepare returning authorization after about25seconds, followed by same-document/same-source generation2 context and abort, with no commit or POST. Five concurrent browser fixtures were active. Scheduler wake previously sent the same generation-invalidating message as explicit Continue. Automatic wakes now carry an explicit marker and coalesce while a selected action is in flight; a refused action reobserves once, while a committed action owns its navigation and is never replayed from the queued wake. Manual Continue, explicit Refresh, cancellation, pagehide, source, claim and document checks retain their fences. Two deterministic race cases failed before the fix and passed after; the delayed authorization fence matrix also queues an automatic wake before each actual invalidation. Installed post-fix acceptance remains pending.
+
+### Automatic-wake race correction
+
+Revision `84da977` passed concurrent installed Chrome and Edge initial numeric 429 and date 503 cases with tracing disabled (zero observer installations). Each row recorded one ready POST and zero early or duplicate POSTs and zero HEAD requests. Dated 0.31.2 evidence retains exact source and native binary hashes. Other scheduler acceptance gates remain pending. Version 0.31.3 records those evidence files; 0.31.4 restores historical changelog bytes.
