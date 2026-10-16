@@ -176,7 +176,7 @@ const server = createServer(async (req, res) => {
           url: base + '/page',
           response:
             requestsToSolver === 1
-              ? '<html><h1>CAPTCHA</h1><input name="captcha"></html>'
+              ? '<html><img id="captchaImage" alt="Unsolved custom challenge"></html>'
               : '<html><a download href="' + base + '/file.bin">Download</a></html>',
           userAgent: 'PermittedSolverFixture/1.0',
           cookies: [
