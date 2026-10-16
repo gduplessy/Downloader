@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.35.3
+
+- Fix the challenge fixture stale-control flow: use actual Refresh when required, verify current enabled radio selection and Continue readiness, and activate the guarded actual control after debugger detachment without duplicate manual continuation or fixed sleeps. Preserve production authentication and byte transfer unchanged; exact Edge acceptance follows separately.
+
 ## 0.35.2
 
 - Persist actual delayed challenge-control diagnostics in success and failure artifacts. Correct missing CRLF-sensitive trace readback; the prior diagnostic failure reproduced zero-byte waiting-user behavior but did not establish its cause.
