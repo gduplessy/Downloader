@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.30.5
+
+- State exact Retry-After date grammar: canonical IMF-fixdate plus decimal delay-seconds. Obsolete RFC850/asctime forms remain unsupported compatibility work; installed date evidence does not claim those formats. Documentation/version metadata only.
+
 ## 0.30.4
 
 - Publish exact-source Windows Chrome/Edge initial429/503 Retry-After evidence and historical owned-navigation matrices, retaining failed attempts and unqualified acceptance boundaries.
