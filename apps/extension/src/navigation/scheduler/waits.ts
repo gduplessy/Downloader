@@ -1,3 +1,5 @@
+import { parseHttpDate } from './http-date';
+
 /** UTC is durable; monotonic time guards live-process clock changes. A due wait
  * only permits another observation, never submission or fabricated readiness. */
 export interface DurableWait {
@@ -87,14 +89,9 @@ export function retryAfter(value: string | null, now: number): number | null {
   let deadline: number;
   if (/^\d+$/.test(value)) deadline = now + Number(value) * 1000;
   else {
-    if (
-      !/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4} \d{2}:\d{2}:\d{2} GMT$/.test(
-        value,
-      )
-    )
-      return null;
-    deadline = Date.parse(value);
-    if (!Number.isFinite(deadline) || new Date(deadline).toUTCString() !== value) return null;
+    const parsed = parseHttpDate(value, now);
+    if (parsed === null) return null;
+    deadline = parsed;
   }
   return Number.isSafeInteger(deadline) && deadline >= now && deadline - now <= 604800000
     ? deadline
