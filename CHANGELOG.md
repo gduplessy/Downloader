@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.33.17
+
+- Include the actual successful CAPTCHA submitter in final selected_host serialization. Regress a submit button adding a second host value and preflight actual browser FormData submitter support before installed qualification. No other binding behavior changes.
+
 ## 0.33.16
 
 - Add installed selected-host-node replacement qualification after the actual production Solve panel appears, retaining exact stale-refusal and zero-submission/publication gates. No authorization hooks or product runtime changes.

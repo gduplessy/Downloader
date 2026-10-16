@@ -9,6 +9,7 @@ afterEach(() => vi.unstubAllGlobals());
 async function fixture(
   mutateDigest = 0,
   replacement: 'value' | 'node' | 'duplicate' = 'value',
+  malformedSubmitter = false,
 ) {
   const nodes: any[] = [];
   const node = (tag = 'div'): any => {
@@ -130,9 +131,17 @@ async function fixture(
   vi.stubGlobal(
     'FormData',
     class {
+      constructor(
+        _form: unknown,
+        private submitter?: any,
+      ) {}
       getAll(name: string) {
         return name === 'selected_host'
-          ? [controls['input[name=selected_host]'].value, ...extraHosts]
+          ? [
+              controls['input[name=selected_host]'].value,
+              ...extraHosts,
+              ...(this.submitter?.name === name ? [this.submitter.value] : []),
+            ]
           : [];
       }
       entries() {
@@ -191,6 +200,10 @@ async function fixture(
     selectedHost: 'gofile.io',
     locale: 'en',
   };
+  if (malformedSubmitter) {
+    submit.name = 'selected_host';
+    submit.value = 'ddownload.com';
+  }
   const authorize = vi.fn(async () => true);
   await showChallenge(
     doc,
@@ -264,6 +277,16 @@ for (const [phase, at] of [
 
 it('rejects a second successful named selected_host control in the serialized form', async () => {
   const f = await fixture(1, 'duplicate');
+  await vi.waitFor(() =>
+    expect(f.status).toBe(
+      'Unsupported or expired challenge. Complete it in the page.',
+    ),
+  );
+  expect(f.submitted).toBe(0);
+});
+
+it('rejects a successful submitter adding a second posted selected_host', async () => {
+  const f = await fixture(0, 'value', true);
   await vi.waitFor(() =>
     expect(f.status).toBe(
       'Unsupported or expired challenge. Complete it in the page.',
