@@ -1,0 +1,49 @@
+{
+  "checked_runtime_revision": "d99c2f889c8d7819196b5790ed4f66f93e5a84e6",
+  "native_build_revision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+  "cli_binary_sha256": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c",
+  "sourceHashes": {
+    "apps/extension/src/background.ts": "377d6884f27ebe2cb0aac18b32077e5798322862678206febeab7dba4d508a0a",
+    "apps/extension/src/resolver.ts": "29e570b52a797e6cc0b46c54f0d353e2312df6fb2cf7ee2590a8338ea8f2499c",
+    "apps/extension/src/navigation/adapters/policy.ts": "accc3594102592862e5fdbefbbaf56d1adb125488bcc6798b37d07d5b19700d0",
+    "apps/extension/src/navigation/adapters/selection-ui.ts": "0a9bb33f98264c70af66d1a7c67056f4ce1765df00861cd9409a1f026d42a516",
+    "apps/extension/src/navigation/adapters/preview.ts": "478b5c171f9fb7990cb6371065959be1fa8f78a217f415ef2b498846da1d587d"
+  },
+  "bundleHashes": {
+    "background.js": "39eeafac0681278adb82db22e913cd46b5f9eb8fd6301d70554e2d33b9cc4630",
+    "resolver.js": "557a3f124534aea016c8323e8ba544ea6432b08d81910811d908894ede25029d",
+    "options.js": "00ae53dfbc32af8ff2e29fa56022894a832cc7134f3c8ed569d68a9fe4c47eaf",
+    "content.js": "daa6cf00b6951a869b1cf29a73a22bd9d698257bfdafb921450c1fce7d833b4d"
+  },
+  "fixture": "production-installed-adapter-negatives-v1",
+  "browser": "Edg/155.0.4283.45",
+  "os": "win32",
+  "arch": "x64",
+  "native_version": "0.25.1",
+  "native_binary_sha256": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+  "rows": [
+    {
+      "scenario": "cancel-refresh",
+      "state": "waiting_user",
+      "unauthorized_requests": 0,
+      "payload_requests": 0,
+      "published": false,
+      "actual_worker_pause": true,
+      "actual_refresh_and_cancel": true,
+      "no_resurrection_after_resume": true,
+      "later_explicit_continue_preview": true
+    }
+  ],
+  "limits": [
+    "Synthetic loopback layouts; no live provider qualification",
+    "Cancel-refresh pauses the actual installed worker with CDP while actual AX Refresh awaits its reply; no response/context/authorization is substituted",
+    "CLI creates the task; trusted production extension messages initiate owned navigation and resume completed HTML; desktop and context-menu UI activation are not qualified",
+    "Preview controls use actual AX/Input; no authorization shim and no payload bytes through CDP",
+    "Unique native fixture host and pregranted loopback permissions; production modules otherwise unchanged"
+  ],
+  "driver": {
+    "path": "scripts/nav-fixtures/adapters/installed-negatives.mjs",
+    "sha256": "6d39b1eb18aa6804d34e25074011f50813f8990c96aecb97160671da4c00d515"
+  },
+  "case_isolation": "Unique browser profile, native state and copied matching executable pair; both native hashes verified after fixture completion."
+}
