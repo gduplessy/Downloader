@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.33.2
+
+- Capture startup driver hashes, raw installed accessibility observations and local request method/path counters. Preserve unsuccessful Edge qualification separately; no installed acceptance claim is inferred from zero submissions alone.
+
 ## 0.33.1
 
 - Add installed cancel and stale CSRF/image/selected-host rejection cases, align fixture permissions with current production and preserve failed attempts before cleanup. Qualification remains pending actual completed runs.

@@ -4,12 +4,13 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises';
 export const payload = Buffer.from('nav-challenge-intended-file-v1\n'.repeat(8192));
 export const expectedHash = createHash('sha256').update(payload).digest('hex');
 export async function startChallengeServer() {
-  const submits = [],
+  const requests = [], submits = [],
     tokens = new Map();
   const server = createServer(async (req, res) => {
     const url = new URL(req.url, 'http://fixture'),
       parts = url.pathname.split('/'),
       provider = parts[2] ?? 'g4u';
+    requests.push({method:req.method,path:url.pathname});
     if (url.pathname === '/harness.js') {
       res.setHeader('Content-Type', 'text/javascript');
       res.end(await readFile('.local/nav-challenges/harness.js'));
@@ -113,7 +114,7 @@ export async function startChallengeServer() {
   });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const base = 'http://127.0.0.1:' + server.address().port;
-  return { base, submits, close: () => new Promise((resolve) => server.close(resolve)) };
+  return { base, submits, requests, close: () => new Promise((resolve) => server.close(resolve)) };
 }
 if (process.argv[1]?.endsWith('server.mjs')) {
   const fixture = await startChallengeServer();
