@@ -94,3 +94,13 @@ describe('RFC9110 HTTP-date compatibility', () => {
     expect(parseHttpDate('Sun, 06 Nov 1994 08:49:37 GMT', NaN)).toBeNull();
   });
 });
+
+it('uses an explicit UTC March1 rollover when a leap-day clock advances fifty calendar years', () => {
+  const now = Date.UTC(2024, 1, 29, 12, 0, 0);
+  const boundary = Date.UTC(2074, 2, 1, 12, 0, 0);
+  expect(parseHttpDate(obsolete(boundary), now)).toBe(boundary);
+  // A later timestamp with year74 resolves to1974 and must carry its correct weekday.
+  const past = Date.UTC(1974, 2, 1, 12, 0, 1);
+  expect(parseHttpDate(obsolete(past), now)).toBe(past);
+  expect(retryAfter(obsolete(boundary), now)).toBeNull(); // The seven-day ceiling still dominates.
+});
