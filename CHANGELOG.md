@@ -1,5 +1,69 @@
 # Changelog
 
+## 0.33.14
+
+- Publish two exact-source installed Firefox selected-host rejection records and inspected screenshots for e1f78c2; preserve the historical one-POST failure separately without relabeling earlier fresh-file acceptance. Evidence and synchronized metadata only.
+
+## 0.33.13
+
+- Reject CAPTCHA selected-host replacement during asynchronous binding and immediately before submission. Add deterministic initial/final digest race regressions preserving the valid exactly-once path; retain failed installed Firefox POST evidence separately.
+
+## 0.33.12
+
+- Remove Firefox fixture profile shadowing that prevented actual browser startup.
+
+
+## 0.33.11
+
+- Record four passing exact-source installed Edge challenge lifecycle negatives after correcting fixture ordering.
+
+
+## 0.33.10
+
+- Fence challenge mutation fixtures on the actual bound panel after asynchronous host selection.
+
+
+## 0.33.9
+
+- Wait for exact installed challenge refusal instead of assuming asynchronous work completes after1500ms; retain unsuccessful Edge observation.
+
+
+## 0.33.8
+
+- Integrate reviewed NAV dependencies; preserve product version consistency and historical changelog bytes.
+
+## 0.33.7
+
+- Integrate reviewed scheduler wake-coalescing fix 84da977 for dependent challenge qualification, preserving explicit refresh/cancel/ownership fences and both evidence histories. Installed challenge repeats remain pending.
+
+## 0.33.6
+
+- Correct generated privileged inspection selector quoting and verify its executable script syntax before Firefox qualification.
+
+## 0.33.5
+
+- Inspect the actual production closed-shadow host chooser without relying on nonexistent fixture IDs; Firefox execution remains pending.
+
+## 0.33.4
+
+- Prepare actual installed Firefox challenge lifecycle controls and original-page fetch-to-owned-Blob downstream qualification. Production bundles/native hashes and local HTTP contract verified; browser acceptance remains pending execution.
+
+## 0.33.3
+
+- Preserve historical changelog bytes while publishing challenge fixture qualification notes.
+
+## 0.33.2
+
+- Capture startup driver hashes, raw installed accessibility observations and local request method/path counters. Preserve unsuccessful Edge qualification separately; no installed acceptance claim is inferred from zero submissions alone.
+
+## 0.33.1
+
+- Add installed cancel and stale CSRF/image/selected-host rejection cases, align fixture permissions with current production and preserve failed attempts before cleanup. Qualification remains pending actual completed runs.
+
+## 0.33.0
+
+- Isolate installed CAPTCHA qualification with full-hash-verified native binaries and record production module source provenance. Edge/Firefox lifecycle acceptance remains pending actual runs.
+
 ## 0.32.4
 
 - Integrate reviewed NAV dependencies; preserve product version consistency and historical changelog bytes.
