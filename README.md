@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.29.3<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.30.5<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -412,3 +412,5 @@ NAV-05 installed context acceptance (0.27.0): actual Chrome/Edge AX Cancel durin
 NAV-05 Firefox local negatives (0.27.1): actual Firefox158 keyboard controls passed disabled-adapter generic preview and changed-layout refusal. Read-only production UI snapshots and inspected screenshots accompany exact driver/source/native25.1 hashes in docs/evidence/nav-adapters. Private-addon, ESR, other OS and live-host rows remain pending.
 
 NAV-05 fixture review (0.27.2): future Firefox runs require full rendered UI state, actual regular profile/store identity and native destination/partial absence. Historical accepted rows retain their original driver fingerprints and inspected evidence.
+
+NAV-04 Retry-After ingestion (0.26.0) adds exact request/document/session binding, durable server deadlines and resolver prepare/commit gates. Unit regressions and the owned-navigation loopback driver are implemented; installed browser and initial pre-claim response qualification remain pending.

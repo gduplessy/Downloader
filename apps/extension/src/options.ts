@@ -53,7 +53,7 @@ async function main() {
       permissions: [
         'cookies',
         'webRequest',
-        ...(chromium ? ['scripting' as const] : ['webRequestBlocking' as const]),
+        ...(chromium ? ['scripting' as const, 'webNavigation' as const] : ['webRequestBlocking' as const]),
       ],
       origins: input('all-sites').checked
         ? ['http://*/*', 'https://*/*']

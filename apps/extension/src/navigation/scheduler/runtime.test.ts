@@ -119,3 +119,38 @@ describe('durable browser alarm recovery', () => {
    expect(native).toHaveBeenCalledWith({ action: 'release', id: 'job', generation: 1 }); expect(browser.alarms.clear).toHaveBeenCalledWith('navigation-wait-job:1:1');
  });
 });
+
+it('server readiness cannot be authorized before monotonic deadline, including after recovery', async () => {
+  let utc = 1000,
+    mono = 0;
+  const state = snapshot();
+  state.tasks[0].wait = {
+    ...observeWait(undefined, 1, 60000, 1000, 'retry_after'),
+    basis: 'server',
+  };
+  state.settings.notifications = false;
+  const native = vi.fn(async (request: any) => {
+    if (request.action === 'ready') state.tasks[0].status = 'active';
+    return state;
+  });
+  const scheduler = new NavigationScheduler(native, vi.fn(), {
+    utc: () => utc,
+    monotonic: () => mono,
+  });
+  expect(await scheduler.serverBlocked('job')).toBe(true);
+  utc = 900000;
+  mono = 1000;
+  expect(await scheduler.readiness('job', true)).toBe(false);
+  expect(native.mock.calls.some(([request]) => request.action === 'ready')).toBe(false);
+  utc = -1000;
+  mono = 60000;
+  expect(await scheduler.serverBlocked('job')).toBe(false);
+  expect(await scheduler.readiness('job', true)).toBe(true);
+  expect(await scheduler.serverBlocked('job')).toBe(false);
+  state.tasks[0].status = 'waiting';
+  const recovered = new NavigationScheduler(native, vi.fn(), {
+    utc: () => 31000,
+    monotonic: () => 0,
+  });
+  expect(await recovered.serverBlocked('job')).toBe(true);
+});

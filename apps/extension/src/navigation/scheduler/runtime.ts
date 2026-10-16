@@ -84,14 +84,25 @@ export class NavigationScheduler {
     const task = state.tasks.find(t => t.id === id);
     if (task) await this.alarm(task);
   }
+  async serverBlocked(id: string): Promise<boolean> {
+    const state = await this.request({ action: 'snapshot' });
+    const task = state.tasks.find((task) => task.id === id);
+    return (
+      !!task?.wait &&
+      task.wait.basis === 'server' &&
+      this.waitClock.remaining(this.observationKey(task), task.wait) > 0
+    );
+  }
   async readiness(id: string, ready: boolean): Promise<boolean> {
     const state = await this.request({ action: 'snapshot' });
     const task = state.tasks.find(t => t.id === id);
     if (!task?.wait) return true;
+    if (task.wait.basis === 'server' && this.waitClock.remaining(this.observationKey(task), task.wait) > 0) return false;
     const result = await this.request({ action: 'ready', id, generation: task.generation, wait_generation: task.wait.generation, ready });
     const current = result.tasks.find(t => t.id === id);
     if (!ready || current?.status !== 'active') return false;
-    await this.clearAlarms(id);
+    // Keep live monotonic proof through commit even if UTC moved backward.
+    await this.clearAlarms(id, task.wait.basis !== 'server');
     // The service records notification emission atomically by wait generation.
     if (result.settings.notifications && current.wait && !current.wait.notified) {
       const claimed = await this.request({ action: 'notify', id, generation: current.generation, wait_generation: current.wait.generation });

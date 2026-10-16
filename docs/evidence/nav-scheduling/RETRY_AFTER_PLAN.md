@@ -1,6 +1,6 @@
-# Retry-After ingestion recommendation (pending)
+# Retry-After ingestion implementation and remaining qualification
 
-The production `retryAfter()` parser currently has no caller outside tests. Core file-transfer retries already read HTTP Retry-After; this does not implement durable browser-navigation waits.
+Production navigation-header ingestion is implemented and locally qualified on the recorded Windows Chrome/Edge builds in [RETRY_AFTER_INSTALLED.md](RETRY_AFTER_INSTALLED.md). Exact request and committed-document identity, fresh native scope/source authority, bounded initial-request adoption and monotonic server deadlines remain mandatory. Initial429 numeric and503 HTTP-date rows passed; broader owned-navigation matrices include malformed/oversized/repeated/distinct-longer deadlines and real worker replacement. Historical failed attempts and remaining acceptance boundaries are recorded separately. Date parsing currently accepts canonical IMF-fixdate only; obsolete RFC850/asctime forms remain unsupported compatibility work. Core file-transfer retry handling is a separate path.
 
 ## Proposed integration
 
@@ -16,4 +16,14 @@ The production `retryAfter()` parser currently has no caller outside tests. Core
 - Count original submissions; require zero early/duplicate POSTs and zero automatic payload refetch. Alarm/worker recovery must preserve the original server deadline and revalidate readiness.
 - Reject stale request IDs, replaced documents, redirects into a different scope, private/regular mixing and same-site competing tabs. Confirm invalidation/cancellation removes the wait and alarm without touching a retained user-origin tab.
 
-This is a source trace and implementation recommendation. No Retry-After browser-navigation acceptance is claimed.
+The design and remaining evidence requirements above remain the acceptance contract. No installed Retry-After browser-navigation acceptance is claimed by implementation or unit tests alone.
+
+## Chromium lifecycle correction (0.26.1)
+
+Actual Chrome155 main-frame header events omit documentId; the initial strict header-only0.26.0 run rejected them and submitted early, so it is not acceptance. The corrected bridge requires optional webNavigation permission, links the latest exact request to an active committed top-frame document, and revalidates that document through the isolated world and fresh native authority. Later navigation intent/BFCache and replaced requests invalidate pending identity. Denied permission cannot provide resolver context.
+
+For a freshly task-created tab, only its first bounded request may be adopted after the actual tabs.create receipt and native post-load scope/source claim; an intervening redirect/replacement fails closed. This does not reload or probe the original request. Duplicate response identity retains its deadline; distinct responses may extend but never shorten a surviving server deadline. Installed proof remains pending.
+
+## First corrected installed row
+
+The original-owned-navigation numeric429 row passed Chrome155 at checked3bc98f0 (extension30.0) with unchanged immutable native3b808ae/25.1: one original POST after the enforced12-second deadline, zero early/duplicate submissions and no original navigation replay. Actual response header documentId was absent; actual committed IDs were present. See retry-after-chrome-numeric-0.30.0.json. The30.1 candidate additionally preserves monotonic proof from readiness through commit after clock rollback; initial responses and the broader Chrome/Edge matrix remain pending until their own records pass.

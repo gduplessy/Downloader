@@ -1,0 +1,60 @@
+{
+  "fixture": "installed-production-retry-after-v1",
+  "source_revision": "3bc98f0ca536b97f917f602f0b21acef5962a91c",
+  "browser": "Chrome/155.0.8059.40",
+  "native_version": "0.25.1",
+  "native_build_revision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+  "native_binary_sha256": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+  "cli_binary_sha256": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c",
+  "fixture_sha256": "aa4047ba50a2a84504bc042af0ecd133f548591bcacf17678081973a7a561ffb",
+  "server_sha256": "a12e5886628c6437f076f2abeaf7722fd5077044b89ccf8fe1b7fd08b63b4e96",
+  "production_background_sha256": "d38198988d3cf1e1bd0cdad387ae1b24d014ff6cbe51c2b039d84001f91a6437",
+  "os": "win32",
+  "arch": "x64",
+  "results": [
+    {
+      "name": "numeric",
+      "initial_response": false,
+      "original_wait": {
+        "basis": "server",
+        "deadline_ms": 1792114231440,
+        "expires_at_ms": null,
+        "generation": 1,
+        "next_recheck_ms": 1792114231440,
+        "notified": false,
+        "observed_at_ms": 1792114219440,
+        "observed_duration_ms": 12000,
+        "reason": "retry_after:wait:657b1affe512fcd22806344d43fda599ae07643488ff805c37ce98dd1de01ba2",
+        "requires_live_tab": true,
+        "source_generation": 1
+      },
+      "distinct_owned_navigation": false,
+      "wait": {
+        "basis": "server",
+        "deadline_ms": 1792114231440,
+        "expires_at_ms": null,
+        "generation": 1,
+        "next_recheck_ms": 1792114231440,
+        "notified": false,
+        "observed_at_ms": 1792114219440,
+        "observed_duration_ms": 12000,
+        "reason": "retry_after:wait:657b1affe512fcd22806344d43fda599ae07643488ff805c37ce98dd1de01ba2",
+        "requires_live_tab": true,
+        "source_generation": 1
+      },
+      "server_deadline": 1792114231405,
+      "original_posts": 1,
+      "early_posts": 0,
+      "duplicate_posts": 0,
+      "navigation_gets": 1,
+      "worker_replaced": false,
+      "headers_include_document_id": false,
+      "committed_document_ids_present": true
+    }
+  ],
+  "limits": [
+    "Synthetic owned landing then original user-selected main-frame429/503; pregranted permissions; direct capture off",
+    "Firefox/other OS/live providers/private installed matrix remain separately pending; initial-response acceptance is limited to explicitly recorded initial rows",
+    "Readiness HTML acknowledgement, not file-transfer proof"
+  ]
+}

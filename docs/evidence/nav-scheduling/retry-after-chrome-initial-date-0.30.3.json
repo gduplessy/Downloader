@@ -1,0 +1,104 @@
+{
+  "fixture": "installed-production-retry-after-v1",
+  "source_revision": "80da439dcfc52695994afad2f00c440e9c9989d9",
+  "browser": "Chrome/155.0.8059.40",
+  "native_version": "0.25.1",
+  "native_build_revision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+  "native_binary_sha256": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+  "cli_binary_sha256": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c",
+  "fixture_sha256": "b381a39536a8265f65c0ca35824c4bfd7f02b397cf24e360d7c043013e6a82d7",
+  "server_sha256": "a12e5886628c6437f076f2abeaf7722fd5077044b89ccf8fe1b7fd08b63b4e96",
+  "production_background_sha256": "cd8941b4cf9592175fdbaa1a27708b17f6190032b6cab7646eef378bef4b4e59",
+  "os": "win32",
+  "arch": "x64",
+  "results": [
+    {
+      "name": "date",
+      "initial_response": true,
+      "original_wait": {
+        "basis": "server",
+        "deadline_ms": 1792115922000,
+        "expires_at_ms": null,
+        "generation": 1,
+        "next_recheck_ms": 1792115922000,
+        "notified": false,
+        "observed_at_ms": 1792115910492,
+        "observed_duration_ms": 11508,
+        "reason": "retry_after:wait:fabc30bf8efc0c6481637fbe24edf9b24c36c3db012924f2a5d5b67fd1c2dd63",
+        "requires_live_tab": true,
+        "source_generation": 1
+      },
+      "distinct_owned_navigation": false,
+      "wait": {
+        "basis": "server",
+        "deadline_ms": 1792115922000,
+        "expires_at_ms": null,
+        "generation": 1,
+        "next_recheck_ms": 1792115922000,
+        "notified": false,
+        "observed_at_ms": 1792115910492,
+        "observed_duration_ms": 11508,
+        "reason": "retry_after:wait:fabc30bf8efc0c6481637fbe24edf9b24c36c3db012924f2a5d5b67fd1c2dd63",
+        "requires_live_tab": true,
+        "source_generation": 1
+      },
+      "server_deadline": 1792115922000,
+      "original_posts": 1,
+      "original_method": "POST",
+      "head_probes": 0,
+      "early_posts": 0,
+      "duplicate_posts": 0,
+      "navigation_gets": 1,
+      "worker_replaced": false,
+      "lifecycle": [
+        {
+          "event": "request",
+          "requestId": "7",
+          "tabId": 664262494,
+          "timeStamp": 1792115910364.063,
+          "url": "http://127.0.0.1:59462/nav-adapters/gofile/limited?case=date"
+        },
+        {
+          "event": "navigate",
+          "tabId": 664262494,
+          "timeStamp": 1792115910318.155,
+          "url": "http://127.0.0.1:59462/nav-adapters/gofile/limited?case=date"
+        },
+        {
+          "event": "committed",
+          "tabId": 664262494,
+          "timeStamp": 1792115910448.456,
+          "url": "http://127.0.0.1:59462/nav-adapters/gofile/limited?case=date",
+          "documentId": "6D8E08CA32FC55DFEDEFD5EE678F4398"
+        },
+        {
+          "event": "navigate",
+          "tabId": 664262494,
+          "timeStamp": 1792115940808.142,
+          "url": "http://127.0.0.1:59462/nav-adapters/gofile/submit?case=date"
+        },
+        {
+          "event": "request",
+          "requestId": "9",
+          "tabId": 664262494,
+          "timeStamp": 1792115940812.483,
+          "url": "http://127.0.0.1:59462/nav-adapters/gofile/submit?case=date"
+        },
+        {
+          "event": "committed",
+          "tabId": 664262494,
+          "timeStamp": 1792115940852.038,
+          "url": "http://127.0.0.1:59462/nav-adapters/gofile/submit?case=date",
+          "documentId": "447E382A5E82C051D66C8671A357307E"
+        }
+      ],
+      "headers_include_document_id": false,
+      "committed_document_ids_present": true
+    }
+  ],
+  "limits": [
+    "Synthetic original initial429/503; task-created tab receipt and post-load native scope; pregranted permissions; direct capture off",
+    "Firefox/other OS/live providers/private installed matrix remain separately pending; initial-response acceptance is limited to explicitly recorded initial rows",
+    "Readiness HTML acknowledgement, not file-transfer proof"
+  ]
+}
