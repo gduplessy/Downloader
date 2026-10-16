@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.29.3
+
+- Record six installed Chrome/Edge discovery interruption recovery passes with exact provenance and explicit remaining gates.
+
+## 0.29.2
+
+- Verify the original session and release a stale native tab lease before discovery replacement; preserve its original time budget.
+- Cover lost-tab heartbeat rejection, missing/changed source sessions and cancelled recovery with deterministic regressions.
+
+## 0.29.1
+
+- Require completed production initialization and its actual polling alarm before discovery interruption; retain browser-side failure diagnostics.
+- Preserve the initial tab-loss timeout and native frontier observation without inferring a runtime cause from an unverified alarm precondition.
+
+## 0.29.0
+
+- Add isolated installed discovery cancellation, owning-tab loss and authentication-expiry fixtures using unchanged production modules, exact copied native hashes and admission-aware document checks.
+- Keep actual installed acceptance pending until the fixture completes its assertions; no desktop GUI or live-provider acceptance is implied.
+
 ## 0.28.9
 
 - Qualify actual Firefox158 saved credentials and existing entitled sessions in two real containers through original-page fetch/owned-Blob direct streaming, with two consecutive exact-source file-hash passes.
