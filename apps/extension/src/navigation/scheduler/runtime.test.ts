@@ -146,6 +146,7 @@ it('server readiness cannot be authorized before monotonic deadline, including a
   mono = 60000;
   expect(await scheduler.serverBlocked('job')).toBe(false);
   expect(await scheduler.readiness('job', true)).toBe(true);
+  expect(await scheduler.serverBlocked('job')).toBe(false);
   state.tasks[0].status = 'waiting';
   const recovered = new NavigationScheduler(native, vi.fn(), {
     utc: () => 31000,

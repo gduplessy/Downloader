@@ -101,7 +101,8 @@ export class NavigationScheduler {
     const result = await this.request({ action: 'ready', id, generation: task.generation, wait_generation: task.wait.generation, ready });
     const current = result.tasks.find(t => t.id === id);
     if (!ready || current?.status !== 'active') return false;
-    await this.clearAlarms(id);
+    // Keep live monotonic proof through commit even if UTC moved backward.
+    await this.clearAlarms(id, task.wait.basis !== 'server');
     // The service records notification emission atomically by wait generation.
     if (result.settings.notifications && current.wait && !current.wait.notified) {
       const claimed = await this.request({ action: 'notify', id, generation: current.generation, wait_generation: current.wait.generation });

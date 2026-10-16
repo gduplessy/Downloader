@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.30.1
+
+- Preserve server monotonic elapsed proof between confirmed readiness and commit after a backward UTC jump; deterministic regression fails before this fix.
+- Record the first corrected installed Chrome numeric429 pass at exact3bc98f0/runtime30.0 with immutable native25.1. Broader and initial-response qualification remain pending for the current candidate.
+
 ## 0.30.0
 
 - Reconcile the committed-navigation Retry-After correction with merged account/challenge qualification while preserving both evidence histories.
