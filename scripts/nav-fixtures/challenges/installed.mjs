@@ -11,6 +11,7 @@ const require = createRequire(
   ),
   { build } = require("esbuild");
 const scenario = process.env.NAV_CHALLENGE_CASE ?? "fresh";
+const controlObservations = [];
 assert(
   ["fresh", "cancel", "csrf", "image", "selected-host"].includes(scenario),
 );
@@ -567,7 +568,7 @@ try {
       {
         objectId: resolved.object.objectId,
         functionDeclaration:
-          "function(){setTimeout(()=>this.click(),500);return true}",
+          `function(){const observe=()=>{const root=this.getRootNode();return {connected:this.isConnected,disabled:this.disabled,checked:[...root.querySelectorAll("input[type=radio]")].map(input=>({checked:input.checked,disabled:input.disabled,connected:input.isConnected})),text:root.textContent.slice(0,2000)}};const trace={scheduled:observe()};globalThis.__navChallengeControlTrace=trace;setTimeout(()=>{trace.fired=observe();this.click();trace.clicked=true},500);return trace.scheduled}`,
         returnByValue: true,
       },
       currentTreeSession,

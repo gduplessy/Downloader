@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.35.1
+
+- Observe actual final challenge controls at scheduling and delayed activation without changing production behavior, preserving connected, disabled and radio state to diagnose the retained Edge fresh failure. Installed acceptance remains pending.
+
 ## 0.35.0
 
 - Record installed Chrome and Edge whole-browser Blob loss, exact durable partial hashes and reader-lease recovery; refresh NAV acceptance audit without broadening proof.
