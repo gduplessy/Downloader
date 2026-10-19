@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.37.3
+
+- Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.
+
 ## 0.37.2
 
 - Record installed Edge original-POST completion after a verified sixty-second upstream idle, with one submission and native payload hash.
