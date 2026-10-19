@@ -1,5 +1,40 @@
 import { createServer } from 'node:http';
-export async function startRetryAfterServer() {
+const longDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+export function formatRetryDate(epochMs, format = 'imf') {
+  if (!['imf', 'rfc850', 'asctime'].includes(format))
+    throw Error('Unsupported fixture date format');
+  const date = new Date(epochMs),
+    parts = date.toUTCString().split(' ');
+  if (format === 'rfc850')
+    return (
+      longDays[date.getUTCDay()] +
+      ', ' +
+      parts[1] +
+      '-' +
+      parts[2] +
+      '-' +
+      parts[3].slice(-2) +
+      ' ' +
+      parts[4] +
+      ' GMT'
+    );
+  if (format === 'asctime')
+    return (
+      parts[0].slice(0, -1) +
+      ' ' +
+      parts[2] +
+      ' ' +
+      String(date.getUTCDate()).padStart(2, ' ') +
+      ' ' +
+      parts[4] +
+      ' ' +
+      parts[3]
+    );
+  return date.toUTCString();
+}
+export async function startRetryAfterServer({ dateFormat = 'imf' } = {}) {
+  if (!['imf', 'rfc850', 'asctime'].includes(dateFormat))
+    throw Error('Unsupported fixture date format');
   const requests = [],
     cases = new Map();
   const server = createServer((req, res) => {
@@ -37,8 +72,10 @@ export async function startRetryAfterServer() {
     if (url.pathname.endsWith('/limited')) {
       let header;
       if (name === 'date') {
-        header = new Date(Date.now() + 12000).toUTCString();
-        row.readyAt = Date.parse(header);
+        row.readyAt = Math.floor((Date.now() + 12000) / 1000) * 1000;
+        header = formatRetryDate(row.readyAt, dateFormat);
+        row.dateFormat = dateFormat;
+        row.header = header;
       } else if (name === 'malformed' || name === 'oversized') {
         header = name === 'malformed' ? 'invalid-delay' : '9'.repeat(129);
         row.readyAt = Date.now() + 4000;

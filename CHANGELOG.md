@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.36.3
+
+- Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.
+
+## 0.36.2
+
+- Record uninstrumented installed Chrome acceptance of RFC850 and asctime Retry-After headers, retaining exact source and native provenance.
+
+# Changelog
+
+## 0.36.1
+
+- Extend installed Retry-After fixtures with explicit RFC850/asctime formats and actual-header evidence. Specify and test the UTC leap-day fifty-year cutoff policy.
+
+## 0.36.0
+
+- Accept strict RFC850 and asctime Retry-After dates alongside IMF-fixdate, with rolling fifty-year interpretation, calendar/weekday checks and conservative leap-second epoch mapping. Keep the existing scheduling bounds and exact response ownership checks.
+
 ## 0.35.10
 
 - Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.

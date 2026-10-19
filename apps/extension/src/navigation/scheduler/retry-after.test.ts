@@ -268,3 +268,19 @@ it('serializes cancellation after a pending storage write without erasing a fres
   expect(order).toEqual(['old', 'clear', 'fresh']);
   expect(stored).toBe('fresh');
 });
+
+it.each(['Sunday, 06-Nov-94 08:49:37 GMT', 'Sun Nov  6 08:49:37 1994'])(
+  'ingests obsolete HTTP-date only through the existing exact request/document authority: %s',
+  async value => {
+    const deadline = Date.UTC(1994,10,6,8,49,37), now=deadline-12000;
+    const requests = new RetryAfterRequests(()=>now);
+    requests.begin({...request,timeStamp:now},Promise.resolve(authority));
+    await requests.committed({...commit,timeStamp:now});
+    const observed=await requests.headers({...response,responseHeaders:[{name:'Retry-After',value}]});
+    expect(observed?.deadline).toBe(deadline);
+    const wait=serverResponseWait(observed!,bound,undefined,now);
+    expect(wait).toMatchObject({basis:'server',deadline_ms:deadline,observed_duration_ms:12000});
+    expect(await requests.headers({...response,responseHeaders:[{name:'Retry-After',value}]})).toBeNull();
+    expect(serverResponseWait(observed!,{...bound,documentId:'replacement'},undefined,now)).toBeNull();
+  },
+);

@@ -1,0 +1,117 @@
+{
+  "fixture": "installed-production-retry-after-v1",
+  "date_format": "rfc850",
+  "resolver_trace_instrumented": false,
+  "observer_installations": 0,
+  "observed_resolver_outcomes": 0,
+  "source_revision": "bc7964326332a501ffc66cee92619e238720e90c",
+  "browser": "Chrome/155.0.8059.40",
+  "native_version": "0.25.1",
+  "native_build_revision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+  "native_binary_sha256": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+  "cli_binary_sha256": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c",
+  "fixture_sha256": "1ee487e2c76185883ae59e8c8b7fd6676e9f6257be1525ffc5dfe759811444b2",
+  "server_sha256": "b68eb971af843106943b6519ea184a08d6e5a6f2150b94612f89f5fc2806316b",
+  "production_background_sha256": "b5295ab0ddb809cf8dd9b389057ea6446ab0db0307ea3b0aca41f60218457c5f",
+  "os": "win32",
+  "arch": "x64",
+  "results": [
+    {
+      "name": "date",
+      "initial_response": true,
+      "date_format": "rfc850",
+      "actual_retry_after_headers": [
+        {
+          "status": 503,
+          "values": [
+            "Friday, 16-Oct-26 22:17:19 GMT"
+          ]
+        }
+      ],
+      "original_wait": {
+        "basis": "server",
+        "deadline_ms": 1792189039000,
+        "expires_at_ms": null,
+        "generation": 1,
+        "next_recheck_ms": 1792189056845,
+        "notified": false,
+        "observed_at_ms": 1792189030066,
+        "observed_duration_ms": 8934,
+        "reason": "retry_after:wait:b455a2ba7d06254729f6131a32bc46c2878c4f078dc4718453523aed9898dcd2",
+        "requires_live_tab": true,
+        "source_generation": 1
+      },
+      "distinct_owned_navigation": false,
+      "wait": {
+        "basis": "server",
+        "deadline_ms": 1792189039000,
+        "expires_at_ms": null,
+        "generation": 1,
+        "next_recheck_ms": 1792189056845,
+        "notified": false,
+        "observed_at_ms": 1792189030066,
+        "observed_duration_ms": 8934,
+        "reason": "retry_after:wait:b455a2ba7d06254729f6131a32bc46c2878c4f078dc4718453523aed9898dcd2",
+        "requires_live_tab": true,
+        "source_generation": 1
+      },
+      "server_deadline": 1792189039000,
+      "original_posts": 1,
+      "original_method": "POST",
+      "head_probes": 0,
+      "early_posts": 0,
+      "duplicate_posts": 0,
+      "navigation_gets": 1,
+      "worker_replaced": false,
+      "lifecycle": [
+        {
+          "event": "request",
+          "requestId": "4",
+          "tabId": 994833248,
+          "timeStamp": 1792189027690.686,
+          "url": "http://127.0.0.1:42398/nav-adapters/gofile/limited?case=date"
+        },
+        {
+          "event": "navigate",
+          "tabId": 994833248,
+          "timeStamp": 1792189027662.001,
+          "url": "http://127.0.0.1:42398/nav-adapters/gofile/limited?case=date"
+        },
+        {
+          "event": "committed",
+          "tabId": 994833248,
+          "timeStamp": 1792189027868.719,
+          "url": "http://127.0.0.1:42398/nav-adapters/gofile/limited?case=date",
+          "documentId": "1C0EB37A083381C8BA41D6BEAC0CE7BE"
+        },
+        {
+          "event": "navigate",
+          "tabId": 994833248,
+          "timeStamp": 1792189062942.036,
+          "url": "http://127.0.0.1:42398/nav-adapters/gofile/submit?case=date"
+        },
+        {
+          "event": "request",
+          "requestId": "8",
+          "tabId": 994833248,
+          "timeStamp": 1792189062945.519,
+          "url": "http://127.0.0.1:42398/nav-adapters/gofile/submit?case=date"
+        },
+        {
+          "event": "committed",
+          "tabId": 994833248,
+          "timeStamp": 1792189062993.9,
+          "url": "http://127.0.0.1:42398/nav-adapters/gofile/submit?case=date",
+          "documentId": "0DE92DE291F6FBED108260142B1AFA6B"
+        }
+      ],
+      "headers_include_document_id": false,
+      "committed_document_ids_present": true
+    }
+  ],
+  "limits": [
+    "Synthetic original initial429/503; task-created tab receipt and post-load native scope; pregranted permissions; direct capture off",
+    "Firefox/other OS/live providers/private installed matrix remain separately pending; initial-response acceptance is limited to explicitly recorded initial rows",
+    "Readiness HTML acknowledgement, not file-transfer proof"
+  ]
+}

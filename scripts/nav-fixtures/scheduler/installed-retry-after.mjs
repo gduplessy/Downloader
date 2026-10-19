@@ -50,7 +50,8 @@ for (const [source, target, expected] of [
     'Copied native pair mismatch',
   );
 }
-const fixture = await startRetryAfterServer(),
+const dateFormat = process.env.NAV_RETRY_DATE_FORMAT ?? 'imf';
+const fixture = await startRetryAfterServer({dateFormat}),
   host = 'org.downloader.fixture_' + randomUUID().replaceAll('-', ''),
   env = { ...process.env, DOWNLOADER_DATA_DIR: state };
 const { publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 }),
@@ -394,7 +395,7 @@ try {
   const results = [];
   await evaluate(
     optionsSession,
-    `globalThis.retryLifecycle=[]; chrome.webRequest.onBeforeRequest.addListener(d=>{if(d.type==='main_frame')globalThis.retryLifecycle.push({event:'request',requestId:d.requestId,tabId:d.tabId,timeStamp:d.timeStamp,url:d.url});},{urls:['http://*/*']}); chrome.webNavigation.onBeforeNavigate.addListener(d=>{if(d.frameId===0)globalThis.retryLifecycle.push({event:'navigate',tabId:d.tabId,timeStamp:d.timeStamp,url:d.url});}); chrome.webNavigation.onCommitted.addListener(d=>{if(d.frameId===0)globalThis.retryLifecycle.push({event:'committed',tabId:d.tabId,timeStamp:d.timeStamp,url:d.url,documentId:d.documentId});}); globalThis.retryCommits=[]; chrome.webNavigation.onCommitted.addListener(d=>{if(d.frameId===0)globalThis.retryCommits.push({tabId:d.tabId,documentId:d.documentId});}); globalThis.retryHeaders=[]; chrome.webRequest.onHeadersReceived.addListener(d=>{if(d.type==='main_frame'&&[429,503].includes(d.statusCode))globalThis.retryHeaders.push({requestId:d.requestId,documentId:d.documentId,tabId:d.tabId,status:d.statusCode});},{urls:['http://*/*']},['responseHeaders']);`,
+    `globalThis.retryLifecycle=[]; chrome.webRequest.onBeforeRequest.addListener(d=>{if(d.type==='main_frame')globalThis.retryLifecycle.push({event:'request',requestId:d.requestId,tabId:d.tabId,timeStamp:d.timeStamp,url:d.url});},{urls:['http://*/*']}); chrome.webNavigation.onBeforeNavigate.addListener(d=>{if(d.frameId===0)globalThis.retryLifecycle.push({event:'navigate',tabId:d.tabId,timeStamp:d.timeStamp,url:d.url});}); chrome.webNavigation.onCommitted.addListener(d=>{if(d.frameId===0)globalThis.retryLifecycle.push({event:'committed',tabId:d.tabId,timeStamp:d.timeStamp,url:d.url,documentId:d.documentId});}); globalThis.retryCommits=[]; chrome.webNavigation.onCommitted.addListener(d=>{if(d.frameId===0)globalThis.retryCommits.push({tabId:d.tabId,documentId:d.documentId});}); globalThis.retryHeaders=[]; chrome.webRequest.onHeadersReceived.addListener(d=>{if(d.type==='main_frame'&&[429,503].includes(d.statusCode))globalThis.retryHeaders.push({requestId:d.requestId,documentId:d.documentId,tabId:d.tabId,status:d.statusCode,case:new URL(d.url).searchParams.get('case'),retry_after_values:d.responseHeaders.filter(h=>h.name.toLowerCase()==='retry-after').map(h=>h.value)});},{urls:['http://*/*']},['responseHeaders']);`,
   );
   for (const name of (
     process.env.NAV_RETRY_CASES ?? 'numeric,date,repeated,malformed,oversized'
@@ -577,9 +578,16 @@ try {
       assert.ok(extendedNavigation && observed.deadline_ms > originalWait.deadline_ms);
       assert.ok(observed.generation > originalWait.generation);
     }
+    if(name==='date') {
+      const actual=headers.filter(h=>h.case===name && h.status===503);
+      assert.equal(actual.length,1,'One actual date503 response required');
+      assert.deepEqual(actual[0].retry_after_values,[fixture.cases.get(name).header],'Actual incoming Retry-After differs from intended format');
+    }
     results.push({
       name,
       initial_response: initialResponse,
+      date_format: name==='date' ? dateFormat : null,
+      actual_retry_after_headers: headers.filter(h=>h.case===name).map(h=>({status:h.status,values:h.retry_after_values})),
       original_wait: originalWait ?? null,
       distinct_owned_navigation: extendedNavigation,
       wait: observed ?? null,
@@ -607,6 +615,7 @@ try {
   }
   const evidence = {
     fixture: 'installed-production-retry-after-v1',
+    date_format: dateFormat,
     resolver_trace_instrumented: instrumented,
     observer_installations: observerInstallations,
     observed_resolver_outcomes: resolverEvents.filter((e) => e.finished).length,
@@ -647,6 +656,7 @@ try {
     'docs/evidence/nav-scheduling/retry-after-' +
       (version.product.startsWith('Edg/') ? 'edge' : 'chrome') +
       (process.env.NAV_RETRY_INITIAL === '1' ? '-initial' : '') +
+      (dateFormat==='imf' ? '' : '-'+dateFormat) +
       '.json',
     JSON.stringify(evidence, null, 2) + '\n',
   );
@@ -655,6 +665,7 @@ try {
   const failure = {
     error: String(error),
     case: currentCase,
+    date_format: dateFormat,
     instrumented,
     resolverEvents,
     observerInstallations,
@@ -665,6 +676,7 @@ try {
   };
   if (optionsSession)
     try {
+      failure.retry_headers = await evaluate(optionsSession, 'globalThis.retryHeaders ?? []');
       failure.native = await evaluate(
         optionsSession,
         'chrome.runtime.sendMessage({type:"navigation_scheduler",request:{action:"snapshot"}})',

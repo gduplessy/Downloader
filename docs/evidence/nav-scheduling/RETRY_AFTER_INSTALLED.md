@@ -17,7 +17,7 @@
 
 ## Boundaries and reproduction
 
-- Parser qualification covers decimal delay-seconds and canonical IMF-fixdate only (exact GMT form and calendar round-trip), bounded to128characters and at most7days. Obsolete RFC850/asctime date forms are currently rejected and remain an explicit compatibility gap; no acceptance for all HTTP-date forms is claimed. A provider using those forms requires bounded parsing/regression coverage before qualification.
+- Parser compatibility now covers decimal delay-seconds and strict IMF-fixdate, RFC850 and asctime forms, bounded to128characters and at most7days. [Deterministic compatibility evidence](HTTP_DATE_COMPATIBILITY.md) includes rolling years, weekday/calendar validation and conservative leap-second mapping. Existing installed date503 rows use IMF-fixdate; obsolete-format installed/live-provider acceptance remains unqualified.
 
 - Isolated real production extension/background/resolver/native messaging, unique browser profile/extension ID/native registry/state; only the native host address is substituted. Permissions are pregranted, direct capture disabled. Synthetic loopback pages return an HTML acknowledgement; no file-transfer, live provider or paid-provider acceptance is claimed.
 - Firefox, private installed matrices, other operating systems, permission-denial lifecycle, whole-browser restart and real sleep/clock changes remain pending. Initial malformed/repeated/distinct-longer rows are not covered by the initial-only records; their positive evidence is the owned-navigation matrix.
