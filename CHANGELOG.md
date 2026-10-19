@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.41.0
+
+- Bound targeted private navigation authority reads to current and legacy keys while preserving ephemeral isolation and precedence.
+
 ## 0.37.3
 
 - Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.
