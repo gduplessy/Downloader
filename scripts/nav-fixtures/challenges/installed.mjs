@@ -299,7 +299,7 @@ async function click(session, name, role = "button") {
 async function currentContinue(session, provider, optionsSession) {
   const deadline = Date.now() + 30000;
   let last;
-  let refreshingNode;
+  let requestedRefresh = false;
   let ignoredAXStaleNode;
   async function inspect(node) {
     const resolved = await command("DOM.resolveNode", {backendNodeId:node.backendDOMNodeId}, session);
@@ -316,8 +316,8 @@ async function currentContinue(session, provider, optionsSession) {
         const current=await inspect(refresh);
         actualStale=current.state.connected&&current.state.stale;
         last={phase:actualStale?"waiting for stale-preview replacement":"AX stale text with current fresh root",refreshNode:refresh.backendDOMNodeId,...current.state};
-        if(actualStale&&!current.state.disabled&&refreshingNode!==refresh.backendDOMNodeId) {
-          refreshingNode=refresh.backendDOMNodeId;
+        if(actualStale&&!current.state.disabled&&!requestedRefresh) {
+          requestedRefresh=true;
           await waitClick(session,"Refresh");
           controlObservations.push({provider,action:"actual stale preview Refresh",state:current.state});
         } else if(current.state.connected&&!current.state.stale&&ignoredAXStaleNode!==refresh.backendDOMNodeId) {

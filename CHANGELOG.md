@@ -1,3 +1,7 @@
+## 0.35.8
+
+- Bound the installed challenge fixture to one explicit refresh per provider so replacement nodes cannot perpetuate asynchronous generation churn.
+
 ## 0.35.7
 
 - Preserve final installed Firefox host-guard positive and node-replacement refusal evidence with exact source provenance.
