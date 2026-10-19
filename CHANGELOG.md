@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.38.0
+
+- Record idle-fixture CLI observation cost and permit a validated polling cadence for controlled transfer diagnostics.
+
 ## 0.37.3
 
 - Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.
