@@ -17,9 +17,11 @@ const sourceRevision = execFileSync('git', ['rev-parse', 'HEAD'], {
 }).trim();
 const nativeBuildRevision = execFileSync(
   'git',
-  ['rev-parse', process.env.NAV_NATIVE_REVISION ?? 'be7484d'],
+  ['rev-parse', process.env.NAV_NATIVE_REVISION ?? '3b808ae1967a210fc5b3a3e461488b9f2ab6cb61'],
   { encoding: 'utf8', windowsHide: true },
 ).trim();
+assert.equal(nativeBuildRevision, '3b808ae1967a210fc5b3a3e461488b9f2ab6cb61');
+const initialDriverSha256 = createHash('sha256').update(await readFile(new URL(import.meta.url))).digest('hex');
 const idleMs = 60000;
 const firstChunkBytes = 192 * 1024;
 const idle = { requestedMs: idleMs };
@@ -45,13 +47,13 @@ const cli = resolve(dir, 'downloader.exe');
 await copyFile(
   await realpath(
     process.env.NAV_NATIVE_BINARY ??
-      '.local/reader-liveness-native-target/debug/downloader-service.exe',
+      'C:/Users/gduplessy/code/Downloader/.fixture-streams/native-pairs/3b808ae-0.25.1/downloader-service.exe',
   ),
   nativeBinary,
 );
 await copyFile(
   await realpath(
-    process.env.NAV_CLI_BINARY ?? '.local/reader-liveness-native-target/debug/downloader.exe',
+    process.env.NAV_CLI_BINARY ?? 'C:/Users/gduplessy/code/Downloader/.fixture-streams/native-pairs/3b808ae-0.25.1/downloader.exe',
   ),
   cli,
 );
@@ -61,11 +63,11 @@ const binaryDigest = async (path) =>
     .digest('hex');
 observations.nativeBinarySha256 = await binaryDigest(nativeBinary);
 observations.cliBinarySha256 = await binaryDigest(cli);
-assert.ok(observations.nativeBinarySha256.startsWith('f8ae3610'), 'Use checked be7484d service');
-assert.ok(observations.cliBinarySha256.startsWith('717f37e4'), 'Use checked be7484d CLI');
+assert.equal(observations.nativeBinarySha256, '3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2', 'Immutable service mismatch');
+assert.equal(observations.cliBinarySha256, '43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c', 'Immutable CLI mismatch');
 assert.match(
   execFileSync(cli, ['--version'], { encoding: 'utf8', windowsHide: true }),
-  /0\.22\.11/,
+  /0\.25\.1/,
 );
 
 const nativeManifest = resolve(dir, 'native.json');
@@ -155,6 +157,7 @@ await writeFile(
       'scripting',
       'storage',
       'webRequest',
+      'webNavigation',
       'downloads',
       'contextMenus',
       'alarms',
@@ -402,6 +405,8 @@ try {
     await new Promise(resolve=>setTimeout(resolve,100));
   }
   assert.equal(driverReady,true,'Actual extension settings driver did not finish loading');
+  observations.navigationPermissionsPregranted = await evaluate("chrome.permissions.contains({permissions:['webRequest','cookies','scripting','webNavigation'],origins:['http://127.0.0.1/*']})");
+  assert.equal(observations.navigationPermissionsPregranted, true, 'Fixture manifest must grant current navigation permissions');
   await evaluate(
     `chrome.storage.local.set({settings:{automatic:false,directCapture:true,extensions:[],excluded:[],bypassUntil:0,locale:'en',overlay:false}})`,
   );
@@ -521,6 +526,8 @@ try {
     ],
   };
   assert.equal(job.verified_sha256, digest(payload));
+  assert.equal(await binaryDigest(new URL(import.meta.url)), initialDriverSha256, 'Driver changed during acceptance');
+  assert.equal(execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8',windowsHide:true}).trim(), sourceRevision, 'Source changed during acceptance');
   await writeFile(resolve(dir, 'evidence.json'), JSON.stringify(evidence, null, 2));
   console.log(JSON.stringify(evidence, null, 2));
 } catch (error) {

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.37.3
+
+- Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.
+
+## 0.37.2
+
+- Record installed Edge original-POST completion after a verified sixty-second upstream idle, with one submission and native payload hash.
+
+## 0.37.1
+
+- Declare and verify current navigation permissions in the isolated original-response idle fixture.
+
+## 0.37.0
+
+- Pin original-response reader-idle qualification to the full-hash-verified native pair and enforce unchanged source and driver provenance.
+
 ## 0.36.3
 
 - Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.
