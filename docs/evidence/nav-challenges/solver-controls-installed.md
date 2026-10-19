@@ -1,0 +1,15 @@
+# Installed extension FlareSolverr controls
+
+The NAV01 fixture builds the production background, resolver and popup modules, substituting only its unique native host address. It installs the extension in an isolated Chromium profile and uses actual pointer input on its popup HTML loaded in a separate extension window. Browser toolbar activation and native desktop settings controls remain separate pending gates.
+
+`node scripts/nav-fixtures/challenges/installed-solver-controls.mjs` verifies and copies the immutable native25.1 pair before execution. `NAV_BROWSER` selects Edge; `NAV_NATIVE_PAIR` selects the directory with the exact recorded pair. Settings are seeded through the real isolated native CLI, not claimed as desktop UI acceptance. The local fake solver is only a protocol/controls fixture, never real challenge-clearance evidence.
+
+The gate requires disabled/routing UI refusal, actual Continue, stale-enabled native refusal, typed unsupported CAPTCHA recovery with no file requests, explicit manual retry to a independently hashed desktop file, matching synthetic User-Agent/cookie continuity, owned temporary-session cleanup and zero paid-provider work. Installed execution remains pending until all assertions finish.
+
+The first Chrome attempt at6e92d68 reached actual Continue, non-Direct disabled state and stale-enabled refusal, then timed out because its synthetic CAPTCHA markup used only a name attribute. Native correctly returned solver_ambiguous with zero file requests. The revised fixture uses the existing native CAPTCHA selector contract; that revision remains unqualified until its full installed run passes.
+
+Chrome155 on Windows passed all five popup scenarios at `f0951c8` using immutable native25.1. The independently hashed desktop output was 286720 bytes, SHA256 `45ccdad267758c02f974f9113d86c3d2435b8b6480b3a461f24526e8134cafc2`. Run and cleanup exited 0 without forced termination. The committed 0.34.1 evidence records that exact driver; its two create/destroy counts and zero sessions do not individually prove matched session ownership. Version 0.34.2 now enforces per-session create/get/destroy and startup/end provenance; that stronger driver and Edge remain pending installed execution.
+
+The strengthened driver passed installed Chrome155 at `a6e6a44`, with two distinct hashed sessions each following exactly create/get/destroy, startup/end provenance unchanged, all five popup cases passing and exact output SHA256 unchanged. The process exited 0 naturally. Edge and native desktop settings UI remain pending.
+
+Integrated head `6a997d5` also passed all five installed Edge155 popup cases and matched session lifecycle, producing the same 286720-byte SHA256 output; cleanup exited 0 naturally. The full integrated extension suite passed 251 tests, TypeScript, Chromium/Firefox builds, generated versions and two observer contract tests. This supersedes the pending Chrome/Edge popup statements above, while all native desktop/live/paid/private/otherOS boundaries remain pending.
