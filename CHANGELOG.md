@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.39.2
+
+- Preserve read-only page readiness, anchor and existing console/native diagnostics when installed Blob preview admission fails; no renderer or source tracing changes.
+
 ## 0.39.1
 
 - Bind empty-Blob qualification to immutable hash-checked native copies, explicit extension build roots and source input hashes. Assert native byte counts, total and verified digest; installed results remain pending.

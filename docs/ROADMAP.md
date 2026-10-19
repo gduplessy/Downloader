@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.39.1<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.39.2<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 NAV-08 empty original streams (0.39.0) accept declared and unknown zero-length responses only after matching owned EOF, durable-file length and checksum verification. Native regressions cover terminal replay/restart and refusal fences; installed browser empty-Blob acceptance remains pending.
 

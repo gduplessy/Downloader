@@ -782,6 +782,10 @@ try {
     if (preview) break;
     await new Promise((r) => setTimeout(r, 100));
   }
+  if (!preview)
+    observations.previewFailurePage = await page(
+      '({readyState:document.readyState,title:document.title,url:location.href,controls:[...document.querySelectorAll("a")].map(a=>({href:a.href,text:a.textContent})),previewPresent:Boolean(document.querySelector("#__downloader_adapter_preview"))})',
+    );
   assert.ok(preview, "Production resolver did not open Blob preview");
   await new Promise((r) => setTimeout(r, 500));
   preview = await shadow();
