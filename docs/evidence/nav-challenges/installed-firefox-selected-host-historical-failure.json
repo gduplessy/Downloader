@@ -1,0 +1,22 @@
+{
+  "stage": "script.evaluate",
+  "error": "Error: Explicit stale challenge refusal deadline",
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/nav-challenges/g4u/page"
+    },
+    {
+      "method": "GET",
+      "path": "/nav-challenges/g4u/image.svg"
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico"
+    },
+    {
+      "method": "POST",
+      "path": "/nav-challenges/g4u/submit"
+    }
+  ]
+}
