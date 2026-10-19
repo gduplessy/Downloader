@@ -37,6 +37,8 @@ const observations = {
   rendererShim: false,
   idle,
 };
+observations.polling = polling;
+assert.deepEqual(JSON.parse(JSON.stringify(observations)).polling, polling);
 const ext = resolve(dir, 'extension');
 const data = resolve(dir, 'service');
 await mkdir(ext, { recursive: true });

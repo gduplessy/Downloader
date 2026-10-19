@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.38.2
+
+- Persist observation-cost counters in idle-fixture evidence and retain the unsuccessful polling diagnostic with its instrumentation and concurrency limits.
+
 ## 0.38.1
 
 - Initialize the per-observation clock before computing fixture CLI latency.
