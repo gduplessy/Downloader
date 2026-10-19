@@ -1,3 +1,7 @@
+## 0.35.7
+
+- Preserve final installed Firefox host-guard positive and node-replacement refusal evidence with exact source provenance.
+
 # Changelog
 
 ## 0.35.6
