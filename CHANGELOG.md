@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.37.2
+
+- Record installed Edge original-POST completion after a verified sixty-second upstream idle, with one submission and native payload hash.
+
 ## 0.37.1
 
 - Declare and verify current navigation permissions in the isolated original-response idle fixture.
