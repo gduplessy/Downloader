@@ -1,3 +1,7 @@
+## 0.36.2
+
+- Record uninstrumented installed Chrome acceptance of RFC850 and asctime Retry-After headers, retaining exact source and native provenance.
+
 # Changelog
 
 ## 0.36.1
