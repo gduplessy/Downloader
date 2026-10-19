@@ -11,6 +11,7 @@ const require = createRequire(
   ),
   { build } = require("esbuild");
 const scenario = process.env.NAV_CHALLENGE_CASE ?? "fresh";
+const controlObservations = [];
 assert(
   ["fresh", "cancel", "csrf", "image", "selected-host"].includes(scenario),
 );
@@ -295,6 +296,68 @@ async function click(session, name, role = "button") {
   );
   return true;
 }
+async function currentContinue(session, provider, optionsSession) {
+  const deadline = Date.now() + 30000;
+  let last;
+  let requestedRefresh = false;
+  let ignoredAXStaleNode;
+  async function inspect(node) {
+    const resolved = await command("DOM.resolveNode", {backendNodeId:node.backendDOMNodeId}, session);
+    const result = await command("Runtime.callFunctionOn", {objectId:resolved.object.objectId,functionDeclaration:'function(){const root=this.getRootNode();return {connected:this.isConnected,disabled:this.disabled,checked:this.checked,selected:[...root.querySelectorAll("input[type=radio]")].some(input=>input.isConnected&&!input.disabled&&input.checked),stale:root.textContent.includes("Page changed. Refresh the selection.")}}',returnByValue:true},session);
+    return {objectId:resolved.object.objectId,state:result.result.value};
+  }
+  while(Date.now()<deadline) {
+    const tree=(await command("Accessibility.getFullAXTree",{},session)).nodes;
+    const visible=tree.filter(node=>!node.ignored);
+    if(visible.some(node=>node.name?.value?.includes("Page changed. Refresh the selection."))) {
+      let actualStale=false;
+      const refresh=visible.find(node=>node.role?.value==="button"&&node.name?.value==="Refresh"&&node.backendDOMNodeId);
+      if(refresh) {
+        const current=await inspect(refresh);
+        actualStale=current.state.connected&&current.state.stale;
+        last={phase:actualStale?"waiting for stale-preview replacement":"AX stale text with current fresh root",refreshNode:refresh.backendDOMNodeId,...current.state};
+        if(actualStale&&!current.state.disabled&&!requestedRefresh) {
+          requestedRefresh=true;
+          await waitClick(session,"Refresh");
+          controlObservations.push({provider,action:"actual stale preview Refresh",state:current.state});
+        } else if(current.state.connected&&!current.state.stale&&ignoredAXStaleNode!==refresh.backendDOMNodeId) {
+          ignoredAXStaleNode=refresh.backendDOMNodeId;
+          controlObservations.push({provider,action:"ignore AX stale text for actual fresh root",state:current.state});
+        }
+      }
+      if(actualStale) {
+        await new Promise(resolve=>setTimeout(resolve,100));
+        continue;
+      }
+    }
+    const radio=visible.find(node=>node.role?.value==="radio"&&node.backendDOMNodeId);
+    if(radio) {
+      const current=await inspect(radio); last=current.state;
+      if(controlObservations.length<256) controlObservations.push({provider,action:"radio before actual input",state:current.state});
+      if(current.state.connected&&!current.state.disabled) {
+        if(!current.state.checked) await waitClick(session,null,"radio");
+        const selected=await inspect(radio);
+        if(controlObservations.length<256) controlObservations.push({provider,action:"radio after actual input",state:selected.state});
+        if(selected.state.connected&&!selected.state.disabled&&selected.state.checked) {
+          const fresh=(await command("Accessibility.getFullAXTree",{},session)).nodes;
+          const button=fresh.find(node=>!node.ignored&&node.role?.value==="button"&&node.name?.value==="Continue"&&node.backendDOMNodeId);
+          if(button) {
+            const ready=await inspect(button); last=ready.state;
+            if(controlObservations.length<256) controlObservations.push({provider,action:"Continue after actual selection",state:ready.state});
+            if(ready.state.connected&&!ready.state.disabled&&ready.state.selected&&!ready.state.stale) {
+              controlObservations.push({provider,action:"current selection ready",state:ready.state});
+              return {objectId:ready.objectId,tree:fresh};
+            }
+          }
+        }
+      }
+    }
+    await new Promise(resolve=>setTimeout(resolve,100));
+  }
+  const runtimeTrace=await evaluate(optionsSession,"globalThis.__challengeRuntimeTrace??[]");
+  controlObservations.push({provider,action:"passive runtime chronology at readiness failure",runtimeTrace});
+  throw Error("Current enabled selected preview did not become ready: "+JSON.stringify({provider,last}));
+}
 async function waitClick(session, name, role = "button") {
   const deadline = Date.now() + 30000;
   while (Date.now() < deadline) {
@@ -388,6 +451,7 @@ try {
     optionsSession,
     'chrome.runtime.sendMessage({type:"settings_changed"})',
   );
+  await evaluate(optionsSession,'globalThis.__challengeRuntimeTrace=[];chrome.runtime.onMessage.addListener((message,sender)=>{if(!sender.tab||!message.type?.startsWith("resolver_"))return;const trace=globalThis.__challengeRuntimeTrace;trace.push({at:Date.now(),type:message.type,tabId:sender.tab.id,documentGeneration:message.document?.generation,bindingGeneration:message.binding?.documentGeneration,decision:message.decision?.kind});if(trace.length>128)trace.shift();});true');
   const rows = [];
   for (const provider of ["g4u", "ddownload", "rapidgator", "gofile"]) {
     const page = fixture.base + "/nav-challenges/" + provider + "/page";
@@ -527,52 +591,18 @@ try {
       await new Promise((r) => setTimeout(r, 50));
     }
     console.log("Form result ", JSON.stringify(fixture.submits));
-    await evaluate(
-      optionsSession,
-      "chrome.runtime.sendMessage(" +
-        JSON.stringify({ type: "navigation_queue_continue", id: job.id }) +
-        ")",
-    );
-    await new Promise((r) => setTimeout(r, 1000));
-    await evaluate(
-      optionsSession,
-      "(async()=>{const tabs=await chrome.tabs.query({});const tab=tabs.find(t=>t.url===" +
-        JSON.stringify(page.replace("/page", "/submit")) +
-        ');if(!tab)throw Error("Fresh result tab missing");return chrome.tabs.sendMessage(tab.id,{type:"resolver_continue"})})()',
-    );
-    await new Promise((r) => setTimeout(r, 500));
+    await evaluate(optionsSession,"chrome.runtime.sendMessage("+JSON.stringify({type:"navigation_queue_continue",id:job.id})+")");
     const currentTreeSession = await targetSession(tab.targetId);
-    const tree = (
-      await command("Accessibility.getFullAXTree", {}, currentTreeSession)
-    ).nodes;
-    await waitClick(currentTreeSession, null, "radio");
-    const controls = (
-      await command("Accessibility.getFullAXTree", {}, currentTreeSession)
-    ).nodes;
-    const continueNode = controls.find(
-      (n) =>
-        !n.ignored &&
-        n.role?.value === "button" &&
-        n.name?.value === "Continue",
-    );
-    if (!continueNode?.backendDOMNodeId)
-      throw Error("Continue control missing");
-    const resolved = await command(
-      "DOM.resolveNode",
-      { backendNodeId: continueNode.backendDOMNodeId },
-      currentTreeSession,
-    );
-    await command(
-      "Runtime.callFunctionOn",
-      {
-        objectId: resolved.object.objectId,
-        functionDeclaration:
-          "function(){setTimeout(()=>this.click(),500);return true}",
-        returnByValue: true,
-      },
-      currentTreeSession,
-    );
-    await command("Target.detachFromTarget", { sessionId: currentTreeSession });
+    const {objectId,tree} = await currentContinue(currentTreeSession,provider,optionsSession);
+    await command("Runtime.callFunctionOn",{
+      objectId,
+      functionDeclaration:'function(){const observe=()=>{const root=this.getRootNode();return {connected:this.isConnected,disabled:this.disabled,selected:[...root.querySelectorAll("input[type=radio]")].some(input=>input.isConnected&&!input.disabled&&input.checked),stale:root.textContent.includes("Page changed. Refresh the selection.")}};const trace={prepared:observe()};globalThis.__navChallengeControlTrace=trace;globalThis.__navChallengeActivate=()=>{trace.activated=observe();if(!trace.activated.connected||trace.activated.disabled||!trace.activated.selected||trace.activated.stale){trace.refused=true;return trace}this.click();trace.clicked=true;return trace};return trace.prepared}',
+      returnByValue:true,
+    },currentTreeSession);
+    await command("Target.detachFromTarget", {sessionId:currentTreeSession});
+    const activation = await evaluate(optionsSession,'(async()=>{const tabs=await chrome.tabs.query({});const tab=tabs.find(t=>t.url==='+JSON.stringify(page.replace("/page","/submit"))+');if(!tab)throw Error("Fresh result tab missing");const result=await chrome.scripting.executeScript({target:{tabId:tab.id},world:"MAIN",func:()=>{const activate=globalThis.__navChallengeActivate;delete globalThis.__navChallengeActivate;if(typeof activate!=="function")throw Error("Prepared actual Continue missing");return activate()}});return result[0]?.result})()');
+    controlObservations.push({provider,action:"after debugger detach activation",trace:activation});
+    assert(activation?.clicked&&!activation.refused&&activation.activated.connected&&!activation.activated.disabled&&activation.activated.selected&&!activation.activated.stale,"Actual Continue became stale or disabled before activation");
     assert(
       fixture.submits.some((s) => s.provider === provider && s.accepted),
       "Original challenge form did not submit: " +
@@ -623,6 +653,7 @@ try {
             ),
           }),
       );
+    assert.equal(fixture.requests.filter(request=>request.method==="POST"&&request.path==="/nav-challenges/"+provider+"/submit").length,1,"Expected one original challenge POST for "+provider);
     assert(complete.destination.startsWith(output));
     const bytes = await readFile(complete.destination);
     assert.equal(
@@ -671,6 +702,7 @@ try {
       .digest("hex"),
     diagnostic_source_changes: false,
     rows,
+    control_observations: controlObservations,
     scenario,
     request_counts: fixture.requests.reduce((counts,r)=>{const key=r.method+" "+r.path;counts[key]=(counts[key]??0)+1;return counts},{}),
     accepted_original_submissions: fixture.submits.filter((s) => s.accepted)
@@ -679,7 +711,7 @@ try {
     limits: [
       "Synthetic open-circle protocol only; live providers/accounts and paid provider pending",
       "Pregranted loopback permissions and unique fixture native host name; production worker/resolver/modules otherwise unchanged",
-      "Host choice, local solve and radio use AX/Input. Final actual Continue element click is scheduled 500ms after driver detachment, preserving exclusive production debugger ownership; no response bytes travel through CDP",
+      "Host choice, local solve, actual stale-preview Refresh and radio use AX/Input with bounded readiness checks. The current connected enabled selected Continue element is activated through a guarded page closure after driver detachment; no response bytes travel through CDP",
       "The trusted extension Continue action resumes the fresh HTML page before preview; native desktop window and unavailable browser/platform matrix remain pending",
     ],
   };
@@ -701,6 +733,7 @@ try {
         error: String(error),
         stack: error.stack,
         submits: fixture.submits,
+        control_observations: controlObservations,
       },
       null,
       2,

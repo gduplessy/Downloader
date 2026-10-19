@@ -1,5 +1,51 @@
 # Changelog
 
+## 0.35.10
+
+- Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.
+
+## 0.35.9
+
+- Record installed Edge fresh four-provider synthetic challenge transfers after the fixture refresh-loop correction.
+
+## 0.35.8
+
+- Bound the installed challenge fixture to one explicit refresh per provider so replacement nodes cannot perpetuate asynchronous generation churn.
+
+## 0.35.7
+
+- Preserve final installed Firefox host-guard positive and node-replacement refusal evidence with exact source provenance.
+
+# Changelog
+
+## 0.35.6
+
+- Add bounded actual radio/Continue transition observations and a passive runtime-message chronology for the remaining Edge fresh-preview invalidation. The observer sends no messages or replies and does not change production code or authorization.
+
+## 0.35.5
+
+- Require the current actual preview root to be stale before invoking Refresh; historical accessibility text cannot trigger repeated refresh of a fresh replacement. Record any AX/DOM disagreement and retain current enabled selection checks.
+
+## 0.35.4
+
+- Wait for actual stale-preview replacement after one Refresh per backend node identity; do not repeatedly invalidate an asynchronous selection refresh. The previous readiness fixture failed safely without starting a file transfer.
+
+## 0.35.3
+
+- Fix the challenge fixture stale-control flow: use actual Refresh when required, verify current enabled radio selection and Continue readiness, and activate the guarded actual control after debugger detachment without duplicate manual continuation or fixed sleeps. Preserve production authentication and byte transfer unchanged; exact Edge acceptance follows separately.
+
+## 0.35.2
+
+- Persist actual delayed challenge-control diagnostics in success and failure artifacts. Correct missing CRLF-sensitive trace readback; the prior diagnostic failure reproduced zero-byte waiting-user behavior but did not establish its cause.
+
+## 0.35.1
+
+- Observe actual final challenge controls at scheduling and delayed activation without changing production behavior, preserving connected, disabled and radio state to diagnose the retained Edge fresh failure. Installed acceptance remains pending.
+
+## 0.35.0
+
+- Record installed Chrome and Edge whole-browser Blob loss, exact durable partial hashes and reader-lease recovery; refresh NAV acceptance audit without broadening proof.
+
 ## 0.34.9
 
 - Integrate reviewed actual-submitter host serialization guard and deterministic duplicate-host regression.

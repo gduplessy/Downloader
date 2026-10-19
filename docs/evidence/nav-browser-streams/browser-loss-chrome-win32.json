@@ -1,0 +1,125 @@
+{
+  "driverSha256": "eaaa5d47d72ca4a8aab01822ded59d0d7161b621c9320f33b2d0fb63c51dfd4e",
+  "privateContextSha256": "24368129d212eba0fd10509e0cd0282332a12cd3e8c47229a0bf93beb8631d5f",
+  "productionBundles": {
+    "background.js": "6ca49985e14422d66bf3de8622c3df23e30e290f846da833b9b996b7d75f2f2a",
+    "resolver.js": "7abae0ca003396cee7bf8038ec4fbcdb12cf3d34d50e3e315b11f86984f49b5c"
+  },
+  "acceptance": "passed",
+  "mode": "browser-loss",
+  "browser": "Chrome/155.0.8059.40",
+  "os": "win32",
+  "architecture": "x64",
+  "checkedBase": "ac261da6fbbab2a1651e758e9abb4091d5372ecc",
+  "sourceRevision": "ac261da6fbbab2a1651e758e9abb4091d5372ecc",
+  "productionBackground": true,
+  "productionResolver": true,
+  "diagnosticSourceChanges": false,
+  "driver": "real radio/Continue/Cancel mouse events in closed production preview",
+  "nativeTransport": "persistent connectNative",
+  "source": "original page-owned Blob",
+  "tokenRequests": [],
+  "nativePairRevision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+  "expectedBytes": 67108881,
+  "actualBytes": 458752,
+  "sha256": null,
+  "state": "waiting_user",
+  "source_generation": 1,
+  "claim_generation": 1,
+  "originResponseRequests": 0,
+  "originRequests": [
+    {
+      "method": "GET",
+      "path": "/nav-adapters/g4u/blob",
+      "browser": true
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico",
+      "browser": true
+    }
+  ],
+  "observations": {
+    "nativeRevision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+    "cliVersion": "downloader-cli 0.25.1",
+    "nativeExecutables": {
+      "hostAndDaemon": {
+        "workspaceRelativePath": "run/native/downloader-service.exe",
+        "sha256": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+        "bytes": 17476096,
+        "modifiedUtc": "2026-10-15T12:30:20.736Z",
+        "selfReportedVersion": null,
+        "sameExecutable": true
+      },
+      "cli": {
+        "workspaceRelativePath": "run/native/downloader.exe",
+        "sha256": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c",
+        "bytes": 6320128,
+        "modifiedUtc": "2026-10-15T12:30:22.112Z",
+        "selfReportedVersion": "downloader-cli 0.25.1"
+      }
+    },
+    "ownedTabCorrelation": "actual debugger target tabId",
+    "radio": {
+      "checked": true,
+      "disabled": false
+    },
+    "continue": {
+      "disabled": false
+    },
+    "bytesAtInterruption": 196608,
+    "captureStatesBeforeLoss": [
+      "streaming"
+    ],
+    "sourceGenerationAtLoss": 1,
+    "claimGenerationAtLoss": 1,
+    "browserProcessExited": true,
+    "browserExitCode": 0,
+    "browserExitSignal": null,
+    "recoveryObservedAfterMs": 45809,
+    "durationMs": 97018,
+    "transferElapsedMs": 57268,
+    "firstDurableProgressMs": 11458,
+    "progressSamples": [
+      {
+        "elapsedMs": 11458,
+        "bytes": 196608
+      },
+      {
+        "elapsedMs": 13012,
+        "bytes": 458752
+      }
+    ],
+    "measuredBytesPerSecond": null,
+    "originalClicks": null,
+    "previewStillVisible": false,
+    "interruptionApplied": true,
+    "private": false,
+    "previewText": null,
+    "consoleEvents": [],
+    "lastError": null,
+    "nativeOriginRequests": 0,
+    "captureStates": [],
+    "typedRecoveryReason": "browser_reader_lost",
+    "adapter": {
+      "id": "local-fixture",
+      "version": "1.0.0",
+      "selectedHost": null
+    },
+    "publishedFileExists": false,
+    "durablePrefixVerified": true,
+    "durablePrefixSha256": "5a32e625f0c3d3da525eb339459f14e2e2e5c68fe57786512a2ae122161bea64",
+    "expectedPrefixSha256": "5a32e625f0c3d3da525eb339459f14e2e2e5c68fe57786512a2ae122161bea64",
+    "partialFileBytes": 458752,
+    "recoveryOutcome": "manual_reauthorization",
+    "workerHeap": {
+      "samples": 108,
+      "baselineBytes": 1609092,
+      "peakBytes": 4660944
+    }
+  },
+  "limitations": [
+    "Local fixtures; live providers and permission prompt pending",
+    "No Firefox ESR or unavailable OS qualification from this run"
+  ]
+}
