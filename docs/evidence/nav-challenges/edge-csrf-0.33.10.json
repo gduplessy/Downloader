@@ -1,0 +1,404 @@
+{
+  "source_revision": "35ed66604e8cf8d83f84dcc8cae248dd429c5176",
+  "driver_sha256": "a11de10cc4d6e3367af983f5aa0ba2f3df4fedf6d44301cf57f42399ee1d4632",
+  "source_graph": [
+    {
+      "path": "apps/extension/src/background.ts",
+      "sha256": "175f3a05e17ec41cc86cb29793b144d07bd8fec68d51ebd2ad9a1dd14bdb3446"
+    },
+    {
+      "path": "apps/extension/src/capture.ts",
+      "sha256": "51981332e825f355c134541bde1bbdc283e868b23b86fa8e6e9d22d29d1a8630"
+    },
+    {
+      "path": "apps/extension/src/content.ts",
+      "sha256": "12dad005907d61c3d672ed5995aaf4e37c0993491d02d46a4b6cde5cbb7868b7"
+    },
+    {
+      "path": "apps/extension/src/discovery.ts",
+      "sha256": "b9150d7786a2b2c82d401fa58f09a03552ca28c4024ca8f41fe623be3e0d0838"
+    },
+    {
+      "path": "apps/extension/src/navigation/accounts/binding.ts",
+      "sha256": "9755ba78c3a1a62046b7d96ac195b0e38f590296808ab3b9f4dd6c25ac13d78f"
+    },
+    {
+      "path": "apps/extension/src/navigation/accounts/document.ts",
+      "sha256": "aae12c0365d70fc4c704edd6539e305d97a2ac2a30d429260a4394394bfc4f18"
+    },
+    {
+      "path": "apps/extension/src/navigation/accounts/forms.ts",
+      "sha256": "a861673d4542838e0150669911f01a51e9148fc01793396b8252021ab1637161"
+    },
+    {
+      "path": "apps/extension/src/navigation/accounts/labels.ts",
+      "sha256": "23b1acb7ffce12a162c64756903c6dc4294ee2d3b16b1761131bfc99d76378ce"
+    },
+    {
+      "path": "apps/extension/src/navigation/accounts/observe.ts",
+      "sha256": "7f4d35a3ff0ed8587591d907f9e0cea2fc3b38d18153dde51fa04e3b777dd3e9"
+    },
+    {
+      "path": "apps/extension/src/navigation/accounts/panel.ts",
+      "sha256": "e93b68ed5c9765d93b39a7ebfb53ae6f9403132bce7f386c038d999d33c42f99"
+    },
+    {
+      "path": "apps/extension/src/navigation/accounts/policy.ts",
+      "sha256": "bb170bd14c822648b9b158e17cc88795b38ac005fd0904d9c0caa208322c55ad"
+    },
+    {
+      "path": "apps/extension/src/navigation/accounts/premium.ts",
+      "sha256": "f3c830fe69505ffda33c1b31bb68de3a2fd85030b88adf176528ef9092484d0c"
+    },
+    {
+      "path": "apps/extension/src/navigation/accounts/worker.ts",
+      "sha256": "9f42e93f2be9342ae3b5553a97f025c484d6e19a7adeb7025ac60044b92a786a"
+    },
+    {
+      "path": "apps/extension/src/navigation/adapters/context.ts",
+      "sha256": "d3d747f5a894f171a49709513a2f6cf72441c551f879e9fd7b5c15f94de39e5e"
+    },
+    {
+      "path": "apps/extension/src/navigation/adapters/dom.ts",
+      "sha256": "50fbfc819f705ff9248b23d1172786185b6a50bae4cf17ae467dc1ffd6d7dbd5"
+    },
+    {
+      "path": "apps/extension/src/navigation/adapters/policy.ts",
+      "sha256": "accc3594102592862e5fdbefbbaf56d1adb125488bcc6798b37d07d5b19700d0"
+    },
+    {
+      "path": "apps/extension/src/navigation/adapters/preview.ts",
+      "sha256": "478b5c171f9fb7990cb6371065959be1fa8f78a217f415ef2b498846da1d587d"
+    },
+    {
+      "path": "apps/extension/src/navigation/adapters/selection-ui.ts",
+      "sha256": "0a9bb33f98264c70af66d1a7c67056f4ce1765df00861cd9409a1f026d42a516"
+    },
+    {
+      "path": "apps/extension/src/navigation/authorization.ts",
+      "sha256": "bf349c0948ad2f3e15335d122c570a21d5b75261e76e0fbab2edbe999527cb47"
+    },
+    {
+      "path": "apps/extension/src/navigation/challenges/geometry.ts",
+      "sha256": "382d93c314ef695e433e51445b7b6d788fc50d34d89de938240976c8db1e1487"
+    },
+    {
+      "path": "apps/extension/src/navigation/challenges/lifecycle.ts",
+      "sha256": "51d1c00d588a7741a0d47bb01140d1dd4a2e7a18168541b9243b056f98241c7e"
+    },
+    {
+      "path": "apps/extension/src/navigation/challenges/messages.ts",
+      "sha256": "1ab58751565b6b92bb438fb4556ac1a785fb6548877526064e78f0b6839920fa"
+    },
+    {
+      "path": "apps/extension/src/navigation/challenges/page.ts",
+      "sha256": "6c51bd7337cb622f9153ed3d5ed02932c90a6c4dd75d5d49836567ff42f03e78"
+    },
+    {
+      "path": "apps/extension/src/navigation/challenges/worker.ts",
+      "sha256": "4c494a95ee9eacf32edc1d93ee5d1228a26ff2d186372ba3ca072b002772e75a"
+    },
+    {
+      "path": "apps/extension/src/navigation/discovery/extract.ts",
+      "sha256": "b00f0d9d84f807d98f7f815e9443450f8adb365eb55e957525114419aeff9a9f"
+    },
+    {
+      "path": "apps/extension/src/navigation/discovery/runtime.ts",
+      "sha256": "bbae3d573db0278a3524dee18719134643c2835f5a663a01c2271f6afd5cdf04"
+    },
+    {
+      "path": "apps/extension/src/navigation/scheduler/cancel.ts",
+      "sha256": "2adea304b3d458efbae889600c2e53e99854aa64d60f0fb65ee4782afa9d868b"
+    },
+    {
+      "path": "apps/extension/src/navigation/scheduler/labels.ts",
+      "sha256": "832181f04bc73745f97d74aad993ab0d950cc69f33b35680a11a3d2f6f1fdc7e"
+    },
+    {
+      "path": "apps/extension/src/navigation/scheduler/retry-after.ts",
+      "sha256": "6028bf622fef694e0914c6876f82f24b150b643833982cd33024e5380e5a353e"
+    },
+    {
+      "path": "apps/extension/src/navigation/scheduler/runtime.ts",
+      "sha256": "b424977fe05c3e30586295783c0ec2ac86f1c024a7b55b7944e6ebe1d131a3a8"
+    },
+    {
+      "path": "apps/extension/src/navigation/scheduler/timers.ts",
+      "sha256": "a5a209726b4f4b7521f55ad0fa7c869c4c2c150f295e166c3cb847a2a861c19a"
+    },
+    {
+      "path": "apps/extension/src/navigation/scheduler/ui.ts",
+      "sha256": "39c1203aa66a22d6fd182f2ce684f3e8468d9df7f3d45eafd6b9660bc08f3cfa"
+    },
+    {
+      "path": "apps/extension/src/navigation/scheduler/waits.ts",
+      "sha256": "4d5ba3eabbcada361403bb5d8082ecc21abf9a38d043199d05da33a1f465d8c1"
+    },
+    {
+      "path": "apps/extension/src/navigation/session/document.ts",
+      "sha256": "21ded4a0f86faccf86f0c77ec7daf870146fc31db99d006286ff163259577d26"
+    },
+    {
+      "path": "apps/extension/src/navigation/session/preflight.ts",
+      "sha256": "0550453b1face92435fefb3dfcc7e52382fc0f38f718a61640949ea20e24a324"
+    },
+    {
+      "path": "apps/extension/src/navigation/session/projection.ts",
+      "sha256": "3ada7cc9724ae5dff3d84a37be6e79d55f0bc17fd65ba9f100366651d8f9bbc5"
+    },
+    {
+      "path": "apps/extension/src/navigation/session/scope.ts",
+      "sha256": "68c0b39f33838e68b878f76bfd32ed7b181f2533a5845358abcc6b516912d9a2"
+    },
+    {
+      "path": "apps/extension/src/navigation/session/source.ts",
+      "sha256": "7260b130785aba5adb8d2b03ea3a834436c6d5bc592087e68cc32c23033ec985"
+    },
+    {
+      "path": "apps/extension/src/navigation/session/start.ts",
+      "sha256": "76828c2456f7e8f7c96813dd2b1d8761d7ff0090e6f326a020cec13da7041556"
+    },
+    {
+      "path": "apps/extension/src/navigation/session/store.ts",
+      "sha256": "27eff892c8503f9fc0d9863360c7de6c056d05761cf53d86bcd98b2acf605d91"
+    },
+    {
+      "path": "apps/extension/src/navigation/session/transfer-ui.ts",
+      "sha256": "2e223a49f4bcf1262bd6fc35dc422986174b4fa38648078733250cc1e1aaceef"
+    },
+    {
+      "path": "apps/extension/src/navigation/session/transfer.ts",
+      "sha256": "dfc7ae15b96f9ab1802ebd853a8cf4e0aee467ae72a1fb17c1aef516fc81a4e7"
+    },
+    {
+      "path": "apps/extension/src/navigation/streams/blob.ts",
+      "sha256": "752894243a75fa5d77435947e5e8882a76d8e7c3cadd72fc796429c1d9965217"
+    },
+    {
+      "path": "apps/extension/src/navigation/streams/capture.ts",
+      "sha256": "b4b4a736e64fe02cf095ff9aba1b2f6d10d06a29dcfdc010898b325844b7a12c"
+    },
+    {
+      "path": "apps/extension/src/navigation/streams/i18n.ts",
+      "sha256": "d55eaced08a011618acd62ecb14f10709bc8cb23e856fc8a6f3722171143febf"
+    },
+    {
+      "path": "apps/extension/src/navigation/streams/ownership.ts",
+      "sha256": "ff11064d5a318d4cfdceee2d9f5c1e31f16ac18807e6fd5abacc115c4f476854"
+    },
+    {
+      "path": "apps/extension/src/navigation/streams/recovery.ts",
+      "sha256": "6d6c0252237bc6c6f0051dfaf48cd06d97527b49a06af5e287c7814be63bfc81"
+    },
+    {
+      "path": "apps/extension/src/navigation/streams/replay.ts",
+      "sha256": "3731c4951467c91cc3754dc952bf833264497c0f99431ae02ff3206ef483a4ae"
+    },
+    {
+      "path": "apps/extension/src/navigation/streams/transitions.ts",
+      "sha256": "6513d3e0a24eb502ad20d5f475b322d7616c482537394ad175fece2fd245cd11"
+    },
+    {
+      "path": "apps/extension/src/navigation/streams/transport.ts",
+      "sha256": "8dc7cd23f8cd39269db2546d05c7183b188105a97123facca8f427bb667bc66a"
+    },
+    {
+      "path": "apps/extension/src/options.ts",
+      "sha256": "ad93a9b22bbdc9d07f8279cc304e8ea3e69e03a437dee7a247b568b82870d916"
+    },
+    {
+      "path": "apps/extension/src/resolver-policy.ts",
+      "sha256": "707d76cd56227a17bb25a17b37d6f21a09282c2fa50695b993e2a437253c0906"
+    },
+    {
+      "path": "apps/extension/src/resolver.ts",
+      "sha256": "cbb9d0a5379c4b2f5871bd0099742007c765ce2a90f6994be0118dd2c26f8ef5"
+    },
+    {
+      "path": "node_modules/.pnpm/webextension-polyfill@0.12.0/node_modules/webextension-polyfill/dist/browser-polyfill.js",
+      "sha256": "cfc53c3525587467c783ef1c6fdefbaf1d60ed197ea2fe0d45899b18069cf496"
+    },
+    {
+      "path": "packages/shared/src/events.ts",
+      "sha256": "a7676df72fb47394caa922de9caa7b457389ac1d5ec88b28119e32d3851370e6"
+    },
+    {
+      "path": "packages/shared/src/i18n.ts",
+      "sha256": "448eb43c26bdf6e5086974f6900569a37beb4f27433e6f28f51fdcdc87003fe7"
+    },
+    {
+      "path": "packages/shared/src/navigation.ts",
+      "sha256": "2f74d31860083962bc01619ee039f0c5d35efc2e5ab2de3ee077db68454fa208"
+    },
+    {
+      "path": "packages/shared/src/translations.ts",
+      "sha256": "15572ed13cdd28dad72688fc2cdf3239e1644fdb046f9ada99210d6d65f8ebd5"
+    }
+  ],
+  "native_build_revision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+  "native_hashes": {
+    "downloader-service.exe": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+    "downloader.exe": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c"
+  },
+  "fixture": "production-installed-challenges-v1",
+  "browser": "Edg/155.0.4283.45",
+  "os": "win32",
+  "arch": "x64",
+  "native_version": "0.25.1",
+  "native_binary_sha256": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+  "diagnostic_source_changes": false,
+  "rows": [
+    {
+      "scenario": "csrf",
+      "provider": "g4u",
+      "original_submissions": 0,
+      "job_states": [
+        "waiting_user"
+      ],
+      "observed": [
+        {
+          "role": "RootWebArea",
+          "name": ""
+        },
+        {
+          "role": "heading",
+          "name": "Synthetic g4u image challenge"
+        },
+        {
+          "role": "form",
+          "name": ""
+        },
+        {
+          "role": "generic",
+          "name": ""
+        },
+        {
+          "role": "StaticText",
+          "name": "Synthetic g4u image challenge"
+        },
+        {
+          "role": "image",
+          "name": ""
+        },
+        {
+          "role": "button",
+          "name": "Submit challenge"
+        },
+        {
+          "role": "dialog",
+          "name": "Image challenge"
+        },
+        {
+          "role": "StaticText",
+          "name": "Submit challenge"
+        },
+        {
+          "role": "strong",
+          "name": ""
+        },
+        {
+          "role": "status",
+          "name": ""
+        },
+        {
+          "role": "button",
+          "name": "Solve locally"
+        },
+        {
+          "role": "button",
+          "name": "Complete manually"
+        },
+        {
+          "role": "button",
+          "name": "Use 2Captcha"
+        },
+        {
+          "role": "paragraph",
+          "name": ""
+        },
+        {
+          "role": "button",
+          "name": "Cancel"
+        },
+        {
+          "role": "StaticText",
+          "name": "Image challenge"
+        },
+        {
+          "role": "StaticText",
+          "name": "Unsupported or expired challenge. Complete it in the page."
+        },
+        {
+          "role": "StaticText",
+          "name": "Solve locally"
+        },
+        {
+          "role": "StaticText",
+          "name": "Complete manually"
+        },
+        {
+          "role": "StaticText",
+          "name": "Use 2Captcha"
+        },
+        {
+          "role": "StaticText",
+          "name": "Paid solving sends this image and instruction externally. It requires desktop opt-in, key and budget."
+        },
+        {
+          "role": "StaticText",
+          "name": "Cancel"
+        },
+        {
+          "role": "InlineTextBox",
+          "name": "Image challenge"
+        },
+        {
+          "role": "InlineTextBox",
+          "name": "Unsupported or expired challenge. Complete it in the "
+        },
+        {
+          "role": "InlineTextBox",
+          "name": "page."
+        },
+        {
+          "role": "InlineTextBox",
+          "name": "Solve locally"
+        },
+        {
+          "role": "InlineTextBox",
+          "name": "Complete manually"
+        },
+        {
+          "role": "InlineTextBox",
+          "name": "Use 2Captcha"
+        },
+        {
+          "role": "InlineTextBox",
+          "name": "Paid solving sends this image and instruction externally. "
+        },
+        {
+          "role": "InlineTextBox",
+          "name": "It requires desktop opt-in, key and budget."
+        },
+        {
+          "role": "InlineTextBox",
+          "name": "Cancel"
+        }
+      ]
+    }
+  ],
+  "scenario": "csrf",
+  "request_counts": {
+    "GET /nav-challenges/g4u/page": 1,
+    "GET /nav-challenges/g4u/image.svg": 1,
+    "GET /favicon.ico": 1
+  },
+  "accepted_original_submissions": 0,
+  "paid_calls": 0,
+  "limits": [
+    "Synthetic open-circle protocol only; live providers/accounts and paid provider pending",
+    "Pregranted loopback permissions and unique fixture native host name; production worker/resolver/modules otherwise unchanged",
+    "Host choice, local solve and radio use AX/Input. Final actual Continue element click is scheduled 500ms after driver detachment, preserving exclusive production debugger ownership; no response bytes travel through CDP",
+    "The trusted extension Continue action resumes the fresh HTML page before preview; native desktop window and unavailable browser/platform matrix remain pending"
+  ]
+}
