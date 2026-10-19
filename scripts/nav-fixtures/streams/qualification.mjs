@@ -91,13 +91,25 @@ const pair = resolve(
 );
 const nativeDir = resolve(dir, "native");
 await mkdir(nativeDir, { recursive: true });
-const expectedNative = {
+const checkedNative = process.env.NAV_NATIVE_MANIFEST
+  ? JSON.parse(await readFile(resolve(process.env.NAV_NATIVE_MANIFEST), "utf8"))
+  : null;
+if (checkedNative) {
+  assert.match(checkedNative.revision, /^[a-f0-9]{40}$/);
+  assert.match(checkedNative.version, /^0\.\d+\.\d+$/);
+}
+const expectedNative = checkedNative?.sha256 ?? {
   "downloader-service.exe":
     "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
   "downloader.exe":
     "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c",
 };
+assert.deepEqual(Object.keys(expectedNative).sort(), [
+  "downloader-service.exe",
+  "downloader.exe",
+]);
 for (const [name, hash] of Object.entries(expectedNative)) {
+  assert.match(hash, /^[a-f0-9]{64}$/);
   const source = resolve(pair, name),
     target = resolve(nativeDir, name);
   assert.equal(
@@ -118,11 +130,19 @@ for (const [name, hash] of Object.entries(expectedNative)) {
 }
 const nativeBinary = resolve(nativeDir, "downloader-service.exe");
 const cli = resolve(nativeDir, "downloader.exe");
-observations.nativeRevision = "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61";
+observations.nativeRevision =
+  checkedNative?.revision ?? "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61";
+observations.nativeBuildProfile = checkedNative?.buildProfile ?? "historical";
+observations.expectedNativeSha256 = expectedNative;
 observations.cliVersion = execFileSync(cli, ["--version"], {
   encoding: "utf8",
   windowsHide: true,
 }).trim();
+if (checkedNative)
+  assert.ok(
+    observations.cliVersion.includes(checkedNative.version),
+    "CLI version differs from checked manifest",
+  );
 const executableIdentity = async (path, workspaceRelativePath) => {
   const metadata = await stat(path);
   return {
@@ -164,10 +184,13 @@ await writeFile(
   JSON.stringify({ chrome_ids: [extId], firefox_ids: [] }),
 );
 // Build the production entry points. The only source substitution is the isolated native host name.
-await build({
+const sourceRoot = resolve(".");
+const compilation = await build({
+  absWorkingDir: sourceRoot,
+  metafile: true,
   entryPoints: [
-    "apps/extension/src/background.ts",
-    "apps/extension/src/resolver.ts",
+    resolve(sourceRoot, "apps/extension/src/background.ts"),
+    resolve(sourceRoot, "apps/extension/src/resolver.ts"),
   ],
   outdir: ext,
   nodePaths: [resolve("apps/extension/node_modules")],
@@ -228,6 +251,16 @@ await build({
     },
   ],
 });
+const sourceInputs = await Promise.all(
+  Object.keys(compilation.metafile.inputs)
+    .sort()
+    .map(async (path) => ({
+      path,
+      sha256: createHash("sha256")
+        .update(await readFile(resolve(sourceRoot, path)))
+        .digest("hex"),
+    })),
+);
 if (privateMode) {
   await writeFile(
     resolve(ext, "background.js"),
@@ -1141,6 +1174,11 @@ try {
       resolve(dir, "downloads", privateMode ? "blob" : filename),
     );
     assert.equal(bytes.length, payload.length);
+    assert.equal(job.total, payload.length);
+    assert.equal(job.bytes, payload.length);
+    assert.equal(job.verified_sha256, digest(payload));
+    observations.publishedFileBytes = bytes.length;
+    observations.publishedFileSha256 = digest(bytes);
     assert.equal(digest(bytes), digest(payload));
     if (privateMode) {
       const regularExpected = Buffer.alloc(payload.length);
@@ -1237,6 +1275,9 @@ try {
   );
   const evidence = {
     driverSha256,
+    sourceRoot,
+    sourceInputs,
+    buildMetafile: compilation.metafile,
     privateContextSha256,
     productionBundles: Object.fromEntries(
       await Promise.all(
