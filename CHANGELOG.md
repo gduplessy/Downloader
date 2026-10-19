@@ -1,3 +1,7 @@
+## 0.35.9
+
+- Record installed Edge fresh four-provider synthetic challenge transfers after the fixture refresh-loop correction.
+
 ## 0.35.8
 
 - Bound the installed challenge fixture to one explicit refresh per provider so replacement nodes cannot perpetuate asynchronous generation churn.
