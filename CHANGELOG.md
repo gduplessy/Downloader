@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.37.1
+
+- Declare and verify current navigation permissions in the isolated original-response idle fixture.
+
 ## 0.37.0
 
 - Pin original-response reader-idle qualification to the full-hash-verified native pair and enforce unchanged source and driver provenance.

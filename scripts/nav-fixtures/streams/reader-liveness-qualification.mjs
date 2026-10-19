@@ -157,6 +157,7 @@ await writeFile(
       'scripting',
       'storage',
       'webRequest',
+      'webNavigation',
       'downloads',
       'contextMenus',
       'alarms',
@@ -404,6 +405,8 @@ try {
     await new Promise(resolve=>setTimeout(resolve,100));
   }
   assert.equal(driverReady,true,'Actual extension settings driver did not finish loading');
+  observations.navigationPermissionsPregranted = await evaluate("chrome.permissions.contains({permissions:['webRequest','cookies','scripting','webNavigation'],origins:['http://127.0.0.1/*']})");
+  assert.equal(observations.navigationPermissionsPregranted, true, 'Fixture manifest must grant current navigation permissions');
   await evaluate(
     `chrome.storage.local.set({settings:{automatic:false,directCapture:true,extensions:[],excluded:[],bypassUntil:0,locale:'en',overlay:false}})`,
   );
