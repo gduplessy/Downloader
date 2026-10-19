@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.38.1
+
+- Initialize the per-observation clock before computing fixture CLI latency.
+
 ## 0.38.0
 
 - Record idle-fixture CLI observation cost and permit a validated polling cadence for controlled transfer diagnostics.

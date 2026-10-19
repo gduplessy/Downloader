@@ -449,6 +449,7 @@ try {
   let idleTimer;
   const idleSamples = [];
   for (let attempt = 0; attempt < 900 && Date.now() < deadline; attempt++) {
+    const pollStarted = performance.now();
     const listed = JSON.parse(
       execFileSync(cli, ['--json', 'list'], { env, windowsHide: true, encoding: 'utf8' }),
     );
