@@ -272,9 +272,6 @@ fn operation_locked(engine: &Arc<Engine>, operation: StreamOperation) -> Result<
         StreamOperation::Begin {
             filename, total, ..
         } => {
-            if total == Some(0) {
-                bail!("Empty browser response cannot complete a download");
-            }
             if resumed {
                 return Ok(ack(&record));
             }
@@ -390,7 +387,7 @@ fn operation_locked(engine: &Arc<Engine>, operation: StreamOperation) -> Result<
             expected_sha256,
             ..
         } => {
-            if total == 0 || total != record.offset || record.total.is_some_and(|t| t != total) {
+            if total != record.offset || record.total.is_some_and(|t| t != total) {
                 bail!("Browser stream EOF does not match durable bytes");
             }
             if expected_sha256
@@ -404,11 +401,14 @@ fn operation_locked(engine: &Arc<Engine>, operation: StreamOperation) -> Result<
             }
             job.total = Some(total);
             job.checksum = expected_sha256;
-            job.segments = vec![crate::Segment {
-                start: 0,
-                end: total - 1,
-                downloaded: total,
-            }];
+            // Empty streams have no inclusive byte range to assemble.
+            job.segments = total.checked_sub(1).map_or_else(Vec::new, |end| {
+                vec![crate::Segment {
+                    start: 0,
+                    end,
+                    downloaded: total,
+                }]
+            });
             engine.store.lock().unwrap().put("job", &job.id, &*job)?;
             drop(job);
             let control = finalizer

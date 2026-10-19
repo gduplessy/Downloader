@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.39.0
+
+- Complete verified zero-length original browser streams while retaining EOF, ownership, declared-size, durable-file and checksum publication fences. Add native empty-file and refusal regressions; installed browser acceptance remains pending.
+
 ## 0.36.3
 
 - Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.
