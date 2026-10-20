@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.39.3
+
+- Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.
+
 ## 0.39.2
 
 - Preserve read-only page readiness, anchor and existing console/native diagnostics when installed Blob preview admission fails; no renderer or source tracing changes.
@@ -11,6 +15,22 @@
 ## 0.39.0
 
 - Complete verified zero-length original browser streams while retaining EOF, ownership, declared-size, durable-file and checksum publication fences. Add native empty-file and refusal regressions; installed browser acceptance remains pending.
+
+## 0.37.3
+
+- Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.
+
+## 0.37.2
+
+- Record installed Edge original-POST completion after a verified sixty-second upstream idle, with one submission and native payload hash.
+
+## 0.37.1
+
+- Declare and verify current navigation permissions in the isolated original-response idle fixture.
+
+## 0.37.0
+
+- Pin original-response reader-idle qualification to the full-hash-verified native pair and enforce unchanged source and driver provenance.
 
 ## 0.36.3
 

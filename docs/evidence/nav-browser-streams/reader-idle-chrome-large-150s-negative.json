@@ -1,0 +1,111 @@
+{
+  "error": "AssertionError [ERR_ASSERTION]: {\"jobState\":\"browser_downloading\",\"bytes\":58589184,\"idle\":{\"requestedMs\":60000,\"responseFirstChunkWrittenAt\":1792445669598,\"durablePartialObservedAt\":1792445671111,\"bytesDuringIdle\":196608,\"idleReleasedAt\":1792445731126,\"responseTailWrittenAt\":1792445731126},\"requests\":1}\n+ actual - expected\n\n+ 'browser_downloading'\n- 'complete'\n",
+  "observations": {
+    "sourceRevision": "4bb588f543ec32f3e0a1dd616e3cc909e234b9c5",
+    "nativeBuildRevision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+    "diagnosticSourceChanges": false,
+    "rendererShim": false,
+    "idle": {
+      "requestedMs": 60000,
+      "responseFirstChunkWrittenAt": 1792445669598,
+      "durablePartialObservedAt": 1792445671111,
+      "bytesDuringIdle": 196608,
+      "idleReleasedAt": 1792445731126,
+      "responseTailWrittenAt": 1792445731126
+    },
+    "nativeBinarySha256": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+    "cliBinarySha256": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c",
+    "productionSourceHashes": {
+      "apps/extension/src/navigation/session/scope.ts": "447a6ad3a08067f1a5bc7e63f6656cb70acf1eeaedde2bb92e1e09b84bd34d2c",
+      "apps/extension/src/navigation/session/store.ts": "27eff892c8503f9fc0d9863360c7de6c056d05761cf53d86bcd98b2acf605d91",
+      "apps/extension/src/navigation/session/source.ts": "7260b130785aba5adb8d2b03ea3a834436c6d5bc592087e68cc32c23033ec985",
+      "apps/extension/src/navigation/session/document.ts": "21ded4a0f86faccf86f0c77ec7daf870146fc31db99d006286ff163259577d26",
+      "apps/extension/src/navigation/discovery/runtime.ts": "24f210321e21323d820717f54eef5502b429b2a63e82883508292ff0dd8d0b8d",
+      "apps/extension/src/navigation/session/start.ts": "76828c2456f7e8f7c96813dd2b1d8761d7ff0090e6f326a020cec13da7041556",
+      "apps/extension/src/navigation/session/transfer.ts": "dfc7ae15b96f9ab1802ebd853a8cf4e0aee467ae72a1fb17c1aef516fc81a4e7",
+      "apps/extension/src/navigation/accounts/policy.ts": "bb170bd14c822648b9b158e17cc88795b38ac005fd0904d9c0caa208322c55ad",
+      "apps/extension/src/navigation/accounts/premium.ts": "f3c830fe69505ffda33c1b31bb68de3a2fd85030b88adf176528ef9092484d0c",
+      "apps/extension/src/navigation/adapters/context.ts": "d3d747f5a894f171a49709513a2f6cf72441c551f879e9fd7b5c15f94de39e5e",
+      "apps/extension/src/resolver-policy.ts": "707d76cd56227a17bb25a17b37d6f21a09282c2fa50695b993e2a437253c0906",
+      "apps/extension/src/navigation/adapters/policy.ts": "accc3594102592862e5fdbefbbaf56d1adb125488bcc6798b37d07d5b19700d0",
+      "apps/extension/src/navigation/accounts/worker.ts": "9f42e93f2be9342ae3b5553a97f025c484d6e19a7adeb7025ac60044b92a786a",
+      "apps/extension/src/navigation/accounts/document.ts": "aae12c0365d70fc4c704edd6539e305d97a2ac2a30d429260a4394394bfc4f18",
+      "apps/extension/src/navigation/session/projection.ts": "3ada7cc9724ae5dff3d84a37be6e79d55f0bc17fd65ba9f100366651d8f9bbc5",
+      "apps/extension/src/navigation/authorization.ts": "bf349c0948ad2f3e15335d122c570a21d5b75261e76e0fbab2edbe999527cb47",
+      "apps/extension/src/navigation/session/preflight.ts": "e2b9cba9d61d5aa94805df3fe4249e1c6f6547bb41fb06e889066643957efe6f",
+      "apps/extension/src/navigation/streams/replay.ts": "3731c4951467c91cc3754dc952bf833264497c0f99431ae02ff3206ef483a4ae",
+      "packages/shared/src/navigation.ts": "2f74d31860083962bc01619ee039f0c5d35efc2e5ab2de3ee077db68454fa208",
+      "apps/extension/src/navigation/streams/transport.ts": "8dc7cd23f8cd39269db2546d05c7183b188105a97123facca8f427bb667bc66a",
+      "apps/extension/src/navigation/streams/ownership.ts": "ff11064d5a318d4cfdceee2d9f5c1e31f16ac18807e6fd5abacc115c4f476854",
+      "apps/extension/src/navigation/streams/recovery.ts": "6d6c0252237bc6c6f0051dfaf48cd06d97527b49a06af5e287c7814be63bfc81",
+      "apps/extension/src/navigation/streams/transitions.ts": "6513d3e0a24eb502ad20d5f475b322d7616c482537394ad175fece2fd245cd11",
+      "apps/extension/src/navigation/streams/capture.ts": "b4b4a736e64fe02cf095ff9aba1b2f6d10d06a29dcfdc010898b325844b7a12c",
+      "apps/extension/src/navigation/streams/blob.ts": "752894243a75fa5d77435947e5e8882a76d8e7c3cadd72fc796429c1d9965217",
+      "packages/shared/src/events.ts": "a7676df72fb47394caa922de9caa7b457389ac1d5ec88b28119e32d3851370e6",
+      "apps/extension/src/navigation/challenges/worker.ts": "462340e62993c4ce19db84bc0b98caa28fcc737780ac148f7a38c8eee1593c74",
+      "apps/extension/src/navigation/scheduler/http-date.ts": "817d6e2dd386abef40a88d3d6d24fabc38794475a25f67c2fa1c2b916c06faa9",
+      "apps/extension/src/navigation/scheduler/waits.ts": "834c8da61ee9309b82770bf342d75e12bc89aacca8bf2a1b18cd12cad6c3f269",
+      "apps/extension/src/navigation/scheduler/labels.ts": "832181f04bc73745f97d74aad993ab0d950cc69f33b35680a11a3d2f6f1fdc7e",
+      "apps/extension/src/navigation/scheduler/runtime.ts": "b424977fe05c3e30586295783c0ec2ac86f1c024a7b55b7944e6ebe1d131a3a8",
+      "apps/extension/src/navigation/scheduler/cancel.ts": "2adea304b3d458efbae889600c2e53e99854aa64d60f0fb65ee4782afa9d868b",
+      "apps/extension/src/navigation/scheduler/retry-after.ts": "6028bf622fef694e0914c6876f82f24b150b643833982cd33024e5380e5a353e",
+      "apps/extension/src/capture.ts": "51981332e825f355c134541bde1bbdc283e868b23b86fa8e6e9d22d29d1a8630",
+      "packages/shared/src/translations.ts": "a44030b9b382b3b425deda0dac50c5206c0f5c3efa6c518df92740b4ecd1f125",
+      "packages/shared/src/i18n.ts": "71d6f09ee4f7af5799cf0fbb693fc33563616cacd5680651e6cd4663f737562a",
+      "apps/extension/src/background.ts": "175f3a05e17ec41cc86cb29793b144d07bd8fec68d51ebd2ad9a1dd14bdb3446",
+      "apps/extension/src/navigation/accounts/binding.ts": "9755ba78c3a1a62046b7d96ac195b0e38f590296808ab3b9f4dd6c25ac13d78f",
+      "apps/extension/src/navigation/scheduler/timers.ts": "a5a209726b4f4b7521f55ad0fa7c869c4c2c150f295e166c3cb847a2a861c19a",
+      "apps/extension/src/navigation/adapters/dom.ts": "50fbfc819f705ff9248b23d1172786185b6a50bae4cf17ae467dc1ffd6d7dbd5",
+      "apps/extension/src/navigation/accounts/forms.ts": "a861673d4542838e0150669911f01a51e9148fc01793396b8252021ab1637161",
+      "apps/extension/src/navigation/accounts/observe.ts": "7f4d35a3ff0ed8587591d907f9e0cea2fc3b38d18153dde51fa04e3b777dd3e9",
+      "apps/extension/src/navigation/accounts/labels.ts": "23b1acb7ffce12a162c64756903c6dc4294ee2d3b16b1761131bfc99d76378ce",
+      "apps/extension/src/navigation/accounts/panel.ts": "e93b68ed5c9765d93b39a7ebfb53ae6f9403132bce7f386c038d999d33c42f99",
+      "apps/extension/src/navigation/challenges/geometry.ts": "10263a6c2086660b2348733a34e416e76b36bd4d0a0c3a1a1eba90846e403dfe",
+      "apps/extension/src/navigation/challenges/lifecycle.ts": "d22b8ec79b86f712a6cee6e4a0881ac37ec84b02b1ffc3f553fb35770b04045f",
+      "apps/extension/src/navigation/challenges/messages.ts": "563da6dc26a716561ad186de3887ef05e10ef7fa0a8e443e8b25897397f3fff2",
+      "apps/extension/src/navigation/challenges/page.ts": "acbe2dc5fd36cf6de04af77fd9c93e21849594ce885e426dbe963e416dc5bbdb",
+      "apps/extension/src/navigation/adapters/preview.ts": "478b5c171f9fb7990cb6371065959be1fa8f78a217f415ef2b498846da1d587d",
+      "apps/extension/src/navigation/adapters/selection-ui.ts": "0a9bb33f98264c70af66d1a7c67056f4ce1765df00861cd9409a1f026d42a516",
+      "apps/extension/src/resolver.ts": "cbb9d0a5379c4b2f5871bd0099742007c765ce2a90f6994be0118dd2c26f8ef5"
+    },
+    "buildProvenance": {
+      "explicitAbsWorkingDir": true,
+      "absoluteEntryPoints": true,
+      "nativeHostAddressOnlySubstitution": true
+    },
+    "bundleHashes": {
+      "background": "805737bc02b71095978622effad9a0976f866cbcff014bcf5d19eaff58999838",
+      "resolver": "7693aac40fec39f8c312267f4e54ddcc522e3d77699af7736fa3d812022dc3aa"
+    },
+    "navigationPermissionsPregranted": true,
+    "initialActivation": "Explicit native navigation job and extension navigation_queue_continue fixture action",
+    "productionControl": "Unchanged resolver follows the original POST form control",
+    "capturePageDriverAttached": false,
+    "previewUiQualified": false
+  },
+  "requests": [
+    {
+      "method": "POST"
+    }
+  ],
+  "allRequests": [
+    {
+      "method": "GET",
+      "path": "/nav-adapters/g4u/post"
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico"
+    },
+    {
+      "method": "POST",
+      "path": "/one-use"
+    }
+  ],
+  "diagnostic_context": {
+    "requested_payload_bytes": 67108881,
+    "configured_total_deadline_ms": 150000,
+    "source": "retained fixture invocation; diagnostic only",
+    "acceptance": "not qualified"
+  }
+}

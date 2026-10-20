@@ -1,0 +1,1252 @@
+{
+  "driverSha256": "22f7e838d87ad7e7d46f0392993966aff9ac75b8e18084c41e3b329513215514",
+  "sourceRoot": "C:\\Users\\gduplessy\\.codex\\worktrees\\nav-empty-streams\\Downloader",
+  "sourceInputs": [
+    {
+      "path": "../../../../code/Downloader/node_modules/.pnpm/webextension-polyfill@0.12.0/node_modules/webextension-polyfill/dist/browser-polyfill.js",
+      "sha256": "cfc53c3525587467c783ef1c6fdefbaf1d60ed197ea2fe0d45899b18069cf496"
+    },
+    {
+      "path": "apps/extension/src/background.ts",
+      "sha256": "175f3a05e17ec41cc86cb29793b144d07bd8fec68d51ebd2ad9a1dd14bdb3446"
+    },
+    {
+      "path": "apps/extension/src/capture.ts",
+      "sha256": "51981332e825f355c134541bde1bbdc283e868b23b86fa8e6e9d22d29d1a8630"
+    },
+    {
+      "path": "apps/extension/src/navigation/accounts/binding.ts",
+      "sha256": "9755ba78c3a1a62046b7d96ac195b0e38f590296808ab3b9f4dd6c25ac13d78f"
+    },
+    {
+      "path": "apps/extension/src/navigation/accounts/document.ts",
+      "sha256": "aae12c0365d70fc4c704edd6539e305d97a2ac2a30d429260a4394394bfc4f18"
+    },
+    {
+      "path": "apps/extension/src/navigation/accounts/forms.ts",
+      "sha256": "a861673d4542838e0150669911f01a51e9148fc01793396b8252021ab1637161"
+    },
+    {
+      "path": "apps/extension/src/navigation/accounts/labels.ts",
+      "sha256": "23b1acb7ffce12a162c64756903c6dc4294ee2d3b16b1761131bfc99d76378ce"
+    },
+    {
+      "path": "apps/extension/src/navigation/accounts/observe.ts",
+      "sha256": "7f4d35a3ff0ed8587591d907f9e0cea2fc3b38d18153dde51fa04e3b777dd3e9"
+    },
+    {
+      "path": "apps/extension/src/navigation/accounts/panel.ts",
+      "sha256": "e93b68ed5c9765d93b39a7ebfb53ae6f9403132bce7f386c038d999d33c42f99"
+    },
+    {
+      "path": "apps/extension/src/navigation/accounts/policy.ts",
+      "sha256": "bb170bd14c822648b9b158e17cc88795b38ac005fd0904d9c0caa208322c55ad"
+    },
+    {
+      "path": "apps/extension/src/navigation/accounts/premium.ts",
+      "sha256": "f3c830fe69505ffda33c1b31bb68de3a2fd85030b88adf176528ef9092484d0c"
+    },
+    {
+      "path": "apps/extension/src/navigation/accounts/worker.ts",
+      "sha256": "9f42e93f2be9342ae3b5553a97f025c484d6e19a7adeb7025ac60044b92a786a"
+    },
+    {
+      "path": "apps/extension/src/navigation/adapters/context.ts",
+      "sha256": "d3d747f5a894f171a49709513a2f6cf72441c551f879e9fd7b5c15f94de39e5e"
+    },
+    {
+      "path": "apps/extension/src/navigation/adapters/dom.ts",
+      "sha256": "50fbfc819f705ff9248b23d1172786185b6a50bae4cf17ae467dc1ffd6d7dbd5"
+    },
+    {
+      "path": "apps/extension/src/navigation/adapters/policy.ts",
+      "sha256": "accc3594102592862e5fdbefbbaf56d1adb125488bcc6798b37d07d5b19700d0"
+    },
+    {
+      "path": "apps/extension/src/navigation/adapters/preview.ts",
+      "sha256": "478b5c171f9fb7990cb6371065959be1fa8f78a217f415ef2b498846da1d587d"
+    },
+    {
+      "path": "apps/extension/src/navigation/adapters/selection-ui.ts",
+      "sha256": "0a9bb33f98264c70af66d1a7c67056f4ce1765df00861cd9409a1f026d42a516"
+    },
+    {
+      "path": "apps/extension/src/navigation/authorization.ts",
+      "sha256": "bf349c0948ad2f3e15335d122c570a21d5b75261e76e0fbab2edbe999527cb47"
+    },
+    {
+      "path": "apps/extension/src/navigation/challenges/geometry.ts",
+      "sha256": "10263a6c2086660b2348733a34e416e76b36bd4d0a0c3a1a1eba90846e403dfe"
+    },
+    {
+      "path": "apps/extension/src/navigation/challenges/lifecycle.ts",
+      "sha256": "d22b8ec79b86f712a6cee6e4a0881ac37ec84b02b1ffc3f553fb35770b04045f"
+    },
+    {
+      "path": "apps/extension/src/navigation/challenges/messages.ts",
+      "sha256": "563da6dc26a716561ad186de3887ef05e10ef7fa0a8e443e8b25897397f3fff2"
+    },
+    {
+      "path": "apps/extension/src/navigation/challenges/page.ts",
+      "sha256": "acbe2dc5fd36cf6de04af77fd9c93e21849594ce885e426dbe963e416dc5bbdb"
+    },
+    {
+      "path": "apps/extension/src/navigation/challenges/worker.ts",
+      "sha256": "462340e62993c4ce19db84bc0b98caa28fcc737780ac148f7a38c8eee1593c74"
+    },
+    {
+      "path": "apps/extension/src/navigation/discovery/runtime.ts",
+      "sha256": "bbae3d573db0278a3524dee18719134643c2835f5a663a01c2271f6afd5cdf04"
+    },
+    {
+      "path": "apps/extension/src/navigation/scheduler/cancel.ts",
+      "sha256": "2adea304b3d458efbae889600c2e53e99854aa64d60f0fb65ee4782afa9d868b"
+    },
+    {
+      "path": "apps/extension/src/navigation/scheduler/http-date.ts",
+      "sha256": "817d6e2dd386abef40a88d3d6d24fabc38794475a25f67c2fa1c2b916c06faa9"
+    },
+    {
+      "path": "apps/extension/src/navigation/scheduler/labels.ts",
+      "sha256": "832181f04bc73745f97d74aad993ab0d950cc69f33b35680a11a3d2f6f1fdc7e"
+    },
+    {
+      "path": "apps/extension/src/navigation/scheduler/retry-after.ts",
+      "sha256": "6028bf622fef694e0914c6876f82f24b150b643833982cd33024e5380e5a353e"
+    },
+    {
+      "path": "apps/extension/src/navigation/scheduler/runtime.ts",
+      "sha256": "b424977fe05c3e30586295783c0ec2ac86f1c024a7b55b7944e6ebe1d131a3a8"
+    },
+    {
+      "path": "apps/extension/src/navigation/scheduler/timers.ts",
+      "sha256": "a5a209726b4f4b7521f55ad0fa7c869c4c2c150f295e166c3cb847a2a861c19a"
+    },
+    {
+      "path": "apps/extension/src/navigation/scheduler/waits.ts",
+      "sha256": "834c8da61ee9309b82770bf342d75e12bc89aacca8bf2a1b18cd12cad6c3f269"
+    },
+    {
+      "path": "apps/extension/src/navigation/session/document.ts",
+      "sha256": "21ded4a0f86faccf86f0c77ec7daf870146fc31db99d006286ff163259577d26"
+    },
+    {
+      "path": "apps/extension/src/navigation/session/preflight.ts",
+      "sha256": "e2b9cba9d61d5aa94805df3fe4249e1c6f6547bb41fb06e889066643957efe6f"
+    },
+    {
+      "path": "apps/extension/src/navigation/session/projection.ts",
+      "sha256": "3ada7cc9724ae5dff3d84a37be6e79d55f0bc17fd65ba9f100366651d8f9bbc5"
+    },
+    {
+      "path": "apps/extension/src/navigation/session/scope.ts",
+      "sha256": "447a6ad3a08067f1a5bc7e63f6656cb70acf1eeaedde2bb92e1e09b84bd34d2c"
+    },
+    {
+      "path": "apps/extension/src/navigation/session/source.ts",
+      "sha256": "7260b130785aba5adb8d2b03ea3a834436c6d5bc592087e68cc32c23033ec985"
+    },
+    {
+      "path": "apps/extension/src/navigation/session/start.ts",
+      "sha256": "76828c2456f7e8f7c96813dd2b1d8761d7ff0090e6f326a020cec13da7041556"
+    },
+    {
+      "path": "apps/extension/src/navigation/session/store.ts",
+      "sha256": "27eff892c8503f9fc0d9863360c7de6c056d05761cf53d86bcd98b2acf605d91"
+    },
+    {
+      "path": "apps/extension/src/navigation/session/transfer.ts",
+      "sha256": "dfc7ae15b96f9ab1802ebd853a8cf4e0aee467ae72a1fb17c1aef516fc81a4e7"
+    },
+    {
+      "path": "apps/extension/src/navigation/streams/blob.ts",
+      "sha256": "752894243a75fa5d77435947e5e8882a76d8e7c3cadd72fc796429c1d9965217"
+    },
+    {
+      "path": "apps/extension/src/navigation/streams/capture.ts",
+      "sha256": "b4b4a736e64fe02cf095ff9aba1b2f6d10d06a29dcfdc010898b325844b7a12c"
+    },
+    {
+      "path": "apps/extension/src/navigation/streams/ownership.ts",
+      "sha256": "ff11064d5a318d4cfdceee2d9f5c1e31f16ac18807e6fd5abacc115c4f476854"
+    },
+    {
+      "path": "apps/extension/src/navigation/streams/recovery.ts",
+      "sha256": "6d6c0252237bc6c6f0051dfaf48cd06d97527b49a06af5e287c7814be63bfc81"
+    },
+    {
+      "path": "apps/extension/src/navigation/streams/replay.ts",
+      "sha256": "3731c4951467c91cc3754dc952bf833264497c0f99431ae02ff3206ef483a4ae"
+    },
+    {
+      "path": "apps/extension/src/navigation/streams/transitions.ts",
+      "sha256": "6513d3e0a24eb502ad20d5f475b322d7616c482537394ad175fece2fd245cd11"
+    },
+    {
+      "path": "apps/extension/src/navigation/streams/transport.ts",
+      "sha256": "8dc7cd23f8cd39269db2546d05c7183b188105a97123facca8f427bb667bc66a"
+    },
+    {
+      "path": "apps/extension/src/resolver-policy.ts",
+      "sha256": "707d76cd56227a17bb25a17b37d6f21a09282c2fa50695b993e2a437253c0906"
+    },
+    {
+      "path": "apps/extension/src/resolver.ts",
+      "sha256": "cbb9d0a5379c4b2f5871bd0099742007c765ce2a90f6994be0118dd2c26f8ef5"
+    },
+    {
+      "path": "packages/shared/src/events.ts",
+      "sha256": "a7676df72fb47394caa922de9caa7b457389ac1d5ec88b28119e32d3851370e6"
+    },
+    {
+      "path": "packages/shared/src/i18n.ts",
+      "sha256": "448eb43c26bdf6e5086974f6900569a37beb4f27433e6f28f51fdcdc87003fe7"
+    },
+    {
+      "path": "packages/shared/src/navigation.ts",
+      "sha256": "2f74d31860083962bc01619ee039f0c5d35efc2e5ab2de3ee077db68454fa208"
+    },
+    {
+      "path": "packages/shared/src/translations.ts",
+      "sha256": "15572ed13cdd28dad72688fc2cdf3239e1644fdb046f9ada99210d6d65f8ebd5"
+    }
+  ],
+  "buildMetafile": {
+    "inputs": {
+      "apps/extension/src/navigation/session/scope.ts": {
+        "bytes": 4556,
+        "imports": [],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/session/store.ts": {
+        "bytes": 8421,
+        "imports": [],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/session/source.ts": {
+        "bytes": 7731,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/session/scope.ts",
+            "kind": "import-statement",
+            "original": "./scope"
+          },
+          {
+            "path": "apps/extension/src/navigation/session/store.ts",
+            "kind": "import-statement",
+            "original": "./store"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/session/document.ts": {
+        "bytes": 3003,
+        "imports": [],
+        "format": "esm"
+      },
+      "../../../../code/Downloader/node_modules/.pnpm/webextension-polyfill@0.12.0/node_modules/webextension-polyfill/dist/browser-polyfill.js": {
+        "bytes": 38440,
+        "imports": [],
+        "format": "cjs"
+      },
+      "apps/extension/src/navigation/discovery/runtime.ts": {
+        "bytes": 23847,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/session/document.ts",
+            "kind": "import-statement",
+            "original": "../session/document"
+          },
+          {
+            "path": "../../../../code/Downloader/node_modules/.pnpm/webextension-polyfill@0.12.0/node_modules/webextension-polyfill/dist/browser-polyfill.js",
+            "kind": "import-statement",
+            "original": "webextension-polyfill"
+          },
+          {
+            "path": "apps/extension/src/navigation/session/scope.ts",
+            "kind": "import-statement",
+            "original": "../session/scope"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/session/start.ts": {
+        "bytes": 566,
+        "imports": [],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/session/transfer.ts": {
+        "bytes": 4721,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/session/scope.ts",
+            "kind": "import-statement",
+            "original": "./scope"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/accounts/policy.ts": {
+        "bytes": 2577,
+        "imports": [],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/accounts/premium.ts": {
+        "bytes": 1644,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/accounts/policy.ts",
+            "kind": "import-statement",
+            "original": "./policy"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/adapters/context.ts": {
+        "bytes": 502,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/session/scope.ts",
+            "kind": "import-statement",
+            "original": "../session/scope"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/resolver-policy.ts": {
+        "bytes": 3248,
+        "imports": [],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/adapters/policy.ts": {
+        "bytes": 7951,
+        "imports": [
+          {
+            "path": "apps/extension/src/resolver-policy.ts",
+            "kind": "import-statement",
+            "original": "../../resolver-policy"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/accounts/worker.ts": {
+        "bytes": 2197,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/adapters/context.ts",
+            "kind": "import-statement",
+            "original": "../adapters/context"
+          },
+          {
+            "path": "apps/extension/src/navigation/adapters/policy.ts",
+            "kind": "import-statement",
+            "original": "../adapters/policy"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/accounts/document.ts": {
+        "bytes": 1120,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/session/document.ts",
+            "kind": "import-statement",
+            "original": "../session/document"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/session/projection.ts": {
+        "bytes": 1023,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/session/scope.ts",
+            "kind": "import-statement",
+            "original": "./scope"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/authorization.ts": {
+        "bytes": 4764,
+        "imports": [],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/session/preflight.ts": {
+        "bytes": 1981,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/session/scope.ts",
+            "kind": "import-statement",
+            "original": "./scope"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/streams/replay.ts": {
+        "bytes": 1516,
+        "imports": [],
+        "format": "esm"
+      },
+      "packages/shared/src/navigation.ts": {
+        "bytes": 2120,
+        "imports": [],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/streams/transport.ts": {
+        "bytes": 7895,
+        "imports": [
+          {
+            "path": "../../../../code/Downloader/node_modules/.pnpm/webextension-polyfill@0.12.0/node_modules/webextension-polyfill/dist/browser-polyfill.js",
+            "kind": "import-statement",
+            "original": "webextension-polyfill"
+          },
+          {
+            "path": "packages/shared/src/navigation.ts",
+            "kind": "import-statement",
+            "original": "../../../../../packages/shared/src/navigation"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/streams/ownership.ts": {
+        "bytes": 961,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/session/scope.ts",
+            "kind": "import-statement",
+            "original": "../session/scope"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/streams/recovery.ts": {
+        "bytes": 2179,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/session/scope.ts",
+            "kind": "import-statement",
+            "original": "../session/scope"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/streams/transitions.ts": {
+        "bytes": 773,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/session/start.ts",
+            "kind": "import-statement",
+            "original": "../session/start"
+          },
+          {
+            "path": "apps/extension/src/navigation/session/scope.ts",
+            "kind": "import-statement",
+            "original": "../session/scope"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/streams/capture.ts": {
+        "bytes": 8957,
+        "imports": [
+          {
+            "path": "packages/shared/src/navigation.ts",
+            "kind": "import-statement",
+            "original": "../../../../../packages/shared/src/navigation"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/streams/blob.ts": {
+        "bytes": 1730,
+        "imports": [
+          {
+            "path": "packages/shared/src/navigation.ts",
+            "kind": "import-statement",
+            "original": "../../../../../packages/shared/src/navigation"
+          }
+        ],
+        "format": "esm"
+      },
+      "packages/shared/src/events.ts": {
+        "bytes": 1123,
+        "imports": [],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/challenges/worker.ts": {
+        "bytes": 4238,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/session/scope.ts",
+            "kind": "import-statement",
+            "original": "../session/scope"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/scheduler/http-date.ts": {
+        "bytes": 2834,
+        "imports": [],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/scheduler/waits.ts": {
+        "bytes": 4946,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/scheduler/http-date.ts",
+            "kind": "import-statement",
+            "original": "./http-date"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/scheduler/labels.ts": {
+        "bytes": 6255,
+        "imports": [],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/scheduler/runtime.ts": {
+        "bytes": 10346,
+        "imports": [
+          {
+            "path": "../../../../code/Downloader/node_modules/.pnpm/webextension-polyfill@0.12.0/node_modules/webextension-polyfill/dist/browser-polyfill.js",
+            "kind": "import-statement",
+            "original": "webextension-polyfill"
+          },
+          {
+            "path": "apps/extension/src/navigation/scheduler/waits.ts",
+            "kind": "import-statement",
+            "original": "./waits"
+          },
+          {
+            "path": "apps/extension/src/navigation/scheduler/labels.ts",
+            "kind": "import-statement",
+            "original": "./labels"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/scheduler/cancel.ts": {
+        "bytes": 2011,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/session/scope.ts",
+            "kind": "import-statement",
+            "original": "../session/scope"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/scheduler/retry-after.ts": {
+        "bytes": 8688,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/session/scope.ts",
+            "kind": "import-statement",
+            "original": "../session/scope"
+          },
+          {
+            "path": "apps/extension/src/navigation/scheduler/waits.ts",
+            "kind": "import-statement",
+            "original": "./waits"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/capture.ts": {
+        "bytes": 3990,
+        "imports": [],
+        "format": "esm"
+      },
+      "packages/shared/src/translations.ts": {
+        "bytes": 37921,
+        "imports": [],
+        "format": "esm"
+      },
+      "packages/shared/src/i18n.ts": {
+        "bytes": 9059,
+        "imports": [
+          {
+            "path": "packages/shared/src/translations.ts",
+            "kind": "import-statement",
+            "original": "./translations"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/background.ts": {
+        "bytes": 98739,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/session/source.ts",
+            "kind": "import-statement",
+            "original": "./navigation/session/source"
+          },
+          {
+            "path": "apps/extension/src/navigation/discovery/runtime.ts",
+            "kind": "import-statement",
+            "original": "./navigation/discovery/runtime"
+          },
+          {
+            "path": "apps/extension/src/navigation/session/document.ts",
+            "kind": "import-statement",
+            "original": "./navigation/session/document"
+          },
+          {
+            "path": "apps/extension/src/navigation/session/start.ts",
+            "kind": "import-statement",
+            "original": "./navigation/session/start"
+          },
+          {
+            "path": "apps/extension/src/navigation/session/transfer.ts",
+            "kind": "import-statement",
+            "original": "./navigation/session/transfer"
+          },
+          {
+            "path": "apps/extension/src/navigation/accounts/premium.ts",
+            "kind": "import-statement",
+            "original": "./navigation/accounts/premium"
+          },
+          {
+            "path": "apps/extension/src/navigation/accounts/worker.ts",
+            "kind": "import-statement",
+            "original": "./navigation/accounts/worker"
+          },
+          {
+            "path": "apps/extension/src/navigation/accounts/document.ts",
+            "kind": "import-statement",
+            "original": "./navigation/accounts/document"
+          },
+          {
+            "path": "apps/extension/src/navigation/accounts/policy.ts",
+            "kind": "import-statement",
+            "original": "./navigation/accounts/policy"
+          },
+          {
+            "path": "apps/extension/src/navigation/session/projection.ts",
+            "kind": "import-statement",
+            "original": "./navigation/session/projection"
+          },
+          {
+            "path": "apps/extension/src/navigation/authorization.ts",
+            "kind": "import-statement",
+            "original": "./navigation/authorization"
+          },
+          {
+            "path": "apps/extension/src/navigation/adapters/policy.ts",
+            "kind": "import-statement",
+            "original": "./navigation/adapters/policy"
+          },
+          {
+            "path": "apps/extension/src/navigation/session/scope.ts",
+            "kind": "import-statement",
+            "original": "./navigation/session/scope"
+          },
+          {
+            "path": "apps/extension/src/navigation/session/preflight.ts",
+            "kind": "import-statement",
+            "original": "./navigation/session/preflight"
+          },
+          {
+            "path": "apps/extension/src/navigation/session/store.ts",
+            "kind": "import-statement",
+            "original": "./navigation/session/store"
+          },
+          {
+            "path": "apps/extension/src/navigation/streams/replay.ts",
+            "kind": "import-statement",
+            "original": "./navigation/streams/replay"
+          },
+          {
+            "path": "apps/extension/src/navigation/streams/transport.ts",
+            "kind": "import-statement",
+            "original": "./navigation/streams/transport"
+          },
+          {
+            "path": "apps/extension/src/navigation/streams/ownership.ts",
+            "kind": "import-statement",
+            "original": "./navigation/streams/ownership"
+          },
+          {
+            "path": "apps/extension/src/navigation/streams/recovery.ts",
+            "kind": "import-statement",
+            "original": "./navigation/streams/recovery"
+          },
+          {
+            "path": "apps/extension/src/navigation/streams/transitions.ts",
+            "kind": "import-statement",
+            "original": "./navigation/streams/transitions"
+          },
+          {
+            "path": "apps/extension/src/navigation/streams/capture.ts",
+            "kind": "import-statement",
+            "original": "./navigation/streams/capture"
+          },
+          {
+            "path": "apps/extension/src/navigation/streams/blob.ts",
+            "kind": "import-statement",
+            "original": "./navigation/streams/blob"
+          },
+          {
+            "path": "packages/shared/src/events.ts",
+            "kind": "import-statement",
+            "original": "../../../packages/shared/src/events"
+          },
+          {
+            "path": "../../../../code/Downloader/node_modules/.pnpm/webextension-polyfill@0.12.0/node_modules/webextension-polyfill/dist/browser-polyfill.js",
+            "kind": "import-statement",
+            "original": "webextension-polyfill"
+          },
+          {
+            "path": "apps/extension/src/navigation/challenges/worker.ts",
+            "kind": "import-statement",
+            "original": "./navigation/challenges/worker"
+          },
+          {
+            "path": "apps/extension/src/resolver-policy.ts",
+            "kind": "import-statement",
+            "original": "./resolver-policy"
+          },
+          {
+            "path": "apps/extension/src/navigation/scheduler/runtime.ts",
+            "kind": "import-statement",
+            "original": "./navigation/scheduler/runtime"
+          },
+          {
+            "path": "apps/extension/src/navigation/scheduler/cancel.ts",
+            "kind": "import-statement",
+            "original": "./navigation/scheduler/cancel"
+          },
+          {
+            "path": "apps/extension/src/navigation/scheduler/waits.ts",
+            "kind": "import-statement",
+            "original": "./navigation/scheduler/waits"
+          },
+          {
+            "path": "apps/extension/src/navigation/scheduler/retry-after.ts",
+            "kind": "import-statement",
+            "original": "./navigation/scheduler/retry-after"
+          },
+          {
+            "path": "apps/extension/src/capture.ts",
+            "kind": "import-statement",
+            "original": "./capture"
+          },
+          {
+            "path": "packages/shared/src/i18n.ts",
+            "kind": "import-statement",
+            "original": "../../../packages/shared/src/i18n"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/accounts/binding.ts": {
+        "bytes": 664,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/adapters/context.ts",
+            "kind": "import-statement",
+            "original": "../adapters/context"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/scheduler/timers.ts": {
+        "bytes": 681,
+        "imports": [],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/adapters/dom.ts": {
+        "bytes": 6645,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/scheduler/timers.ts",
+            "kind": "import-statement",
+            "original": "../scheduler/timers"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/accounts/forms.ts": {
+        "bytes": 6007,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/accounts/binding.ts",
+            "kind": "import-statement",
+            "original": "./binding"
+          },
+          {
+            "path": "apps/extension/src/navigation/adapters/dom.ts",
+            "kind": "import-statement",
+            "original": "../adapters/dom"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/accounts/observe.ts": {
+        "bytes": 1941,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/accounts/policy.ts",
+            "kind": "import-statement",
+            "original": "./policy"
+          },
+          {
+            "path": "apps/extension/src/navigation/accounts/forms.ts",
+            "kind": "import-statement",
+            "original": "./forms"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/accounts/labels.ts": {
+        "bytes": 10244,
+        "imports": [],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/accounts/panel.ts": {
+        "bytes": 3554,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/accounts/binding.ts",
+            "kind": "import-statement",
+            "original": "./binding"
+          },
+          {
+            "path": "apps/extension/src/navigation/accounts/labels.ts",
+            "kind": "import-statement",
+            "original": "./labels"
+          },
+          {
+            "path": "apps/extension/src/navigation/accounts/policy.ts",
+            "kind": "import-statement",
+            "original": "./policy"
+          },
+          {
+            "path": "apps/extension/src/navigation/accounts/forms.ts",
+            "kind": "import-statement",
+            "original": "./forms"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/challenges/geometry.ts": {
+        "bytes": 4199,
+        "imports": [],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/challenges/lifecycle.ts": {
+        "bytes": 1063,
+        "imports": [],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/challenges/messages.ts": {
+        "bytes": 2544,
+        "imports": [],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/challenges/page.ts": {
+        "bytes": 14989,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/challenges/geometry.ts",
+            "kind": "import-statement",
+            "original": "./geometry"
+          },
+          {
+            "path": "apps/extension/src/navigation/challenges/lifecycle.ts",
+            "kind": "import-statement",
+            "original": "./lifecycle"
+          },
+          {
+            "path": "apps/extension/src/navigation/challenges/messages.ts",
+            "kind": "import-statement",
+            "original": "./messages"
+          }
+        ],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/adapters/preview.ts": {
+        "bytes": 1861,
+        "imports": [],
+        "format": "esm"
+      },
+      "apps/extension/src/navigation/adapters/selection-ui.ts": {
+        "bytes": 9053,
+        "imports": [],
+        "format": "esm"
+      },
+      "apps/extension/src/resolver.ts": {
+        "bytes": 19238,
+        "imports": [
+          {
+            "path": "apps/extension/src/navigation/accounts/observe.ts",
+            "kind": "import-statement",
+            "original": "./navigation/accounts/observe"
+          },
+          {
+            "path": "apps/extension/src/navigation/accounts/policy.ts",
+            "kind": "import-statement",
+            "original": "./navigation/accounts/policy"
+          },
+          {
+            "path": "apps/extension/src/navigation/accounts/panel.ts",
+            "kind": "import-statement",
+            "original": "./navigation/accounts/panel"
+          },
+          {
+            "path": "apps/extension/src/navigation/accounts/labels.ts",
+            "kind": "import-statement",
+            "original": "./navigation/accounts/labels"
+          },
+          {
+            "path": "apps/extension/src/navigation/adapters/policy.ts",
+            "kind": "import-statement",
+            "original": "./navigation/adapters/policy"
+          },
+          {
+            "path": "../../../../code/Downloader/node_modules/.pnpm/webextension-polyfill@0.12.0/node_modules/webextension-polyfill/dist/browser-polyfill.js",
+            "kind": "import-statement",
+            "original": "webextension-polyfill"
+          },
+          {
+            "path": "apps/extension/src/navigation/challenges/page.ts",
+            "kind": "import-statement",
+            "original": "./navigation/challenges/page"
+          },
+          {
+            "path": "apps/extension/src/resolver-policy.ts",
+            "kind": "import-statement",
+            "original": "./resolver-policy"
+          },
+          {
+            "path": "apps/extension/src/navigation/adapters/dom.ts",
+            "kind": "import-statement",
+            "original": "./navigation/adapters/dom"
+          },
+          {
+            "path": "apps/extension/src/navigation/adapters/policy.ts",
+            "kind": "import-statement",
+            "original": "./navigation/adapters/policy"
+          },
+          {
+            "path": "apps/extension/src/navigation/adapters/preview.ts",
+            "kind": "import-statement",
+            "original": "./navigation/adapters/preview"
+          },
+          {
+            "path": "apps/extension/src/navigation/adapters/selection-ui.ts",
+            "kind": "import-statement",
+            "original": "./navigation/adapters/selection-ui"
+          },
+          {
+            "path": "apps/extension/src/navigation/adapters/context.ts",
+            "kind": "import-statement",
+            "original": "./navigation/adapters/context"
+          }
+        ],
+        "format": "esm"
+      }
+    },
+    "outputs": {
+      ".fixture-streams/qualification-blob-1792467681133/extension/background.js": {
+        "imports": [],
+        "exports": [],
+        "entryPoint": "apps/extension/src/background.ts",
+        "inputs": {
+          "../../../../code/Downloader/node_modules/.pnpm/webextension-polyfill@0.12.0/node_modules/webextension-polyfill/dist/browser-polyfill.js": {
+            "bytesInOutput": 32436
+          },
+          "apps/extension/src/navigation/session/scope.ts": {
+            "bytesInOutput": 2009
+          },
+          "apps/extension/src/navigation/session/store.ts": {
+            "bytesInOutput": 7244
+          },
+          "apps/extension/src/navigation/session/source.ts": {
+            "bytesInOutput": 6318
+          },
+          "apps/extension/src/navigation/session/document.ts": {
+            "bytesInOutput": 2246
+          },
+          "apps/extension/src/navigation/discovery/runtime.ts": {
+            "bytesInOutput": 23284
+          },
+          "apps/extension/src/navigation/session/start.ts": {
+            "bytesInOutput": 436
+          },
+          "apps/extension/src/navigation/session/transfer.ts": {
+            "bytesInOutput": 3864
+          },
+          "apps/extension/src/navigation/accounts/policy.ts": {
+            "bytesInOutput": 1142
+          },
+          "apps/extension/src/navigation/accounts/premium.ts": {
+            "bytesInOutput": 1301
+          },
+          "apps/extension/src/navigation/adapters/context.ts": {
+            "bytesInOutput": 0
+          },
+          "apps/extension/src/resolver-policy.ts": {
+            "bytesInOutput": 180
+          },
+          "apps/extension/src/navigation/adapters/policy.ts": {
+            "bytesInOutput": 1541
+          },
+          "apps/extension/src/navigation/accounts/worker.ts": {
+            "bytesInOutput": 1412
+          },
+          "apps/extension/src/navigation/accounts/document.ts": {
+            "bytesInOutput": 905
+          },
+          "apps/extension/src/navigation/session/projection.ts": {
+            "bytesInOutput": 461
+          },
+          "apps/extension/src/navigation/authorization.ts": {
+            "bytesInOutput": 3489
+          },
+          "apps/extension/src/navigation/session/preflight.ts": {
+            "bytesInOutput": 1173
+          },
+          "apps/extension/src/navigation/streams/replay.ts": {
+            "bytesInOutput": 881
+          },
+          "apps/extension/src/navigation/streams/transport.ts": {
+            "bytesInOutput": 6559
+          },
+          "packages/shared/src/navigation.ts": {
+            "bytesInOutput": 79
+          },
+          "apps/extension/src/navigation/streams/ownership.ts": {
+            "bytesInOutput": 590
+          },
+          "apps/extension/src/navigation/streams/recovery.ts": {
+            "bytesInOutput": 1455
+          },
+          "apps/extension/src/navigation/streams/transitions.ts": {
+            "bytesInOutput": 501
+          },
+          "apps/extension/src/navigation/streams/capture.ts": {
+            "bytesInOutput": 5546
+          },
+          "apps/extension/src/navigation/streams/blob.ts": {
+            "bytesInOutput": 1475
+          },
+          "packages/shared/src/events.ts": {
+            "bytesInOutput": 713
+          },
+          "apps/extension/src/background.ts": {
+            "bytesInOutput": 93063
+          },
+          "apps/extension/src/navigation/challenges/worker.ts": {
+            "bytesInOutput": 2710
+          },
+          "apps/extension/src/navigation/scheduler/runtime.ts": {
+            "bytesInOutput": 8902
+          },
+          "apps/extension/src/navigation/scheduler/http-date.ts": {
+            "bytesInOutput": 2489
+          },
+          "apps/extension/src/navigation/scheduler/waits.ts": {
+            "bytesInOutput": 3627
+          },
+          "apps/extension/src/navigation/scheduler/labels.ts": {
+            "bytesInOutput": 8418
+          },
+          "apps/extension/src/navigation/scheduler/cancel.ts": {
+            "bytesInOutput": 956
+          },
+          "apps/extension/src/navigation/scheduler/retry-after.ts": {
+            "bytesInOutput": 6198
+          },
+          "apps/extension/src/capture.ts": {
+            "bytesInOutput": 2802
+          },
+          "packages/shared/src/translations.ts": {
+            "bytesInOutput": 55802
+          },
+          "packages/shared/src/i18n.ts": {
+            "bytesInOutput": 8819
+          }
+        },
+        "bytes": 304610
+      },
+      ".fixture-streams/qualification-blob-1792467681133/extension/resolver.js": {
+        "imports": [],
+        "exports": [],
+        "entryPoint": "apps/extension/src/resolver.ts",
+        "inputs": {
+          "../../../../code/Downloader/node_modules/.pnpm/webextension-polyfill@0.12.0/node_modules/webextension-polyfill/dist/browser-polyfill.js": {
+            "bytesInOutput": 32436
+          },
+          "apps/extension/src/navigation/accounts/policy.ts": {
+            "bytesInOutput": 1999
+          },
+          "apps/extension/src/navigation/session/scope.ts": {
+            "bytesInOutput": 444
+          },
+          "apps/extension/src/navigation/adapters/context.ts": {
+            "bytesInOutput": 0
+          },
+          "apps/extension/src/navigation/accounts/binding.ts": {
+            "bytesInOutput": 464
+          },
+          "apps/extension/src/navigation/scheduler/timers.ts": {
+            "bytesInOutput": 676
+          },
+          "apps/extension/src/navigation/adapters/dom.ts": {
+            "bytesInOutput": 5638
+          },
+          "apps/extension/src/navigation/accounts/forms.ts": {
+            "bytesInOutput": 5143
+          },
+          "apps/extension/src/navigation/accounts/observe.ts": {
+            "bytesInOutput": 1682
+          },
+          "apps/extension/src/navigation/accounts/labels.ts": {
+            "bytesInOutput": 13496
+          },
+          "apps/extension/src/navigation/accounts/panel.ts": {
+            "bytesInOutput": 2959
+          },
+          "apps/extension/src/resolver-policy.ts": {
+            "bytesInOutput": 1900
+          },
+          "apps/extension/src/navigation/adapters/policy.ts": {
+            "bytesInOutput": 6105
+          },
+          "apps/extension/src/resolver.ts": {
+            "bytesInOutput": 17095
+          },
+          "apps/extension/src/navigation/challenges/geometry.ts": {
+            "bytesInOutput": 3262
+          },
+          "apps/extension/src/navigation/challenges/lifecycle.ts": {
+            "bytesInOutput": 609
+          },
+          "apps/extension/src/navigation/challenges/messages.ts": {
+            "bytesInOutput": 3661
+          },
+          "apps/extension/src/navigation/challenges/page.ts": {
+            "bytesInOutput": 13539
+          },
+          "apps/extension/src/navigation/adapters/preview.ts": {
+            "bytesInOutput": 1156
+          },
+          "apps/extension/src/navigation/adapters/selection-ui.ts": {
+            "bytesInOutput": 10018
+          }
+        },
+        "bytes": 124837
+      }
+    }
+  },
+  "privateContextSha256": "24368129d212eba0fd10509e0cd0282332a12cd3e8c47229a0bf93beb8631d5f",
+  "productionBundles": {
+    "background.js": "34d84b9d488fcaa18919a245e0f54265335b91adb8a575098fba7b9006f6771a",
+    "resolver.js": "3b737365d7b2c435c6e8a74651ebf6a9e7e89ab79c644eac0c03d7bab7eb9ff8"
+  },
+  "acceptance": "passed",
+  "mode": "blob",
+  "browser": "Edg/155.0.4283.62",
+  "os": "win32",
+  "architecture": "x64",
+  "checkedBase": "aaa278aaaa7e7024f4badc230e2127e92f876d9d",
+  "sourceRevision": "aaa278aaaa7e7024f4badc230e2127e92f876d9d",
+  "productionBackground": true,
+  "productionResolver": true,
+  "diagnosticSourceChanges": false,
+  "driver": "real radio/Continue/Cancel mouse events in closed production preview",
+  "nativeTransport": "persistent connectNative",
+  "source": "original page-owned Blob",
+  "tokenRequests": [],
+  "nativePairRevision": "ca7927bb62d9bdc2802f03b11bfe8eacf3b49a39",
+  "expectedBytes": 0,
+  "actualBytes": 0,
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "state": "complete",
+  "source_generation": 1,
+  "claim_generation": 1,
+  "originResponseRequests": 0,
+  "originRequests": [
+    {
+      "method": "GET",
+      "path": "/nav-adapters/g4u/blob",
+      "browser": true
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico",
+      "browser": true
+    }
+  ],
+  "observations": {
+    "nativeRevision": "ca7927bb62d9bdc2802f03b11bfe8eacf3b49a39",
+    "nativeBuildProfile": "dev (unoptimized + debuginfo)",
+    "expectedNativeSha256": {
+      "downloader-service.exe": "d0cf3deb2d26b7d4957d3f1177252841af747abd557d95fb6c1f1c517c8c3c95",
+      "downloader.exe": "64f79ae41c0596712e6ff44ca00098f8eb8983ea64d98de0a11d924a5f080650"
+    },
+    "cliVersion": "downloader-cli 0.39.0",
+    "nativeExecutables": {
+      "hostAndDaemon": {
+        "workspaceRelativePath": "run/native/downloader-service.exe",
+        "sha256": "d0cf3deb2d26b7d4957d3f1177252841af747abd557d95fb6c1f1c517c8c3c95",
+        "bytes": 17475584,
+        "modifiedUtc": "2026-10-19T22:02:14.539Z",
+        "selfReportedVersion": null,
+        "sameExecutable": true
+      },
+      "cli": {
+        "workspaceRelativePath": "run/native/downloader.exe",
+        "sha256": "64f79ae41c0596712e6ff44ca00098f8eb8983ea64d98de0a11d924a5f080650",
+        "bytes": 6320128,
+        "modifiedUtc": "2026-10-19T22:02:20.093Z",
+        "selfReportedVersion": "downloader-cli 0.39.0"
+      }
+    },
+    "ownedTabCorrelation": "actual debugger target tabId",
+    "radio": {
+      "checked": true,
+      "disabled": false
+    },
+    "continue": {
+      "disabled": false
+    },
+    "durationMs": 27249,
+    "transferElapsedMs": 6422,
+    "firstDurableProgressMs": null,
+    "progressSamples": [],
+    "measuredBytesPerSecond": 0,
+    "originalClicks": 0,
+    "previewStillVisible": false,
+    "interruptionApplied": false,
+    "private": false,
+    "previewText": null,
+    "consoleEvents": [],
+    "lastError": null,
+    "nativeOriginRequests": 0,
+    "captureStates": [
+      "complete"
+    ],
+    "typedRecoveryReason": null,
+    "adapter": {
+      "id": "local-fixture",
+      "version": "1.0.0",
+      "selectedHost": null
+    },
+    "publishedFileExists": true,
+    "publishedFileBytes": 0,
+    "publishedFileSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "workerHeap": {
+      "samples": 59,
+      "baselineBytes": 1616508,
+      "peakBytes": 2120772
+    }
+  },
+  "limitations": [
+    "Local fixtures; live providers and permission prompt pending",
+    "No Firefox ESR or unavailable OS qualification from this run"
+  ]
+}
