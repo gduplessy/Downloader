@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.41.3
+
+- Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.
+
 ## 0.41.2
 
 - Preserve historical local challenge and initial-response scheduler observations with their original provenance and limitations.
@@ -11,6 +15,12 @@
 ## 0.41.0
 
 - Bound targeted private navigation authority reads to current and legacy keys while preserving ephemeral isolation and precedence.
+
+## 0.40.0
+
+- Show localized browser capture readiness, site-permission requirements, and desktop destination guidance.
+- Add a fixed, expiring, one-use request that focuses destination settings in the running desktop; browser callers cannot consume requests or write settings.
+- Preserve default/category destination selection and existing job paths; Firefox binary navigation capture remains pending.
 
 ## 0.38.2
 

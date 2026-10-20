@@ -534,6 +534,11 @@ pub enum Command {
         username: String,
         password: String,
     },
+    DesktopDestination,
+    DesktopDestinationSetup(crate::desktop_setup::Request),
+    ConsumeDesktopDestinationSetup {
+        nonce: String,
+    },
     Diagnostics,
     Quit,
 }
@@ -638,6 +643,10 @@ pub enum EventPayload {
         navigation_owner: Option<String>,
         #[serde(default)]
         navigation_scope: Option<Box<crate::navigation::SessionScope>>,
+    },
+    DesktopDestinationSetup {
+        nonce: String,
+        expires_at: i64,
     },
     SettingsChanged,
     QueuesChanged,

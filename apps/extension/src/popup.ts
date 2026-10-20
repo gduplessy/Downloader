@@ -1,3 +1,4 @@
+import { captureText } from '../../../packages/shared/src/capture-ui';
 import { mountDiscovery } from './navigation/discovery/ui';
 import browser from 'webextension-polyfill';
 import { streamTranslate, type StreamTextKey } from './navigation/streams/i18n';
@@ -27,6 +28,9 @@ async function main() {
           element('error').textContent = String(e);
         });
   };
+  const setup = document.createElement('p');
+  setup.textContent = captureText(locale,'setupHelp');
+  element('options').before(setup);
   element('options').onclick = () => void browser.runtime.openOptionsPage();
   element('try-solver').onclick = () =>
     void browser.runtime
