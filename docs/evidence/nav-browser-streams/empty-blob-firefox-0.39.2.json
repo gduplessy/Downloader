@@ -1,0 +1,137 @@
+{
+  "browser": "Firefox/158.0",
+  "os": "win32",
+  "architecture": "x64",
+  "version": "0.39.2",
+  "nativeVersion": "0.39.0",
+  "nativeBuildRevision": "ca7927bb62d9bdc2802f03b11bfe8eacf3b49a39",
+  "nativeManifest": {
+    "revision": "ca7927bb62d9bdc2802f03b11bfe8eacf3b49a39",
+    "version": "0.39.0",
+    "buildProfile": "dev (unoptimized + debuginfo)",
+    "sha256": {
+      "downloader-service.exe": "d0cf3deb2d26b7d4957d3f1177252841af747abd557d95fb6c1f1c517c8c3c95",
+      "downloader.exe": "64f79ae41c0596712e6ff44ca00098f8eb8983ea64d98de0a11d924a5f080650"
+    }
+  },
+  "nativeHostDiagnostics": {
+    "version": "0.39.0",
+    "protocol": 1,
+    "platform": "windows"
+  },
+  "daemonDiagnostics": {
+    "version": "0.39.0",
+    "protocol": 1,
+    "platform": "windows"
+  },
+  "sourceRevision": "aaa278aaaa7e7024f4badc230e2127e92f876d9d",
+  "compiledSourceRevision": "aaa278aaaa7e7024f4badc230e2127e92f876d9d",
+  "buildProvenance": {
+    "explicitAbsWorkingDir": true,
+    "absoluteEntryPoints": true,
+    "verifiedProductionInputs": [
+      "apps/extension/src/navigation/session/scope.ts",
+      "apps/extension/src/navigation/session/store.ts",
+      "apps/extension/src/navigation/session/source.ts",
+      "apps/extension/src/navigation/session/document.ts",
+      "apps/extension/src/navigation/discovery/runtime.ts",
+      "apps/extension/src/navigation/session/start.ts",
+      "apps/extension/src/navigation/session/transfer.ts",
+      "apps/extension/src/navigation/accounts/policy.ts",
+      "apps/extension/src/navigation/accounts/premium.ts",
+      "apps/extension/src/navigation/adapters/context.ts",
+      "apps/extension/src/resolver-policy.ts",
+      "apps/extension/src/navigation/adapters/policy.ts",
+      "apps/extension/src/navigation/accounts/worker.ts",
+      "apps/extension/src/navigation/accounts/document.ts",
+      "apps/extension/src/navigation/session/projection.ts",
+      "apps/extension/src/navigation/authorization.ts",
+      "apps/extension/src/navigation/session/preflight.ts",
+      "apps/extension/src/navigation/streams/replay.ts",
+      "packages/shared/src/navigation.ts",
+      "apps/extension/src/navigation/streams/transport.ts",
+      "apps/extension/src/navigation/streams/ownership.ts",
+      "apps/extension/src/navigation/streams/recovery.ts",
+      "apps/extension/src/navigation/streams/transitions.ts",
+      "apps/extension/src/navigation/streams/capture.ts",
+      "apps/extension/src/navigation/streams/blob.ts",
+      "packages/shared/src/events.ts",
+      "apps/extension/src/navigation/challenges/worker.ts",
+      "apps/extension/src/navigation/scheduler/http-date.ts",
+      "apps/extension/src/navigation/scheduler/waits.ts",
+      "apps/extension/src/navigation/scheduler/labels.ts",
+      "apps/extension/src/navigation/scheduler/runtime.ts",
+      "apps/extension/src/navigation/scheduler/cancel.ts",
+      "apps/extension/src/navigation/scheduler/retry-after.ts",
+      "apps/extension/src/capture.ts",
+      "packages/shared/src/translations.ts",
+      "packages/shared/src/i18n.ts",
+      "apps/extension/src/background.ts",
+      "apps/extension/src/navigation/accounts/binding.ts",
+      "apps/extension/src/navigation/scheduler/timers.ts",
+      "apps/extension/src/navigation/adapters/dom.ts",
+      "apps/extension/src/navigation/accounts/forms.ts",
+      "apps/extension/src/navigation/accounts/observe.ts",
+      "apps/extension/src/navigation/accounts/labels.ts",
+      "apps/extension/src/navigation/accounts/panel.ts",
+      "apps/extension/src/navigation/challenges/geometry.ts",
+      "apps/extension/src/navigation/challenges/lifecycle.ts",
+      "apps/extension/src/navigation/challenges/messages.ts",
+      "apps/extension/src/navigation/challenges/page.ts",
+      "apps/extension/src/navigation/adapters/preview.ts",
+      "apps/extension/src/navigation/adapters/selection-ui.ts",
+      "apps/extension/src/resolver.ts"
+    ]
+  },
+  "sourceHashes": {
+    "apps/extension/src/background.ts": "175f3a05e17ec41cc86cb29793b144d07bd8fec68d51ebd2ad9a1dd14bdb3446",
+    "apps/extension/src/resolver.ts": "cbb9d0a5379c4b2f5871bd0099742007c765ce2a90f6994be0118dd2c26f8ef5",
+    "apps/extension/src/navigation/streams/blob.ts": "752894243a75fa5d77435947e5e8882a76d8e7c3cadd72fc796429c1d9965217",
+    "apps/extension/src/navigation/streams/capture.ts": "b4b4a736e64fe02cf095ff9aba1b2f6d10d06a29dcfdc010898b325844b7a12c",
+    "apps/extension/src/navigation/streams/transport.ts": "8dc7cd23f8cd39269db2546d05c7183b188105a97123facca8f427bb667bc66a"
+  },
+  "extensionBundleHashes": {
+    "background": "6593aa17afd5426494470981ca299bc8cd62dfb8a63c99986611e89c16318779",
+    "resolver": "3b737365d7b2c435c6e8a74651ebf6a9e7e89ab79c644eac0c03d7bab7eb9ff8"
+  },
+  "nativeBinarySha256": "d0cf3deb2d26b7d4957d3f1177252841af747abd557d95fb6c1f1c517c8c3c95",
+  "cliBinarySha256": "64f79ae41c0596712e6ff44ca00098f8eb8983ea64d98de0a11d924a5f080650",
+  "scenario": "blob",
+  "filename": "original-blob.bin",
+  "extensionAPI": "page-owned Blob reader -> owned_blob_stream",
+  "transport": "persistent browser.runtime.connectNative",
+  "driver": "WebDriver BiDi for addon installation and controls; no byte relay",
+  "diagnosticNativeWrapper": false,
+  "diagnosticSourceChanges": false,
+  "productionBackground": true,
+  "productionResolver": true,
+  "submissions": 0,
+  "originalPageOwnedXhr": false,
+  "pageOwnedConsumer": null,
+  "ordinaryNavigationPostRewritten": false,
+  "httpRequests": [
+    {
+      "method": "GET",
+      "path": "/nav-adapters/g4u/blob"
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico"
+    }
+  ],
+  "httpPayloadRequests": 0,
+  "bytes": 0,
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "nativeVerifiedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "nativeBytes": 0,
+  "nativeTotal": 0,
+  "state": "complete",
+  "claimGeneration": 1,
+  "sourceGeneration": 1,
+  "limitations": [
+    "Local fixtures; live hosts/accounts pending",
+    "Firefox stable only; ESR and other OS rows are separate",
+    "Fixture permissions granted in isolated manifest; user permission prompts unqualified",
+    "Ordinary binary POST download lane remains pending; Blob cancellation/private/container are separate qualification gates"
+  ]
+}

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.39.3
+
+- Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.
+
+## 0.39.2
+
+- Preserve read-only page readiness, anchor and existing console/native diagnostics when installed Blob preview admission fails; no renderer or source tracing changes.
+
+## 0.39.1
+
+- Bind empty-Blob qualification to immutable hash-checked native copies, explicit extension build roots and source input hashes. Assert native byte counts, total and verified digest; installed results remain pending.
+
+## 0.39.0
+
+- Complete verified zero-length original browser streams while retaining EOF, ownership, declared-size, durable-file and checksum publication fences. Add native empty-file and refusal regressions; installed browser acceptance remains pending.
+
 ## 0.37.3
 
 - Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.
