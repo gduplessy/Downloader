@@ -780,6 +780,21 @@ impl Engine {
                 )?;
                 self.solve_challenge(id, owner, url, automatic)
             }
+            Command::DesktopDestination => {
+                Ok(serde_json::json!({"directory": self.settings.lock().unwrap().directory}))
+            }
+            Command::DesktopDestinationSetup(request) => {
+                self.store
+                    .lock()
+                    .unwrap()
+                    .queue_destination_setup(&request)?;
+                Ok(
+                    serde_json::json!({"status": "queued", "nonce": request.nonce, "expires_at": request.expires_at}),
+                )
+            }
+            Command::ConsumeDesktopDestinationSetup { nonce } => Ok(
+                serde_json::json!({"accepted": self.store.lock().unwrap().consume_destination_setup(&nonce)?}),
+            ),
             Command::Negotiate { minimum, maximum } => {
                 if minimum > PROTOCOL_VERSION || maximum < PROTOCOL_VERSION || minimum > maximum {
                     bail!("protocol_mismatch: Supported protocol is 1");
@@ -2034,6 +2049,9 @@ fn browser_event_visible(
     private: bool,
     scopes: &[crate::navigation::SessionScope],
 ) -> bool {
+    if event["type"] == "desktop_destination_setup" {
+        return false;
+    }
     if event["type"] == "job_removed" {
         // Historical tombstones have no lane/claim proof. A fresh snapshot
         // recovers removals without exposing unknown private or foreign IDs.

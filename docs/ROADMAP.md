@@ -1,6 +1,6 @@
 # Downloader roadmap
 
-Current product version: <!-- product-version -->0.37.3<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
+Current product version: <!-- product-version -->0.40.0<!-- /product-version -->. Major stays at `0` until the full IDM parity acceptance gate is satisfied; see [version policy](../CONTRIBUTING.md#versioning).
 
 NAV-11 review hardening (0.21.2) isolates private pending origins from regular cleanup and checks fresh native authority after queue admission before opening a source URL. Mutable caller snapshots cannot change frozen navigation intent. Current main's expiry regression and qualification histories are retained.
 
@@ -365,3 +365,5 @@ NAV-05 Firefox local negatives (0.27.1): actual Firefox158 keyboard controls pas
 NAV-05 fixture review (0.27.2): future Firefox runs require full rendered UI state, actual regular profile/store identity and native destination/partial absence. Historical accepted rows retain their original driver fingerprints and inspected evidence.
 
 NAV-04 Retry-After ingestion (0.26.0) adds exact request/document/session binding, durable server deadlines and resolver prepare/commit gates. Unit regressions and the owned-navigation loopback driver are implemented; installed browser and initial pre-claim response qualification remain pending.
+
+Browser capture setup controls report API, session, permission, and opt-in readiness. The options page can inspect the desktop default destination and queue a fixed 15-second request to focus destination settings in an already-running desktop. Browser requests cannot choose paths or write settings; existing jobs retain their destinations. Automated DOM/native tests cover the handoff; installed UI focus, keyboard, and accessibility acceptance remain pending.

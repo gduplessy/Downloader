@@ -1,3 +1,4 @@
+import { mountCaptureControls } from './navigation/streams/controls-ui';
 import { mountSchedulerControls } from './navigation/scheduler/ui';
 import { mountTransfer } from './navigation/session/transfer-ui';
 
@@ -12,6 +13,9 @@ async function main() {
     ...defaults,
     ...((await browser.storage.local.get('settings')) as Record<string, any>).settings,
   };
+  const controls=mountCaptureControls(document.getElementById('capture-status')!,settings.locale,message=>browser.runtime.sendMessage(message),()=>input('site-scope').value);
+  const refreshReadiness=()=>controls.refresh();
+  await refreshReadiness();
   function localize() {
     for (const el of document.querySelectorAll<HTMLElement>('[data-stream-i18n]'))
       el.textContent = streamTranslate(settings.locale, el.dataset.streamI18n as StreamTextKey);
@@ -83,6 +87,7 @@ async function main() {
     };
     await browser.storage.local.set({ settings });
     await browser.runtime.sendMessage({ type: 'settings_changed' });
+    await refreshReadiness();
     document.getElementById('result')!.textContent = translate(settings.locale, 'saved');
   }
   document.querySelector('form')!.onsubmit = (e) => {

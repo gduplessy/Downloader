@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.40.0
+
+- Show localized browser capture readiness, site-permission requirements, and desktop destination guidance.
+- Add a fixed, expiring, one-use request that focuses destination settings in the running desktop; browser callers cannot consume requests or write settings.
+- Preserve default/category destination selection and existing job paths; Firefox binary navigation capture remains pending.
+
 ## 0.37.3
 
 - Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.

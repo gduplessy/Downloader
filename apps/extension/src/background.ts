@@ -1,3 +1,4 @@
+import { captureReadiness } from './navigation/streams/readiness';
 import { NavigationSources, NavigationSourceError } from './navigation/session/source';
 import { RenderedDiscovery } from './navigation/discovery/runtime';
 import {
@@ -53,7 +54,7 @@ import {
   type Download,
 } from './capture';
 import { translate, type Key } from '../../../packages/shared/src/i18n';
-declare const BROWSER: string;
+declare const BROWSER: 'chromium'|'firefox';
 const HOST = 'org.downloader.native';
 const scheduler = new NavigationScheduler(
   (request) => native('navigation_scheduler', { request, private_lane: privateWorker }),
@@ -427,6 +428,20 @@ async function newSink(
   if (!deferred) await sink.begin({ kind: 'job', id }, filename, total);
   return sink;
 }
+async function directReadiness(scope?: SessionScope, url?: string) {
+  const origins = url && /^https?:/.test(url) ? [sitePattern(url)] : ['http://*/*', 'https://*/*'];
+  const contains = (permissions: string[]) => browser.permissions.contains({ permissions: permissions as any, origins }).catch(() => false);
+  return captureReadiness({
+    browser: BROWSER, enabled: settings.directCapture, scope,
+    scopeApi: typeof browser.cookies?.getAllCookieStores === 'function' &&
+      (BROWSER !== 'chromium' || typeof (browser.cookies as any).getPartitionKey === 'function'),
+    blobApi: BROWSER === 'chromium' ? typeof browser.scripting?.executeScript === 'function' : typeof browser.tabs.executeScript === 'function',
+    responseApi: BROWSER === 'chromium' ? Boolean((globalThis as any).chrome?.debugger?.attach) :
+      typeof (browser.webRequest as any)?.filterResponseData === 'function',
+    blobPermission: await contains(BROWSER === 'chromium' ? ['cookies', 'scripting'] : ['cookies']),
+    responsePermission: await contains(BROWSER === 'chromium' ? ['cookies', 'debugger'] : ['cookies', 'webRequest', 'webRequestBlocking']),
+  });
+}
 async function armDirect(
   id: string,
   record: ResolverRecord,
@@ -434,6 +449,9 @@ async function armDirect(
   filename = 'download',
 ) {
   if (!settings.directCapture || !record.scope) return false;
+  const readiness = await directReadiness(record.scope, request.url.startsWith('blob:') ? (await browser.tabs.get(record.tabId)).url : request.url);
+  const lane = request.url.startsWith('blob:') ? readiness.blob : readiness.originalResponse;
+  if (!lane.ready) throw Error('direct_capture_' + lane.reason);
   // armDirect is called only inside the serialized resolver commit transition.
   await captureCancels.get(record.tabId)?.(true);
   captureCancels.delete(record.tabId);
@@ -1465,6 +1483,10 @@ browser.runtime.onMessage.addListener((message: any, sender: browser.Runtime.Mes
         }
       return true;
     })();
+  if (extensionPage && message.type === 'capture_readiness') return directReadiness(undefined,typeof message.url==='string'?message.url:undefined);
+  if (extensionPage && message.type === 'desktop_destination') return native('desktop_destination');
+  if (extensionPage && message.type === 'desktop_destination_setup')
+    return native('desktop_destination_setup', { nonce: crypto.randomUUID(), expires_at: Date.now() + 14000 });
   if (message.type === 'settings_changed') return load().then(() => true);
   if (message.type === 'diagnostics')
     return native('diagnostics').then(async (desktop) => ({
@@ -2474,7 +2496,7 @@ async function resolverContext(
     selectedResource: job.request_id?.startsWith('discovery-') ? job.url : undefined,
     disabledAdapters: settings.disabledAdapters ?? [],
     locale: settings.locale,
-    capabilities: { pageBlob: settings.directCapture },
+    capabilities: { pageBlob: (await directReadiness(record.scope, (await browser.tabs.get(tabId)).url)).blob.ready },
   };
 }
 

@@ -55,6 +55,15 @@ async fn file_action(app: tauri::AppHandle, id: String, reveal: bool) -> Result<
             .map_err(|e| e.to_string())
     }
 }
+#[tauri::command]
+fn show_destination_settings(app: tauri::AppHandle) -> Result<(), String> {
+    let window = app
+        .get_webview_window("main")
+        .ok_or("Desktop window unavailable")?;
+    window.show().map_err(|e| e.to_string())?;
+    window.unminimize().map_err(|e| e.to_string())?;
+    window.set_focus().map_err(|e| e.to_string())
+}
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -65,7 +74,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             request,
             file_action,
-            register_extension
+            register_extension,
+            show_destination_settings
         ])
         .setup(|app| {
             let _ = downloader_service::ensure_service();
