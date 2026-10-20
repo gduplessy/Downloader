@@ -5,7 +5,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::path::Path;
 
 pub struct Store {
-    connection: Connection,
+    pub(crate) connection: Connection,
     ephemeral_events: std::cell::RefCell<std::collections::BTreeMap<u64, EventPayload>>,
     ephemeral: std::cell::RefCell<std::collections::BTreeMap<(String, String), String>>,
 }
@@ -159,7 +159,7 @@ impl Store {
         tx.commit()?;
         Ok(())
     }
-    fn append(tx: &rusqlite::Transaction, event: EventPayload) -> Result<()> {
+    pub(crate) fn append(tx: &rusqlite::Transaction, event: EventPayload) -> Result<()> {
         tx.execute(
             "INSERT INTO events(at,data) VALUES(?1,?2)",
             params![

@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.41.4
+
+- Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.
+
+## 0.41.3
+
+- Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.
+
+## 0.41.2
+
+- Preserve historical local challenge and initial-response scheduler observations with their original provenance and limitations.
+
+## 0.41.1
+
+- Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.
+
+## 0.41.0
+
+- Bound targeted private navigation authority reads to current and legacy keys while preserving ephemeral isolation and precedence.
+
+## 0.40.0
+
+- Show localized browser capture readiness, site-permission requirements, and desktop destination guidance.
+- Add a fixed, expiring, one-use request that focuses destination settings in the running desktop; browser callers cannot consume requests or write settings.
+- Preserve default/category destination selection and existing job paths; Firefox binary navigation capture remains pending.
+
 ## 0.39.3
 
 - Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.
@@ -15,6 +41,18 @@
 ## 0.39.0
 
 - Complete verified zero-length original browser streams while retaining EOF, ownership, declared-size, durable-file and checksum publication fences. Add native empty-file and refusal regressions; installed browser acceptance remains pending.
+
+## 0.38.2
+
+- Persist observation-cost counters in idle-fixture evidence and retain the unsuccessful polling diagnostic with its instrumentation and concurrency limits.
+
+## 0.38.1
+
+- Initialize the per-observation clock before computing fixture CLI latency.
+
+## 0.38.0
+
+- Record idle-fixture CLI observation cost and permit a validated polling cadence for controlled transfer diagnostics.
 
 ## 0.37.3
 

@@ -87,7 +87,11 @@ const selectedKeys = (keys: any, values: Record<string, any>): string[] =>
 export function navigationStorage(local: Area, session: Area, privateWorker: boolean): Area {
   const area: Area = privateWorker ? {
     async get(keys?: any) {
-      const all = await session.get(null), view: Record<string, any> = {};
+      // A frame checks only its own authority; preserve legacy/prefixed precedence without reading unrelated tasks.
+      const requested = keys == null ? null : selectedKeys(keys, {});
+      const all = await session.get(requested === null ? null :
+        [...new Set(requested.flatMap(key => [key, privatePrefix + key]))]);
+      const view: Record<string, any> = {};
       // Read only marked legacy private objects; primitive legacy IDs have no authority.
       for (const [key, value] of Object.entries(all))
         if (!key.startsWith(privatePrefix) && privateValue(value)) view[key] = value;

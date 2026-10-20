@@ -1,3 +1,5 @@
+import { captureText } from '../../../packages/shared/src/capture-ui';
+import { handleDestinationSetup } from './features/destination-setup';
 import { RenderedResources } from './features/discovery/RenderedResources';
 import { applyEvents, type EventBatch } from '../../../packages/shared/src/events';
 import { useEffect, useMemo, useState, useRef, useId, type ReactNode } from 'react';
@@ -71,6 +73,7 @@ export default function App() {
     [selected, setSelected] = useState<string | null>(null),
     [add, setAdd] = useState(false),
     [busy, setBusy] = useState(false),
+    [destinationRequest, setDestinationRequest] = useState(0),
     [sort, setSort] = useState('created'),
     [ascending, setAscending] = useState(false),
     [sidebar, setSidebar] = useState(true);
@@ -78,6 +81,12 @@ export default function App() {
   const t = (k: Key) => translate(locale, k);
   const engineSnapshot = useRef<Snapshot | null>(null);
   const loadingEvents = useRef(false);
+  const focusedDestinationRequest=useRef(0);
+  useEffect(()=>{
+    if(page!=='settings'||destinationRequest<=focusedDestinationRequest.current) return;
+    const field=document.getElementById('desktop-destination-folder');
+    if(field){ focusedDestinationRequest.current=destinationRequest; field.focus(); field.scrollIntoView?.({block:'center'}); }
+  },[page,destinationRequest,snapshot]);
   async function load() {
     if (loadingEvents.current) return;
     loadingEvents.current = true;
@@ -87,6 +96,14 @@ export default function App() {
         after_sequence: engineSnapshot.current?.sequence ?? null,
         limit: 100,
       });
+      await handleDestinationSetup(batch.events, engineSnapshot.current?.sequence ?? batch.sequence, Date.now(),
+        async (nonce) => (await api<{ accepted: boolean }>('consume_desktop_destination_setup', { nonce })).accepted,
+        async () => {
+          setPage('settings');
+          setDestinationRequest(value => value + 1);
+          const { invoke } = await import('@tauri-apps/api/core');
+          await invoke('show_destination_settings');
+        });
       let next = applyEvents(engineSnapshot.current, batch);
       if (!next) {
         batch = await api<EventBatch<Snapshot>>('subscribe', { after_sequence: null, limit: 100 });
@@ -301,7 +318,7 @@ export default function App() {
         ) : page === 'grabber' ? (
           <GrabberPage t={t} run={run} directory={snapshot?.settings.directory ?? ''} />
         ) : page === 'integration' ? (
-          <IntegrationPage snapshot={snapshot} t={t} run={run} />
+          <IntegrationPage snapshot={snapshot} t={t} run={run} openDestination={() => { setPage('settings'); setDestinationRequest(value => value + 1); }} />
         ) : (
           <>
             <div className="toolbar">
@@ -804,6 +821,7 @@ export function SettingsPage({
             {t('directory')}
             <div className="input-row">
               <input
+                id="desktop-destination-folder"
                 value={value.directory}
                 onChange={(e) => update('directory', e.target.value)}
               />
@@ -1717,12 +1735,20 @@ function GrabberPage({ t, run, directory }: { t: T; run: Run; directory: string 
     </div>
   );
 }
-function IntegrationPage({ snapshot, t, run }: { snapshot: Snapshot | null; t: T; run: Run }) {
+function IntegrationPage({ snapshot, t, run, openDestination }: { snapshot: Snapshot | null; t: T; run: Run; openDestination: () => void }) {
+  const locale=snapshot?.settings.locale??'en';
   const [id, setId] = useState(''),
     [diagnostics, setDiagnostics] = useState<unknown>(null),
     [error, setError] = useState('');
   return (
     <div className="page-content">
+      <section className="card">
+        <h2>{captureText(locale,'heading')}</h2>
+        <p>{captureText(locale,'desktopHelp')}</p>
+        <p>{captureText(locale,'destination')}: {snapshot?.settings.directory??''}</p>
+        <p>{captureText(locale,'policy')}</p>
+        <button onClick={openDestination}>{captureText(locale,'choose')}</button>
+      </section>
       <section className="card">
         <h2>{t('health')}</h2>
         <p>{t('nativeHelp')}</p>

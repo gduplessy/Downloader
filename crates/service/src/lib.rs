@@ -315,6 +315,13 @@ pub fn register(config: Registration, root: Option<&Path>) -> Result<serde_json:
     }
     Ok(serde_json::json!({"chromium":chrome_path,"firefox":firefox_path,"host":HOST_NAME}))
 }
+fn browser_desktop_setup_command(command: &downloader_core::Command) -> bool {
+    matches!(
+        command,
+        downloader_core::Command::DesktopDestination
+            | downloader_core::Command::DesktopDestinationSetup(_)
+    )
+}
 pub fn native(args: &[String]) -> Result<()> {
     let config: Registration = serde_json::from_slice(
         &std::fs::read(data_dir().join("native-allowlist.json"))
@@ -354,6 +361,7 @@ pub fn native(args: &[String]) -> Result<()> {
                     add.context.browser = Some("extension".into());
                     call(downloader_core::Command::Navigate(add)).map(|job| browser_job(&job))
                 }
+                c if browser_desktop_setup_command(&c) => call(c),
                 c @ downloader_core::Command::NavigationScheduler { .. } => call(c),
 
                 c @ downloader_core::Command::BrowserStream(_) => call(c),
@@ -531,6 +539,25 @@ fn browser_events(mut data: serde_json::Value) -> Result<serde_json::Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn desktop_setup_native_allowlist_excludes_consume_and_settings() {
+        use downloader_core::{desktop_setup::Request, Command};
+        assert!(browser_desktop_setup_command(&Command::DesktopDestination));
+        assert!(browser_desktop_setup_command(
+            &Command::DesktopDestinationSetup(Request {
+                nonce: "test".into(),
+                expires_at: 1
+            })
+        ));
+        assert!(!browser_desktop_setup_command(
+            &Command::ConsumeDesktopDestinationSetup {
+                nonce: "test".into()
+            }
+        ));
+        assert!(!browser_desktop_setup_command(&Command::Snapshot));
+        let projected = browser_events(serde_json::json!({"snapshot":null,"sequence":1,"events":[{"type":"desktop_destination_setup","sequence":1,"nonce":"secret","expires_at":1}]})).unwrap();
+        assert!(projected["events"].as_array().unwrap().is_empty());
+    }
     #[cfg(unix)]
     #[test]
     fn unix_endpoint_is_private_and_rebinds_after_shutdown() {

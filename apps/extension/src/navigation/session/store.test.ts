@@ -136,3 +136,36 @@ describe('browser restart references and private overlay', () => {
     ).toBe('https://file.test');
   });
 });
+
+
+it.each(['single', 'array', 'defaults'] as const)('private %s reads do not enumerate unrelated session authority', async shape => {
+  const local = memoryStorage(), backing = memoryStorage();
+  const legacy = {scope:{...scope,private:true},sourceGeneration:1,tabId:7};
+  const current = {...legacy,sourceGeneration:2};
+  await backing.set(Object.fromEntries(Array.from({length:2000},(_,i)=>['private-nav:unrelated-'+i,{private:true,marker:i}])));
+  await backing.set({'resolver-target':legacy,'private-nav:resolver-target':current,'unmarked':'regular-value'});
+  const reads:string[][]=[];
+  const session={...backing,async get(keys?:any){
+    if(keys==null) throw Error('Targeted private read enumerated the session store');
+    const requested=typeof keys==='string'?[keys]:Array.isArray(keys)?keys:Object.keys(keys);
+    reads.push(requested);
+    return backing.get(keys);
+  }};
+  const store=navigationStorage(local,session,true);
+  const keys=shape==='single'?'resolver-target':shape==='array'?['resolver-target','unmarked','missing']:{'resolver-target':null,unmarked:null,missing:null};
+  expect(await store.get(keys)).toEqual({'resolver-target':current});
+  expect(reads).toHaveLength(1);
+  expect(reads[0].length).toBeLessThanOrEqual(shape==='single'?2:6);
+  expect(reads[0].some(key=>key.includes('unrelated'))).toBe(false);
+  expect(await local.get()).toEqual({});
+});
+
+it('private full enumeration keeps legacy filtering and prefixed precedence', async()=>{
+  const backing=memoryStorage();
+  const legacy={scope:{...scope,private:true},sourceGeneration:1};
+  const current={...legacy,sourceGeneration:2};
+  await backing.set({'resolver-target':legacy,'private-nav:resolver-target':current,regular:{private:false},primitive:'not-authority','private-nav:profile':'private-profile-id'});
+  const store=navigationStorage(memoryStorage(),backing,true);
+  expect(await store.get()).toEqual({'resolver-target':current,profile:'private-profile-id'});
+  expect(await store.get([])).toEqual({});
+});

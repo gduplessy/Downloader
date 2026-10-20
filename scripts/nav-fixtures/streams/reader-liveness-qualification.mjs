@@ -23,6 +23,11 @@ const nativeBuildRevision = execFileSync(
 assert.equal(nativeBuildRevision, '3b808ae1967a210fc5b3a3e461488b9f2ab6cb61');
 const initialDriverSha256 = createHash('sha256').update(await readFile(new URL(import.meta.url))).digest('hex');
 const idleMs = 60000;
+const pollMs = Number(process.env.NAV_POLL_MS ?? 200);
+assert.ok(Number.isSafeInteger(pollMs) && pollMs >= 200 && pollMs <= 5000, 'Poll interval must be 200..5000ms');
+const totalDeadlineMs = Number(process.env.NAV_DEADLINE_MS ?? 150000);
+assert.ok(Number.isSafeInteger(totalDeadlineMs) && totalDeadlineMs >= 60000 && totalDeadlineMs <= 600000, 'Total deadline must be 60000..600000ms');
+const polling = {intervalMs:pollMs, totalDeadlineMs, calls:0, totalCliMs:0, maximumCliMs:0};
 const firstChunkBytes = 192 * 1024;
 const idle = { requestedMs: idleMs };
 const observations = {
@@ -32,6 +37,8 @@ const observations = {
   rendererShim: false,
   idle,
 };
+observations.polling = polling;
+assert.deepEqual(JSON.parse(JSON.stringify(observations)).polling, polling);
 const ext = resolve(dir, 'extension');
 const data = resolve(dir, 'service');
 await mkdir(ext, { recursive: true });
@@ -440,13 +447,16 @@ try {
   observations.capturePageDriverAttached = false;
   observations.previewUiQualified = false;
   await command('Target.closeTarget', { targetId: fixtureTarget.targetId });
-  const deadline = Date.now() + Number(process.env.NAV_DEADLINE_MS ?? 150000);
+  const deadline = Date.now() + totalDeadlineMs;
   let idleTimer;
   const idleSamples = [];
   for (let attempt = 0; attempt < 900 && Date.now() < deadline; attempt++) {
+    const pollStarted = performance.now();
     const listed = JSON.parse(
       execFileSync(cli, ['--json', 'list'], { env, windowsHide: true, encoding: 'utf8' }),
     );
+    const cliMs = performance.now() - pollStarted;
+    polling.calls++; polling.totalCliMs += cliMs; polling.maximumCliMs = Math.max(polling.maximumCliMs, cliMs);
     job = (listed.jobs ?? listed).find((item) => item.id === jobId);
     if (job?.bytes === firstChunkBytes && !idle.durablePartialObservedAt) {
       assert.equal(job.state, 'browser_downloading');
@@ -480,7 +490,7 @@ try {
     if (job?.state === 'complete') break;
     if (['failed', 'cancelled'].includes(job?.state))
       throw Error(JSON.stringify({ job, requests }));
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, pollMs));
   }
   assert.equal(
     job?.state,

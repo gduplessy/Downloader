@@ -1,0 +1,58 @@
+{
+  "source_revision": "38b0a400c3c39ac2657d7f867951b337ea81dc39",
+  "scenario": "fresh",
+  "result": "failed_fixture_stale_control",
+  "overall_process_exit": 1,
+  "original_submissions": [
+    {
+      "provider": "g4u",
+      "host": "gofile.io",
+      "accepted": true
+    }
+  ],
+  "control_trace": {
+    "scheduled": {
+      "connected": true,
+      "disabled": true,
+      "radios": [
+        {
+          "checked": false,
+          "connected": true,
+          "disabled": true
+        }
+      ],
+      "stale_message_observed": true
+    },
+    "fired": {
+      "connected": true,
+      "disabled": true,
+      "radios": [
+        {
+          "checked": false,
+          "connected": true,
+          "disabled": true
+        }
+      ],
+      "stale_message_observed": true
+    }
+  },
+  "retained_job_snapshot_read_after_run": [
+    {
+      "state": "waiting_user",
+      "bytes": 0,
+      "error": "Select the intended download control.",
+      "source_generation": 1,
+      "claim_generation": 2
+    }
+  ],
+  "native_hashes": {
+    "downloader-service.exe": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+    "downloader.exe": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c"
+  },
+  "conclusion": "Legacy fixture attempted to select a stale disabled unchecked radio and invoked a disabled Continue. This proves an invalid fixture action, not a production authentication or byte-transfer failure.",
+  "limits": [
+    "This failure does not establish which overlapping continuation invalidated the preview.",
+    "The first diagnostic at f9946b4 omitted trace persistence and is not used as control-state proof.",
+    "No passing file acceptance is claimed by this failed attempt."
+  ]
+}
