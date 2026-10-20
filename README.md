@@ -4,7 +4,7 @@
 
 **An open-source download manager with a native desktop app, a Rust engine, and browser extensions.**
 
-**Version <!-- product-version -->0.41.3<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
+**Version <!-- product-version -->0.41.4<!-- /product-version -->** · [Changelog](CHANGELOG.md) · [Version policy](CONTRIBUTING.md#versioning)
 
 [![Build and test](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/gduplessy/Downloader/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-5DD6BC?style=flat-square&labelColor=18212B)](LICENSE)
@@ -15,6 +15,8 @@
 </div>
 
 ## Downloads you can trust
+
+Original browser streams accept empty files after owned EOF and SHA-256 verification; installed regular-profile Chrome/Edge/Firefox empty-Blob runs pass; broader context acceptance remains pending.
 
 Automatic navigation startup preserves an existing live selection preview. Blob capture progress and cancellation are visible in the extension; installed browser lifecycle qualification remains in progress.
 

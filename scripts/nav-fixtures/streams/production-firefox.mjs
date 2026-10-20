@@ -1,12 +1,12 @@
 import { createServer } from 'node:http';
 import { createHash } from 'node:crypto';
 import { spawn, execFileSync } from 'node:child_process';
-import { mkdir, writeFile, readFile, realpath } from 'node:fs/promises';
+import { mkdir, writeFile, readFile, realpath, copyFile } from 'node:fs/promises';
 import { resolve, dirname, relative, isAbsolute } from 'node:path';
 import { createRequire } from 'node:module';
 import assert from 'node:assert/strict';
 const require = createRequire(new URL('../../../apps/extension/package.json', import.meta.url));
-const { build } = require('esbuild');
+const { build, stop } = require('esbuild');
 const runnerCwd = process.cwd();
 if (process.env.NAV_SOURCE_ROOT) process.chdir(await realpath(process.env.NAV_SOURCE_ROOT));
 const sourceRevision =
@@ -37,9 +37,41 @@ assert.ok(
   'NAV_NATIVE_BINARY must name the checked service executable',
 );
 assert.ok(process.env.NAV_CLI_BINARY, 'NAV_CLI_BINARY must name the checked CLI executable');
-const nativeBinary = await realpath(resolve(runnerCwd, process.env.NAV_NATIVE_BINARY));
-const cli = await realpath(resolve(runnerCwd, process.env.NAV_CLI_BINARY));
-const nativeBuildRevision = process.env.NAV_NATIVE_REVISION ?? null;
+let nativeBinary = await realpath(resolve(runnerCwd, process.env.NAV_NATIVE_BINARY));
+let cli = await realpath(resolve(runnerCwd, process.env.NAV_CLI_BINARY));
+const checkedNative = process.env.NAV_NATIVE_MANIFEST
+  ? JSON.parse(await readFile(resolve(runnerCwd, process.env.NAV_NATIVE_MANIFEST), 'utf8'))
+  : null;
+const nativeBuildRevision = checkedNative?.revision ?? process.env.NAV_NATIVE_REVISION ?? null;
+if (checkedNative) {
+  assert.match(checkedNative.version, /^0\.\d+\.\d+$/);
+  assert.deepEqual(Object.keys(checkedNative.sha256).sort(), [
+    'downloader-service.exe',
+    'downloader.exe',
+  ]);
+  const nativeDir = resolve(dir, 'native');
+  await mkdir(nativeDir, { recursive: true });
+  for (const [name, source] of [
+    ['downloader-service.exe', nativeBinary],
+    ['downloader.exe', cli],
+  ]) {
+    const expected = checkedNative.sha256[name];
+    assert.match(expected, /^[a-f0-9]{64}$/);
+    const hash = (path) =>
+      readFile(path).then((bytes) => createHash('sha256').update(bytes).digest('hex'));
+    assert.equal(await hash(source), expected, 'Wrong immutable native source ' + name);
+    const target = resolve(nativeDir, name);
+    await copyFile(source, target);
+    assert.equal(await hash(target), expected, 'Copied native differs ' + name);
+    if (name === 'downloader-service.exe') nativeBinary = target;
+    else cli = target;
+  }
+  assert.ok(
+    execFileSync(cli, ['--version'], { encoding: 'utf8', windowsHide: true }).includes(
+      checkedNative.version,
+    ),
+  );
+}
 if (nativeBuildRevision)
   assert.match(nativeBuildRevision, /^[a-f0-9]{40}$/, 'Record exact native build source revision');
 const nativeManifest = resolve(dir, 'native.json');
@@ -707,6 +739,15 @@ try {
       assert.equal(bytes.length, payload.length);
       assert.equal(digest(bytes), digest(payload));
       assert.equal(job.verified_sha256, digest(payload));
+      assert.equal(job.bytes, payload.length);
+      assert.equal(job.total, payload.length);
+      if (checkedNative) {
+        assert.equal(
+          digest(await readFile(nativeBinary)),
+          checkedNative.sha256['downloader-service.exe'],
+        );
+        assert.equal(digest(await readFile(cli)), checkedNative.sha256['downloader.exe']);
+      }
       const nativeDiagnostics = JSON.parse(
         execFileSync(cli, ['--json', 'diagnostics'], { env, windowsHide: true, encoding: 'utf8' }),
       );
@@ -727,6 +768,7 @@ try {
         version: JSON.parse(await readFile('package.json', 'utf8')).version,
         nativeVersion: nativeDiagnostics.version,
         nativeBuildRevision,
+        nativeManifest: checkedNative,
         nativeHostDiagnostics: hostDiagnostics,
         daemonDiagnostics: {
           version: nativeDiagnostics.version,
@@ -769,6 +811,8 @@ try {
         bytes: bytes.length,
         sha256: digest(bytes),
         nativeVerifiedSha256: job.verified_sha256,
+        nativeBytes: job.bytes,
+        nativeTotal: job.total,
         state: job.state,
         claimGeneration: job.navigation_scope?.claim_generation ?? job.navigation_claim?.generation,
         sourceGeneration: job.source_generation,
@@ -821,4 +865,5 @@ try {
   server.closeAllConnections();
   server.close();
   execFileSync('reg', ['DELETE', registry, '/f'], { windowsHide: true, stdio: 'ignore' });
+  stop();
 }

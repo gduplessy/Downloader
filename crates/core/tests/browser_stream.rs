@@ -268,16 +268,6 @@ fn browser_recovery_status_preserves_durable_partial_progress() {
 #[test]
 fn eof_and_offsets_cannot_falsely_complete() {
     let (_, engine, id, identity) = setup(false);
-    assert!(frame(
-        &engine,
-        StreamOperation::Begin {
-            identity: identity.clone(),
-            target: NavigationTarget::Job { id: id.clone() },
-            filename: "x".into(),
-            total: Some(0)
-        }
-    )
-    .is_err());
     frame(
         &engine,
         StreamOperation::Begin {
@@ -756,4 +746,168 @@ fn concurrent_eof_and_publication_checkpoint_gap_acknowledge_one_artifact() {
             .count(),
         1
     );
+}
+
+const EMPTY_SHA256: &str = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+
+#[test]
+fn empty_original_streams_require_eof_and_publish_verified_empty_files() {
+    for declared in [Some(0), None] {
+        let (dir, engine, id, identity) = setup(false);
+        let ack = frame(
+            &engine,
+            StreamOperation::Begin {
+                identity: identity.clone(),
+                target: NavigationTarget::Job { id: id.clone() },
+                filename: "empty.bin".into(),
+                total: declared,
+            },
+        )
+        .unwrap();
+        assert_eq!(ack["accepted_offset"], 0);
+        assert_eq!(ack["terminal"], false);
+        let before = engine.job(&id).unwrap().lock().unwrap().clone();
+        assert_eq!(before.state, JobState::BrowserDownloading);
+        assert!(!before.destination.exists());
+        assert!(frame(
+            &engine,
+            StreamOperation::Chunk {
+                identity: identity.clone(),
+                offset: 0,
+                data_base64: String::new(),
+            },
+        )
+        .is_err());
+        let eof = StreamOperation::End {
+            identity: identity.clone(),
+            total: 0,
+            expected_sha256: Some(EMPTY_SHA256.into()),
+        };
+        let ack = frame(&engine, eof.clone()).unwrap();
+        assert_eq!(ack["accepted_offset"], 0);
+        assert_eq!(ack["terminal"], true);
+        let published = engine.job(&id).unwrap().lock().unwrap().clone();
+        assert_eq!(published.state, JobState::Complete);
+        assert_eq!(published.total, Some(0));
+        assert_eq!(published.bytes, 0);
+        assert!(published.segments.is_empty());
+        assert_eq!(published.verified_sha256.as_deref(), Some(EMPTY_SHA256));
+        assert_eq!(std::fs::read(&published.destination).unwrap(), b"");
+        assert_eq!(frame(&engine, eof.clone()).unwrap(), ack);
+        drop(engine);
+        let reopened = Engine::open(dir.path()).unwrap();
+        assert_eq!(frame(&reopened, eof).unwrap(), ack);
+        assert_eq!(
+            reopened.job(&id).unwrap().lock().unwrap().state,
+            JobState::Complete
+        );
+    }
+}
+
+#[test]
+fn empty_stream_checksum_mismatch_never_publishes() {
+    let (_dir, engine, id, identity) = setup(false);
+    frame(
+        &engine,
+        StreamOperation::Begin {
+            identity: identity.clone(),
+            target: NavigationTarget::Job { id: id.clone() },
+            filename: "empty.bin".into(),
+            total: Some(0),
+        },
+    )
+    .unwrap();
+    assert!(frame(
+        &engine,
+        StreamOperation::End {
+            identity,
+            total: 0,
+            expected_sha256: Some("0".repeat(64))
+        }
+    )
+    .is_err());
+    let job = engine.job(&id).unwrap().lock().unwrap().clone();
+    assert_eq!(job.state, JobState::Failed);
+    assert!(job.verified_sha256.is_none());
+    assert!(!job.destination.exists());
+}
+
+#[test]
+fn empty_eof_preserves_size_identity_and_durable_file_fences() {
+    for declared in [Some(0), Some(1), None] {
+        let (_dir, engine, id, identity) = setup(false);
+        frame(
+            &engine,
+            StreamOperation::Begin {
+                identity: identity.clone(),
+                target: NavigationTarget::Job { id: id.clone() },
+                filename: "empty.bin".into(),
+                total: declared,
+            },
+        )
+        .unwrap();
+        for mutation in 0..3 {
+            let mut foreign = identity.clone();
+            match mutation {
+                0 => foreign.scope.profile.push_str("-foreign"),
+                1 => foreign.scope.claim_generation += 1,
+                _ => foreign.source_generation += 1,
+            }
+            assert!(frame(
+                &engine,
+                StreamOperation::End {
+                    identity: foreign,
+                    total: 0,
+                    expected_sha256: None
+                }
+            )
+            .is_err());
+        }
+        if declared == Some(0) {
+            assert!(frame(
+                &engine,
+                StreamOperation::Chunk {
+                    identity: identity.clone(),
+                    offset: 0,
+                    data_base64: "AQ==".into()
+                }
+            )
+            .is_err());
+        }
+        if declared == Some(1) {
+            assert!(frame(
+                &engine,
+                StreamOperation::End {
+                    identity: identity.clone(),
+                    total: 0,
+                    expected_sha256: None
+                }
+            )
+            .is_err());
+        } else {
+            let job = engine.job(&id).unwrap().lock().unwrap().clone();
+            std::fs::write(
+                job.destination
+                    .with_file_name(format!(".{}.{}.part", job.filename, job.id)),
+                b"unacknowledged",
+            )
+            .unwrap();
+            let error = frame(
+                &engine,
+                StreamOperation::End {
+                    identity,
+                    total: 0,
+                    expected_sha256: None,
+                },
+            )
+            .unwrap_err();
+            assert!(
+                error.to_string().contains("trailing unacknowledged"),
+                "{error}"
+            );
+        }
+        let job = engine.job(&id).unwrap().lock().unwrap().clone();
+        assert_ne!(job.state, JobState::Complete);
+        assert!(!job.destination.exists());
+    }
 }
