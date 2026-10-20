@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.41.2
+
+- Preserve historical local challenge and initial-response scheduler observations with their original provenance and limitations.
+
 ## 0.41.1
 
 - Integrate reviewed main prerequisites and reconcile product metadata without rewriting historical changelog bytes.

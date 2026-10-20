@@ -1,0 +1,230 @@
+{
+  "fixture": "installed-production-retry-after-v1",
+  "resolver_trace_instrumented": false,
+  "observer_installations": 0,
+  "observed_resolver_outcomes": 0,
+  "source_revision": "84da977449447c6c3ab8068addc7dc17fc01e8c5",
+  "browser": "Chrome/155.0.8059.40",
+  "native_version": "0.25.1",
+  "native_build_revision": "3b808ae1967a210fc5b3a3e461488b9f2ab6cb61",
+  "native_binary_sha256": "3cbd6aa2c7d65e2c4aeaabd83afed64d86e838d2c898fd8f63cb1083804056f2",
+  "cli_binary_sha256": "43094f64f3379c39cd24c0e3358df77d0931afa9dd81a80a9550d16e57787e0c",
+  "fixture_sha256": "2b41f076238bf3894e7b4efb681452e2ca18821771fcd8ecdc4a2119f5f5486c",
+  "server_sha256": "a12e5886628c6437f076f2abeaf7722fd5077044b89ccf8fe1b7fd08b63b4e96",
+  "production_background_sha256": "b5295ab0ddb809cf8dd9b389057ea6446ab0db0307ea3b0aca41f60218457c5f",
+  "os": "win32",
+  "arch": "x64",
+  "results": [
+    {
+      "name": "numeric",
+      "initial_response": true,
+      "original_wait": {
+        "basis": "server",
+        "deadline_ms": 1792149898015,
+        "expires_at_ms": null,
+        "generation": 1,
+        "next_recheck_ms": 1792149903203,
+        "notified": false,
+        "observed_at_ms": 1792149886015,
+        "observed_duration_ms": 12000,
+        "reason": "retry_after:wait:2d2c0c1b5082a0e312376025caa8bcbcfd344f982586554de808d6b410ec1fd0",
+        "requires_live_tab": true,
+        "source_generation": 1
+      },
+      "distinct_owned_navigation": false,
+      "wait": {
+        "basis": "server",
+        "deadline_ms": 1792149898015,
+        "expires_at_ms": null,
+        "generation": 1,
+        "next_recheck_ms": 1792149903203,
+        "notified": false,
+        "observed_at_ms": 1792149886015,
+        "observed_duration_ms": 12000,
+        "reason": "retry_after:wait:2d2c0c1b5082a0e312376025caa8bcbcfd344f982586554de808d6b410ec1fd0",
+        "requires_live_tab": true,
+        "source_generation": 1
+      },
+      "server_deadline": 1792149897627,
+      "original_posts": 1,
+      "original_method": "POST",
+      "head_probes": 0,
+      "early_posts": 0,
+      "duplicate_posts": 0,
+      "navigation_gets": 1,
+      "worker_replaced": false,
+      "lifecycle": [
+        {
+          "event": "request",
+          "requestId": "6",
+          "tabId": 1562547683,
+          "timeStamp": 1792149885607.133,
+          "url": "http://127.0.0.1:8427/nav-adapters/gofile/limited?case=numeric"
+        },
+        {
+          "event": "navigate",
+          "tabId": 1562547683,
+          "timeStamp": 1792149885560.826,
+          "url": "http://127.0.0.1:8427/nav-adapters/gofile/limited?case=numeric"
+        },
+        {
+          "event": "committed",
+          "tabId": 1562547683,
+          "timeStamp": 1792149885827.537,
+          "url": "http://127.0.0.1:8427/nav-adapters/gofile/limited?case=numeric",
+          "documentId": "BA8A8F3044B0F3F9BDD2BF268EEE179E"
+        },
+        {
+          "event": "navigate",
+          "tabId": 1562547683,
+          "timeStamp": 1792149925456.794,
+          "url": "http://127.0.0.1:8427/nav-adapters/gofile/submit?case=numeric"
+        },
+        {
+          "event": "request",
+          "requestId": "8",
+          "tabId": 1562547683,
+          "timeStamp": 1792149925462.67,
+          "url": "http://127.0.0.1:8427/nav-adapters/gofile/submit?case=numeric"
+        },
+        {
+          "event": "committed",
+          "tabId": 1562547683,
+          "timeStamp": 1792149925531.166,
+          "url": "http://127.0.0.1:8427/nav-adapters/gofile/submit?case=numeric",
+          "documentId": "1AC3B35C36E41D0C350140275633F533"
+        }
+      ],
+      "headers_include_document_id": false,
+      "committed_document_ids_present": true
+    },
+    {
+      "name": "date",
+      "initial_response": true,
+      "original_wait": {
+        "basis": "server",
+        "deadline_ms": 1792149944000,
+        "expires_at_ms": null,
+        "generation": 1,
+        "next_recheck_ms": 1792149944000,
+        "notified": false,
+        "observed_at_ms": 1792149932362,
+        "observed_duration_ms": 11638,
+        "reason": "retry_after:wait:edfdf27f8126d318907aa27b2f275a561354b52b2265dc6e34f4ff6bd53d7d72",
+        "requires_live_tab": true,
+        "source_generation": 1
+      },
+      "distinct_owned_navigation": false,
+      "wait": {
+        "basis": "server",
+        "deadline_ms": 1792149944000,
+        "expires_at_ms": null,
+        "generation": 1,
+        "next_recheck_ms": 1792149944000,
+        "notified": false,
+        "observed_at_ms": 1792149932362,
+        "observed_duration_ms": 11638,
+        "reason": "retry_after:wait:edfdf27f8126d318907aa27b2f275a561354b52b2265dc6e34f4ff6bd53d7d72",
+        "requires_live_tab": true,
+        "source_generation": 1
+      },
+      "server_deadline": 1792149944000,
+      "original_posts": 1,
+      "original_method": "POST",
+      "head_probes": 0,
+      "early_posts": 0,
+      "duplicate_posts": 0,
+      "navigation_gets": 1,
+      "worker_replaced": false,
+      "lifecycle": [
+        {
+          "event": "request",
+          "requestId": "6",
+          "tabId": 1562547683,
+          "timeStamp": 1792149885607.133,
+          "url": "http://127.0.0.1:8427/nav-adapters/gofile/limited?case=numeric"
+        },
+        {
+          "event": "navigate",
+          "tabId": 1562547683,
+          "timeStamp": 1792149885560.826,
+          "url": "http://127.0.0.1:8427/nav-adapters/gofile/limited?case=numeric"
+        },
+        {
+          "event": "committed",
+          "tabId": 1562547683,
+          "timeStamp": 1792149885827.537,
+          "url": "http://127.0.0.1:8427/nav-adapters/gofile/limited?case=numeric",
+          "documentId": "BA8A8F3044B0F3F9BDD2BF268EEE179E"
+        },
+        {
+          "event": "navigate",
+          "tabId": 1562547683,
+          "timeStamp": 1792149925456.794,
+          "url": "http://127.0.0.1:8427/nav-adapters/gofile/submit?case=numeric"
+        },
+        {
+          "event": "request",
+          "requestId": "8",
+          "tabId": 1562547683,
+          "timeStamp": 1792149925462.67,
+          "url": "http://127.0.0.1:8427/nav-adapters/gofile/submit?case=numeric"
+        },
+        {
+          "event": "committed",
+          "tabId": 1562547683,
+          "timeStamp": 1792149925531.166,
+          "url": "http://127.0.0.1:8427/nav-adapters/gofile/submit?case=numeric",
+          "documentId": "1AC3B35C36E41D0C350140275633F533"
+        },
+        {
+          "event": "request",
+          "requestId": "10",
+          "tabId": 1562547685,
+          "timeStamp": 1792149932345.935,
+          "url": "http://127.0.0.1:8427/nav-adapters/gofile/limited?case=date"
+        },
+        {
+          "event": "navigate",
+          "tabId": 1562547685,
+          "timeStamp": 1792149932313.087,
+          "url": "http://127.0.0.1:8427/nav-adapters/gofile/limited?case=date"
+        },
+        {
+          "event": "committed",
+          "tabId": 1562547685,
+          "timeStamp": 1792149932435.352,
+          "url": "http://127.0.0.1:8427/nav-adapters/gofile/limited?case=date",
+          "documentId": "9CF080EDCB9F61721E7EBD538CAE51BD"
+        },
+        {
+          "event": "navigate",
+          "tabId": 1562547685,
+          "timeStamp": 1792149957353.623,
+          "url": "http://127.0.0.1:8427/nav-adapters/gofile/submit?case=date"
+        },
+        {
+          "event": "request",
+          "requestId": "12",
+          "tabId": 1562547685,
+          "timeStamp": 1792149957357.354,
+          "url": "http://127.0.0.1:8427/nav-adapters/gofile/submit?case=date"
+        },
+        {
+          "event": "committed",
+          "tabId": 1562547685,
+          "timeStamp": 1792149957416.812,
+          "url": "http://127.0.0.1:8427/nav-adapters/gofile/submit?case=date",
+          "documentId": "63BD28C54EFCB358E77ED09442AC3685"
+        }
+      ],
+      "headers_include_document_id": false,
+      "committed_document_ids_present": true
+    }
+  ],
+  "limits": [
+    "Synthetic original initial429/503; task-created tab receipt and post-load native scope; pregranted permissions; direct capture off",
+    "Firefox/other OS/live providers/private installed matrix remain separately pending; initial-response acceptance is limited to explicitly recorded initial rows",
+    "Readiness HTML acknowledgement, not file-transfer proof"
+  ]
+}
